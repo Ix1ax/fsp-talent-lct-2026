@@ -6,6 +6,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -36,5 +37,20 @@ func TestRoutes(t *testing.T) {
 				t.Fatal("Нет идентификатора запроса")
 			}
 		})
+	}
+}
+
+// Страница возврата после входа через Keycloak подключает скрипт; без него Swagger остаётся с белым экраном.
+func TestSwaggerOAuthRedirectScript(t *testing.T) {
+	r := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, nil)
+	page := httptest.NewRecorder()
+	r.ServeHTTP(page, httptest.NewRequest("GET", "/docs/oauth2-redirect.html", nil))
+	if page.Code != 200 || !strings.Contains(page.Body.String(), `src="assets/oauth2-redirect.js"`) {
+		t.Fatalf("страница возврата: %d %s", page.Code, page.Body)
+	}
+	script := httptest.NewRecorder()
+	r.ServeHTTP(script, httptest.NewRequest("GET", "/docs/assets/oauth2-redirect.js", nil))
+	if script.Code != 200 || script.Body.Len() == 0 {
+		t.Fatalf("скрипт возврата недоступен: %d", script.Code)
 	}
 }
