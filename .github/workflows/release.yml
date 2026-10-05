@@ -1,9 +1,12 @@
 name: Release and deploy
-on:
+'on':
   workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
 permissions:
   contents: read
 concurrency:
@@ -70,18 +73,33 @@ jobs:
           PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
           IMAGE_PREFIX: ${{ needs.publish.outputs.image_prefix }}
           SHA: ${{ needs.publish.outputs.sha }}
-        run: |
+        run: |-
           umask 077
           printf '%s\n' "$PRODUCTION_ENV" > deploy/.env
-          printf 'API_IMAGE=%s/api:%s\nWEB_IMAGE=%s/web:%s\n' "$IMAGE_PREFIX" "$SHA" "$IMAGE_PREFIX" "$SHA" >> deploy/.env
+          printf 'API_IMAGE=%s/api:%s\n' "$IMAGE_PREFIX" "$SHA" >> deploy/.env
+          mkdir -p deploy/keycloak
+          cp infra/keycloak/fsp-realm.json deploy/keycloak/fsp-realm.json
+          cp scripts/deploy-server.sh deploy/deploy-server.sh
       - name: Deploy
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p ~/fsp && chmod 700 ~/fsp'
-          scp deploy/compose.yaml deploy/Caddyfile deploy/.env "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
-          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/fsp && chmod 600 .env && docker compose pull && docker compose up -d postgres redis s3 && docker compose run --rm migrate && docker compose up -d --wait --wait-timeout 240 && docker compose exec -T web wget -q -O /dev/null http://127.0.0.1/readyz'
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: >-
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p ~/fsp/keycloak && chmod 700 ~/fsp'
+
+          scp deploy/compose.yaml deploy/Caddyfile deploy/.env deploy/deploy-server.sh "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
+
+          scp deploy/keycloak/fsp-realm.json "$DEPLOY_USER@$DEPLOY_HOST:fsp/keycloak/"
+
+          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$GHCR_USER'
+          --password-stdin"
+
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/fsp && sh deploy-server.sh'
       - name: Cleanup credentials
         if: always()
         run: rm -f deploy/.env ~/.ssh/id_ed25519 ~/.ssh/known_hosts
+    permissions:
+      contents: read
+      packages: read

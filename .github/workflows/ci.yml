@@ -20,6 +20,8 @@ jobs:
         with:
           go-version-file: apps/api/go.mod
           cache-dependency-path: apps/api/go.sum
+      - run: sh scripts/check-openapi.sh
+        working-directory: .
       - run: go mod download
       - run: test -z "$(gofmt -l .)"
       - run: go vet ./...
@@ -41,8 +43,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
-      - run: docker compose --profile app up -d --build --wait --wait-timeout 240
+      - run: docker compose --profile app up -d --build --wait --wait-timeout 360
       - run: sh scripts/smoke.sh
+      - run: sh scripts/keycloak-smoke.sh
       - uses: actions/setup-go@v5
         with:
           go-version-file: apps/api/go.mod

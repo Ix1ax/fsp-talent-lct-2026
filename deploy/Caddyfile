@@ -1,4 +1,9 @@
-{$DOMAIN} {
+{$API_DOMAIN} {
   encode zstd gzip
-  reverse_proxy web:80
+  reverse_proxy api:8080
+}
+
+{$AUTH_DOMAIN} {
+  encode zstd gzip
+  reverse_proxy keycloak:8080
 }

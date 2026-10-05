@@ -24,14 +24,14 @@ type Dependencies struct {
 func Open(ctx context.Context, c config.Config) (*Dependencies, error) {
 	cfg, err := pgxpool.ParseConfig(c.DatabaseURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid database configuration")
+		return nil, fmt.Errorf("Некорректные настройки подключения к базе данных")
 	}
 	cfg.MaxConns = 10
 	cfg.MinConns = 1
 	cfg.MaxConnLifetime = time.Hour
 	db, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("create database pool: %w", err)
+		return nil, fmt.Errorf("Не удалось создать пул подключений к базе данных: %w", err)
 	}
 	d := &Dependencies{DB: db, Cache: redis.NewClient(&redis.Options{Addr: c.RedisAddr, Password: c.RedisPassword, DialTimeout: 3 * time.Second, ReadTimeout: 2 * time.Second, WriteTimeout: 2 * time.Second}), Bucket: c.S3Bucket}
 	d.Objects = s3.New(s3.Options{Region: c.S3Region, BaseEndpoint: aws.String(c.S3Endpoint), UsePathStyle: true, Credentials: credentials.NewStaticCredentialsProvider(c.S3AccessKey, c.S3SecretKey, ""), RetryMaxAttempts: 2})
@@ -45,13 +45,13 @@ func (d *Dependencies) Check(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 	if err := d.DB.Ping(ctx); err != nil {
-		return fmt.Errorf("postgres unavailable")
+		return fmt.Errorf("Postgres недоступен")
 	}
 	if err := d.Cache.Ping(ctx).Err(); err != nil {
-		return fmt.Errorf("redis unavailable")
+		return fmt.Errorf("Redis недоступен")
 	}
 	if _, err := d.Objects.HeadBucket(ctx, &s3.HeadBucketInput{Bucket: aws.String(d.Bucket)}); err != nil {
-		return fmt.Errorf("object storage unavailable")
+		return fmt.Errorf("Хранилище файлов недоступно")
 	}
 	return nil
 }
