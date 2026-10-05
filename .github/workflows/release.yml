@@ -44,12 +44,10 @@ jobs:
           context: apps/api
           push: true
           tags: ${{ steps.images.outputs.prefix }}/api:${{ steps.images.outputs.sha }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          push: true
-          tags: ${{ steps.images.outputs.prefix }}/web:${{ steps.images.outputs.sha }}
+          cache-from: type=gha,scope=fsp-api
+          cache-to: type=gha,scope=fsp-api,mode=max
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+        name: Публикация образа API с кешем
   deploy:
     needs: publish
     if: vars.DEPLOY_ENABLED == 'true'
@@ -93,8 +91,8 @@ jobs:
 
           scp deploy/keycloak/fsp-realm.json "$DEPLOY_USER@$DEPLOY_HOST:fsp/keycloak/"
 
-          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u '$GHCR_USER'
-          --password-stdin"
+          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u
+          '$GHCR_USER' --password-stdin"
 
           ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/fsp && sh deploy-server.sh'
       - name: Cleanup credentials

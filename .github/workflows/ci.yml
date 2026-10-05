@@ -1,8 +1,9 @@
 name: CI
-on:
-  pull_request:
+'on':
+  pull_request: null
   push:
-    branches: [main]
+    branches:
+      - main
 permissions:
   contents: read
 concurrency:
@@ -43,7 +44,27 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
-      - run: docker compose --profile app up -d --build --wait --wait-timeout 360
+      - name: Настройка кеша Docker
+        uses: docker/setup-buildx-action@v3
+      - name: Сборка API с кешем
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          load: true
+          tags: fsp-api:ci
+          cache-from: type=gha,scope=fsp-api
+          cache-to: type=gha,scope=fsp-api,mode=max
+      - name: Сборка фронта с кешем
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          load: true
+          tags: fsp-web:ci
+          cache-from: type=gha,scope=fsp-web
+          cache-to: type=gha,scope=fsp-web,mode=max
+      - name: Запуск тестового окружения
+        run: docker compose --profile app up -d --no-build --wait --wait-timeout 360
       - run: sh scripts/smoke.sh
       - run: sh scripts/keycloak-smoke.sh
       - uses: actions/setup-go@v5
@@ -54,9 +75,11 @@ jobs:
         run: |
           cp apps/api/.env.example apps/api/.env
           make integration
-      - name: Logs on failure
+      - name: Логи при ошибке
         if: failure()
         run: docker compose --profile app logs --tail=100
-      - name: Cleanup
+      - name: Удаление тестового окружения
         if: always()
         run: docker compose --profile app down -v
+    env:
+      COMPOSE_FILE: compose.yaml:compose.ci.yaml

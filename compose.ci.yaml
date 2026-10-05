@@ -1,0 +1,6 @@
+# CI загружает готовые образы из Buildx. Compose повторно их не собирает.
+services:
+  api:
+    image: fsp-api:ci
+  web:
+    image: fsp-web:ci
