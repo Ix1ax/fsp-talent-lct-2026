@@ -10,7 +10,45 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
+  changes:
+    name: Определение изменений
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.files.outputs.backend }}
+      frontend: ${{ steps.files.outputs.frontend }}
+      integration: ${{ steps.files.outputs.integration }}
+    steps:
+      - id: files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 100,
+            });
+            // При переименовании проверяем и старый путь, чтобы удаление кода не прошло незамеченным.
+            const paths = files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean));
+            const global = paths.some(path => path.startsWith('.github/workflows/') || path === 'Makefile');
+            // Для слишком большого PR безопаснее запустить все проверки: API отдаёт максимум 3000 файлов.
+            const all = global || files.length >= 3000;
+            const backend = all || paths.some(path => path.startsWith('apps/api/') || path.startsWith('api/') || path === 'scripts/check-openapi.sh');
+            const frontend = all || paths.some(path => path.startsWith('apps/web/') || ['package.json', 'package-lock.json', '.nvmrc', '.dockerignore'].includes(path));
+            const integration = all || backend || paths.some(path =>
+              path.startsWith('infra/') || path.startsWith('deploy/') || path.startsWith('scripts/') ||
+              path.startsWith('compose.') || path.startsWith('apps/web/next.config.') ||
+              ['.env.example', '.dockerignore', 'package.json', 'package-lock.json', '.nvmrc', 'apps/web/Dockerfile', 'apps/web/package.json'].includes(path));
+            for (const [name, value] of Object.entries({backend, frontend, integration})) {
+              core.setOutput(name, String(value));
+              core.info(`${name}: ${value ? 'запускаем' : 'изменений нет'}`);
+            }
   backend:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -29,6 +67,8 @@ jobs:
       - run: go test -race -coverprofile=coverage.out ./...
       - run: go build ./cmd/...
   frontend:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,9 +77,18 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Кеш сборки Next.js
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
       - run: npm run lint
       - run: npm run build
   integration:
+    needs: changes
+    if: github.event_name == 'pull_request' && needs.changes.outputs.integration == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,10 +134,6 @@ jobs:
       COMPOSE_FILE: compose.yaml:compose.ci.yaml
   deploy:
     name: Деплой бека
-    needs:
-      - backend
-      - frontend
-      - integration
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
