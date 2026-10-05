@@ -35,3 +35,18 @@ func TestPartialOIDC(t *testing.T) {
 		t.Fatal("Приняты неполные настройки OIDC")
 	}
 }
+
+func TestProductionHTTPRequiresExplicitSetting(t *testing.T) {
+	validEnv(t)
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("OIDC_ISSUER", "http://89.104.69.242:8081/realms/fsp")
+	t.Setenv("OIDC_CLIENT_ID", "fsp-api")
+	t.Setenv("OIDC_ALLOW_HTTP", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("HTTP разрешён без явной настройки тестового окружения")
+	}
+	t.Setenv("OIDC_ALLOW_HTTP", "true")
+	if _, err := Load(); err != nil {
+		t.Fatal(err)
+	}
+}
