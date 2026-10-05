@@ -1,13 +1,13 @@
-import { getApiProxyTarget } from '@/shared/config'
+import 'server-only';
 
-export type APIInfo = { name: string; version: string }
+import { publicServerApi } from './server';
 
-export async function getAPIInfo(signal?: AbortSignal): Promise<APIInfo> {
-  const base = getApiProxyTarget()
-  const response = await fetch(`${base}/api/v1/info`, {
-    signal,
-    cache: 'no-store',
-  })
-  if (!response.ok) throw new Error(`API: HTTP ${response.status}`)
-  return response.json() as Promise<APIInfo>
-}
+export type APIInfo = {
+  name: string;
+  version: string;
+};
+
+export const getAPIInfo = async (): Promise<APIInfo> => {
+  const { data } = await publicServerApi.get<APIInfo>('/v1/info');
+  return data;
+};
