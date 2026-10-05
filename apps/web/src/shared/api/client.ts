@@ -1,12 +1,14 @@
 'use client';
 
 import { isAxiosError } from 'axios';
+
 import {
   clearClientAccessToken,
   emitSessionExpired,
   getClientAccessToken,
   setClientAccessToken,
 } from '@/shared/auth';
+
 import { attachErrorInterceptor, createApi } from './base';
 import { ApiError } from './errors';
 

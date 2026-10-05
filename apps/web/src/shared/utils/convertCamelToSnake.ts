@@ -1,5 +1,5 @@
-import { isObject } from './isObject';
 import { camelToSnake } from './camelToSnake';
+import { isObject } from './isObject';
 
 const processPair = ([key, value]: [string, unknown]) => [
   camelToSnake(key),

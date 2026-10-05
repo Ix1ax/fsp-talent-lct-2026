@@ -1,3 +1,10 @@
+export {
+  clearClientAccessToken,
+  emitSessionExpired,
+  getClientAccessToken,
+  onSessionExpired,
+  setClientAccessToken,
+} from './session.client';
 export type { AuthTokens, TokenRefreshResult } from './tokens';
 export {
   ACCESS_TOKEN_COOKIE,
@@ -6,10 +13,3 @@ export {
   REFRESH_TOKEN_COOKIE_PATH,
 } from './tokens';
 export { sanitizeRedirectPath } from '@/shared/utils';
-export {
-  getClientAccessToken,
-  setClientAccessToken,
-  clearClientAccessToken,
-  onSessionExpired,
-  emitSessionExpired,
-} from './session.client';

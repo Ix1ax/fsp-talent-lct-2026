@@ -2,6 +2,7 @@ import 'server-only';
 
 import { getAccessToken } from '@/shared/auth/session.server';
 import { getApiProxyTarget } from '@/shared/config';
+
 import { attachErrorInterceptor, createApi } from './base';
 
 const baseURL = `${getApiProxyTarget()}/api`;

@@ -1,7 +1,9 @@
 import 'server-only';
 
 import { redirect } from 'next/navigation';
+
 import { sanitizeRedirectPath } from '@/shared/utils';
+
 import { getAccessToken } from './session.server';
 
 export const requireAccessToken = async (nextPath: string): Promise<string> => {

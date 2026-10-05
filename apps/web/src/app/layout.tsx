@@ -1,6 +1,8 @@
-import type { Metadata } from 'next';
-import { AuthBootstrap } from './AuthBootstrap';
 import './globals.css';
+
+import type { Metadata } from 'next';
+
+import { AuthBootstrap } from './AuthBootstrap';
 
 export const metadata: Metadata = {
   title: 'ФСП · Основа платформы',

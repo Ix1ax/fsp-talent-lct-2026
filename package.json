@@ -12,6 +12,11 @@
     "build": "npm run build -w apps/web",
     "lint": "npm run lint -w apps/web",
     "typecheck": "npm run typecheck -w apps/web",
-    "test": "npm run test -w apps/web"
+    "test": "npm run test -w apps/web",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0"
   }
 }

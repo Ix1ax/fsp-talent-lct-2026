@@ -1,14 +1,16 @@
 import axios, {
-  isAxiosError,
-  isCancel,
   type AxiosInstance,
   type CreateAxiosDefaults,
+  isAxiosError,
+  isCancel,
 } from 'axios';
+
 import {
   convertCamelToSnake,
   convertSnakeToCamel,
   isObject,
 } from '@/shared/utils';
+
 import { ApiError, toApiError } from './errors';
 
 export const attachErrorInterceptor = (instance: AxiosInstance): void => {

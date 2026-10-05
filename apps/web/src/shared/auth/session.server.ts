@@ -1,12 +1,13 @@
 import 'server-only';
 
 import { cookies } from 'next/headers';
+
 import {
   ACCESS_TOKEN_COOKIE,
   ACCESS_TOKEN_COOKIE_PATH,
+  type AuthTokens,
   REFRESH_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE_PATH,
-  type AuthTokens,
 } from './tokens';
 
 const baseCookie = {

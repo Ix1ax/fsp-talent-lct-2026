@@ -8,6 +8,8 @@
     "start": "next start --hostname 0.0.0.0 --port 3000",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
+    "lint:fix": "eslint . --fix --max-warnings 0",
+    "format": "prettier --write .",
     "test": "vitest run",
     "test:watch": "vitest"
   },
@@ -27,6 +29,7 @@
     "eslint-config-next": "^15.5.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-simple-import-sort": "^14.0.0",
     "prettier": "^3.9.9",
     "typescript": "~5.9.3",
     "vitest": "^3.2.7"
