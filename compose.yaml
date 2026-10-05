@@ -129,7 +129,7 @@ services:
       retries: 30
     mem_limit: 192m
   mailpit:
-    image: axllent/mailpit:v1.27.8
+    image: axllent/mailpit:v1.31.3
     ports:
       - 127.0.0.1:8025:8025
     mem_limit: 64m
