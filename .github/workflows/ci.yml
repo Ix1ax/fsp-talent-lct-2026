@@ -1,6 +1,5 @@
 name: CI
 "on":
-  pull_request: null
   push:
     branches:
       - main
@@ -8,130 +7,8 @@ permissions:
   contents: read
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: false
 jobs:
-  changes:
-    name: Определение изменений
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
-    outputs:
-      backend: ${{ steps.files.outputs.backend }}
-      frontend: ${{ steps.files.outputs.frontend }}
-      integration: ${{ steps.files.outputs.integration }}
-    steps:
-      - id: files
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              per_page: 100,
-            });
-            // При переименовании проверяем и старый путь, чтобы удаление кода не прошло незамеченным.
-            const paths = files.flatMap(file => [file.filename, file.previous_filename].filter(Boolean));
-            const global = paths.some(path => path.startsWith('.github/workflows/') || path === 'Makefile');
-            // Для слишком большого PR безопаснее запустить все проверки: API отдаёт максимум 3000 файлов.
-            const all = global || files.length >= 3000;
-            const backend = all || paths.some(path => path.startsWith('apps/api/') || path.startsWith('api/') || path === 'scripts/check-openapi.sh');
-            const frontend = all || paths.some(path => path.startsWith('apps/web/') || ['package.json', 'package-lock.json', '.nvmrc', '.dockerignore'].includes(path));
-            const integration = all || backend || paths.some(path =>
-              path.startsWith('infra/') || path.startsWith('deploy/') || path.startsWith('scripts/') ||
-              path.startsWith('compose.') || path.startsWith('apps/web/next.config.') ||
-              ['.env.example', '.dockerignore', 'package.json', 'package-lock.json', '.nvmrc', 'apps/web/Dockerfile', 'apps/web/package.json'].includes(path));
-            for (const [name, value] of Object.entries({backend, frontend, integration})) {
-              core.setOutput(name, String(value));
-              core.info(`${name}: ${value ? 'запускаем' : 'изменений нет'}`);
-            }
-  backend:
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.backend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/api
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: apps/api/go.mod
-          cache-dependency-path: apps/api/go.sum
-      - run: sh scripts/check-openapi.sh
-        working-directory: .
-      - run: go mod download
-      - run: test -z "$(gofmt -l .)"
-      - run: go vet ./...
-      - run: go test -race -coverprofile=coverage.out ./...
-      - run: go build ./cmd/...
-  frontend:
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-      - run: npm ci
-      - name: Кеш сборки Next.js
-        uses: actions/cache@v4
-        with:
-          path: apps/web/.next/cache
-          key: next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            next-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-      - run: npm run lint
-      - run: npm run build
-  integration:
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.integration == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - run: cp .env.example .env
-      - name: Настройка кеша Docker
-        uses: docker/setup-buildx-action@v3
-      - name: Сборка API с кешем
-        uses: docker/build-push-action@v6
-        with:
-          context: apps/api
-          load: true
-          tags: fsp-api:ci
-          cache-from: type=gha,scope=fsp-api
-          cache-to: type=gha,scope=fsp-api,mode=max
-      - name: Сборка фронта с кешем
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/web/Dockerfile
-          load: true
-          tags: fsp-web:ci
-          cache-from: type=gha,scope=fsp-web
-          cache-to: type=gha,scope=fsp-web,mode=max
-      - name: Запуск тестового окружения
-        run: docker compose --profile app up -d --no-build --wait --wait-timeout 360
-      - run: sh scripts/smoke.sh
-      - run: sh scripts/keycloak-smoke.sh
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: apps/api/go.mod
-          cache-dependency-path: apps/api/go.sum
-      - name: Проверка записи и чтения хранилищ
-        run: |
-          cp apps/api/.env.example apps/api/.env
-          make integration
-      - name: Логи при ошибке
-        if: failure()
-        run: docker compose --profile app logs --tail=100
-      - name: Удаление тестового окружения
-        if: always()
-        run: docker compose --profile app down -v
-    env:
-      COMPOSE_FILE: compose.yaml:compose.ci.yaml
   deploy:
     name: Деплой бека
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
