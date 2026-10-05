@@ -99,3 +99,10 @@ func registerUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
 		}
 	}
 }
+
+// UserFrom возвращает локальный UUID. Вызывать после currentUser, а не брать sub из JWT.
+func UserFrom(c *gin.Context) (user.User, bool) {
+	v, _ := c.Get(userKey)
+	u, ok := v.(user.User)
+	return u, ok
+}

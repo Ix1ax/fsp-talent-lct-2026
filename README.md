@@ -151,3 +151,68 @@ API-контракт меняем вместе с кодом; копию OpenAPI
 make check        # gofmt, vet, race-тесты, линтер и сборка фронта
 make integration  # чтение и запись Postgres, Redis, S3; нужен apps/api/.env
 ```
+
+### Компании и документы
+
+Сначала пользователь входит через Keycloak, подтверждает почту и регистрируется в API через
+`POST /api/v1/me/register` с `{"role":"employer"}`. Дальше во всех запросах нужен
+`Authorization: Bearer <access_token>`; локальный UUID уже предоставляет middleware.
+
+| Метод | Путь | Доступ |
+| --- | --- | --- |
+| POST | `/api/v1/companies` | Работодатель создаёт компанию и становится `owner` |
+| GET | `/api/v1/companies?limit=20&offset=0` | Только компании пользователя |
+| GET | `/api/v1/companies/{company_id}` | Активный участник |
+| PATCH | `/api/v1/companies/{company_id}` | Только владелец |
+| GET | `/api/v1/companies/{company_id}/files` | Активный участник; та же пагинация |
+| POST | `/api/v1/companies/{company_id}/files` | Только владелец, multipart |
+| GET | `/api/v1/companies/{company_id}/files/{file_id}/download` | Активный участник |
+| DELETE | `/api/v1/companies/{company_id}/files/{file_id}` | Только владелец |
+
+Минимальное тело создания: `{"name":"Компания","contact_email":"hr@example.org"}`.
+Дополнительно: `description`, `inn`, `contact_url`. В PATCH отправляйте только изменяемые поля;
+`null` очищает необязательное поле. ИНН необязателен, проверяется по контрольной сумме и уникален.
+Проверка ИНН не означает верификацию компании: она создаётся со статусом `unverified`.
+Чужая компания или файл возвращают 404, свой профиль без прав владельца — 403.
+Приглашения участников, модерация и вакансии в этот этап не входят.
+
+Загрузка — ровно один `file` и `purpose`: `company_document` или `company_logo`.
+Документы: PDF/JPEG/PNG до 10 МиБ; логотип: JPEG/PNG до 2 МиБ. Изображения — до 4 мегапикселей.
+Тип определяется по содержимому, изображения декодируются для проверки; антивирусного сканирования нет.
+API обрабатывает до двух загрузок одновременно; при занятости вернёт `503 upload_busy` и `Retry-After: 2`.
+Успешная загрузка логотипа автоматически обновляет `logo_file_id`; предыдущий файл остаётся
+в списке, пока владелец его не удалит. Для удаления логотипа используйте DELETE его файла.
+
+```sh
+curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/files" \
+  -H "Authorization: Bearer $TOKEN" \
+  -F 'purpose=company_document' \
+  -F 'file=@./договор.pdf'
+```
+
+В Swagger (`/docs/`) доступны авторизация, создание компании, выбор файла и скачивание.
+Фронту для показа логотипа нужен `fetch(downloadURL, {headers: {Authorization: 'Bearer ' + token}})`:
+из ответа получить `blob()`, затем `URL.createObjectURL(blob)`; при смене/размонтировании картинки
+вызвать `URL.revokeObjectURL`. Токен в URL не передавать. `Content-Disposition` доступен через CORS.
+
+В Postgres лежат `companies`, `company_members`, общая таблица `files` и связь `company_documents`.
+В приватном S3 — только содержимое файлов со случайными ключами. Прямые ссылки и ключи S3 API не выдаёт.
+Используются существующие `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`;
+новые GitHub Secrets не нужны. Бакет должен существовать и запрещать анонимное чтение.
+Миграция `20261006010000_companies_files.sql` применяется после `users`; старые миграции не менялись.
+
+Файл проходит состояния `pending → ready → deleting → deleted`. Скачать можно только `ready`.
+При сбое загрузки API пытается убрать файл; при недоступном S3 или аварийной остановке незавершённая
+запись остаётся видна в списке. Владелец может повторить DELETE для `pending`/`deleting`.
+Автоматического фонового удаления таких записей пока нет. После удаления метаданные сохраняются,
+содержимое S3 удаляется. На уровне компании изменения блокируются транзакцией, чтобы параллельные
+PATCH не затирали друг друга.
+
+Интеграционный тест компаний создаёт временную схему в `TEST_DATABASE_URL`, применяет и откатывает
+новую миграцию, проверяет права и реальные операции S3. Используйте отдельный тестовый бакет:
+
+```sh
+cd apps/api
+# Задайте TEST_DATABASE_URL и TEST_S3_ENDPOINT, TEST_S3_BUCKET, TEST_S3_ACCESS_KEY, TEST_S3_SECRET_KEY.
+go test -race -tags=integration ./internal/httpapi -run TestCompaniesAndPrivateS3
+```

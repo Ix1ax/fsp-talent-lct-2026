@@ -14,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -22,6 +24,7 @@ type Checker interface{ Check(context.Context) error }
 type Options struct {
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
+	Companies               *company.Service
 }
 
 func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Options) *gin.Engine {
@@ -38,7 +41,11 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		id := hex.EncodeToString(b)
 		c.Header("X-Request-ID", id)
 		c.Header("X-Content-Type-Options", "nosniff")
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2<<20)
+		limit := int64(2 << 20)
+		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/companies/:company_id/files" {
+			limit = files.MaxSize + (64 << 10)
+		}
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
 		start := time.Now()
 		c.Next()
 		// Параметры URL и тело запроса могут содержать персональные данные, поэтому их не пишем.
@@ -88,6 +95,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.GET("/info", func(c *gin.Context) { c.JSON(200, gin.H{"name": "fsp-api", "version": "0.1.0"}) })
 	api.GET("/me", auth.Middleware(verifier), currentUser(log, opts.Users), getMe)
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
+	registerCompanies(api, log, verifier, opts)
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})
