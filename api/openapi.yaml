@@ -49,9 +49,9 @@ paths:
                     example: 0.1.0
   /api/v1/me:
     get:
-      operationId: getIdentity
-      summary: Проверенная OIDC-идентичность текущего пользователя
-      description: Требуется JWT access token с audience API и подтверждённым email. Локальная роль пока не возвращается.
+      operationId: getMe
+      summary: Текущий пользователь приложения
+      description: Требуется JWT access token с audience API и подтверждённым email. Если пользователь ещё не выбрал роль, возвращается 404 not_registered, и нужно вызвать POST /api/v1/me/register.
       security:
         - bearerAuth: []
         - keycloakOAuth:
@@ -59,35 +59,74 @@ paths:
             - email
       responses:
         '200':
-          description: Идентичность из токена
+          description: Пользователь и его роль
           content:
             application/json:
               schema:
-                type: object
-                required:
-                  - sub
-                  - email
-                  - email_verified
-                properties:
-                  sub:
-                    type: string
-                  email:
-                    type: string
-                    format: email
-                  email_verified:
-                    type: boolean
+                $ref: '#/components/schemas/CurrentUser'
         '401':
-          description: Нет валидного токена или email не подтверждён
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Учётная запись заблокирована или удалена (user_inactive)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не зарегистрирован (not_registered)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
         '503':
-          description: OIDC не настроен
+          $ref: '#/components/responses/AuthUnavailable'
+  /api/v1/me/register:
+    post:
+      operationId: registerMe
+      summary: Первичная регистрация пользователя с выбором роли
+      description: Вызывается один раз после первого входа через Keycloak. Роль выбирает пользователь; роль admin через API выдать нельзя.
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role
+              properties:
+                role:
+                  type: string
+                  enum:
+                    - candidate
+                    - employer
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUser'
+        '400':
+          description: Некорректное тело запроса (validation_error) или недопустимая роль (invalid_role)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Пользователь уже зарегистрирован (already_registered)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          $ref: '#/components/responses/AuthUnavailable'
   /api/v1/auth/config:
     get:
       operationId: getAuthConfig
@@ -138,6 +177,39 @@ components:
           enum:
             - ok
             - unavailable
+    CurrentUser:
+      type: object
+      required:
+        - id
+        - sub
+        - email
+        - email_verified
+        - role
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+        sub:
+          type: string
+          description: Идентификатор пользователя в Keycloak
+        email:
+          type: string
+          format: email
+        email_verified:
+          type: boolean
+        role:
+          type: string
+          enum:
+            - candidate
+            - employer
+            - admin
+        status:
+          type: string
+          enum:
+            - active
+            - blocked
+            - deleted
     Error:
       type: object
       required:
@@ -156,6 +228,18 @@ components:
               description: Понятное сообщение об ошибке на русском языке
               example: Маршрут не найден
   responses:
+    Unauthorized:
+      description: Нет валидного токена или email не подтверждён (unauthorized)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AuthUnavailable:
+      description: OIDC не настроен (auth_unavailable)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     Healthy:
       description: Сервис доступен
       headers:

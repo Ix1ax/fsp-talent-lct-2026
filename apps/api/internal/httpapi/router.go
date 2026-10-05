@@ -14,11 +14,15 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 type Checker interface{ Check(context.Context) error }
 
-type Options struct{ CORSOrigins, OIDCIssuer string }
+type Options struct {
+	CORSOrigins, OIDCIssuer string
+	Users                   *user.Service
+}
 
 func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Options) *gin.Engine {
 	opts := Options{CORSOrigins: "*"}
@@ -82,7 +86,8 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		c.JSON(200, gin.H{"issuer": opts.OIDCIssuer, "client_id": "fsp-web"})
 	})
 	api.GET("/info", func(c *gin.Context) { c.JSON(200, gin.H{"name": "fsp-api", "version": "0.1.0"}) })
-	api.GET("/me", auth.Middleware(verifier), func(c *gin.Context) { identity, _ := c.Get("identity"); c.JSON(200, identity) })
+	api.GET("/me", auth.Middleware(verifier), currentUser(log, opts.Users), getMe)
+	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})
