@@ -18,20 +18,35 @@ func TestMissingSecret(t *testing.T) {
 	validEnv(t)
 	t.Setenv("S3_SECRET_KEY", "")
 	if _, err := Load(); err == nil {
-		t.Fatal("accepted missing secret")
+		t.Fatal("Настройки приняты без обязательного секрета")
 	}
 }
 func TestProductionRequiresOIDC(t *testing.T) {
 	validEnv(t)
 	t.Setenv("APP_ENV", "production")
 	if _, err := Load(); err == nil {
-		t.Fatal("accepted missing OIDC")
+		t.Fatal("Настройки приняты без обязательного OIDC")
 	}
 }
 func TestPartialOIDC(t *testing.T) {
 	validEnv(t)
 	t.Setenv("OIDC_CLIENT_ID", "api")
 	if _, err := Load(); err == nil {
-		t.Fatal("accepted incomplete OIDC")
+		t.Fatal("Приняты неполные настройки OIDC")
+	}
+}
+
+func TestProductionHTTPRequiresExplicitSetting(t *testing.T) {
+	validEnv(t)
+	t.Setenv("APP_ENV", "production")
+	t.Setenv("OIDC_ISSUER", "http://89.104.69.242:8081/realms/fsp")
+	t.Setenv("OIDC_CLIENT_ID", "fsp-api")
+	t.Setenv("OIDC_ALLOW_HTTP", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("HTTP разрешён без явной настройки тестового окружения")
+	}
+	t.Setenv("OIDC_ALLOW_HTTP", "true")
+	if _, err := Load(); err != nil {
+		t.Fatal(err)
 	}
 }

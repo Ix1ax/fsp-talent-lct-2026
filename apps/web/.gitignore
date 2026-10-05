@@ -1,0 +1,4 @@
+# See https://nextjs.org/docs/app/building-your-application/configuring/eslint
+.next/
+out/
+node_modules/
