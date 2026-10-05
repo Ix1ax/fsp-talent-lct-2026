@@ -1,1 +1,0 @@
-export { snakeToCamel } from './snakeToCamel';

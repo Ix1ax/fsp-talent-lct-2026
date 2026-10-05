@@ -1,5 +1,5 @@
-import { isObject } from '../isObject';
-import { snakeToCamel } from '../snakeToCamel';
+import { isObject } from './isObject';
+import { snakeToCamel } from './snakeToCamel';
 
 const processPair = ([key, value]: [string, unknown]) => [
   snakeToCamel(key),
@@ -22,7 +22,7 @@ export const convertSnakeToCamel = <T>(value: unknown): T => {
   if (Array.isArray(value)) return value.map(convertSnakeToCamel) as T;
 
   if (isObject(value)) {
-    return Object.fromEntries(Object.entries(value).map(processPair));
+    return Object.fromEntries(Object.entries(value).map(processPair)) as T;
   }
 
   return value as T;

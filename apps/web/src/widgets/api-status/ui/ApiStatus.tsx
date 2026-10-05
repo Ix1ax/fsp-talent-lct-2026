@@ -1,11 +1,11 @@
-import { getAPIInfo } from '@/shared/api'
+import { getAPIInfo } from '@/shared/api/info';
 
 export async function ApiStatus() {
-  let status = 'API недоступен. Проверьте запуск бекенда.'
+  let status = 'API недоступен. Проверьте запуск бекенда.';
 
   try {
-    const info = await getAPIInfo()
-    status = `${info.name} · v${info.version} · доступен`
+    const info = await getAPIInfo();
+    status = `${info.name} · v${info.version} · доступен`;
   } catch {
     // keep fallback message
   }
@@ -14,5 +14,5 @@ export async function ApiStatus() {
     <p className="status" role="status">
       {status}
     </p>
-  )
+  );
 }

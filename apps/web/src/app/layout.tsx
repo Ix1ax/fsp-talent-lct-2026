@@ -1,21 +1,24 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from 'next';
+import { AuthBootstrap } from './AuthBootstrap';
+import './globals.css';
 
 export const metadata: Metadata = {
   title: 'ФСП · Основа платформы',
   other: {
     'color-scheme': 'dark',
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        <AuthBootstrap>{children}</AuthBootstrap>
+      </body>
     </html>
-  )
+  );
 }

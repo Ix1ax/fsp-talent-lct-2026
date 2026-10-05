@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { convertSnakeToCamel } from './convertSnakeToCamel';
+import { convertSnakeToCamel } from '../convertSnakeToCamel';
 
 describe('convertSnakeToCamel', () => {
   it('leaves primitives and null unchanged', () => {

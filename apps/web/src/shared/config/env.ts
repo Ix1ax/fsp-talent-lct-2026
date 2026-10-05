@@ -1,3 +1,3 @@
-export function getApiProxyTarget(): string {
-  return process.env.API_PROXY_TARGET ?? 'http://localhost:8080'
-}
+export const getApiProxyTarget = (): string => {
+  return process.env.API_PROXY_TARGET ?? 'http://localhost:8080';
+};
