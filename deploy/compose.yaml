@@ -1,0 +1,84 @@
+name: fsp-production
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fsp
+      POSTGRES_DB: fsp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fsp -d fsp"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?required}
+    command: ["sh", "-c", 'exec redis-server --requirepass "$$REDIS_PASSWORD" --maxmemory 128mb --maxmemory-policy allkeys-lru --save "" --appendonly no']
+    healthcheck:
+      test: ["CMD-SHELL", 'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+  s3:
+    image: chrislusf/seaweedfs:4.37
+    restart: unless-stopped
+    command: ["mini", "-dir=/data"]
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:?required}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?required}
+      S3_BUCKET: ${S3_BUCKET:?required}
+    volumes: ["s3-data:/data"]
+  migrate:
+    image: ${API_IMAGE:?required}
+    entrypoint: ["migrate"]
+    environment:
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD}@postgres:5432/fsp?sslmode=disable
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    image: ${API_IMAGE:?required}
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD}@postgres:5432/fsp?sslmode=disable
+      REDIS_ADDR: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      S3_ENDPOINT: http://s3:8333
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET}
+      OIDC_ISSUER: ${OIDC_ISSUER:?required}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?required}
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+      s3: {condition: service_started}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/readyz"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
+  web:
+    image: ${WEB_IMAGE:?required}
+    restart: unless-stopped
+    depends_on:
+      api: {condition: service_healthy}
+  gateway:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?required}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes: ["./Caddyfile:/etc/caddy/Caddyfile:ro", "caddy-data:/data", "caddy-config:/config"]
+    depends_on: [web]
+volumes:
+  postgres-data:
+  s3-data:
+  caddy-data:
+  caddy-config:

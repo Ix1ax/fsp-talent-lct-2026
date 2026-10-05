@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: ФСП API
+  version: 0.1.0
+  description: Основа API. Продуктовые методы добавляются по мере реализации.
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      operationId: liveness
+      summary: Проверка процесса API
+      responses:
+        '200':
+          $ref: '#/components/responses/Healthy'
+  /readyz:
+    get:
+      operationId: readiness
+      summary: Доступность Postgres, Redis и S3-бакета
+      responses:
+        '200':
+          $ref: '#/components/responses/Healthy'
+        '503':
+          description: Одна из зависимостей недоступна
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+  /api/v1/info:
+    get:
+      operationId: getInfo
+      summary: Информация об API
+      responses:
+        '200':
+          description: Версия сервиса
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, version]
+                properties:
+                  name: {type: string, example: fsp-api}
+                  version: {type: string, example: 0.1.0}
+  /api/v1/me:
+    get:
+      operationId: getIdentity
+      summary: Проверенная OIDC-идентичность текущего пользователя
+      description: Требуется JWT access token с audience API и подтверждённым email. Локальная роль пока не возвращается.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Идентичность из токена
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sub, email, email_verified]
+                properties:
+                  sub: {type: string}
+                  email: {type: string, format: email}
+                  email_verified: {type: boolean}
+        '401':
+          description: Нет валидного токена или email не подтверждён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: OIDC не настроен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Health:
+      type: object
+      required: [status]
+      properties:
+        status: {type: string, enum: [ok, unavailable]}
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string}
+            message: {type: string}
+  responses:
+    Healthy:
+      description: Сервис доступен
+      headers:
+        X-Request-ID:
+          schema: {type: string}
+          description: Идентификатор запроса в логах
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Health'

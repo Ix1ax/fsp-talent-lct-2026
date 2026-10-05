@@ -1,0 +1,17 @@
+# Секреты
+.env
+.env.*
+!.env.example
+!*.env.example
+*.pem
+*.key
+# Результаты сборки
+node_modules/
+dist/
+coverage/
+*.out
+bin/
+.DS_Store
+.idea/
+.tmp/
+*.tsbuildinfo
