@@ -77,10 +77,11 @@ services:
       S3_ACCESS_KEY: ${S3_ACCESS_KEY}
       S3_SECRET_KEY: ${S3_SECRET_KEY}
       S3_BUCKET: ${S3_BUCKET}
-      OIDC_ISSUER: https://${AUTH_DOMAIN}/realms/fsp
+      OIDC_ISSUER: http://${PUBLIC_HOST:?required}:8081/realms/fsp
       OIDC_CLIENT_ID: fsp-api
       OIDC_INTERNAL_URL: http://keycloak:8080/realms/fsp
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-*}
+      OIDC_ALLOW_HTTP: "true"
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -102,24 +103,8 @@ services:
       timeout: 4s
       retries: 30
     mem_limit: 160m
-  gateway:
-    image: caddy:2.10-alpine
-    restart: unless-stopped
-    environment:
-      API_DOMAIN: ${API_DOMAIN:?required}
-      AUTH_DOMAIN: ${AUTH_DOMAIN:?required}
     ports:
-      - "80:80"
-      - "443:443"
-      - 443:443/udp
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on: []
-    mem_limit: 128m
-    extra_hosts:
-      - host.docker.internal:host-gateway
+      - "8080:8080"
   keycloak-db:
     image: postgres:17-alpine
     environment:
@@ -158,12 +143,12 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?required}
       KC_HTTP_ENABLED: "true"
       KC_HEALTH_ENABLED: "true"
-      KC_HOSTNAME: https://${AUTH_DOMAIN:?required}
+      KC_HOSTNAME: http://${PUBLIC_HOST:?required}:8081
       JAVA_OPTS_KC_HEAP: "-Xms128m -Xmx384m"
-      API_PUBLIC_URL: https://${API_DOMAIN:?required}
+      API_PUBLIC_URL: http://${PUBLIC_HOST:?required}:8080
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-http://localhost:5173}
-      KC_PROXY_HEADERS: xforwarded
-    ports: []
+    ports:
+      - "8081:8080"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
     depends_on:
@@ -184,6 +169,4 @@ services:
 volumes:
   postgres-data: null
   s3-data: null
-  caddy-data: null
-  caddy-config: null
   keycloak-data: null

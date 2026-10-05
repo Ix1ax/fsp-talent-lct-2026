@@ -9,7 +9,7 @@
   "verifyEmail": true,
   "resetPasswordAllowed": true,
   "rememberMe": false,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "bruteForceProtected": true,
   "accessTokenLifespan": 300,
   "smtpServer": {

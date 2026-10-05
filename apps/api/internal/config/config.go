@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	OIDCAllowHTTP                                            bool
 	Env, Addr, DatabaseURL, RedisAddr, RedisPassword         string
 	S3Endpoint, S3Region, S3AccessKey, S3SecretKey, S3Bucket string
 	OIDCIssuer, OIDCClientID, OIDCInternalURL, CORSOrigins   string
@@ -14,6 +15,7 @@ type Config struct {
 
 func Load() (Config, error) {
 	c := Config{
+		OIDCAllowHTTP:   os.Getenv("OIDC_ALLOW_HTTP") == "true",
 		Env:             value("APP_ENV", "development"),
 		Addr:            value("HTTP_ADDR", ":8080"),
 		DatabaseURL:     os.Getenv("DATABASE_URL"),
@@ -51,8 +53,8 @@ func Load() (Config, error) {
 		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
 			return c, fmt.Errorf("Некорректный URL в %s", name)
 		}
-		if name == "OIDC_ISSUER" && c.Env == "production" && u.Scheme != "https" {
-			return c, fmt.Errorf("В рабочем окружении OIDC должен использовать HTTPS")
+		if name == "OIDC_ISSUER" && c.Env == "production" && u.Scheme != "https" && !c.OIDCAllowHTTP {
+			return c, fmt.Errorf("Для OIDC по HTTP на тестовом сервере укажите OIDC_ALLOW_HTTP=true")
 		}
 	}
 	return c, nil

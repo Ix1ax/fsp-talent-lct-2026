@@ -1,14 +1,11 @@
 #!/bin/sh
-# Запускается на сервере из директории релиза после docker login и загрузки файлов.
+# Запускается на сервере после загрузки конфигурации и входа в GHCR.
 set -eu
 umask 077
 chmod 600 .env
-docker compose pull
-docker compose up -d postgres redis s3 keycloak-db mailpit keycloak gateway
-docker compose run --rm migrate
-docker compose up -d --wait --wait-timeout 360
-# Проверяем backend внутри сети, а затем HTTPS-сайт снаружи.
-docker compose exec -T api wget -q -O /dev/null http://127.0.0.1:8080/readyz
-API_DOMAIN=$(sed -n 's/^API_DOMAIN=//p' .env)
-curl --fail --silent --show-error --retry 12 --retry-delay 5 --retry-all-errors "https://$API_DOMAIN/readyz"
-curl --fail --silent --show-error "https://$API_DOMAIN/docs/" > /dev/null
+# Миграции запускает Compose перед API. Уже работающие хранилища не пересоздаются без изменений.
+docker compose pull api
+docker compose up -d --remove-orphans --wait --wait-timeout 360
+curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors http://127.0.0.1:8080/readyz
+curl --fail --silent --show-error http://127.0.0.1:8080/docs/ > /dev/null
+printf '\nБек запущен и доступен на порту 8080\n'
