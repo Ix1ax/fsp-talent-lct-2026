@@ -11,7 +11,7 @@
     "lint:fix": "eslint . --fix --max-warnings 0",
     "format": "prettier --write .",
     "ui:rename": "node scripts/rename-shadcn-ui.mjs",
-    "prepare": "cd ../.. && node apps/web/node_modules/husky/bin.js apps/web/.husky",
+    "prepare": "cd ../.. && node apps/web/node_modules/husky/bin.js apps/web/.husky || node node_modules/husky/bin.js apps/web/.husky",
     "test": "vitest run",
     "test:watch": "vitest"
   },

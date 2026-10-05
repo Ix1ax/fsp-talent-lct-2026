@@ -1,4 +1,4 @@
-// Package auth проверяет OIDC-токены. Права на конкретные записи проверяются в доменных сервисах.
+// Пакет auth проверяет OIDC-токены. Права на конкретные записи проверяются в доменных сервисах.
 package auth
 
 import (
@@ -21,7 +21,7 @@ type Verifier interface {
 func Middleware(v Verifier) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if v == nil {
-			c.AbortWithStatusJSON(503, gin.H{"error": gin.H{"code": "auth_unavailable", "message": "Identity provider is not configured"}})
+			c.AbortWithStatusJSON(503, gin.H{"error": gin.H{"code": "auth_unavailable", "message": "Сервис авторизации не настроен"}})
 			return
 		}
 		parts := strings.Fields(c.GetHeader("Authorization"))
@@ -44,5 +44,5 @@ func Middleware(v Verifier) gin.HandlerFunc {
 	}
 }
 func unauthorized(c *gin.Context) {
-	c.AbortWithStatusJSON(401, gin.H{"error": gin.H{"code": "unauthorized", "message": "A valid token with verified email is required"}})
+	c.AbortWithStatusJSON(401, gin.H{"error": gin.H{"code": "unauthorized", "message": "Нужен действующий токен с подтверждённым адресом электронной почты"}})
 }

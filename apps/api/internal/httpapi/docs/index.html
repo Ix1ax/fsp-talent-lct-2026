@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ФСП API · Swagger</title><link rel="stylesheet" href="/docs/assets/swagger-ui.css"></head>
+<body style="margin:0"><div id="swagger-ui"></div><script src="/docs/assets/swagger-ui-bundle.js"></script><script src="/docs/assets/swagger-ui-standalone-preset.js"></script>
+<script>
+const ui = SwaggerUIBundle({url:'/openapi.yaml',dom_id:'#swagger-ui',deepLinking:true,presets:[SwaggerUIBundle.presets.apis,SwaggerUIStandalonePreset],layout:'StandaloneLayout',oauth2RedirectUrl:location.origin+'/docs/oauth2-redirect.html',persistAuthorization:false});
+ui.initOAuth({clientId:'fsp-swagger',appName:'ФСП Swagger',usePkceWithAuthorizationCodeGrant:true,scopes:'openid profile email'});
+</script></body></html>

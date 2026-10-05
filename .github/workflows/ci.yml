@@ -1,13 +1,14 @@
 name: CI
-on:
-  pull_request:
+"on":
+  pull_request: null
   push:
-    branches: [main]
+    branches:
+      - main
 permissions:
   contents: read
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   backend:
     runs-on: ubuntu-latest
@@ -20,6 +21,8 @@ jobs:
         with:
           go-version-file: apps/api/go.mod
           cache-dependency-path: apps/api/go.sum
+      - run: sh scripts/check-openapi.sh
+        working-directory: .
       - run: go mod download
       - run: test -z "$(gofmt -l .)"
       - run: go vet ./...
@@ -41,8 +44,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: cp .env.example .env
-      - run: docker compose --profile app up -d --build --wait --wait-timeout 240
+      - name: Настройка кеша Docker
+        uses: docker/setup-buildx-action@v3
+      - name: Сборка API с кешем
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          load: true
+          tags: fsp-api:ci
+          cache-from: type=gha,scope=fsp-api
+          cache-to: type=gha,scope=fsp-api,mode=max
+      - name: Сборка фронта с кешем
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/web/Dockerfile
+          load: true
+          tags: fsp-web:ci
+          cache-from: type=gha,scope=fsp-web
+          cache-to: type=gha,scope=fsp-web,mode=max
+      - name: Запуск тестового окружения
+        run: docker compose --profile app up -d --no-build --wait --wait-timeout 360
       - run: sh scripts/smoke.sh
+      - run: sh scripts/keycloak-smoke.sh
       - uses: actions/setup-go@v5
         with:
           go-version-file: apps/api/go.mod
@@ -51,9 +75,112 @@ jobs:
         run: |
           cp apps/api/.env.example apps/api/.env
           make integration
-      - name: Logs on failure
+      - name: Логи при ошибке
         if: failure()
         run: docker compose --profile app logs --tail=100
-      - name: Cleanup
+      - name: Удаление тестового окружения
         if: always()
         run: docker compose --profile app down -v
+    env:
+      COMPOSE_FILE: compose.yaml:compose.ci.yaml
+  deploy:
+    name: Деплой бека
+    needs:
+      - backend
+      - frontend
+      - integration
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+    concurrency:
+      group: production-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Проверка секретов деплоя
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+        run: |-
+          python3 - <<'PY'
+          import os, sys
+          names = ["DEPLOY_HOST", "DEPLOY_USER", "DEPLOY_SSH_KEY", "DEPLOY_KNOWN_HOSTS", "PRODUCTION_ENV"]
+          missing = [name for name in names if not os.environ.get(name, "").strip()]
+          if missing:
+              sys.exit("Не заполнены GitHub Secrets environment production: " + ", ".join(missing))
+          PY
+      - id: images
+        env:
+          REPOSITORY: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          echo "prefix=ghcr.io/${REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: apps/api
+          push: true
+          tags: ${{ steps.images.outputs.prefix }}/api:${{ steps.images.outputs.sha }}
+          cache-from: type=gha,scope=fsp-api
+          cache-to: type=gha,scope=fsp-api,mode=max
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+        name: Публикация образа API с кешем
+      - name: Настройка SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/*
+      - name: Подготовка релиза
+        env:
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+          IMAGE_PREFIX: ${{ steps.images.outputs.prefix }}
+          SHA: ${{ github.sha }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |-
+          umask 077
+          printf '%s\n' "$PRODUCTION_ENV" > deploy/.env
+          printf 'API_IMAGE=%s/api:%s\n' "$IMAGE_PREFIX" "$SHA" >> deploy/.env
+          if ! grep -q '^PUBLIC_HOST=' deploy/.env; then
+            printf 'PUBLIC_HOST=%s\n' "$DEPLOY_HOST" >> deploy/.env
+          fi
+          mkdir -p deploy/keycloak
+          cp infra/keycloak/fsp-realm.json deploy/keycloak/fsp-realm.json
+          cp scripts/deploy-server.sh deploy/deploy-server.sh
+      - name: Деплой бека
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: >-
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p ~/fsp/keycloak && chmod 700 ~/fsp'
+
+          scp deploy/compose.yaml deploy/.env deploy/deploy-server.sh "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
+
+          scp deploy/keycloak/fsp-realm.json "$DEPLOY_USER@$DEPLOY_HOST:fsp/keycloak/"
+
+          printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u
+          '$GHCR_USER' --password-stdin"
+
+          ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'cd ~/fsp && sh deploy-server.sh'
+      - name: Удаление временных секретов
+        if: always()
+        run: rm -f deploy/.env ~/.ssh/id_ed25519 ~/.ssh/known_hosts
