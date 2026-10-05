@@ -8,6 +8,7 @@
 # Результаты сборки
 node_modules/
 dist/
+.next/
 coverage/
 *.out
 bin/

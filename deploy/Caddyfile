@@ -1,4 +1,4 @@
 {$DOMAIN} {
   encode zstd gzip
-  reverse_proxy web:80
+  reverse_proxy web:3000
 }

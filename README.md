@@ -1,6 +1,6 @@
 # ФСП · ЛЦТ 2026
 
-Монорепозиторий: Go/Gin API, React/Vite/TypeScript, PostgreSQL, Redis и S3. Сейчас здесь инфраструктурная основа, а не готовый продукт хакатона.
+Монорепозиторий: Go/Gin API, Next.js (App Router) + FSD/TypeScript, PostgreSQL, Redis и S3. Сейчас здесь инфраструктурная основа, а не готовый продукт хакатона.
 
 ## Быстрый запуск
 
@@ -23,18 +23,18 @@ make setup
 make infra
 make migrate
 make api     # первый терминал
-make web     # второй терминал, http://localhost:5173
+make web     # второй терминал, http://localhost:3000
 ```
 
 Если меняете пароли в корневом `.env`, обновите `apps/api/.env` для запуска Go на хосте. `make setup` существующие файлы не перезаписывает. Если перед этим запущен полный стек, выполните `make down`, чтобы освободить порты.
 
-Vite проксирует `/api`, `/healthz` и `/readyz` в Go. В контейнерах это делает Nginx. Фронт всегда использует относительные URL: нет отдельных сборок под каждый домен и не нужен CORS для штатного запуска. Секретов в `VITE_*` быть не должно: эти переменные попадают в браузер.
+Next.js проксирует `/api`, `/healthz` и `/readyz` в Go через `rewrites` (`API_PROXY_TARGET`). В контейнерах тот же механизм: Next.js ходит во внутренний сервис `api`. Фронт в браузере использует относительные URL: нет отдельных сборок под каждый домен и не нужен CORS для штатного запуска. Секретов в `NEXT_PUBLIC_*` быть не должно: эти переменные попадают в браузер.
 
 ## Структура
 
 ```text
 apps/api/              Go-модуль, Dockerfile, cmd, internal, миграции
-apps/web/              React/Vite, Dockerfile, Nginx
+apps/web/              Next.js App Router + FSD, Dockerfile (standalone)
 api/openapi.yaml       контракт с фронтендом
 compose.yaml           локальное окружение
 deploy/               серверное окружение и HTTPS (Caddy)
@@ -59,7 +59,7 @@ docs/                 архитектура, разработка, деплой
 ## Проверки
 
 ```sh
-make check   # gofmt, vet, race-тесты, ESLint, TypeScript, Vite build
+make check   # gofmt, vet, race-тесты, ESLint, TypeScript, Next.js build
 make smoke   # проверка уже запущенного контейнерного стека
 make integration # запись/чтение Postgres, Redis и S3; нужен apps/api/.env
 ```

@@ -40,7 +40,7 @@ migrations               SQL, встроенный в бинарник migrate
 
 ## OIDC и файлы
 
-В ТЗ Keycloak указан как ориентир. Здесь готова серверная проверка OIDC JWT, но сам провайдер и экран входа пока не развёрнуты. Для Keycloak настройте audience `fsp-api`, claim `email_verified`, обязательное подтверждение почты и отдельный публичный SPA-клиент с Authorization Code + PKCE. Не передавайте ID token вместо access token; access token должен содержать ожидаемые claims и audience.
+В ТЗ Keycloak указан как ориентир. Здесь готова серверная проверка OIDC JWT, но сам провайдер и экран входа пока не развёрнуты. Для Keycloak настройте audience `fsp-api`, claim `email_verified`, обязательное подтверждение почты и отдельный публичный клиент с Authorization Code + PKCE. Не передавайте ID token вместо access token; access token должен содержать ожидаемые claims и audience.
 
 Для нового issuer локальная учётка определяется парой `(issuer, subject)`. Связь аккаунта с ФСП ID должна требовать подтверждения владения, а не простого ввода чужого ID.
 
@@ -49,5 +49,7 @@ S3 не опубликован наружу в production. В следующих
 ## Монорепа
 
 В корне один npm workspace. Go остаётся самостоятельным модулем в `apps/api`; `go.work` пока не нужен, потому что Go-модуль один. Общий контракт — `api/openapi.yaml`. Добавлять `packages/*` и генерацию клиента имеет смысл, когда появятся общие библиотеки и продуктовые методы.
+
+Фронтенд — Next.js App Router со слоями Feature-Sliced Design в `apps/web/src`. Прокси к API — `rewrites` на `API_PROXY_TARGET` (локально `http://localhost:8080`, в Compose — `http://api:8080`). Образ web собирается в standalone-режиме Node, без Nginx.
 
 CI проверяет обе части и их совместный запуск. Docker-контекст API ограничен его директорией; фронтенд собирается из корня, чтобы видеть workspace lock-файл. Образы версионируются SHA коммита и деплоятся вместе.
