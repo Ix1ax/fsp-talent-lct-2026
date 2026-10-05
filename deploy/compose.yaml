@@ -125,8 +125,14 @@ services:
   mailpit:
     image: axllent/mailpit:v1.27.8
     restart: unless-stopped
+    environment:
+      MP_DATABASE: /data/mailpit.db
+      MP_UI_AUTH: ${MAILPIT_UI_AUTH:-}
     ports:
-      - 127.0.0.1:8025:8025
+      # Тестовая почта доступна команде без SSH-туннеля.
+      - "8025:8025"
+    volumes:
+      - mailpit-data:/data
     mem_limit: 64m
   keycloak:
     image: quay.io/keycloak/keycloak:26.8.0
@@ -167,6 +173,7 @@ services:
     restart: unless-stopped
     mem_limit: 768m
 volumes:
+  mailpit-data:
   postgres-data:
   s3-data:
   keycloak-data:
