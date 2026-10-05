@@ -105,29 +105,6 @@ services:
     mem_limit: 160m
     ports:
       - "8080:8080"
-  web:
-    image: ${WEB_IMAGE:?required}
-    restart: unless-stopped
-    environment:
-      API_PROXY_TARGET: http://api:8080
-    depends_on:
-      api:
-        condition: service_healthy
-  gateway:
-    image: caddy:2.10-alpine
-    restart: unless-stopped
-    environment:
-      DOMAIN: ${DOMAIN:?required}
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
-    depends_on:
-      - web
   keycloak-db:
     image: postgres:17-alpine
     environment:
@@ -193,5 +170,3 @@ volumes:
   postgres-data:
   s3-data:
   keycloak-data:
-  caddy-data:
-  caddy-config:
