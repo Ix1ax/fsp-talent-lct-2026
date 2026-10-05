@@ -5,7 +5,7 @@ COPY apps/web/package.json apps/web/package.json
 RUN npm ci
 COPY apps/web apps/web
 RUN npm run build
-FROM nginx:1.28-alpine
+FROM nginx:1.31-alpine
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/apps/web/dist /usr/share/nginx/html
 EXPOSE 80
