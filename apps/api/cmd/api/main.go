@@ -16,6 +16,7 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/platform"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 func main() {
@@ -50,7 +51,7 @@ func run(log *slog.Logger) error {
 	}
 	srv := &http.Server{
 		Addr:              c.Addr,
-		Handler:           httpapi.New(log, deps, verifier, httpapi.Options{CORSOrigins: c.CORSOrigins, OIDCIssuer: c.OIDCIssuer}),
+		Handler:           httpapi.New(log, deps, verifier, httpapi.Options{CORSOrigins: c.CORSOrigins, OIDCIssuer: c.OIDCIssuer, Users: user.NewService(user.NewRepository(deps.DB))}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,

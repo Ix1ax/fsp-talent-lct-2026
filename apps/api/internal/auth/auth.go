@@ -13,6 +13,8 @@ type Claims struct {
 	Subject       string `json:"sub"`
 	Email         string `json:"email"`
 	EmailVerified bool   `json:"email_verified"`
+	// Issuer берём из проверенного токена; вместе с Subject он однозначно определяет аккаунт.
+	Issuer string `json:"-"`
 }
 type Verifier interface {
 	Verify(context.Context, string) (*oidc.IDToken, error)
@@ -39,10 +41,18 @@ func Middleware(v Verifier) gin.HandlerFunc {
 			unauthorized(c)
 			return
 		}
+		claims.Issuer = token.Issuer
 		c.Set("identity", claims)
 		c.Next()
 	}
 }
 func unauthorized(c *gin.Context) {
 	c.AbortWithStatusJSON(401, gin.H{"error": gin.H{"code": "unauthorized", "message": "Нужен действующий токен с подтверждённым адресом электронной почты"}})
+}
+
+// IdentityFrom возвращает идентичность, которую положил Middleware.
+func IdentityFrom(c *gin.Context) (Claims, bool) {
+	v, ok := c.Get("identity")
+	claims, isClaims := v.(Claims)
+	return claims, ok && isClaims
 }

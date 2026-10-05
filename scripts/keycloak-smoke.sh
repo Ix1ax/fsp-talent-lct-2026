@@ -31,15 +31,22 @@ if claims.get("email_verified") is not True:
     sys.exit("Почта локального тестового пользователя не подтверждена")
 print(token)
 ')
-identity=$(printf '%s' "$token" | python3 -c 'import sys; print("header = \"Authorization: Bearer " + sys.stdin.read() + "\"")' | \
-  curl --fail --silent --show-error --config - http://localhost:8080/api/v1/me) || {
+auth_header() { printf 'header = "Authorization: Bearer %s"\n' "$token"; }
+# Первый вход: выбираем роль. Повторный запуск возвращает 409, это нормально.
+status=$(auth_header | curl --silent --show-error --output /dev/null --write-out '%{http_code}' --config - \
+  --header 'Content-Type: application/json' --data '{"role":"candidate"}' http://localhost:8080/api/v1/me/register)
+if [ "$status" != 201 ] && [ "$status" != 409 ]; then
+  echo "API не зарегистрировал тестового пользователя, статус $status" >&2
+  exit 1
+fi
+identity=$(auth_header | curl --fail --silent --show-error --config - http://localhost:8080/api/v1/me) || {
   echo 'API отклонил тестовый токен: проверьте issuer, подпись и доступность JWKS' >&2
   exit 1
 }
 printf '%s' "$identity" | python3 -c '
 import json, sys
 identity = json.load(sys.stdin)
-if not identity.get("sub") or identity.get("email") != "dev@example.test" or identity.get("email_verified") is not True:
+if not identity.get("sub") or identity.get("email") != "dev@example.test" or identity.get("email_verified") is not True or identity.get("role") != "candidate" or identity.get("status") != "active" or not identity.get("id"):
     sys.exit("API вернул неверные данные локального тестового пользователя")
 '
 printf 'Проверка Keycloak → JWT → API пройдена\n'
