@@ -24,7 +24,8 @@ func TestRepository(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer db.Close()
+	// Cleanup выполняется в обратном порядке: сначала удаление данных, потом закрытие пула.
+	t.Cleanup(db.Close)
 	repo := NewRepository(db)
 	issuer := "https://integration.test/realms/" + fmt.Sprint(time.Now().UnixNano())
 	t.Cleanup(func() {
