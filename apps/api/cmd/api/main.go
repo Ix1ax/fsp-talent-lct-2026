@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
@@ -22,7 +21,7 @@ import (
 func main() {
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(log); err != nil {
-		log.Error("api stopped", "error", err)
+		log.Error("API остановлен из-за ошибки", "error", err)
 		os.Exit(1)
 	}
 }
@@ -43,15 +42,15 @@ func run(log *slog.Logger) error {
 	defer deps.Close()
 	var verifier auth.Verifier
 	if c.OIDCIssuer != "" {
-		provider, err := oidc.NewProvider(startup, c.OIDCIssuer)
+		configured, err := auth.NewVerifier(startup, c.OIDCIssuer, c.OIDCClientID, c.OIDCInternalURL)
 		if err != nil {
-			return errors.New("OIDC discovery failed")
+			return errors.New("Не удалось получить настройки сервиса авторизации")
 		}
-		verifier = provider.Verifier(&oidc.Config{ClientID: c.OIDCClientID})
+		verifier = configured
 	}
 	srv := &http.Server{
 		Addr:              c.Addr,
-		Handler:           httpapi.New(log, deps, verifier),
+		Handler:           httpapi.New(log, deps, verifier, httpapi.Options{CORSOrigins: c.CORSOrigins, OIDCIssuer: c.OIDCIssuer}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
 		WriteTimeout:      15 * time.Second,
@@ -59,7 +58,10 @@ func run(log *slog.Logger) error {
 		MaxHeaderBytes:    1 << 20,
 	}
 	failed := make(chan error, 1)
-	go func() { log.Info("api listening", "address", c.Addr); failed <- srv.ListenAndServe() }()
+	go func() {
+		log.Info("API принимает запросы", "address", c.Addr)
+		failed <- srv.ListenAndServe()
+	}()
 	select {
 	case err := <-failed:
 		if !errors.Is(err, http.ErrServerClosed) {

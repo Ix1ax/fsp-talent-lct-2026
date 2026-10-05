@@ -30,10 +30,10 @@ func TestRoutes(t *testing.T) {
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest("GET", tc.path, nil))
 			if w.Code != tc.status {
-				t.Fatalf("got %d: %s", w.Code, w.Body)
+				t.Fatalf("Получен статус %d: %s", w.Code, w.Body)
 			}
 			if w.Header().Get("X-Request-ID") == "" {
-				t.Fatal("missing request ID")
+				t.Fatal("Нет идентификатора запроса")
 			}
 		})
 	}

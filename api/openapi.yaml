@@ -37,10 +37,16 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [name, version]
+                required:
+                  - name
+                  - version
                 properties:
-                  name: {type: string, example: fsp-api}
-                  version: {type: string, example: 0.1.0}
+                  name:
+                    type: string
+                    example: fsp-api
+                  version:
+                    type: string
+                    example: 0.1.0
   /api/v1/me:
     get:
       operationId: getIdentity
@@ -48,6 +54,9 @@ paths:
       description: Требуется JWT access token с audience API и подтверждённым email. Локальная роль пока не возвращается.
       security:
         - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
       responses:
         '200':
           description: Идентичность из токена
@@ -55,11 +64,18 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [sub, email, email_verified]
+                required:
+                  - sub
+                  - email
+                  - email_verified
                 properties:
-                  sub: {type: string}
-                  email: {type: string, format: email}
-                  email_verified: {type: boolean}
+                  sub:
+                    type: string
+                  email:
+                    type: string
+                    format: email
+                  email_verified:
+                    type: boolean
         '401':
           description: Нет валидного токена или email не подтверждён
           content:
@@ -72,34 +88,80 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/auth/config:
+    get:
+      operationId: getAuthConfig
+      summary: Публичная конфигурация входа через Keycloak
+      responses:
+        '200':
+          description: Настройки SPA
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - issuer
+                  - client_id
+                properties:
+                  issuer:
+                    type: string
+                    format: uri
+                  client_id:
+                    type: string
+                    example: fsp-web
+        '503':
+          description: Авторизация не настроена
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    keycloakOAuth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: __OIDC_ISSUER__/protocol/openid-connect/auth
+          tokenUrl: __OIDC_ISSUER__/protocol/openid-connect/token
+          scopes:
+            openid: OIDC-идентичность
+            profile: Профиль
+            email: Подтверждённый email
   schemas:
     Health:
       type: object
-      required: [status]
+      required:
+        - status
       properties:
-        status: {type: string, enum: [ok, unavailable]}
+        status:
+          type: string
+          enum:
+            - ok
+            - unavailable
     Error:
       type: object
-      required: [error]
+      required:
+        - error
       properties:
         error:
           type: object
-          required: [code, message]
+          required:
+            - code
+            - message
           properties:
-            code: {type: string}
-            message: {type: string}
+            code:
+              type: string
+            message:
+              type: string
+              description: Понятное сообщение об ошибке на русском языке
+              example: Маршрут не найден
   responses:
     Healthy:
       description: Сервис доступен
       headers:
         X-Request-ID:
-          schema: {type: string}
+          schema:
+            type: string
           description: Идентификатор запроса в логах
       content:
         application/json:
