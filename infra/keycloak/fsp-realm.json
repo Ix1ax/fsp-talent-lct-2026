@@ -45,6 +45,7 @@
         "post.logout.redirect.uris": "+"
       },
       "defaultClientScopes": [
+        "basic",
         "web-origins",
         "profile",
         "email"
@@ -85,6 +86,7 @@
         "pkce.code.challenge.method": "S256"
       },
       "defaultClientScopes": [
+        "basic",
         "web-origins",
         "profile",
         "email"
