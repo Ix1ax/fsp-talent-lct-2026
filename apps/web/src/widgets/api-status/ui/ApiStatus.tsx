@@ -11,7 +11,10 @@ export async function ApiStatus() {
   }
 
   return (
-    <p className="status" role="status">
+    <p
+      className="inline-block rounded-md border border-border px-3.5 py-2 font-mono text-[13px] text-foreground"
+      role="status"
+    >
       {status}
     </p>
   );

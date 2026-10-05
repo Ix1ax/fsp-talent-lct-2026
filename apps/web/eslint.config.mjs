@@ -25,7 +25,7 @@ const eslintConfig = [
         'error',
         {
           groups: [
-            ['^\\u0000'],
+            ['^\\u0000(?!.*\\.(css|scss|sass|less)$)'],
             ['^node:'],
             ['^react', '^next', '^@?\\w'],
             [
@@ -37,6 +37,10 @@ const eslintConfig = [
             ],
             ['^@/'],
             ['^\\.'],
+            [
+              '^\\u0000.*\\.(css|scss|sass|less)$',
+              '^.+\\.(css|scss|sass|less)$',
+            ],
           ],
         },
       ],
