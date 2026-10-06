@@ -83,6 +83,7 @@ func TestCandidateAvatarService(t *testing.T) {
 			t.Fatal(err)
 		}
 		if withProfile {
+			grantConsentRows(t, db, id, "processing")
 			if _, err := profiles.Create(ctx, id, entity.ProfileInput{}); err != nil {
 				t.Fatal(err)
 			}
@@ -218,6 +219,7 @@ func TestCandidateRepositoryDiscardFile(t *testing.T) {
 	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {
 		t.Fatal(err)
 	}
+	grantConsentRows(t, db, user, "processing")
 	if _, err := profiles.Create(ctx, user, entity.ProfileInput{}); err != nil {
 		t.Fatal(err)
 	}
@@ -266,6 +268,7 @@ func TestCandidateAvatarDeleteWhenStorageFails(t *testing.T) {
 	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {
 		t.Fatal(err)
 	}
+	grantConsentRows(t, db, user, "processing")
 	if _, err := profiles.Create(ctx, user, entity.ProfileInput{}); err != nil {
 		t.Fatal(err)
 	}

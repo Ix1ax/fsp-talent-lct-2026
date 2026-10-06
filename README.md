@@ -382,7 +382,7 @@ go test -race -tags=integration ./internal/httpapi -run 'TestCompanyMembers|Test
 Пользователь входит через Keycloak, подтверждает почту и регистрируется в API через
 `POST /api/v1/me/register` с `{"role":"candidate"}`. Дальше во всех запросах нужен
 `Authorization: Bearer <access_token>`. Методы доступны только роли `candidate`: работодатель получит 403.
-Профиль создаётся явным запросом кандидата, у одного пользователя он один.
+Профиль создаётся явным запросом кандидата, у одного пользователя он один. Для создания профиля нужно согласие `processing`, для публичного статуса ещё и `publication`: см. раздел «Согласия и контакты кандидата».
 
 | Метод | Путь | Что делает |
 | --- | --- | --- |
@@ -441,6 +441,74 @@ curl --fail-with-body -X PUT "$API_URL/api/v1/me/profile/avatar" \
 ```sh
 cd apps/api
 go test -race -tags=integration ./internal/httpapi -run 'TestCandidate'
+```
+
+### Согласия и контакты кандидата
+
+Персональные данные кандидата обрабатываются только с его согласием (152-ФЗ). Порядок для фронта:
+
+1. Вход через Keycloak и регистрация `POST /api/v1/me/register` с `{"role":"candidate"}`.
+2. `GET /api/v1/me/consents`: взять `current_policy_version`, показать кандидату текст политики этой версии.
+3. `POST /api/v1/me/consents` с `{"kind":"processing","policy_version":"<текущая версия>"}`. Без этого нельзя создать профиль и сохранить контакты (409 `consent_required`).
+4. Для публикации профиля (`search_status` `open` или `passive`) дополнительно `{"kind":"publication",...}`. Пока его нет, профиль остаётся скрытым и не попадает в банк кандидатов.
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| GET | `/api/v1/me/consents` | История согласий (новые первыми, активное имеет `revoked_at: null`) и `current_policy_version` |
+| POST | `/api/v1/me/consents` | Дать согласие: `kind`, `policy_version`, `company_id` (только для `ats_transfer`) |
+| DELETE | `/api/v1/me/consents/{kind}` | Отозвать активное согласие (для `ats_transfer` с `?company_id=`), 204 |
+| PUT | `/api/v1/me/contacts` | Сохранить свои контакты целиком |
+| GET | `/api/v1/me/contacts` | Получить свои контакты |
+| GET | `/api/v1/companies/{company_id}/offers/{offer_id}/candidate-contacts` | Для работодателя: контакты кандидата по принятому предложению |
+
+Виды согласий: `processing` (обработка персональных данных), `publication` (публикация профиля), `ats_transfer`
+(передача в ATS конкретной компании, нужен `company_id`; пока только хранится). Повторная выдача после отзыва создаёт
+новую запись, история сохраняется. Версия политики хранится на сервере (`PRIVACY_POLICY_VERSION`); если фронт передаст
+устаревшую, придёт 409 `policy_outdated`: нужно обновить текст и подтвердить заново.
+
+**Отзыв.** Отзыв `processing` отзывает все активные согласия, переводит профиль в `hidden` и закрывает контакты
+(кандидат получает 409 `consent_required`, работодатель 409 `contacts_unavailable`). Данные не удаляются.
+Отзыв `publication` только скрывает профиль. Повторная выдача согласия статус профиля не восстанавливает:
+кандидат сам возвращает `open` или `passive` через `PATCH /api/v1/me/profile`.
+
+**Контакты.** Поля: `full_name` и `email` обязательны, `phone` (5-20 символов: цифры, `+`, пробелы, скобки, дефис) и
+`telegram` (5-32 символа, латиница, цифры, `_`; ведущий `@` отбрасывается) необязательны. PUT заменяет объект целиком.
+Контакты не показываются в карточках банка кандидатов. Работодатель получает их только если он активный `owner` или
+`recruiter` компании, отправившей предложение, предложение принято (`accepted`) и у кандидата активно `processing`;
+роль `viewer`, чужая компания и другой статус дают 404. Ответы с контактами не кешируются
+(`Cache-Control: private, no-store`). Каждая выдача работодателю записывается в журнал аудита без самих контактов.
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `consent_required` | 409 | Нет нужного согласия: для профиля, публикации или контактов |
+| `consent_exists` | 409 | Такое согласие уже дано |
+| `policy_outdated` | 409 | Передана не текущая версия политики |
+| `consent_not_found` | 404 | Нет активного согласия такого вида при отзыве |
+| `company_not_found` | 404 | Компания для `ats_transfer` не найдена |
+| `contacts_not_found` | 404 | Контакты ещё не сохранены |
+| `contacts_unavailable` | 409 | Работодателю: нет активного согласия или контактов у кандидата |
+| `request_too_large` | 413 | Тело JSON больше 2 МиБ (для аватара вместо этого `file_too_large`) |
+
+```sh
+curl --fail-with-body "$API_URL/api/v1/me/consents" -H "Authorization: Bearer $TOKEN"
+
+curl --fail-with-body -X POST "$API_URL/api/v1/me/consents" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"kind":"processing","policy_version":"2026-10-07"}'
+
+curl --fail-with-body -X PUT "$API_URL/api/v1/me/contacts" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"full_name":"Иван Иванов","email":"ivan@example.org","phone":"+7 900 123-45-67","telegram":"@ivan_dev"}'
+```
+
+При обновлении сервера профили, которые были опубликованы до появления согласий, переводятся в `hidden`:
+кандидатам нужно дать согласия и снова выбрать `open` или `passive`. Данные лежат в `candidate_consents`,
+`candidate_contacts` и `audit_events`; миграция `*_consents_contacts.sql` применяется после `candidate_offers`.
+Интеграционные тесты используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./internal/httpapi -run 'Consent|CandidateContacts'
 ```
 
 ### Предложения кандидатам

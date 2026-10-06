@@ -21,6 +21,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
+	consentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/repository"
+	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	offerrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
@@ -64,18 +66,20 @@ func run(log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
-			CORSOrigins:   c.CORSOrigins,
-			OIDCIssuer:    c.OIDCIssuer,
-			Users:         user.NewService(user.NewRepository(deps.DB)),
-			Companies:     service.NewCompanyService(companyRepo),
-			Candidates:    candidateservice.NewProfileService(candidateRepo),
-			Avatars:       candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Documents:     service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Needs:         service.NewNeedsService(companyRepo),
-			Members:       service.NewMemberService(companyRepo),
-			Catalogs:      catalog.NewService(catalog.NewRepository(deps.DB)),
-			Offers:        offerservice.New(offerrepository.New(deps.DB)),
-			CandidateBank: bankservice.New(bankrepository.New(deps.DB)),
+			CORSOrigins:       c.CORSOrigins,
+			OIDCIssuer:        c.OIDCIssuer,
+			Users:             user.NewService(user.NewRepository(deps.DB)),
+			Companies:         service.NewCompanyService(companyRepo),
+			Candidates:        candidateservice.NewProfileService(candidateRepo),
+			CandidateContacts: candidateservice.NewContactsService(candidateRepo),
+			Avatars:           candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Documents:         service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Needs:             service.NewNeedsService(companyRepo),
+			Members:           service.NewMemberService(companyRepo),
+			Catalogs:          catalog.NewService(catalog.NewRepository(deps.DB)),
+			Offers:            offerservice.New(offerrepository.New(deps.DB)),
+			CandidateBank:     bankservice.New(bankrepository.New(deps.DB)),
+			Consents:          consentservice.NewService(consentrepository.NewRepository(deps.DB), c.PrivacyPolicyVersion),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,

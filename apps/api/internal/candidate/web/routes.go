@@ -16,17 +16,19 @@ type Options struct {
 	Users    *user.Service
 	Profiles *service.ProfileService
 	Avatars  *service.AvatarService
+	Contacts *service.ContactsService
 }
 
 type profileHandler struct {
 	profiles *service.ProfileService
 	avatars  *service.AvatarService
+	contacts *service.ContactsService
 	log      *slog.Logger
 	uploads  chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, log: log, uploads: make(chan struct{}, 2)}
+	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, log: log, uploads: make(chan struct{}, 2)}
 	g := api.Group("/me/profile", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
 	g.Use(func(c *gin.Context) {
 		if h.profiles == nil {
@@ -48,4 +50,18 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	avatar.PUT("", h.uploadAvatar)
 	avatar.GET("", h.downloadAvatar)
 	avatar.DELETE("", h.deleteAvatar)
+	registerContacts(api, log, verifier, opts, h)
+}
+
+func registerContacts(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options, h profileHandler) {
+	g := api.Group("/me/contacts", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
+	g.Use(func(c *gin.Context) {
+		if h.contacts == nil {
+			abortError(c, 503, "contacts_unavailable", "Сервис контактов не настроен")
+			return
+		}
+		c.Next()
+	})
+	g.PUT("", h.putContacts)
+	g.GET("", h.getContacts)
 }

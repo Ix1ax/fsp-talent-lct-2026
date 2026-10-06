@@ -86,3 +86,15 @@ func (h handler) respond(c *gin.Context) {
 	}
 	c.JSON(200, o)
 }
+
+// candidateContacts выдаёт контакты кандидата по принятому предложению; ответ нельзя кешировать.
+func (h handler) candidateContacts(c *gin.Context) {
+	u, _ := middleware.UserFrom(c)
+	contacts, err := h.offers.CandidateContacts(c.Request.Context(), u.ID, c.Param("company_id"), c.Param("offer_id"))
+	if err != nil {
+		h.fail(c, err)
+		return
+	}
+	c.Header("Cache-Control", "private, no-store")
+	c.JSON(200, contacts)
+}

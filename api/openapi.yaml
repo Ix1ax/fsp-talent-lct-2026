@@ -1052,7 +1052,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: Профиль уже создан (profile_exists).
+          description: Профиль уже создан (profile_exists) или нет согласия на обработку (consent_required); для open и passive нужны ещё и publication.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
           content:
             application/json:
               schema:
@@ -1162,6 +1168,18 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Профиль ещё не создан (profile_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Для open и passive нужны активные согласия processing и publication (consent_required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
           content:
             application/json:
               schema:
@@ -2245,6 +2263,409 @@ paths:
           $ref: '#/components/responses/CandidateBankInternal'
         '503':
           $ref: '#/components/responses/CandidateBankUnavailable'
+  /api/v1/me/consents:
+    get:
+      operationId: listMyConsents
+      summary: История согласий кандидата и текущая версия политики
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Все согласия пользователя, новые первыми; активное имеет revoked_at null. Версию политики из current_policy_version нужно показать
+        кандидату и вернуть при выдаче согласия.
+      responses:
+        '200':
+          description: Согласия и текущая версия политики.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsentList'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис согласий не настроен (consent_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: grantMyConsent
+      summary: Дать согласие
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Виды: processing (обработка персональных данных), publication (публикация профиля), ats_transfer (передача в ATS конкретной компании,
+        нужен company_id). Нужно передать текущую версию политики. Повторная выдача после отзыва создаёт новую запись.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsentGrant'
+      responses:
+        '201':
+          description: Согласие дано.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/me/consents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Consent'
+        '400':
+          description: Некорректный JSON, неизвестное поле, вид или company_id (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания для ats_transfer не найдена (company_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Согласие уже дано (consent_exists) или версия политики устарела (policy_outdated).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис согласий не настроен (consent_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/consents/{kind}:
+    delete:
+      operationId: revokeMyConsent
+      summary: Отозвать активное согласие
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Отзыв processing отзывает все активные согласия кандидата, скрывает профиль (search_status hidden) и закрывает контакты;
+        данные не удаляются. Отзыв publication скрывает профиль. Повторная выдача статус профиля не восстанавливает. Для ats_transfer
+        обязателен параметр company_id, для остальных видов он не допускается.
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum:
+              - processing
+              - publication
+              - ats_transfer
+        - name: company_id
+          in: query
+          required: false
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Согласие отозвано.
+        '400':
+          description: Неизвестный вид или неверное использование company_id (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Активное согласие не найдено (consent_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис согласий не настроен (consent_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/contacts:
+    put:
+      operationId: putMyContacts
+      summary: Сохранить свои контакты
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Объект заменяется целиком. Нужно активное согласие processing. Контакты не показываются в карточках кандидатов: работодатель
+        получает их только по принятому предложению. Ответ не кешируется.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateContactsInput'
+      responses:
+        '200':
+          description: Контакты сохранены.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateOwnContacts'
+        '400':
+          description: Некорректный JSON, неизвестное поле или значение (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Нет согласия на обработку персональных данных (consent_required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис контактов не настроен (contacts_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: getMyContacts
+      summary: Получить свои контакты
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '200':
+          description: Контакты кандидата.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateOwnContacts'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Контакты ещё не сохранены (contacts_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Нет согласия на обработку персональных данных (consent_required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис контактов не настроен (contacts_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/companies/{company_id}/offers/{offer_id}/candidate-contacts:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: offer_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getOfferCandidateContacts
+      summary: Контакты кандидата по принятому предложению
+      tags: [Предложения кандидатам]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      description: "Только активный owner или recruiter компании, отправившей предложение. Предложение должно быть в статусе accepted, у кандидата должно быть активное согласие processing и сохранённые контакты. Роль viewer, чужая компания, чужое предложение и статус не accepted дают 404. Каждая выдача записывается в журнал аудита. Ответ не кешируется."
+      responses:
+        '200':
+          description: Контакты кандидата.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateContacts'
+        '400':
+          description: Некорректный UUID компании или предложения в адресе (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не employer (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания, предложение или права не найдены (not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Контакты сейчас недоступны, потому что нет активного согласия кандидата или самих контактов (contacts_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис предложений не настроен (offers_unavailable).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -3263,6 +3684,137 @@ components:
         updated_at:
           type: string
           format: date-time
+    Consent:
+      type: object
+      required:
+        - id
+        - kind
+        - policy_version
+        - company_id
+        - granted_at
+        - revoked_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          enum:
+            - processing
+            - publication
+            - ats_transfer
+        policy_version:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+        granted_at:
+          type: string
+          format: date-time
+        revoked_at:
+          type: string
+          format: date-time
+          nullable: true
+    ConsentGrant:
+      type: object
+      additionalProperties: false
+      required:
+        - kind
+        - policy_version
+      properties:
+        kind:
+          type: string
+          enum:
+            - processing
+            - publication
+            - ats_transfer
+        policy_version:
+          type: string
+          maxLength: 32
+          description: Текущая версия политики из GET /api/v1/me/consents.
+        company_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: Только для ats_transfer.
+    ConsentList:
+      type: object
+      required:
+        - current_policy_version
+        - items
+      properties:
+        current_policy_version:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Consent'
+    CandidateContactsInput:
+      type: object
+      additionalProperties: false
+      required:
+        - full_name
+        - email
+      properties:
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          description: 5-20 символов, только цифры, плюс, пробелы, скобки и дефис.
+        telegram:
+          type: string
+          nullable: true
+          description: 5-32 символа, латиница, цифры и подчёркивание; ведущий @ отбрасывается.
+    CandidateOwnContacts:
+      type: object
+      required:
+        - full_name
+        - email
+        - phone
+        - telegram
+        - updated_at
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        telegram:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+    CandidateContacts:
+      type: object
+      required:
+        - full_name
+        - email
+        - phone
+        - telegram
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+          nullable: true
+        telegram:
+          type: string
+          nullable: true
     Health:
       type: object
       required:

@@ -61,3 +61,12 @@ func companyPermission(ctx context.Context, tx pgx.Tx, user, company string, wri
 	}
 	return name, nil
 }
+
+// lockCandidateUser берёт строку пользователя-кандидата FOR SHARE до любых блокировок его профиля.
+// Порядок «пользователь, затем профиль» совпадает с отзывом согласия (users FOR UPDATE, затем UPDATE профиля);
+// иначе запрос предложения и отзыв могут заблокировать друг друга.
+func lockCandidateUser(ctx context.Context, tx pgx.Tx, userID string) error {
+	var ok bool
+	err := tx.QueryRow(ctx, `SELECT true FROM users WHERE id=$1 AND role='candidate' AND status='active' FOR SHARE`, userID).Scan(&ok)
+	return dbError(err)
+}

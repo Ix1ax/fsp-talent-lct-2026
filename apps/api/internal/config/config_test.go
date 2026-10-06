@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func validEnv(t *testing.T) {
 	t.Helper()
@@ -48,5 +51,23 @@ func TestProductionHTTPRequiresExplicitSetting(t *testing.T) {
 	t.Setenv("OIDC_ALLOW_HTTP", "true")
 	if _, err := Load(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestPrivacyPolicyVersion(t *testing.T) {
+	validEnv(t)
+	c, err := Load()
+	if err != nil || c.PrivacyPolicyVersion != "2026-10-07" {
+		t.Fatalf("версия по умолчанию: %q (%v)", c.PrivacyPolicyVersion, err)
+	}
+	t.Setenv("PRIVACY_POLICY_VERSION", "v2")
+	if c, err = Load(); err != nil || c.PrivacyPolicyVersion != "v2" {
+		t.Fatalf("заданная версия: %q (%v)", c.PrivacyPolicyVersion, err)
+	}
+	for _, bad := range []string{"с пробелом", "a b", "версия-на-русском", strings.Repeat("a", 33)} {
+		t.Setenv("PRIVACY_POLICY_VERSION", bad)
+		if _, err := Load(); err == nil || !strings.Contains(err.Error(), "PRIVACY_POLICY_VERSION") {
+			t.Fatalf("версия %q принята или ошибка без имени переменной: %v", bad, err)
+		}
 	}
 }

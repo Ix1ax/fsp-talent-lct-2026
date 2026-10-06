@@ -15,6 +15,9 @@ func (r *Repository) CandidateList(ctx context.Context, user, status string, lim
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
+	if err = lockCandidateUser(ctx, tx, user); err != nil {
+		return nil, err
+	}
 	var exists bool
 	err = tx.QueryRow(ctx, `SELECT true FROM candidate_profiles p JOIN users u ON u.id=p.user_id WHERE p.user_id=$1 AND u.role='candidate' AND u.status='active' FOR SHARE OF p,u`, user).Scan(&exists)
 	if err != nil {
@@ -45,6 +48,9 @@ func (r *Repository) action(ctx context.Context, user, id, status string) (entit
 		return entity.Offer{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = lockCandidateUser(ctx, tx, user); err != nil {
+		return entity.Offer{}, err
+	}
 	o, err := scan(tx.QueryRow(ctx, `SELECT `+columns+candidateAccess+` AND o.id=$2 FOR UPDATE OF o FOR SHARE OF p,u`, user, id))
 	if err != nil {
 		return o, err
