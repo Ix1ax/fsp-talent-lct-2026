@@ -2078,6 +2078,173 @@ paths:
           $ref: '#/components/responses/NeedsInternal'
         '503':
           $ref: '#/components/responses/OfferUnavailable'
+  /api/v1/companies/{company_id}/candidates:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: listCandidateBank
+      summary: Банк кандидатов компании
+      tags: [Банк кандидатов]
+      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сортировка по UUID профиля по возрастанию; это каталог, а не рейтинг квалификации. Профили, контакты и файлы не изменяются."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - name: offset
+          in: query
+          schema: {type: integer, minimum: 0, maximum: 10000, default: 0}
+        - name: work_format_ids
+          in: query
+          description: "До 10 уникальных ID из справочника. Подходит любой выбранный формат. Передавать один параметр через запятую, например 1,3."
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 10
+            uniqueItems: true
+            items: {type: integer, minimum: 1, maximum: 32767}
+        - name: experience_min_months
+          in: query
+          description: Минимальный стаж в месяцах включительно
+          schema: {type: integer, minimum: 0, maximum: 600}
+        - name: experience_max_months
+          in: query
+          description: Максимальный стаж в месяцах включительно; не меньше минимального
+          schema: {type: integer, minimum: 0, maximum: 600}
+        - name: salary_max_rub
+          in: query
+          description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
+          schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateBankPage'
+        '400':
+          $ref: '#/components/responses/CandidateBankBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CandidateBankForbidden'
+        '404':
+          $ref: '#/components/responses/CandidateBankNotFound'
+        '500':
+          $ref: '#/components/responses/CandidateBankInternal'
+        '503':
+          $ref: '#/components/responses/CandidateBankUnavailable'
+  /api/v1/companies/{company_id}/candidates/{candidate_id}:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: candidate_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getCandidateBankCard
+      summary: Карточка доступного кандидата
+      tags: [Банк кандидатов]
+      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Контакты, локальный ID пользователя, аватар и свободное описание не возвращаются."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateBankCard'
+        '400':
+          $ref: '#/components/responses/CandidateBankBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CandidateBankForbidden'
+        '404':
+          $ref: '#/components/responses/CandidateBankNotFound'
+        '500':
+          $ref: '#/components/responses/CandidateBankInternal'
+        '503':
+          $ref: '#/components/responses/CandidateBankUnavailable'
+  /api/v1/companies/{company_id}/needs/{need_id}/candidates:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: need_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: recommendCandidatesForNeed
+      summary: Предварительная подборка по условиям потребности
+      tags: [Банк кандидатов]
+      description: "Только активная потребность этой компании. Несовместимые форматы и известные ожидания выше salary_to_rub исключаются. Неизвестная зарплата допускается, если не задан явный salary_max_rub. Дополнительные фильтры сужают подборку. Сортировка по числу совпадений формата, бюджета, города и часового пояса по убыванию, затем по UUID по возрастанию; пагинация после сортировки. Это подбор условий работы, а не квалификации: специализация, подтверждённый грейд, навыки, результаты тестов и достижения ФСП пока не оцениваются."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - name: offset
+          in: query
+          schema: {type: integer, minimum: 0, maximum: 10000, default: 0}
+        - name: work_format_ids
+          in: query
+          description: "До 10 уникальных ID из справочника. Подходит любой выбранный формат. Передавать один параметр через запятую, например 1,3."
+          style: form
+          explode: false
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 10
+            uniqueItems: true
+            items: {type: integer, minimum: 1, maximum: 32767}
+        - name: experience_min_months
+          in: query
+          description: Минимальный стаж в месяцах включительно
+          schema: {type: integer, minimum: 0, maximum: 600}
+        - name: experience_max_months
+          in: query
+          description: Максимальный стаж в месяцах включительно; не меньше минимального
+          schema: {type: integer, minimum: 0, maximum: 600}
+        - name: salary_max_rub
+          in: query
+          description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
+          schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateRecommendationPage'
+        '400':
+          $ref: '#/components/responses/CandidateBankBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CandidateBankForbidden'
+        '404':
+          $ref: '#/components/responses/CandidateBankNotFound'
+        '500':
+          $ref: '#/components/responses/CandidateBankInternal'
+        '503':
+          $ref: '#/components/responses/CandidateBankUnavailable'
 components:
   securitySchemes:
     bearerAuth:
@@ -2095,6 +2262,85 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    CandidateBankCard:
+      type: object
+      description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
+      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids]
+      properties:
+        id: {type: string, format: uuid}
+        city: {type: string, nullable: true, maxLength: 200}
+        timezone: {type: string, nullable: true, maxLength: 64}
+        experience_months: {type: integer, minimum: 0, maximum: 600}
+        salary_min_rub: {type: integer, format: int64, nullable: true, minimum: 0, maximum: 1000000000}
+        search_status: {type: string, enum: [open, passive]}
+        work_format_ids:
+          type: array
+          items: {type: integer, minimum: 1}
+      example:
+        id: a76cb614-f634-41d6-9d19-76874fbcc842
+        city: Москва
+        timezone: Europe/Moscow
+        experience_months: 36
+        salary_min_rub: 180000
+        search_status: open
+        work_format_ids: [3]
+    CandidateBankPage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateBankCard'}
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Число доступных профилей после фильтрации до пагинации
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0, maximum: 10000}
+    CandidateRecommendation:
+      allOf:
+        - $ref: '#/components/schemas/CandidateBankCard'
+        - type: object
+          required: [matched_conditions, reasons, unknown_conditions]
+          properties:
+            matched_conditions:
+              type: integer
+              minimum: 0
+              maximum: 4
+              description: Количество совпавших условий; не процент пригодности и не оценка квалификации
+            reasons:
+              type: array
+              items: {type: string}
+              example: [Совпадает формат работы, Зарплатные ожидания укладываются в бюджет]
+            unknown_conditions:
+              type: array
+              description: "Не хватает значения кандидата или условия потребности. Известное несовпадение не включается в этот список."
+              items:
+                type: string
+                enum: [work_format, salary, city, timezone]
+    CandidateRecommendationPage:
+      type: object
+      required: [items, total, limit, offset, need_id, matching_mode, unassessed_criteria]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateRecommendation'}
+        total: {type: integer, format: int64, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0, maximum: 10000}
+        need_id: {type: string, format: uuid}
+        matching_mode:
+          type: string
+          enum: [conditions_only]
+          description: Предварительная подборка только по условиям работы
+        unassessed_criteria:
+          type: array
+          description: Критерии квалификации, которые пока не оцениваются
+          items:
+            type: string
+            enum: [specialization, confirmed_grade, skills, test_results, fsp_achievements]
+          example: [specialization, confirmed_grade, skills, test_results, fsp_achievements]
     CandidateOfferInput:
       type: object
       additionalProperties: false
@@ -3078,6 +3324,56 @@ components:
               description: Понятное сообщение об ошибке на русском языке
               example: Маршрут не найден
   responses:
+    CandidateBankBadRequest:
+      description: "Неверный UUID, фильтр, диапазон стажа или ID формата работы"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: validation_error
+              message: "Минимальный стаж не должен превышать максимальный"
+    CandidateBankForbidden:
+      description: "Неподходящая роль либо заблокированный или удалённый пользователь"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: forbidden
+              message: "Недостаточно прав для этого действия"
+    CandidateBankNotFound:
+      description: "Нет локальной регистрации, доступа к компании, доступного кандидата или активной потребности этой компании"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: not_found
+              message: "Кандидат или компания недоступны"
+    CandidateBankInternal:
+      description: "Внутренняя ошибка сервера"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: internal_error
+              message: "Внутренняя ошибка сервера"
+    CandidateBankUnavailable:
+      description: "Банк кандидатов или сервис авторизации не настроен"
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: candidate_bank_unavailable
+              message: "Банк кандидатов не настроен"
     OfferBadRequest:
       description: "Некорректные JSON, UUID, параметры списка, зарплата, контакты или потребность. Неизвестные поля запрещены."
       content:
