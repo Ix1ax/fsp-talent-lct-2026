@@ -1,38 +1,22 @@
 import Link from 'next/link';
 
-import { ApiError } from '@/shared/api';
 import { requireAccessToken } from '@/shared/auth/server';
-import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
 import {
+  Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/shared/ui/Card';
-import { getMe, type SessionUser } from '@/entities/session';
+} from '@/shared/ui';
+import { loadSession } from '@/entities/session/api/server';
 import { LogoutButton } from '@/features/auth';
 
-async function loadSessionUser(): Promise<
-  { user: SessionUser } | { error: string }
-> {
-  try {
-    const user = await getMe();
-    return { user };
-  } catch (error) {
-    const message =
-      error instanceof ApiError
-        ? `${error.code}: ${error.message}`
-        : 'Не удалось загрузить профиль';
-    return { error: message };
-  }
-}
-
-export async function CabinetPage() {
+export const CabinetPage = async () => {
   await requireAccessToken('/cabinet');
-  const result = await loadSessionUser();
+  const session = await loadSession();
 
   return (
     <main className="mx-auto flex min-h-screen max-w-2xl items-center p-6">
@@ -40,20 +24,20 @@ export async function CabinetPage() {
         <CardHeader>
           <CardTitle>Кабинет</CardTitle>
           <CardDescription>
-            Защищённый экран: без access-токена выполняется попытка refresh, затем
-            редирект на логин.
+            Защищённый экран: без access-токена выполняется попытка refresh,
+            затем редирект на логин.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {'user' in result ? (
+          {session.kind === 'user' ? (
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                <Badge>sub: {result.user.sub}</Badge>
-                <Badge variant="secondary">{result.user.email}</Badge>
+                <Badge>sub: {session.user.sub}</Badge>
+                <Badge variant="secondary">{session.user.email}</Badge>
                 <Badge
-                  variant={result.user.emailVerified ? 'default' : 'outline'}
+                  variant={session.user.emailVerified ? 'default' : 'outline'}
                 >
-                  {result.user.emailVerified
+                  {session.user.emailVerified
                     ? 'email verified'
                     : 'email unverified'}
                 </Badge>
@@ -65,7 +49,9 @@ export async function CabinetPage() {
             </div>
           ) : (
             <p className="text-sm text-destructive" role="alert">
-              {result.error}
+              {session.kind === 'error'
+                ? session.message
+                : 'Не удалось загрузить профиль'}
             </p>
           )}
         </CardContent>
@@ -78,4 +64,4 @@ export async function CabinetPage() {
       </Card>
     </main>
   );
-}
+};

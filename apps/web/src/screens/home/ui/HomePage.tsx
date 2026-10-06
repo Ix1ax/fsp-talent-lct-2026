@@ -1,13 +1,14 @@
+import { LoginButton } from '@/features/auth';
 import { ApiStatus } from '@/widgets/api-status';
 
-export function HomePage() {
+export const HomePage = () => {
   return (
     <main className="mx-auto max-w-[1140px] p-8 max-md:p-5">
       <header className="flex items-center justify-between gap-5 text-[13px] text-muted-foreground max-md:items-start">
         <span className="bg-primary px-[18px] py-3 text-[22px] font-black text-primary-foreground">
           ФСП
         </span>
-        <span>ЛЦТ 2026 / Командная разработка</span>
+        <LoginButton />
       </header>
 
       <section className="pt-[90px] pb-14 max-md:pt-13">
@@ -20,8 +21,8 @@ export function HomePage() {
           Дальше — ваш код.
         </h1>
         <p className="mt-4 max-w-[620px] text-lg leading-relaxed text-muted-foreground">
-          Стартовая страница монорепозитория. Здесь можно проверить, что фронтенд
-          видит API.
+          Стартовая страница монорепозитория. Здесь можно проверить, что
+          фронтенд видит API.
         </p>
         <div className="mt-4">
           <ApiStatus />
@@ -54,4 +55,4 @@ export function HomePage() {
       </footer>
     </main>
   );
-}
+};

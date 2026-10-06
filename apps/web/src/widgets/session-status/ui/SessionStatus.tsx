@@ -1,34 +1,9 @@
 import Link from 'next/link';
 
-import { ApiError } from '@/shared/api';
-import { getAccessToken } from '@/shared/auth/session.server';
-import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
-import { getMe, type SessionUser } from '@/entities/session';
+import { Badge, Button } from '@/shared/ui';
+import { loadSession } from '@/entities/session/api/server';
 
-async function loadSession(): Promise<
-  | { kind: 'guest' }
-  | { kind: 'user'; user: SessionUser }
-  | { kind: 'error'; message: string }
-> {
-  const token = await getAccessToken();
-  if (!token) return { kind: 'guest' };
-
-  try {
-    const user = await getMe();
-    return { kind: 'user', user };
-  } catch (error) {
-    const message =
-      error instanceof ApiError
-        ? error.code === 'unauthorized'
-          ? 'Сессия недействительна'
-          : error.message
-        : 'Не удалось проверить сессию';
-    return { kind: 'error', message };
-  }
-}
-
-export async function SessionStatus() {
+export const SessionStatus = async () => {
   const session = await loadSession();
 
   if (session.kind === 'guest') {
@@ -69,4 +44,4 @@ export async function SessionStatus() {
       </Button>
     </div>
   );
-}
+};
