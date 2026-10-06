@@ -2666,6 +2666,181 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/me/skills:
+    get:
+      operationId: listMySkills
+      summary: Мои навыки
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Навыки текущего кандидата по названию. В каждом навыке source и confidence показывают источник подтверждения и его вес:
+        claimed 0.3, test 0.8, fsp 1.0. Сейчас доступен только claimed. Работодатели навыки кандидата пока не видят.
+      responses:
+        '200':
+          description: Список навыков.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateSkillList'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль ещё не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/skills/{skill_id}:
+    parameters:
+      - name: skill_id
+        in: path
+        required: true
+        description: ID навыка из GET /api/v1/catalogs/skills.
+        schema: {type: string, format: uuid}
+    put:
+      operationId: putMySkill
+      summary: Добавить навык или изменить уровень
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Если навыка нет в списке, он добавляется, иначе меняется уровень. Навык должен быть в справочнике и активен; не более 50 навыков.
+        Уровень claimed_level обязателен, целое число от 1 до 5. Источник и вес клиент передать не может.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSkillInput'
+      responses:
+        '200':
+          description: Навык сохранён.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateSkill'
+        '400':
+          description: "Некорректный UUID, JSON, уровень или лишнее поле, неизвестный или выключенный навык, превышен лимит 50 (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль ещё не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Тело запроса больше 2 МиБ (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMySkill
+      summary: Убрать навык из списка
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '204':
+          description: Навык удалён.
+        '400':
+          description: "Некорректный UUID навыка (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль ещё не создан (profile_not_found) или навыка нет в вашем списке (skill_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -3815,6 +3990,65 @@ components:
         telegram:
           type: string
           nullable: true
+    CandidateSkillInput:
+      type: object
+      additionalProperties: false
+      required:
+        - claimed_level
+      properties:
+        claimed_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Самооценка уровня. Не подтверждённый грейд.
+    CandidateSkill:
+      type: object
+      required:
+        - skill_id
+        - code
+        - name
+        - claimed_level
+        - source
+        - confidence
+        - updated_at
+      properties:
+        skill_id:
+          type: string
+          format: uuid
+        code:
+          type: string
+          example: go
+        name:
+          type: string
+          example: Go
+        claimed_level:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+        source:
+          type: string
+          enum:
+            - claimed
+            - test
+            - fsp
+          description: Источник подтверждения. Сейчас всегда claimed.
+        confidence:
+          type: number
+          description: Вес источника, claimed 0.3, test 0.8, fsp 1.0.
+          example: 0.3
+        updated_at:
+          type: string
+          format: date-time
+    CandidateSkillList:
+      type: object
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateSkill'
     Health:
       type: object
       required:
