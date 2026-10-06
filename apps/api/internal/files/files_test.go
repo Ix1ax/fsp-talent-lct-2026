@@ -5,6 +5,7 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"image/jpeg"
 	"image/png"
 	"strings"
 	"testing"
@@ -49,5 +50,47 @@ func TestPrepare(t *testing.T) {
 	}
 	if first.OriginalName != "договор.pdf" || first.ObjectKey == second.ObjectKey || strings.Contains(first.ObjectKey, "договор") || len(first.ChecksumSHA256) != 64 {
 		t.Fatalf("небезопасные метаданные: %+v", first)
+	}
+}
+
+func encodePNG(t *testing.T, width, height int) []byte {
+	t.Helper()
+	var data bytes.Buffer
+	if err := png.Encode(&data, image.NewRGBA(image.Rect(0, 0, width, height))); err != nil {
+		t.Fatal(err)
+	}
+	return data.Bytes()
+}
+
+func TestPrepareCandidateAvatar(t *testing.T) {
+	f, err := Prepare("я.png", PurposeCandidateAvatar, encodePNG(t, 2, 2))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Purpose != "candidate_avatar" || f.MediaType != "image/png" || f.Status != "pending" || !strings.HasPrefix(f.ObjectKey, "candidates/") || strings.Contains(f.ObjectKey, "я") {
+		t.Fatalf("неверные метаданные аватара: %+v", f)
+	}
+	jpegData := func() []byte {
+		var b bytes.Buffer
+		if err := jpeg.Encode(&b, image.NewRGBA(image.Rect(0, 0, 2, 2)), nil); err != nil {
+			t.Fatal(err)
+		}
+		return b.Bytes()
+	}()
+	for _, tt := range []struct {
+		name string
+		data []byte
+		want error
+	}{
+		{"photo.jpg", jpegData, nil},
+		{"cv.pdf", []byte("%PDF-1.7"), ErrType},
+		{"a.png", []byte("просто текст под видом картинки"), ErrType},
+		{"a.png", bytes.Repeat([]byte{0}, MaxLogoSize+1), ErrSize},
+		{"empty.png", nil, ErrInvalid},
+		{"huge.png", encodePNG(t, 2001, 2001), ErrInvalid},
+	} {
+		if _, err := Prepare(tt.name, PurposeCandidateAvatar, tt.data); !errors.Is(err, tt.want) {
+			t.Fatalf("%s: ожидали %v, получили %v", tt.name, tt.want, err)
+		}
 	}
 }
