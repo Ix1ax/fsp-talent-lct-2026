@@ -52,21 +52,10 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	if err = authorize(ctx, tx, userID, companyID); err != nil {
 		return page, err
 	}
-	// Неизвестные форматы не превращаем молча в пустую выдачу.
-	if len(filter.WorkFormatIDs) > 0 {
-		var count int
-		if err = tx.QueryRow(ctx, `SELECT count(*) FROM work_formats WHERE id=ANY($1::smallint[])`, filter.WorkFormatIDs).Scan(&count); err != nil {
-			return page, err
-		}
-		if count != len(filter.WorkFormatIDs) {
-			return page, &entity.ValidationError{Message: "Неизвестный формат работы: выберите ID из справочника"}
-		}
+	if err = validateFormats(ctx, tx, filter.WorkFormatIDs); err != nil {
+		return page, err
 	}
-	conditions := visible + ` AND ($1::integer IS NULL OR p.experience_months >= $1)
-        AND ($2::integer IS NULL OR p.experience_months <= $2)
-        AND ($3::bigint IS NULL OR p.salary_min_rub <= $3)
-        AND (cardinality($4::smallint[])=0 OR EXISTS (
-            SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($4::smallint[])))`
+	conditions := visible + filterConditions
 	// При фильтре зарплаты неизвестные ожидания исключаются: соответствие бюджету не подтверждено.
 	formats := filter.WorkFormatIDs
 	if formats == nil {
@@ -111,4 +100,23 @@ func (r *Repository) Get(ctx context.Context, userID, companyID, candidateID str
 		return c, err
 	}
 	return c, tx.Commit(ctx)
+}
+
+const filterConditions = ` AND ($1::integer IS NULL OR p.experience_months >= $1)
+ AND ($2::integer IS NULL OR p.experience_months <= $2)
+ AND ($3::bigint IS NULL OR p.salary_min_rub <= $3)
+ AND (cardinality($4::smallint[])=0 OR EXISTS (SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($4::smallint[])))`
+
+func validateFormats(ctx context.Context, tx pgx.Tx, ids []int16) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	var count int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM work_formats WHERE id=ANY($1::smallint[])`, ids).Scan(&count); err != nil {
+		return err
+	}
+	if count != len(ids) {
+		return &entity.ValidationError{Message: "Неизвестный формат работы: выберите ID из справочника"}
+	}
+	return nil
 }

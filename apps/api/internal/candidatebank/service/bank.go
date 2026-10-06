@@ -7,6 +7,7 @@ import (
 )
 
 type Store interface {
+	Recommend(context.Context, string, string, string, entity.Filter) (entity.RecommendationPage, error)
 	List(context.Context, string, string, entity.Filter) (entity.Page, error)
 	Get(context.Context, string, string, string) (entity.Card, error)
 }
@@ -18,4 +19,8 @@ func (s *Service) List(ctx context.Context, user, company string, filter entity.
 }
 func (s *Service) Get(ctx context.Context, user, company, candidate string) (entity.Card, error) {
 	return s.store.Get(ctx, user, company, candidate)
+}
+
+func (s *Service) Recommend(ctx context.Context, user, company, need string, filter entity.Filter) (entity.RecommendationPage, error) {
+	return s.store.Recommend(ctx, user, company, need, filter)
 }

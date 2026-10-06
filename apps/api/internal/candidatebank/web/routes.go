@@ -17,13 +17,13 @@ func abort(c *gin.Context, status int, code, message string) {
 	c.AbortWithStatusJSON(status, gin.H{"error": gin.H{"code": code, "message": message}})
 }
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, users *user.Service, bank *service.Service) {
-	g := api.Group("/companies/:company_id/candidates", auth.Middleware(verifier), middleware.CurrentUser(log, users), middleware.RequireRole(user.RoleEmployer))
+	g := api.Group("/companies/:company_id", auth.Middleware(verifier), middleware.CurrentUser(log, users), middleware.RequireRole(user.RoleEmployer))
 	g.Use(func(c *gin.Context) {
 		if bank == nil {
 			abort(c, 503, "candidate_bank_unavailable", "Банк кандидатов не настроен")
 			return
 		}
-		for _, key := range []string{"company_id", "candidate_id"} {
+		for _, key := range []string{"company_id", "candidate_id", "need_id"} {
 			if v := c.Param(key); v != "" {
 				var id pgtype.UUID
 				if id.Scan(v) != nil || !id.Valid {
@@ -48,7 +48,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 			c.JSON(200, value)
 		}
 	}
-	g.GET("", func(c *gin.Context) {
+	g.GET("/candidates", func(c *gin.Context) {
 		filter, err := entity.ParseFilter(c.Request.URL.RawQuery)
 		if err != nil {
 			abort(c, 400, "validation_error", err.Error())
@@ -58,7 +58,17 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 		v, err := bank.List(c.Request.Context(), u.ID, c.Param("company_id"), filter)
 		respond(c, v, err)
 	})
-	g.GET("/:candidate_id", func(c *gin.Context) {
+	g.GET("/needs/:need_id/candidates", func(c *gin.Context) {
+		filter, err := entity.ParseFilter(c.Request.URL.RawQuery)
+		if err != nil {
+			abort(c, 400, "validation_error", err.Error())
+			return
+		}
+		u, _ := middleware.UserFrom(c)
+		v, err := bank.Recommend(c.Request.Context(), u.ID, c.Param("company_id"), c.Param("need_id"), filter)
+		respond(c, v, err)
+	})
+	g.GET("/candidates/:candidate_id", func(c *gin.Context) {
 		u, _ := middleware.UserFrom(c)
 		v, err := bank.Get(c.Request.Context(), u.ID, c.Param("company_id"), c.Param("candidate_id"))
 		respond(c, v, err)
