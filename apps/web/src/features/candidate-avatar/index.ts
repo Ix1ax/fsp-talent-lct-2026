@@ -1,0 +1,1 @@
+export { CandidateAvatar } from './ui';
