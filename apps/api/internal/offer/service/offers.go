@@ -15,6 +15,7 @@ type Store interface {
 	CandidateGet(context.Context, string, string) (entity.Offer, error)
 	View(context.Context, string, string) (entity.Offer, error)
 	Respond(context.Context, string, string, string) (entity.Offer, error)
+	CandidateContacts(context.Context, string, string, string) (entity.CandidateContacts, error)
 }
 
 type Service struct{ store Store }
@@ -53,6 +54,9 @@ func (s *Service) Respond(ctx context.Context, user, id, status string) (entity.
 		return entity.Offer{}, err
 	}
 	return s.store.Respond(ctx, user, id, status)
+}
+func (s *Service) CandidateContacts(ctx context.Context, user, company, offerID string) (entity.CandidateContacts, error) {
+	return s.store.CandidateContacts(ctx, user, company, offerID)
 }
 func filter(status string) error {
 	switch status {

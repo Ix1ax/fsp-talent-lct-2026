@@ -26,6 +26,8 @@ func (h handler) fail(c *gin.Context, err error) {
 		abort(c, 404, "not_found", entity.ErrNotFound.Error())
 	case errors.Is(err, entity.ErrForbidden):
 		abort(c, 403, "forbidden", entity.ErrForbidden.Error())
+	case errors.Is(err, entity.ErrContactsUnavailable):
+		abort(c, 409, "contacts_unavailable", entity.ErrContactsUnavailable.Error())
 	case errors.Is(err, entity.ErrResponseConflict):
 		abort(c, 409, "response_conflict", entity.ErrResponseConflict.Error())
 	default:

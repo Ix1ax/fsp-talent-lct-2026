@@ -23,6 +23,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 	company.POST("", h.create)
 	company.GET("", h.companyList)
 	company.GET("/:offer_id", h.companyGet)
+	company.GET("/:offer_id/candidate-contacts", h.candidateContacts)
 	candidate := api.Group("/me/offers", auth.Middleware(verifier), middleware.CurrentUser(log, users), middleware.RequireRole(user.RoleCandidate), h.available)
 	candidate.GET("", h.candidateList)
 	candidate.GET("/:offer_id", h.candidateGet)
