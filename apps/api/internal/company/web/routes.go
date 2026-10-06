@@ -18,24 +18,34 @@ type Options struct {
 	Companies *service.CompanyService
 	Documents *service.DocumentService
 	Needs     *service.NeedsService
+	Members   *service.MemberService
 }
 type companiesHandler struct {
 	service   *service.CompanyService
 	documents *service.DocumentService
 	needs     *service.NeedsService
+	members   *service.MemberService
 	log       *slog.Logger
 	uploads   chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := companiesHandler{service: opts.Companies, needs: opts.Needs, documents: opts.Documents, log: log, uploads: make(chan struct{}, 2)}
+	h := companiesHandler{service: opts.Companies, needs: opts.Needs, documents: opts.Documents, members: opts.Members, log: log, uploads: make(chan struct{}, 2)}
+	memberAvailable := func(c *gin.Context) {
+		if h.members == nil {
+			abortError(c, 503, "members_unavailable", "Сервис команды компании не настроен")
+			return
+		}
+		c.Next()
+	}
+	api.POST("/company-invitations/accept", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleEmployer), memberAvailable, h.acceptInvitation)
 	g := api.Group("/companies", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleEmployer))
 	g.Use(func(c *gin.Context) {
 		if h.service == nil {
 			abortError(c, 503, "companies_unavailable", "Сервис компаний не настроен")
 			return
 		}
-		for _, key := range []string{"company_id", "file_id", "need_id"} {
+		for _, key := range []string{"company_id", "file_id", "need_id", "user_id", "invitation_id"} {
 			if value := c.Param(key); value != "" {
 				var id pgtype.UUID
 				if id.Scan(value) != nil || !id.Valid {
@@ -50,6 +60,14 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	g.GET("", h.list)
 	g.GET("/:company_id", h.get)
 	g.PATCH("/:company_id", h.update)
+	members := g.Group("/:company_id/members", memberAvailable)
+	members.GET("", h.listMembers)
+	members.PATCH("/:user_id", h.updateMember)
+	members.DELETE("/:user_id", h.removeMember)
+	invitations := g.Group("/:company_id/invitations", memberAvailable)
+	invitations.POST("", h.invite)
+	invitations.GET("", h.listInvitations)
+	invitations.DELETE("/:invitation_id", h.revokeInvitation)
 	fileRoutes := g.Group("/:company_id/files", func(c *gin.Context) {
 		if h.documents == nil {
 			abortError(c, 503, "documents_unavailable", "Сервис документов не настроен")
