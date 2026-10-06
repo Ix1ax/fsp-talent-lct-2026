@@ -11,6 +11,7 @@ export type SessionUser = {
   id: string;
   sub: string;
   email: string;
+  name?: string;
   emailVerified: boolean;
   role?: UserRole;
   status: 'active' | 'blocked' | 'deleted';

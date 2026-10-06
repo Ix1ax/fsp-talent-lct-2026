@@ -1,5 +1,6 @@
 import 'server-only';
 
+export { getTokenDisplayName } from './getTokenDisplayName';
 export { refreshAuthTokens } from './refresh';
 export { requireAccessToken } from './require-access';
 export {

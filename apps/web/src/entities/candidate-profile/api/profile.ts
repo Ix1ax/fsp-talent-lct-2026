@@ -1,7 +1,11 @@
 import { clientApi } from '@/shared/api/client';
 import { ApiError, toApiError } from '@/shared/api/errors';
 
-import type { CandidateProfile, SearchStatus } from '../model';
+import {
+  type CandidateProfile,
+  notifyCandidateAvatarUpdated,
+  type SearchStatus,
+} from '../model';
 
 export type CreateCandidateProfileInput = {
   headline: string | null;
@@ -60,6 +64,7 @@ export const uploadCandidateAvatar = async (
     '/v1/me/profile/avatar',
     body,
   );
+  notifyCandidateAvatarUpdated();
   return data;
 };
 
@@ -86,4 +91,5 @@ export const getCandidateAvatar = async (
 
 export const deleteCandidateAvatar = async (): Promise<void> => {
   await clientApi.delete('/v1/me/profile/avatar');
+  notifyCandidateAvatarUpdated();
 };

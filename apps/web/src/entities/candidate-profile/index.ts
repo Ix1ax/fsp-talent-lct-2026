@@ -11,3 +11,4 @@ export {
   uploadCandidateAvatar,
 } from './api';
 export type { CandidateProfile, SearchStatus } from './model';
+export { CANDIDATE_AVATAR_UPDATED_EVENT } from './model';

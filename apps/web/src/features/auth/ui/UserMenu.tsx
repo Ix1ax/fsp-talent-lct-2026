@@ -2,13 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ChevronDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
 
-import { STATIC_ROUTES } from '@/shared/contants';
+import { STATIC_ROUTES, USER_ROLE_LABELS } from '@/shared/contants';
 import {
   Avatar,
   AvatarFallback,
+  AvatarImage,
   Button,
   DropdownMenu,
   DropdownMenuContent,
@@ -20,15 +20,23 @@ import {
 import { getRoleHomeRoute, type SessionUser } from '@/entities/session';
 
 import { logoutSession } from '../api';
+import { useAccountAvatar } from '../model';
 
 interface UserMenuProps {
   user: SessionUser;
 }
 
-const getInitials = (email: string): string => email.slice(0, 1).toUpperCase();
+const getInitials = (name: string): string =>
+  name
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
 
 export const UserMenu = ({ user }: UserMenuProps) => {
-  const router = useRouter();
+  const avatarUrl = useAccountAvatar(user);
+  const displayName = user.name?.trim() || user.email;
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,8 +46,6 @@ export const UserMenu = ({ user }: UserMenuProps) => {
 
     try {
       await logoutSession();
-      router.push(STATIC_ROUTES.HOME);
-      router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Не удалось выйти');
     } finally {
@@ -55,21 +61,39 @@ export const UserMenu = ({ user }: UserMenuProps) => {
           variant="outline"
           size="sm"
           className="gap-2"
+          aria-label={`Аккаунт: ${displayName}`}
           disabled={pending}
         >
           <Avatar size="sm">
-            <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+            <AvatarImage src={avatarUrl} alt="" />
+            <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
           </Avatar>
-          <span className="max-w-[160px] truncate">{user.email}</span>
+          <span className="max-w-40 truncate max-sm:hidden">{displayName}</span>
           <ChevronDownIcon className="size-3.5 opacity-60" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="min-w-52">
-        <DropdownMenuLabel className="font-normal">
-          <p className="truncate text-sm font-medium">{user.email}</p>
-          {user.role ? (
-            <p className="text-xs text-muted-foreground">{user.role}</p>
-          ) : null}
+      <DropdownMenuContent
+        align="end"
+        className="w-72 max-w-[calc(100vw-2rem)]"
+      >
+        <DropdownMenuLabel className="flex items-center gap-3 font-normal">
+          <Avatar size="lg">
+            <AvatarImage src={avatarUrl} alt="" />
+            <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium [overflow-wrap:anywhere]">
+              {displayName}
+            </p>
+            {user.name?.trim() && (
+              <p className="mt-0.5 text-xs text-muted-foreground [overflow-wrap:anywhere]">
+                {user.email}
+              </p>
+            )}
+            <p className="mt-1 text-xs text-muted-foreground">
+              {user.role ? USER_ROLE_LABELS[user.role] : 'Роль не выбрана'}
+            </p>
+          </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
