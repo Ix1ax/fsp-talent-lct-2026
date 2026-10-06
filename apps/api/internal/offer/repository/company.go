@@ -17,6 +17,13 @@ func (r *Repository) Create(ctx context.Context, user, company string, in entity
 		return entity.Offer{}, err
 	}
 	// Скрытому профилю новые предложения не отправляем. Уже полученные остаются в истории.
+	var candidateUser string
+	if err = tx.QueryRow(ctx, `SELECT user_id::text FROM candidate_profiles WHERE id=$1`, in.CandidateID).Scan(&candidateUser); err != nil {
+		return entity.Offer{}, dbError(err)
+	}
+	if err = lockCandidateUser(ctx, tx, candidateUser); err != nil {
+		return entity.Offer{}, err
+	}
 	var visible bool
 	err = tx.QueryRow(ctx, `SELECT true FROM candidate_profiles p JOIN users u ON u.id=p.user_id
  WHERE p.id=$1 AND p.search_status IN ('open','passive') AND u.role='candidate' AND u.status='active' FOR SHARE OF p,u`, in.CandidateID).Scan(&visible)

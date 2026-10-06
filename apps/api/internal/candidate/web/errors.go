@@ -25,7 +25,9 @@ func (h profileHandler) fail(c *gin.Context, err error) {
 		abortError(c, 400, "validation_error", requestValidation.Message)
 	case errors.As(err, &validation):
 		abortError(c, 400, "validation_error", validation.Message)
-	case errors.Is(err, files.ErrSize) || errors.As(err, &maxBytes):
+	case errors.As(err, &maxBytes):
+		abortError(c, 413, "request_too_large", "Превышен допустимый размер запроса")
+	case errors.Is(err, files.ErrSize):
 		abortError(c, 413, "file_too_large", "Аватар — не более 2 МиБ")
 	case errors.Is(err, files.ErrType):
 		abortError(c, 415, "unsupported_file_type", files.ErrType.Error())

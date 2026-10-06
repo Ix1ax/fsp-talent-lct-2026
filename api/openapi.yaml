@@ -1057,6 +1057,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Внутренняя ошибка сервера.
           content:
@@ -1168,6 +1174,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Для open и passive нужны активные согласия processing и publication (consent_required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
           content:
             application/json:
               schema:
@@ -2357,6 +2369,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           description: Внутренняя ошибка сервера.
           content:
@@ -2486,6 +2504,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '409':
           description: Нет согласия на обработку персональных данных (consent_required).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Тело запроса больше 2 МиБ (request_too_large).
           content:
             application/json:
               schema:

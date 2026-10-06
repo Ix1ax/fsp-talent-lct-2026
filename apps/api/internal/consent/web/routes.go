@@ -4,6 +4,7 @@ package web
 import (
 	"errors"
 	"log/slog"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 
@@ -81,7 +82,10 @@ func abortError(c *gin.Context, status int, code, message string) {
 func (h handler) fail(c *gin.Context, err error) {
 	var validation *entity.ValidationError
 	var requestValidation *request.ValidationError
+	var maxBytes *http.MaxBytesError
 	switch {
+	case errors.As(err, &maxBytes):
+		abortError(c, 413, "request_too_large", "Превышен допустимый размер запроса")
 	case errors.As(err, &requestValidation):
 		abortError(c, 400, "validation_error", requestValidation.Message)
 	case errors.As(err, &validation):

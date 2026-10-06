@@ -30,7 +30,8 @@ func (h profileHandler) uploadAvatar(c *gin.Context) {
 	if err := c.Request.ParseMultipartForm(1 << 20); err != nil {
 		var max *http.MaxBytesError
 		if errors.As(err, &max) {
-			h.fail(c, err)
+			// Для загрузки аватара слишком большое тело означает слишком большой файл.
+			h.fail(c, files.ErrSize)
 		} else {
 			abortError(c, 400, "invalid_file", "Ожидается multipart/form-data с одним файлом file")
 		}

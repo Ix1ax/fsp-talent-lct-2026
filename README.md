@@ -487,6 +487,7 @@ go test -race -tags=integration ./internal/httpapi -run 'TestCandidate'
 | `company_not_found` | 404 | Компания для `ats_transfer` не найдена |
 | `contacts_not_found` | 404 | Контакты ещё не сохранены |
 | `contacts_unavailable` | 409 | Работодателю: нет активного согласия или контактов у кандидата |
+| `request_too_large` | 413 | Тело JSON больше 2 МиБ (для аватара вместо этого `file_too_large`) |
 
 ```sh
 curl --fail-with-body "$API_URL/api/v1/me/consents" -H "Authorization: Bearer $TOKEN"
