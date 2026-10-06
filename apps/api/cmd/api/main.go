@@ -15,6 +15,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
+	bankrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
+	bankservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
@@ -62,17 +64,18 @@ func run(log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
-			CORSOrigins: c.CORSOrigins,
-			OIDCIssuer:  c.OIDCIssuer,
-			Users:       user.NewService(user.NewRepository(deps.DB)),
-			Companies:   service.NewCompanyService(companyRepo),
-			Candidates:  candidateservice.NewProfileService(candidateRepo),
-			Avatars:     candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Needs:       service.NewNeedsService(companyRepo),
-			Members:     service.NewMemberService(companyRepo),
-			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
-			Offers:      offerservice.New(offerrepository.New(deps.DB)),
+			CORSOrigins:   c.CORSOrigins,
+			OIDCIssuer:    c.OIDCIssuer,
+			Users:         user.NewService(user.NewRepository(deps.DB)),
+			Companies:     service.NewCompanyService(companyRepo),
+			Candidates:    candidateservice.NewProfileService(candidateRepo),
+			Avatars:       candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Documents:     service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Needs:         service.NewNeedsService(companyRepo),
+			Members:       service.NewMemberService(companyRepo),
+			Catalogs:      catalog.NewService(catalog.NewRepository(deps.DB)),
+			Offers:        offerservice.New(offerrepository.New(deps.DB)),
+			CandidateBank: bankservice.New(bankrepository.New(deps.DB)),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,

@@ -17,6 +17,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	candidateweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/web"
+	bankservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/service"
+	bankweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	catalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
@@ -40,6 +42,7 @@ type Options struct {
 	Members                 *service.MemberService
 	Catalogs                *catalog.Service
 	Offers                  *offerservice.Service
+	CandidateBank           *bankservice.Service
 }
 
 func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Options) *gin.Engine {
@@ -115,6 +118,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
 	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs, Members: opts.Members})
 	catalogweb.Register(api, log, opts.Catalogs)
+	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
 	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars})
 	r.NoRoute(func(c *gin.Context) {
