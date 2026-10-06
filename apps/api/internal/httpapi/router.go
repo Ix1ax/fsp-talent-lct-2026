@@ -15,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
+	candidateweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	catalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
@@ -29,6 +31,7 @@ type Options struct {
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
 	Companies               *service.CompanyService
+	Candidates              *candidateservice.ProfileService
 	Documents               *service.DocumentService
 	Needs                   *service.NeedsService
 	Catalogs                *catalog.Service
@@ -104,6 +107,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
 	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs})
 	catalogweb.Register(api, log, opts.Catalogs)
+	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})
