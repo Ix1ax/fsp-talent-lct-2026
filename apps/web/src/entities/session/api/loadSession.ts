@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { ApiError } from '@/shared/api/errors';
+import { getTokenDisplayName } from '@/shared/auth/server';
 import { getAccessToken } from '@/shared/auth/session.server';
 
 import type { SessionUser } from '../model';
@@ -17,7 +18,10 @@ export const loadSession = async (): Promise<SessionState> => {
 
   try {
     const user = await getMe();
-    return { kind: 'user', user };
+    return {
+      kind: 'user',
+      user: { ...user, name: getTokenDisplayName(token) },
+    };
   } catch (error) {
     if (!(error instanceof ApiError)) {
       return { kind: 'error', message: 'Не удалось проверить сессию' };

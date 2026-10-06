@@ -1,0 +1,1 @@
+export { getCandidateProfile } from './getCandidateProfile';

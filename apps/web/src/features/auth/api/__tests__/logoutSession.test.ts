@@ -4,9 +4,17 @@ import { clearClientAccessToken, clearOidcUser } from '@/shared/auth';
 
 import { logoutSession } from '../logoutSession';
 
+const { signoutRedirect } = vi.hoisted(() => ({ signoutRedirect: vi.fn() }));
+vi.mock('@/shared/api/authConfig', () => ({
+  getAuthConfig: vi.fn(async () => ({
+    issuer: 'https://id.test',
+    clientId: 'fsp-web',
+  })),
+}));
 vi.mock('@/shared/auth', () => ({
   clearClientAccessToken: vi.fn(),
   clearOidcUser: vi.fn(),
+  createOidcManager: vi.fn(() => ({ signoutRedirect })),
 }));
 const fetchMock = vi.fn();
 
@@ -22,6 +30,7 @@ describe('logoutSession', () => {
     await logoutSession();
     expect(clearClientAccessToken).toHaveBeenCalledOnce();
     expect(clearOidcUser).toHaveBeenCalledOnce();
+    expect(signoutRedirect).toHaveBeenCalledOnce();
   });
 
   it('keeps client state on a failed logout', async () => {
@@ -31,5 +40,6 @@ describe('logoutSession', () => {
     );
     expect(clearClientAccessToken).not.toHaveBeenCalled();
     expect(clearOidcUser).not.toHaveBeenCalled();
+    expect(signoutRedirect).not.toHaveBeenCalled();
   });
 });

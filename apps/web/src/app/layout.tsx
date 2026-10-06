@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { Geist } from 'next/font/google';
 
 import { cn } from '@/shared/lib/utils';
+import { Toaster } from '@/shared/ui/Sonner';
 import { TooltipProvider } from '@/shared/ui/Tooltip';
 
 import { AuthBootstrap } from './AuthBootstrap';
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body>
         <TooltipProvider>
           <AuthBootstrap>{children}</AuthBootstrap>
+          <Toaster />
         </TooltipProvider>
       </body>
     </html>

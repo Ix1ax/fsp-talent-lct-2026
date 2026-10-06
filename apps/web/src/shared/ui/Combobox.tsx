@@ -1,0 +1,100 @@
+'use client';
+
+import { type ComponentProps, useId, useState } from 'react';
+import { CheckIcon, ChevronsUpDownIcon } from 'lucide-react';
+
+import { cn } from '@/shared/lib/utils';
+
+import { Button } from './Button';
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from './Command';
+import { Popover, PopoverContent, PopoverTrigger } from './Popover';
+
+export type ComboboxOption = {
+  value: string;
+  label: string;
+  keywords?: string[];
+};
+
+interface ComboboxProps extends Pick<
+  ComponentProps<'button'>,
+  'id' | 'ref' | 'onBlur' | 'disabled' | 'aria-invalid' | 'aria-describedby'
+> {
+  options: ComboboxOption[];
+  value: string;
+  onValueChange: (value: string) => void;
+  placeholder?: string;
+  searchPlaceholder?: string;
+  emptyMessage?: string;
+}
+
+export const Combobox = ({
+  options,
+  value,
+  onValueChange,
+  placeholder = 'Выберите значение',
+  searchPlaceholder = 'Поиск…',
+  emptyMessage = 'Ничего не найдено.',
+  ...props
+}: ComboboxProps) => {
+  const [open, setOpen] = useState(false);
+  const listId = useId();
+  const selected = options.find((option) => option.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          aria-controls={listId}
+          className="w-full justify-between font-normal"
+          {...props}
+        >
+          <span className="truncate">{selected?.label ?? placeholder}</span>
+          <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="w-(--radix-popover-trigger-width) p-0"
+      >
+        <Command defaultValue={value || 'empty-value'}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            aria-label={searchPlaceholder}
+          />
+          <CommandList id={listId}>
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
+            {options.map((option) => (
+              <CommandItem
+                key={option.value}
+                value={option.value || 'empty-value'}
+                keywords={[option.label, ...(option.keywords ?? [])]}
+                onSelect={() => {
+                  onValueChange(option.value);
+                  setOpen(false);
+                }}
+              >
+                <CheckIcon
+                  className={cn(
+                    'size-4 shrink-0',
+                    value !== option.value && 'opacity-0',
+                  )}
+                />
+                {option.label}
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
