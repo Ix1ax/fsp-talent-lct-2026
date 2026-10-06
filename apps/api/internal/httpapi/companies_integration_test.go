@@ -24,7 +24,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
+	companyservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/migrations"
@@ -138,8 +140,10 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 	})
 	storage := &faultyObjects{Objects: files.NewS3(client)}
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	service := company.NewService(company.NewRepository(db), storage, bucket, log)
-	e := newAuthEnv(t, service)
+	repo := repository.NewRepository(db)
+	profileService := companyservice.NewCompanyService(repo)
+	documentService := companyservice.NewDocumentService(repo, storage, bucket, log)
+	e := newAuthEnvWithOptions(t, Options{Companies: profileService, Documents: documentService})
 	tokens := map[string]string{}
 	ids := map[string]string{}
 	ctx := context.Background()
@@ -167,9 +171,9 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 		}
 		return w
 	}
-	decodeCompany := func(w *httptest.ResponseRecorder) company.Company {
+	decodeCompany := func(w *httptest.ResponseRecorder) entity.Company {
 		t.Helper()
-		var c company.Company
+		var c entity.Company
 		if err := json.Unmarshal(w.Body.Bytes(), &c); err != nil {
 			t.Fatal(err)
 		}

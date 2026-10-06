@@ -4,17 +4,21 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/docs"
 	"io/fs"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/docs"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
+	catalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog/web"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
+	companyweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
@@ -24,7 +28,10 @@ type Checker interface{ Check(context.Context) error }
 type Options struct {
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
-	Companies               *company.Service
+	Companies               *service.CompanyService
+	Documents               *service.DocumentService
+	Needs                   *service.NeedsService
+	Catalogs                *catalog.Service
 }
 
 func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Options) *gin.Engine {
@@ -95,7 +102,8 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.GET("/info", func(c *gin.Context) { c.JSON(200, gin.H{"name": "fsp-api", "version": "0.1.0"}) })
 	api.GET("/me", auth.Middleware(verifier), currentUser(log, opts.Users), getMe)
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
-	registerCompanies(api, log, verifier, opts)
+	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs})
+	catalogweb.Register(api, log, opts.Catalogs)
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})

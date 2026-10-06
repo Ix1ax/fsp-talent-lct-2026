@@ -1,4 +1,4 @@
-package company
+package entity
 
 import (
 	"encoding/json"

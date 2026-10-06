@@ -1,4 +1,4 @@
-package company
+package service
 
 import (
 	"context"
@@ -7,11 +7,12 @@ import (
 	"log/slog"
 	"testing"
 
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 )
 
 type raceStore struct {
-	Store
+	DocumentStore
 	file files.File
 }
 
@@ -22,7 +23,7 @@ func (r *raceStore) ReserveFile(_ context.Context, _, _ string, f files.File) (f
 }
 func (r *raceStore) CompleteFile(_ context.Context, _, _, _ string) (files.File, error) {
 	if r.file.Status != "pending" {
-		return files.File{}, ErrNotFound
+		return files.File{}, entity.ErrNotFound
 	}
 	r.file.Status = "ready"
 	return r.file, nil
@@ -54,7 +55,7 @@ func (o *delayedObjects) Delete(_ context.Context, _ files.File) error { o.exist
 func TestDeleteDuringUploadLeavesNoObject(t *testing.T) {
 	store := &raceStore{}
 	objects := &delayedObjects{}
-	service := NewService(store, objects, "test", slog.New(slog.NewTextHandler(io.Discard, nil)))
+	service := NewDocumentService(store, objects, "test", slog.New(slog.NewTextHandler(io.Discard, nil)))
 	// DELETE успел завершиться, пока Put ещё передавал файл в S3.
 	objects.beforeWrite = func() {
 		if err := service.Delete(context.Background(), "user", "company", "test-file"); err != nil {
@@ -62,7 +63,7 @@ func TestDeleteDuringUploadLeavesNoObject(t *testing.T) {
 		}
 	}
 	_, err := service.Upload(context.Background(), "user", "company", "document.pdf", "company_document", []byte("%PDF-1.7\n%%EOF"))
-	if !errors.Is(err, ErrNotFound) {
+	if !errors.Is(err, entity.ErrNotFound) {
 		t.Fatalf("загрузка удалённого файла: %v", err)
 	}
 	if objects.exists || store.file.Status != "deleted" {
