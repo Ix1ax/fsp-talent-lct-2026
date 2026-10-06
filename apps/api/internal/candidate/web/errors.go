@@ -40,6 +40,8 @@ func (h profileHandler) fail(c *gin.Context, err error) {
 		abortError(c, 404, "profile_not_found", "Профиль кандидата не найден: сначала создайте его")
 	case errors.Is(err, entity.ErrAvatarNotFound):
 		abortError(c, 404, "avatar_not_found", "Аватар не загружен")
+	case errors.Is(err, entity.ErrSkillNotFound):
+		abortError(c, 404, "skill_not_found", "Навык не найден в вашем списке")
 	case errors.Is(err, entity.ErrContactsNotFound):
 		abortError(c, 404, "contacts_not_found", "Контакты ещё не сохранены")
 	case errors.Is(err, entity.ErrConsentRequired):
