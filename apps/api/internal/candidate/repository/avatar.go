@@ -118,9 +118,17 @@ func (r *Repository) DetachAvatar(ctx context.Context, userID string) (files.Fil
 }
 
 // DiscardFile закрывает незавершённую загрузку, чтобы её объект можно было удалить.
+// Если запись уже не pending (например, коммит всё же прошёл), возвращает ErrFileNotPending,
+// и объект удалять нельзя: он может принадлежать живому аватару.
 func (r *Repository) DiscardFile(ctx context.Context, fileID string) error {
-	_, err := r.db.Exec(ctx, `UPDATE files SET status='deleting' WHERE id=$1 AND status='pending'`, fileID)
-	return err
+	tag, err := r.db.Exec(ctx, `UPDATE files SET status='deleting' WHERE id=$1 AND status='pending'`, fileID)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return entity.ErrFileNotPending
+	}
+	return nil
 }
 
 func (r *Repository) FinishDelete(ctx context.Context, fileID string) error {

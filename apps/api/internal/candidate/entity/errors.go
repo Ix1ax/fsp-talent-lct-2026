@@ -7,6 +7,7 @@ var (
 	ErrAvatarNotFound = errors.New("аватар не найден")
 	ErrForbidden      = errors.New("профилем может управлять только активный кандидат")
 	ErrConflict       = errors.New("профиль кандидата уже создан")
+	ErrFileNotPending = errors.New("файл уже не ожидает загрузки")
 )
 
 type ValidationError struct{ Message string }

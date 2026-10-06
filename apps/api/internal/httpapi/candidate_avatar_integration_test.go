@@ -207,3 +207,81 @@ func TestCandidateAvatarService(t *testing.T) {
 		t.Fatalf("не картинка: %v, строк %d", err, rowCount(other))
 	}
 }
+
+// DiscardFile закрывает только незавершённую загрузку: готовый файл (живой аватар) он трогать не должен.
+func TestCandidateRepositoryDiscardFile(t *testing.T) {
+	db := companyTestDB(t)
+	repo := candidaterepo.NewRepository(db)
+	profiles := candidateservice.NewProfileService(repo)
+	ctx := context.Background()
+	var user string
+	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := profiles.Create(ctx, user, entity.ProfileInput{}); err != nil {
+		t.Fatal(err)
+	}
+	reserve := func(key string) files.File {
+		f, err := files.Prepare("a.png", files.PurposeCandidateAvatar, pngBytes(t, 7))
+		if err != nil {
+			t.Fatal(err)
+		}
+		f.Bucket, f.ObjectKey = "bucket", key
+		f, err = repo.ReserveAvatar(ctx, user, f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return f
+	}
+	pending := reserve("candidates/discard-pending")
+	if err := repo.DiscardFile(ctx, pending.ID); err != nil {
+		t.Fatalf("закрытие pending-файла: %v", err)
+	}
+	if err := repo.DiscardFile(ctx, pending.ID); !errors.Is(err, entity.ErrFileNotPending) {
+		t.Fatalf("повторное закрытие: %v", err)
+	}
+	ready := reserve("candidates/discard-ready")
+	if _, _, err := repo.CompleteAvatar(ctx, user, ready.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.DiscardFile(ctx, ready.ID); !errors.Is(err, entity.ErrFileNotPending) {
+		t.Fatalf("готовый файл нельзя закрывать как незавершённый: %v", err)
+	}
+	var status string
+	if err := db.QueryRow(ctx, `SELECT status FROM files WHERE id=$1`, ready.ID).Scan(&status); err != nil || status != "ready" {
+		t.Fatalf("готовый файл изменился: %s (%v)", status, err)
+	}
+}
+
+// Аватар уже отвязан от профиля, поэтому сбой S3 при DELETE не должен превращаться в ошибку клиенту.
+func TestCandidateAvatarDeleteWhenStorageFails(t *testing.T) {
+	db := companyTestDB(t)
+	client, bucket := testS3(t, db)
+	ctx := context.Background()
+	storage := &faultyObjects{Objects: files.NewS3(client)}
+	repo := candidaterepo.NewRepository(db)
+	profiles := candidateservice.NewProfileService(repo)
+	avatars := candidateservice.NewAvatarService(repo, storage, bucket, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	var user string
+	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := profiles.Create(ctx, user, entity.ProfileInput{}); err != nil {
+		t.Fatal(err)
+	}
+	p, err := avatars.Upload(ctx, user, "a.png", pngBytes(t, 9))
+	if err != nil {
+		t.Fatal(err)
+	}
+	storage.failDelete = true
+	err = avatars.Delete(ctx, user)
+	storage.failDelete = false
+	if err != nil {
+		t.Fatalf("DELETE после отвязки аватара должен завершиться успехом, получили %v", err)
+	}
+	after, _ := profiles.Get(ctx, user)
+	var status string
+	if err := db.QueryRow(ctx, `SELECT status FROM files WHERE id=$1`, *p.AvatarFileID).Scan(&status); err != nil || after.AvatarFileID != nil || status != "deleting" {
+		t.Fatalf("после сбоя S3: аватар %v, статус записи %q (%v)", after.AvatarFileID, status, err)
+	}
+}

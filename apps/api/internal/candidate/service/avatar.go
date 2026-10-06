@@ -59,9 +59,12 @@ func (s *AvatarService) Upload(ctx context.Context, userID, name string, data []
 	// У запроса уже мог истечь контекст, поэтому незавершённую загрузку убираем отдельным.
 	cleanup, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if discardErr := s.store.DiscardFile(cleanup, f.ID); discardErr == nil {
+	switch discardErr := s.store.DiscardFile(cleanup, f.ID); {
+	case discardErr == nil:
 		s.removeObjectWith(cleanup, f)
-	} else {
+	case errors.Is(discardErr, entity.ErrFileNotPending):
+		s.log.Warn("Загрузка аватара уже не в статусе pending; объект не удаляем", "file_id", f.ID)
+	default:
 		s.log.Error("Не удалось закрыть незавершённую загрузку аватара", "file_id", f.ID, "error", discardErr)
 	}
 	return entity.Profile{}, err
@@ -84,10 +87,10 @@ func (s *AvatarService) Delete(ctx context.Context, userID string) error {
 	if err != nil {
 		return err
 	}
-	if err = s.objects.Delete(ctx, f); err != nil {
-		return fmt.Errorf("%w: %v", ErrStorage, err)
-	}
-	return s.store.FinishDelete(ctx, f.ID)
+	// Аватар уже отвязан от профиля, поэтому сбой S3 клиенту не показываем:
+	// запись остаётся в статусе deleting, как при замене.
+	s.removeObject(f)
+	return nil
 }
 
 // removeObject удаляет объект прежнего аватара после замены; ошибка не отменяет замену, запись остаётся deleting.
