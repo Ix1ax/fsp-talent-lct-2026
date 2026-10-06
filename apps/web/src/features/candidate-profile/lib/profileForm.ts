@@ -14,7 +14,7 @@ export const toProfileFormValues = (
   city: profile?.city ?? '',
   timezone: profile?.timezone ?? '',
   experienceYears: String(
-    Number(((profile?.experienceMonths ?? 0) / 12).toFixed(4)),
+    Number(((profile?.experienceMonths ?? 0) / 12).toFixed(1)),
   ),
   salaryMinRub: profile?.salaryMinRub?.toString() ?? '',
   searchStatus: profile?.searchStatus ?? 'hidden',

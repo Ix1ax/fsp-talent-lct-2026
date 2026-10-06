@@ -14,6 +14,7 @@ export * from './Select';
 export * from './Separator';
 export * from './Sheet';
 export * from './Skeleton';
+export * from './Slider';
 export * from './Sonner';
 export * from './Switch';
 export * from './Tabs';

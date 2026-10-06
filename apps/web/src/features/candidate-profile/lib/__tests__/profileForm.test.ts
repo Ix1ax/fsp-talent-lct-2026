@@ -71,12 +71,24 @@ describe('profile form', () => {
       toProfileInput({ ...values, experienceYears: '1.2' }).experienceMonths,
     ).toBe(14);
   });
-  it('preserves every existing month value when unchanged', () => {
+  it('renders years rounded to tenths', () => {
+    expect(
+      toProfileFormValues({ ...profile, experienceMonths: 16 }).experienceYears,
+    ).toBe('1.3');
+    expect(
+      toProfileFormValues({ ...profile, experienceMonths: 20 }).experienceYears,
+    ).toBe('1.7');
+  });
+  it('preserves every existing month value when experience is unchanged', () => {
     for (let months = 0; months <= 600; months++) {
       const original = { ...profile, experienceMonths: months };
       const values = toProfileFormValues(original);
-      expect(toProfileInput(values).experienceMonths).toBe(months);
       expect(buildProfilePatch(original, values)).toEqual({});
+      expect(
+        buildProfilePatch(original, { ...values, city: 'Москва' }),
+      ).toEqual({
+        city: 'Москва',
+      });
     }
   });
   it('defaults new profiles to hidden with zero experience', () => {

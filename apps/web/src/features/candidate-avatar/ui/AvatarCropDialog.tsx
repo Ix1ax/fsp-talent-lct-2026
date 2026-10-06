@@ -11,7 +11,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  Input,
+  Label,
+  Slider,
 } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 
@@ -134,31 +135,31 @@ export const AvatarCropDialog = ({
         </div>
         <fieldset disabled={processing} className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="avatar-zoom" className="text-sm font-medium">
-              Масштаб: {zoom.toFixed(1)}×
-            </label>
-            <Input
+            <Label id="avatar-zoom-label">Масштаб: {zoom.toFixed(1)}×</Label>
+            <Slider
               id="avatar-zoom"
-              type="range"
+              aria-labelledby="avatar-zoom-label"
+              disabled={processing}
               min={1}
               max={3}
               step={0.1}
-              value={zoom}
-              onChange={(event) => setZoom(Number(event.target.value))}
+              value={[zoom]}
+              onValueChange={([value]) => setZoom(value)}
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label htmlFor="avatar-rotation" className="text-sm font-medium">
+            <Label id="avatar-rotation-label">
               Поворот: {Math.round(rotation)}°
-            </label>
-            <Input
+            </Label>
+            <Slider
               id="avatar-rotation"
-              type="range"
+              aria-labelledby="avatar-rotation-label"
+              disabled={processing}
               min={0}
               max={360}
               step={1}
-              value={rotation}
-              onChange={(event) => setRotation(Number(event.target.value))}
+              value={[rotation]}
+              onValueChange={([value]) => setRotation(value)}
             />
           </div>
           <div className="flex flex-wrap gap-2">
