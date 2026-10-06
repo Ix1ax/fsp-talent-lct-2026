@@ -4,8 +4,8 @@ import (
 	"errors"
 )
 
-var ErrNotFound = errors.New("компания или файл не найдены")
-var ErrForbidden = errors.New("изменять компанию может только её владелец")
+var ErrNotFound = errors.New("запись не найдена или недоступна")
+var ErrForbidden = errors.New("недостаточно прав для этого действия")
 var ErrConflict = errors.New("компания с таким ИНН уже существует")
 
 type ValidationError struct{ Message string }

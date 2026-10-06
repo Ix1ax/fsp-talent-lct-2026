@@ -35,6 +35,7 @@ type Options struct {
 	Avatars                 *candidateservice.AvatarService
 	Documents               *service.DocumentService
 	Needs                   *service.NeedsService
+	Members                 *service.MemberService
 	Catalogs                *catalog.Service
 }
 
@@ -109,7 +110,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.GET("/info", func(c *gin.Context) { c.JSON(200, gin.H{"name": "fsp-api", "version": "0.1.0"}) })
 	api.GET("/me", auth.Middleware(verifier), currentUser(log, opts.Users), getMe)
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
-	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs})
+	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs, Members: opts.Members})
 	catalogweb.Register(api, log, opts.Catalogs)
 	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars})
 	r.NoRoute(func(c *gin.Context) {

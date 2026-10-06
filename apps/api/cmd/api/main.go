@@ -68,6 +68,7 @@ func run(log *slog.Logger) error {
 			Avatars:     candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Needs:       service.NewNeedsService(companyRepo),
+			Members:     service.NewMemberService(companyRepo),
 			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,

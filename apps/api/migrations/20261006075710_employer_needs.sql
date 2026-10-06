@@ -30,14 +30,14 @@ CREATE TABLE work_formats (
 );
 
 INSERT INTO specializations (id, code, name) VALUES
-    (1, 'backend',   'Бэкенд'),
-    (2, 'frontend',  'Фронтенд'),
+    (1, 'backend'  , 'Бэкенд'),
+    (2, 'frontend' , 'Фронтенд'),
     (3, 'fullstack', 'Фулстек'),
-    (4, 'qa',        'Тестирование'),
-    (5, 'devops',    'DevOps'),
-    (6, 'data',      'Данные и аналитика'),
-    (7, 'mobile',    'Мобильная разработка'),
-    (8, 'security',  'Информационная безопасность');
+    (4, 'qa'       , 'Тестирование'),
+    (5, 'devops'   , 'DevOps'),
+    (6, 'data'     , 'Данные и аналитика'),
+    (7, 'mobile'   , 'Мобильная разработка'),
+    (8, 'security' , 'Информационная безопасность');
 
 INSERT INTO grades (id, code, name, rank) VALUES
     (1, 'intern', 'Стажёр', 1),
@@ -51,22 +51,22 @@ INSERT INTO work_formats (id, code, name) VALUES
     (3, 'remote', 'Удалённо');
 
 INSERT INTO skills (id, code, name, aliases) VALUES
-    ('00000000-0000-4000-8000-000000000001', 'go',         'Go',           ARRAY['golang']),
-    ('00000000-0000-4000-8000-000000000002', 'javascript', 'JavaScript',   ARRAY['js']),
-    ('00000000-0000-4000-8000-000000000003', 'typescript', 'TypeScript',   ARRAY['ts']),
-    ('00000000-0000-4000-8000-000000000004', 'react',      'React',        ARRAY['reactjs']),
-    ('00000000-0000-4000-8000-000000000005', 'python',     'Python',       ARRAY['py']),
-    ('00000000-0000-4000-8000-000000000006', 'java',       'Java',         ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000007', 'postgresql', 'PostgreSQL',   ARRAY['postgres', 'pgsql']),
-    ('00000000-0000-4000-8000-000000000008', 'redis',      'Redis',        ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000009', 'docker',     'Docker',       ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000010', 'kubernetes', 'Kubernetes',   ARRAY['k8s']),
-    ('00000000-0000-4000-8000-000000000011', 'git',        'Git',          ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000012', 'sql',        'SQL',          ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000013', 'linux',      'Linux',        ARRAY[]::text[]),
-    ('00000000-0000-4000-8000-000000000014', 'nextjs',     'Next.js',      ARRAY['next', 'next.js']),
-    ('00000000-0000-4000-8000-000000000015', 'testing',    'Тестирование', ARRAY['qa', 'тесты']),
-    ('00000000-0000-4000-8000-000000000016', 'csharp',     'C#',           ARRAY['csharp', 'dotnet', '.net']);
+    ('00000000-0000-4000-8000-000000000001', 'go'        , 'Go'          , ARRAY['golang']),
+    ('00000000-0000-4000-8000-000000000002', 'javascript', 'JavaScript'  , ARRAY['js']),
+    ('00000000-0000-4000-8000-000000000003', 'typescript', 'TypeScript'  , ARRAY['ts']),
+    ('00000000-0000-4000-8000-000000000004', 'react'     , 'React'       , ARRAY['reactjs']),
+    ('00000000-0000-4000-8000-000000000005', 'python'    , 'Python'      , ARRAY['py']),
+    ('00000000-0000-4000-8000-000000000006', 'java'      , 'Java'        , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000007', 'postgresql', 'PostgreSQL'  , ARRAY['postgres', 'pgsql']),
+    ('00000000-0000-4000-8000-000000000008', 'redis'     , 'Redis'       , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000009', 'docker'    , 'Docker'      , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000010', 'kubernetes', 'Kubernetes'  , ARRAY['k8s']),
+    ('00000000-0000-4000-8000-000000000011', 'git'       , 'Git'         , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000012', 'sql'       , 'SQL'         , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000013', 'linux'     , 'Linux'       , ARRAY[]::text[]),
+    ('00000000-0000-4000-8000-000000000014', 'nextjs'    , 'Next.js'     , ARRAY['next', 'next.js']),
+    ('00000000-0000-4000-8000-000000000015', 'testing'   , 'Тестирование', ARRAY['qa', 'тесты']),
+    ('00000000-0000-4000-8000-000000000016', 'csharp'    , 'C#'          , ARRAY['csharp', 'dotnet', '.net']);
 
 CREATE TABLE employer_needs (
     id                 uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
