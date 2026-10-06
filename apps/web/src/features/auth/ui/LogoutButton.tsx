@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
-import { STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 
 import { logoutSession } from '../api';
@@ -13,7 +11,6 @@ interface LogoutButtonProps {
 }
 
 export const LogoutButton = ({ className }: LogoutButtonProps) => {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +20,6 @@ export const LogoutButton = ({ className }: LogoutButtonProps) => {
 
     try {
       await logoutSession();
-      router.push(STATIC_ROUTES.HOME);
-      router.refresh();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Не удалось выйти');
     } finally {

@@ -14,6 +14,14 @@ describe('OIDC token storage', () => {
       sessionStorage,
     });
     const manager = createOidcManager('https://id.test', 'fsp-web');
+
+    expect(manager.settings.redirect_uri).toBe(
+      'https://app.test/auth/callback',
+    );
+    expect(manager.settings.post_logout_redirect_uri).toBe('https://app.test');
+    expect(manager.settings.response_type).toBe('code');
+    expect(manager.settings.disablePKCE).toBe(false);
+
     const user = new User({
       access_token: 'access',
       refresh_token: 'refresh',

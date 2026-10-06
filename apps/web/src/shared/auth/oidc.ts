@@ -6,9 +6,6 @@ import {
 } from 'oidc-client-ts';
 
 export const getAppOrigin = (): string => {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
-  }
   if (typeof window !== 'undefined') {
     return window.location.origin;
   }
@@ -32,6 +29,9 @@ export const createOidcManager = (
     authority: issuer,
     client_id: clientId,
     redirect_uri: redirectUri,
+    post_logout_redirect_uri: getAppOrigin(),
+    response_type: 'code',
+    disablePKCE: false,
     scope: 'openid profile email',
     automaticSilentRenew: false,
     userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
