@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui';
-import type { SessionUser } from '@/entities/session';
+import { getRoleHomeRoute, type SessionUser } from '@/entities/session';
 
 import { logoutSession } from '../api';
 
@@ -69,7 +69,11 @@ export const UserMenu = ({ user }: UserMenuProps) => {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href={STATIC_ROUTES.CABINET}>
+          <Link
+            href={
+              user.role ? getRoleHomeRoute(user.role) : STATIC_ROUTES.CABINET
+            }
+          >
             <UserIcon />
             Личный кабинет
           </Link>

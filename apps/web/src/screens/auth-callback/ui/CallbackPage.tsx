@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { STATIC_ROUTES } from '@/shared/contants';
+import { getRoleHomeRoute } from '@/entities/session';
 import {
   completeOidcCallback,
   type CompleteOidcCallbackResult,
@@ -30,7 +31,12 @@ export const CallbackPage = () => {
       const result = await completeOidcCallback();
 
       if (result.status === 'authenticated') {
-        router.replace(STATIC_ROUTES.CABINET);
+        if (!result.user.role) {
+          setState({ status: 'role_chooser' });
+          return;
+        }
+
+        router.replace(getRoleHomeRoute(result.user.role));
         return;
       }
 

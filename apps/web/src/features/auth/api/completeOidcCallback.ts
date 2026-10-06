@@ -1,10 +1,10 @@
 import { ApiError } from '@/shared/api';
 import { getAuthConfig } from '@/shared/api/authConfig';
 import { createOidcManager, setClientAccessToken } from '@/shared/auth';
-import { getMeClient } from '@/entities/session';
+import { getMeClient, type SessionUser } from '@/entities/session';
 
 export type CompleteOidcCallbackResult =
-  | { status: 'authenticated' }
+  | { status: 'authenticated'; user: SessionUser }
   | { status: 'role_chooser' }
   | { status: 'inactive' }
   | { status: 'unauthorized' }
@@ -39,8 +39,8 @@ export const completeOidcCallback =
       setClientAccessToken(user.access_token);
 
       try {
-        await getMeClient();
-        return { status: 'authenticated' };
+        const sessionUser = await getMeClient();
+        return { status: 'authenticated', user: sessionUser };
       } catch (err) {
         if (err instanceof ApiError) {
           if (err.status === 404 && err.code === 'not_registered') {

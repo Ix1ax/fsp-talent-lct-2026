@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Button,
   Card,
@@ -12,7 +11,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
-import { registerRole, type UserRole } from '@/entities/session';
+import {
+  getRoleHomeRoute,
+  registerRole,
+  USER_ROLES,
+  type UserRole,
+} from '@/entities/session';
 
 export const RoleChooser = () => {
   const router = useRouter();
@@ -25,7 +29,7 @@ export const RoleChooser = () => {
 
     try {
       await registerRole(role);
-      router.push(STATIC_ROUTES.CABINET);
+      router.push(getRoleHomeRoute(role));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка регистрации');
       setPending(null);
@@ -45,16 +49,16 @@ export const RoleChooser = () => {
         <div className="flex flex-wrap gap-3">
           <Button
             disabled={pending !== null}
-            onClick={() => void choose('candidate')}
+            onClick={() => void choose(USER_ROLES.CANDIDATE)}
           >
-            {pending === 'candidate' ? 'Сохранение…' : 'Я соискатель'}
+            {pending === USER_ROLES.CANDIDATE ? 'Сохранение…' : 'Я соискатель'}
           </Button>
           <Button
             variant="outline"
             disabled={pending !== null}
-            onClick={() => void choose('employer')}
+            onClick={() => void choose(USER_ROLES.EMPLOYER)}
           >
-            {pending === 'employer' ? 'Сохранение…' : 'Я работодатель'}
+            {pending === USER_ROLES.EMPLOYER ? 'Сохранение…' : 'Я работодатель'}
           </Button>
         </div>
         {error && (
