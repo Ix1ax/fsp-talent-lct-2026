@@ -323,3 +323,69 @@ cd apps/api
 # Задайте TEST_DATABASE_URL для отдельного тестового Postgres.
 go test -race -tags=integration ./internal/httpapi -run TestCompanyNeeds
 ```
+
+### Профиль кандидата
+
+Пользователь входит через Keycloak, подтверждает почту и регистрируется в API через
+`POST /api/v1/me/register` с `{"role":"candidate"}`. Дальше во всех запросах нужен
+`Authorization: Bearer <access_token>`. Методы доступны только роли `candidate`: работодатель получит 403.
+Профиль создаётся явным запросом кандидата, у одного пользователя он один.
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| POST | `/api/v1/me/profile` | Создать свой профиль, 201 и `Location: /api/v1/me/profile` |
+| GET | `/api/v1/me/profile` | Получить свой профиль |
+| PATCH | `/api/v1/me/profile` | Изменить свой профиль |
+| PUT | `/api/v1/me/profile/avatar` | Загрузить или заменить аватар, multipart, поле `file` |
+| GET | `/api/v1/me/profile/avatar` | Получить свой аватар (картинка) |
+| DELETE | `/api/v1/me/profile/avatar` | Удалить аватар, 204 |
+
+Поля профиля, все необязательны: `headline` (до 200 символов), `summary` (до 10000), `city` (до 200),
+`timezone` (IANA, например `Europe/Moscow`), `experience_months` (0–600, по умолчанию 0),
+`salary_min_rub` (желаемая зарплата в месяц), `search_status` и `work_format_ids`.
+`search_status`: `open`, `passive` или `hidden`; по умолчанию `hidden` — профиль никому не виден,
+пока кандидат сам не выберет другой статус. `work_format_ids` берите из `GET /api/v1/catalogs`.
+Грейд и категория не задаются: они появятся после тестирования. В ответе есть `id`, `avatar_file_id`
+и `updated_at`; `user_id` наружу не отдаётся.
+
+В PATCH отправляйте только изменяемые поля: отсутствующее поле не меняется, `null` очищает необязательное
+поле. `experience_months` и `search_status` очистить нельзя. Непустой `work_format_ids` заменяет набор
+целиком, `[]` очищает его. Нельзя передавать `id`, `user_id`, `avatar_file_id`, `updated_at`: это 400.
+
+Ошибки приходят в формате `{"error":{"code","message"}}`, сообщение на русском:
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `profile_exists` | 409 | Профиль уже создан |
+| `profile_not_found` | 404 | Профиля ещё нет, создайте его через POST |
+| `avatar_not_found` | 404 | Аватар не загружен |
+| `validation_error` | 400 | Некорректный JSON, неизвестное поле, значение вне границ, неизвестный формат работы |
+| `invalid_file` | 400 | Нужен ровно один файл в поле `file`, файл пустой или повреждён |
+| `file_too_large` | 413 | Аватар больше 2 МиБ |
+| `unsupported_file_type` | 415 | Допустимы только JPEG и PNG |
+| `forbidden` / `user_inactive` | 403 | Не кандидат / учётная запись заблокирована |
+| `storage_unavailable` | 503 | Хранилище файлов недоступно |
+
+Аватар: только JPEG и PNG, до 2 МиБ и до 4 мегапикселей. Тип определяется по содержимому, не по расширению.
+Повторная загрузка заменяет аватар. **Аватар видит только сам кандидат**: карточки кандидатов для работодателей
+анонимны, и показ фото решим вместе с офферами. Для показа достаточно
+`fetch(url, {headers: {Authorization: 'Bearer ' + token}})`, затем `blob()` и `URL.createObjectURL(blob)`;
+при смене или размонтировании картинки вызывайте `URL.revokeObjectURL`. Токен в URL не передавайте.
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/me/profile" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"headline":"Go-разработчик","experience_months":30,"search_status":"open","work_format_ids":[1,3]}'
+
+curl --fail-with-body -X PUT "$API_URL/api/v1/me/profile/avatar" \
+  -H "Authorization: Bearer $TOKEN" -F 'file=@./photo.png'
+```
+
+Данные лежат в `candidate_profiles` и `candidate_work_formats`, содержимое аватара — в приватном S3 в общей
+таблице `files` с целью `candidate_avatar`. Миграция `20261006092005_candidate_profiles.sql` применяется после
+`employer_needs`. Интеграционные тесты профиля и аватара используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./internal/httpapi -run 'TestCandidate'
+```
