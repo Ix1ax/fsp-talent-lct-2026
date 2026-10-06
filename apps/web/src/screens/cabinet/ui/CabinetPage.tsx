@@ -1,25 +1,20 @@
-import Link from 'next/link';
-
 import { requireAccessToken } from '@/shared/auth/server';
 import {
   Badge,
-  Button,
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
 import { loadSession } from '@/entities/session/api/server';
-import { LogoutButton } from '@/features/auth';
 
 export const CabinetPage = async () => {
   await requireAccessToken('/cabinet');
   const session = await loadSession();
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-2xl items-center p-6">
+    <main className="mx-auto flex max-w-2xl items-start p-6 pt-10">
       <Card className="w-full">
         <CardHeader>
           <CardTitle>Кабинет</CardTitle>
@@ -55,12 +50,6 @@ export const CabinetPage = async () => {
             </p>
           )}
         </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-          <Button asChild variant="outline">
-            <Link href="/">На главную</Link>
-          </Button>
-          <LogoutButton />
-        </CardFooter>
       </Card>
     </main>
   );

@@ -14,8 +14,8 @@ export const LoginPage = () => {
         <CardHeader>
           <CardTitle>Вход</CardTitle>
           <CardDescription>
-            Войдите через корпоративный аккаунт. Вы будете перенаправлены на
-            страницу авторизации.
+            Войдите через аккаунт ФСП. Вы будете перенаправлены на страницу
+            авторизации.
           </CardDescription>
         </CardHeader>
         <CardContent>

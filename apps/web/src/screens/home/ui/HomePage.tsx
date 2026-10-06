@@ -1,16 +1,8 @@
-import { LoginButton } from '@/features/auth';
 import { ApiStatus } from '@/widgets/api-status';
 
 export const HomePage = () => {
   return (
     <main className="mx-auto max-w-[1140px] p-8 max-md:p-5">
-      <header className="flex items-center justify-between gap-5 text-[13px] text-muted-foreground max-md:items-start">
-        <span className="bg-primary px-[18px] py-3 text-[22px] font-black text-primary-foreground">
-          ФСП
-        </span>
-        <LoginButton />
-      </header>
-
       <section className="pt-[90px] pb-14 max-md:pt-13">
         <p className="text-xs tracking-[3px] text-brand-soft">
           DEVELOPMENT WORKSPACE

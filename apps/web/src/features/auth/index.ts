@@ -4,4 +4,4 @@ export {
   logoutSession,
   startOidcLogin,
 } from './api';
-export { LoginButton, LogoutButton, RoleChooser } from './ui';
+export { LoginButton, LogoutButton, RoleChooser, UserMenu } from './ui';

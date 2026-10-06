@@ -34,7 +34,7 @@ export const LoginButton = ({ className }: LoginButtonProps) => {
         disabled={pending}
         onClick={() => void onLogin()}
       >
-        {pending ? 'Перенаправление…' : 'Войти через Keycloak'}
+        {pending ? 'Перенаправление…' : 'Войти через ФСП'}
       </Button>
       {error && (
         <p className="text-sm text-destructive" role="alert">
