@@ -8,6 +8,11 @@ import (
 )
 
 // Recommend использует только условия работы. Категорию и квалификацию подключим после тестирования.
+// TODO: после согласования данных со вторым беком добавить специализацию, подтверждённый грейд
+// и сравнение навыков с требованиями потребности. Результаты тестов и подтверждённые достижения
+// ФСП учитывать при ранжировании внутри категории; достижения не должны повышать грейд.
+// Обработать отсутствие этих данных, расширить объяснения и обновить matching_mode,
+// unassessed_criteria и Swagger только по фактически реализованным критериям.
 func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID string, filter entity.Filter) (entity.RecommendationPage, error) {
 	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "conditions_only", UnassessedCriteria: []string{"specialization", "confirmed_grade", "skills", "test_results", "fsp_achievements"}}
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
