@@ -38,6 +38,10 @@ func (h profileHandler) fail(c *gin.Context, err error) {
 		abortError(c, 404, "profile_not_found", "Профиль кандидата не найден: сначала создайте его")
 	case errors.Is(err, entity.ErrAvatarNotFound):
 		abortError(c, 404, "avatar_not_found", "Аватар не загружен")
+	case errors.Is(err, entity.ErrContactsNotFound):
+		abortError(c, 404, "contacts_not_found", "Контакты ещё не сохранены")
+	case errors.Is(err, entity.ErrConsentRequired):
+		abortError(c, 409, "consent_required", "Для этого действия нужно согласие на обработку персональных данных")
 	case errors.Is(err, entity.ErrForbidden):
 		abortError(c, 403, "forbidden", "Профилем может управлять только активный кандидат")
 	case errors.Is(err, entity.ErrConflict):
