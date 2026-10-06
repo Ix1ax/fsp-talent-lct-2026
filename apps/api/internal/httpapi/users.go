@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/middleware"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -20,49 +21,10 @@ func meResponse(identity auth.Claims, u user.User) gin.H {
 	return gin.H{"id": u.ID, "sub": identity.Subject, "email": identity.Email, "email_verified": identity.EmailVerified, "role": u.Role, "status": u.Status}
 }
 
-// currentUser находит пользователя приложения по проверенной идентичности и кладёт его в контекст.
 func currentUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		identity, ok := auth.IdentityFrom(c)
-		if !ok || users == nil {
-			abortError(c, 503, "auth_unavailable", "Сервис авторизации не настроен")
-			return
-		}
-		u, err := users.Resolve(c.Request.Context(), identity.Issuer, identity.Subject)
-		switch {
-		case errors.Is(err, user.ErrNotFound):
-			abortError(c, 404, "not_registered", "Пользователь не зарегистрирован: выберите роль соискателя или работодателя")
-		case errors.Is(err, user.ErrInactive):
-			abortError(c, 403, "user_inactive", "Учётная запись заблокирована или удалена")
-		case err != nil:
-			log.Error("Не удалось получить пользователя", "error", err)
-			abortError(c, 500, "internal_error", "Внутренняя ошибка сервера")
-		default:
-			c.Set(userKey, u)
-			c.Next()
-		}
-	}
+	return middleware.CurrentUser(log, users)
 }
-
-// requireRole пропускает только пользователей с одной из перечисленных ролей. Ставится после currentUser.
-func requireRole(roles ...string) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		v, _ := c.Get(userKey)
-		u, ok := v.(user.User)
-		if !ok {
-			abortError(c, 401, "unauthorized", "Требуется вход в систему")
-			return
-		}
-		for _, role := range roles {
-			if u.Role == role {
-				c.Next()
-				return
-			}
-		}
-		abortError(c, 403, "forbidden", "Недостаточно прав для этого действия")
-	}
-}
-
+func requireRole(roles ...string) gin.HandlerFunc { return middleware.RequireRole(roles...) }
 func getMe(c *gin.Context) {
 	identity, _ := auth.IdentityFrom(c)
 	v, _ := c.Get(userKey)
@@ -100,9 +62,4 @@ func registerUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
 	}
 }
 
-// UserFrom возвращает локальный UUID. Вызывать после currentUser, а не брать sub из JWT.
-func UserFrom(c *gin.Context) (user.User, bool) {
-	v, _ := c.Get(userKey)
-	u, ok := v.(user.User)
-	return u, ok
-}
+func UserFrom(c *gin.Context) (user.User, bool) { return middleware.UserFrom(c) }

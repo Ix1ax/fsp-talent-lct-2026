@@ -17,7 +17,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-jose/go-jose/v4"
 
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -48,7 +48,15 @@ type authEnv struct {
 	signer jose.Signer
 }
 
-func newAuthEnv(t *testing.T, companies ...*company.Service) *authEnv {
+func newAuthEnv(t *testing.T, companies ...*service.CompanyService) *authEnv {
+	opts := Options{}
+	if len(companies) > 0 {
+		opts.Companies = companies[0]
+	}
+	return newAuthEnvWithOptions(t, opts)
+}
+
+func newAuthEnvWithOptions(t *testing.T, opts Options) *authEnv {
 	t.Helper()
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -60,11 +68,9 @@ func newAuthEnv(t *testing.T, companies ...*company.Service) *authEnv {
 	}
 	verifier := oidc.NewVerifier(testIssuer, &oidc.StaticKeySet{PublicKeys: []crypto.PublicKey{&key.PublicKey}}, &oidc.Config{ClientID: "fsp-api"})
 	store := &memStore{users: map[string]user.User{}}
-	var companiesService *company.Service
-	if len(companies) > 0 {
-		companiesService = companies[0]
-	}
-	router := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, verifier, Options{CORSOrigins: "*", Users: user.NewService(store), Companies: companiesService})
+	opts.CORSOrigins = "*"
+	opts.Users = user.NewService(store)
+	router := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, verifier, opts)
 	return &authEnv{router: router, store: store, signer: signer}
 }
 

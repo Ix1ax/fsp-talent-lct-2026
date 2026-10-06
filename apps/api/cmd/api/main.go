@@ -13,7 +13,9 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
@@ -51,13 +53,17 @@ func run(log *slog.Logger) error {
 		}
 		verifier = configured
 	}
+	companyRepo := repository.NewRepository(deps.DB)
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
 			CORSOrigins: c.CORSOrigins,
 			OIDCIssuer:  c.OIDCIssuer,
 			Users:       user.NewService(user.NewRepository(deps.DB)),
-			Companies:   company.NewService(company.NewRepository(deps.DB), files.NewS3(deps.Objects), deps.Bucket, log),
+			Companies:   service.NewCompanyService(companyRepo),
+			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Needs:       service.NewNeedsService(companyRepo),
+			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,
