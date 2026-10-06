@@ -23,6 +23,8 @@ import (
 	catalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	companyweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/web"
+	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
+	consentweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	offerservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
 	offerweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/web"
@@ -43,6 +45,7 @@ type Options struct {
 	Catalogs                *catalog.Service
 	Offers                  *offerservice.Service
 	CandidateBank           *bankservice.Service
+	Consents                *consentservice.Service
 }
 
 func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Options) *gin.Engine {
@@ -120,6 +123,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	catalogweb.Register(api, log, opts.Catalogs)
 	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
+	consentweb.Register(api, log, verifier, opts.Users, opts.Consents)
 	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})

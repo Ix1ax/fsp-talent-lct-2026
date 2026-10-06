@@ -21,6 +21,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
+	consentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/repository"
+	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	offerrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
@@ -76,6 +78,7 @@ func run(log *slog.Logger) error {
 			Catalogs:      catalog.NewService(catalog.NewRepository(deps.DB)),
 			Offers:        offerservice.New(offerrepository.New(deps.DB)),
 			CandidateBank: bankservice.New(bankrepository.New(deps.DB)),
+			Consents:      consentservice.NewService(consentrepository.NewRepository(deps.DB), c.PrivacyPolicyVersion),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,
