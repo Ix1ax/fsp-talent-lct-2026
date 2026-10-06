@@ -41,8 +41,8 @@ func authorize(ctx context.Context, tx pgx.Tx, userID, companyID string) error {
 	return err
 }
 
-func (r *Repository) List(ctx context.Context, userID, companyID string, limit, offset int) (entity.Page, error) {
-	page := entity.Page{Items: []entity.Card{}, Limit: limit, Offset: offset}
+func (r *Repository) List(ctx context.Context, userID, companyID string, filter entity.Filter) (entity.Page, error) {
+	page := entity.Page{Items: []entity.Card{}, Limit: filter.Limit, Offset: filter.Offset}
 	// Список и total читаем из одного снимка, чтобы они не расходились при изменении профилей.
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
@@ -52,11 +52,32 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, limit, 
 	if err = authorize(ctx, tx, userID, companyID); err != nil {
 		return page, err
 	}
-	if err = tx.QueryRow(ctx, `SELECT count(*)`+visible).Scan(&page.Total); err != nil {
+	// Неизвестные форматы не превращаем молча в пустую выдачу.
+	if len(filter.WorkFormatIDs) > 0 {
+		var count int
+		if err = tx.QueryRow(ctx, `SELECT count(*) FROM work_formats WHERE id=ANY($1::smallint[])`, filter.WorkFormatIDs).Scan(&count); err != nil {
+			return page, err
+		}
+		if count != len(filter.WorkFormatIDs) {
+			return page, &entity.ValidationError{Message: "Неизвестный формат работы: выберите ID из справочника"}
+		}
+	}
+	conditions := visible + ` AND ($1::integer IS NULL OR p.experience_months >= $1)
+        AND ($2::integer IS NULL OR p.experience_months <= $2)
+        AND ($3::bigint IS NULL OR p.salary_min_rub <= $3)
+        AND (cardinality($4::smallint[])=0 OR EXISTS (
+            SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($4::smallint[])))`
+	// При фильтре зарплаты неизвестные ожидания исключаются: соответствие бюджету не подтверждено.
+	formats := filter.WorkFormatIDs
+	if formats == nil {
+		formats = []int16{}
+	}
+	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, formats}
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	// На первом этапе это каталог, а не рейтинг: порядок по UUID стабилен и не обещает релевантность.
-	rows, err := tx.Query(ctx, `SELECT `+columns+visible+` ORDER BY p.id LIMIT $1 OFFSET $2`, limit, offset)
+	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+` ORDER BY p.id LIMIT $5 OFFSET $6`, append(args, filter.Limit, filter.Offset)...)
+
 	if err != nil {
 		return page, err
 	}

@@ -3,7 +3,9 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -78,4 +80,51 @@ func TestCandidateBankVisibilityAndAccess(t *testing.T) {
 	f.request(t, "GET", base, "viewer", "", 404)
 	f.exec(t, `UPDATE users SET status='blocked' WHERE id=$1`, f.ids["owner"])
 	f.request(t, "GET", base, "owner", "", 404)
+}
+
+func TestCandidateBankFilters(t *testing.T) {
+	f := newOfferFixture(t)
+	old := f.auth.store.users
+	f.auth = newAuthEnvWithOptions(t, Options{CandidateBank: service.New(repository.New(f.db))})
+	f.auth.store.users = old
+	for who := range f.tokens {
+		f.tokens[who] = f.auth.token(t, who)
+	}
+	base := "/api/v1/companies/" + f.company + "/candidates"
+	var format int16
+	if err := f.db.QueryRow(context.Background(), `SELECT id FROM work_formats ORDER BY id LIMIT 1`).Scan(&format); err != nil {
+		t.Fatal(err)
+	}
+	f.exec(t, `UPDATE candidate_profiles SET experience_months=36,salary_min_rub=180000 WHERE id=$1`, f.profiles["candidate"])
+	f.exec(t, `UPDATE candidate_profiles SET experience_months=12,salary_min_rub=NULL WHERE id=$1`, f.profiles["other_candidate"])
+	f.exec(t, `INSERT INTO candidate_work_formats(candidate_id,work_format_id) VALUES($1,$2)`, f.profiles["candidate"], format)
+	for _, tc := range []struct {
+		query string
+		total int64
+	}{
+		{"experience_min_months=36&experience_max_months=36", 1},
+		{"experience_max_months=12", 1},
+		{"salary_max_rub=180000", 1}, {"salary_max_rub=179999", 0},
+		{fmt.Sprintf("work_format_ids=%d", format), 1},
+		{fmt.Sprintf("work_format_ids=%d&experience_min_months=36&salary_max_rub=180000&offset=1", format), 1},
+		{fmt.Sprintf("work_format_ids=%d&experience_max_months=12", format), 0},
+	} {
+		w := f.request(t, "GET", base+"?"+tc.query, "owner", "", 200)
+		var page entity.Page
+		if err := json.Unmarshal(w.Body.Bytes(), &page); err != nil {
+			t.Fatal(err)
+		}
+		if page.Total != tc.total {
+			t.Fatalf("%s: %+v", tc.query, page)
+		}
+		if strings.Contains(tc.query, "offset=1") && len(page.Items) != 0 {
+			t.Fatal("Пагинация применяется после фильтра")
+		}
+	}
+	f.request(t, "GET", base+"?work_format_ids=32767", "owner", "", 400)
+	f.exec(t, `UPDATE candidate_profiles SET search_status='hidden' WHERE id=$1`, f.profiles["candidate"])
+	w := f.request(t, "GET", base+"?salary_max_rub=200000", "owner", "", 200)
+	if !strings.Contains(w.Body.String(), `"total":0`) {
+		t.Fatal("Фильтры раскрыли скрытый профиль")
+	}
 }

@@ -11,7 +11,6 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 	"github.com/jackc/pgx/v5/pgtype"
 	"log/slog"
-	"strconv"
 )
 
 func abort(c *gin.Context, status int, code, message string) {
@@ -36,7 +35,10 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 		c.Next()
 	})
 	respond := func(c *gin.Context, value any, err error) {
+		var validation *entity.ValidationError
 		switch {
+		case errors.As(err, &validation):
+			abort(c, 400, "validation_error", validation.Message)
 		case errors.Is(err, entity.ErrNotFound):
 			abort(c, 404, "not_found", "Кандидат или компания недоступны")
 		case err != nil:
@@ -47,33 +49,13 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 		}
 	}
 	g.GET("", func(c *gin.Context) {
-		// Не игнорируем опечатки и ещё не реализованные фильтры: фронт должен получить честный ответ.
-		for key, values := range c.Request.URL.Query() {
-			if (key != "limit" && key != "offset") || len(values) != 1 {
-				abort(c, 400, "validation_error", "Допустимы только однократные параметры limit и offset")
-				return
-			}
-		}
-		limit, offset := 20, 0
-		for _, p := range []struct {
-			name     string
-			target   *int
-			min, max int
-		}{{"limit", &limit, 1, 100}, {"offset", &offset, 0, 10000}} {
-			if value, exists := c.GetQuery(p.name); exists {
-				n, err := strconv.Atoi(value)
-				if err != nil || n < p.min || n > p.max {
-					abort(c, 400, "validation_error", "Некорректный параметр "+p.name)
-					return
-				}
-				*p.target = n
-			} else if _, exists := c.Request.URL.Query()[p.name]; exists {
-				abort(c, 400, "validation_error", "Параметр "+p.name+" не должен быть пустым")
-				return
-			}
+		filter, err := entity.ParseFilter(c.Request.URL.RawQuery)
+		if err != nil {
+			abort(c, 400, "validation_error", err.Error())
+			return
 		}
 		u, _ := middleware.UserFrom(c)
-		v, err := bank.List(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
+		v, err := bank.List(c.Request.Context(), u.ID, c.Param("company_id"), filter)
 		respond(c, v, err)
 	})
 	g.GET("/:candidate_id", func(c *gin.Context) {
