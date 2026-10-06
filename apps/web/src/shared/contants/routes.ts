@@ -4,4 +4,5 @@ export const STATIC_ROUTES = {
   CABINET: '/cabinet',
   CANDIDATE: '/candidate',
   EMPLOYER: '/employer',
+  GUIDES: '/guides',
 } as const;

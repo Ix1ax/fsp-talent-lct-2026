@@ -1,0 +1,1 @@
+export { parseSkillsQuery } from './query';
