@@ -150,6 +150,589 @@ paths:
                     example: fsp-web
         '503':
           description: Авторизация не настроена
+  /api/v1/companies:
+    post:
+      operationId: createCompany
+      summary: Создать компанию и стать её владельцем
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Требуется локальная роль employer. Компания и членство owner создаются одной транзакцией. Пользователь может состоять в нескольких
+        компаниях. Поля статуса проверки и владельца передавать нельзя.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyInput'
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Компания с указанным ИНН уже существует (company_exists).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: listMyCompanies
+      summary: Мои компании
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: 'Только активные членства. Порядок: сначала новые, затем UUID по убыванию.'
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+            maximum: 10000
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyList'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/companies/{company_id}:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getCompany
+      summary: Профиль моей компании
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      operationId: updateCompany
+      summary: Обновить профиль компании
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: Только owner. Параллельные запросы не затирают поля, которые не передавались в PATCH.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyPatch'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Компания с указанным ИНН уже существует (company_exists).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/companies/{company_id}/files:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: listCompanyFiles
+      summary: Документы и логотипы компании
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: Для активных участников компании. Удалённые файлы не возвращаются. Старые логотипы остаются в списке до явного удаления.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+            maximum: 10000
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyFileList'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: uploadCompanyFile
+      summary: Загрузить документ или установить логотип
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Только owner. Ровно один file и один purpose. Документы: PDF/JPEG/PNG до 10 МиБ. Логотип: JPEG/PNG до 2 МиБ. Изображения — до 4
+        мегапикселей. Тип определяется по содержимому. company_logo автоматически заменяет logo_file_id после успешной загрузки. Бакет
+        приватный; скачивание через API с Bearer. Это проверка формата, а не антивирус.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - file
+                - purpose
+              properties:
+                file:
+                  type: string
+                  format: binary
+                purpose:
+                  type: string
+                  enum:
+                    - company_document
+                    - company_logo
+      responses:
+        '201':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyFile'
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер файла (file_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Неподдерживаемый тип файла (unsupported_file_type).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/companies/{company_id}/files/{file_id}/download:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: downloadCompanyFile
+      summary: Скачать приватный файл компании
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Только активные участники этой компании. В браузере используйте fetch с Authorization и blob; ключ S3 клиенту не нужен. PDF
+        возвращается как attachment, логотип — inline. Cache-Control: private, no-store.
+      responses:
+        '200':
+          description: Содержимое файла
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: Имя файла и способ отображения
+            Cache-Control:
+              schema:
+                type: string
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/companies/{company_id}/files/{file_id}:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: file_id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    delete:
+      operationId: deleteCompanyFile
+      summary: Удалить документ или логотип
+      tags:
+        - Компании
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Только owner. Сначала закрывается скачивание и сбрасывается logo_file_id, затем удаляется объект S3. При сбое вернётся 503: повторите
+        DELETE. Повторное удаление доступного владельцу файла возвращает 204.
+      responses:
+        '204':
+          description: Файл удалён
+        '400':
+          description: Некорректный UUID, JSON, параметры или поля (validation_error/invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован, роль не employer или участник не владелец.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Компания/файл недоступны этому пользователю, файл ещё не ready либо пользователь не зарегистрирован локально.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис или хранилище временно недоступны.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -167,6 +750,214 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    CompanyInput:
+      type: object
+      additionalProperties: false
+      required:
+        - name
+        - contact_email
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: ФСП Технологии
+        description:
+          type: string
+          nullable: true
+          maxLength: 10000
+        inn:
+          type: string
+          nullable: true
+          pattern: ^([0-9]{10}|[0-9]{12})$
+          description: Необязательный уникальный ИНН. Проверяется контрольная сумма; пустая строка очищает поле.
+          example: '7707083893'
+        contact_email:
+          type: string
+          format: email
+          maxLength: 254
+          example: hr@example.org
+        contact_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+          description: Контактная ссылка http или https, без логина и пароля.
+    CompanyPatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: >-
+        Передавайте только изменяемые поля. null очищает description, inn и contact_url. name и contact_email очистить нельзя. Логотип задаётся
+        загрузкой файла с purpose=company_logo.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: ФСП Технологии
+        description:
+          type: string
+          nullable: true
+          maxLength: 10000
+        inn:
+          type: string
+          nullable: true
+          pattern: ^([0-9]{10}|[0-9]{12})$
+          description: Необязательный уникальный ИНН. Проверяется контрольная сумма; пустая строка очищает поле.
+          example: '7707083893'
+        contact_email:
+          type: string
+          format: email
+          maxLength: 254
+          example: hr@example.org
+        contact_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+          description: Контактная ссылка http или https, без логина и пароля.
+    Company:
+      type: object
+      required:
+        - id
+        - name
+        - description
+        - inn
+        - contact_email
+        - contact_url
+        - logo_file_id
+        - verification_status
+        - created_at
+        - member_role
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: ФСП Технологии
+        description:
+          type: string
+          nullable: true
+          maxLength: 10000
+        inn:
+          type: string
+          nullable: true
+          pattern: ^([0-9]{10}|[0-9]{12})$
+          description: Необязательный уникальный ИНН. Проверяется контрольная сумма; пустая строка очищает поле.
+          example: '7707083893'
+        contact_email:
+          type: string
+          format: email
+          maxLength: 254
+          example: hr@example.org
+        contact_url:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 2048
+          description: Контактная ссылка http или https, без логина и пароля.
+        logo_file_id:
+          type: string
+          format: uuid
+          nullable: true
+        verification_status:
+          type: string
+          enum:
+            - unverified
+            - pending
+            - verified
+            - rejected
+          description: При создании unverified. Через профиль менять нельзя.
+        created_at:
+          type: string
+          format: date-time
+        member_role:
+          type: string
+          enum:
+            - owner
+            - recruiter
+            - viewer
+    CompanyFile:
+      type: object
+      required:
+        - id
+        - purpose
+        - original_name
+        - media_type
+        - size_bytes
+        - checksum_sha256
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          enum:
+            - company_document
+            - company_logo
+        original_name:
+          type: string
+        media_type:
+          type: string
+          enum:
+            - application/pdf
+            - image/jpeg
+            - image/png
+        size_bytes:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 10485760
+        checksum_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        status:
+          type: string
+          enum:
+            - pending
+            - ready
+            - deleting
+            - deleted
+          description: Скачать можно только ready. pending/deleting после сбоя можно удалить повторным DELETE.
+        created_at:
+          type: string
+          format: date-time
+    CompanyList:
+      type: object
+      required:
+        - items
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Company'
+        limit:
+          type: integer
+        offset:
+          type: integer
+    CompanyFileList:
+      type: object
+      required:
+        - items
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyFile'
+        limit:
+          type: integer
+        offset:
+          type: integer
     Health:
       type: object
       required:

@@ -1,0 +1,94 @@
+// Пакет files проверяет загружаемые файлы и работает с приватным хранилищем.
+package files
+
+import (
+	"bytes"
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
+	"errors"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"io"
+	"net/http"
+	"path"
+	"strings"
+	"time"
+	"unicode"
+)
+
+const MaxSize = 10 << 20
+const MaxLogoSize = 2 << 20
+
+var ErrSize = errors.New("размер файла превышает допустимый")
+var ErrType = errors.New("допустимы PDF, JPEG и PNG; для логотипа — только JPEG и PNG")
+var ErrInvalid = errors.New("файл пустой, повреждён или содержит неверные параметры")
+
+type File struct {
+	ID             string    `json:"id"`
+	OwnerUserID    string    `json:"-"`
+	Bucket         string    `json:"-"`
+	ObjectKey      string    `json:"-"`
+	Purpose        string    `json:"purpose"`
+	OriginalName   string    `json:"original_name"`
+	MediaType      string    `json:"media_type"`
+	SizeBytes      int64     `json:"size_bytes"`
+	ChecksumSHA256 string    `json:"checksum_sha256"`
+	Status         string    `json:"status"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type Objects interface {
+	Put(context.Context, File, []byte) error
+	Get(context.Context, File) (io.ReadCloser, error)
+	Delete(context.Context, File) error
+}
+
+// Prepare не доверяет Content-Type браузера. SVG и HTML не принимаем.
+func Prepare(name, purpose string, data []byte) (File, error) {
+	if purpose != "company_document" && purpose != "company_logo" {
+		return File{}, ErrInvalid
+	}
+	if len(data) > MaxSize || purpose == "company_logo" && len(data) > MaxLogoSize {
+		return File{}, ErrSize
+	}
+	if len(data) == 0 {
+		return File{}, ErrInvalid
+	}
+	media := http.DetectContentType(data)
+	switch media {
+	case "image/jpeg", "image/png":
+		cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+		if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || int64(cfg.Width)*int64(cfg.Height) > 4_000_000 {
+			return File{}, ErrInvalid
+		}
+		if _, _, err := image.Decode(bytes.NewReader(data)); err != nil {
+			return File{}, ErrInvalid
+		}
+	case "application/pdf":
+		if purpose == "company_logo" {
+			return File{}, ErrType
+		}
+	default:
+		return File{}, ErrType
+	}
+	name = path.Base(strings.ReplaceAll(name, "\\", "/"))
+	name = strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, name)
+	name = strings.TrimSpace(name)
+	if name == "" || name == "." || name == "/" || len([]rune(name)) > 255 {
+		return File{}, ErrInvalid
+	}
+	hash := sha256.Sum256(data)
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		return File{}, err
+	}
+	return File{ObjectKey: "companies/" + hex.EncodeToString(key), Purpose: purpose, OriginalName: name, MediaType: media, SizeBytes: int64(len(data)), ChecksumSHA256: hex.EncodeToString(hash[:]), Status: "pending"}, nil
+}
