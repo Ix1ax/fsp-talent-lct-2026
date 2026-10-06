@@ -15,15 +15,18 @@ import (
 type Options struct {
 	Users    *user.Service
 	Profiles *service.ProfileService
+	Avatars  *service.AvatarService
 }
 
 type profileHandler struct {
 	profiles *service.ProfileService
+	avatars  *service.AvatarService
 	log      *slog.Logger
+	uploads  chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := profileHandler{profiles: opts.Profiles, log: log}
+	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, log: log, uploads: make(chan struct{}, 2)}
 	g := api.Group("/me/profile", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
 	g.Use(func(c *gin.Context) {
 		if h.profiles == nil {
@@ -35,4 +38,14 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	g.POST("", h.create)
 	g.GET("", h.get)
 	g.PATCH("", h.update)
+	avatar := g.Group("/avatar", func(c *gin.Context) {
+		if h.avatars == nil {
+			abortError(c, 503, "avatar_unavailable", "Сервис аватаров не настроен")
+			return
+		}
+		c.Next()
+	})
+	avatar.PUT("", h.uploadAvatar)
+	avatar.GET("", h.downloadAvatar)
+	avatar.DELETE("", h.deleteAvatar)
 }

@@ -65,6 +65,7 @@ func run(log *slog.Logger) error {
 			Users:       user.NewService(user.NewRepository(deps.DB)),
 			Companies:   service.NewCompanyService(companyRepo),
 			Candidates:  candidateservice.NewProfileService(candidateRepo),
+			Avatars:     candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Needs:       service.NewNeedsService(companyRepo),
 			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
