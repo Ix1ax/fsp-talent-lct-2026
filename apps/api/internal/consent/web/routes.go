@@ -43,6 +43,7 @@ func (h handler) list(c *gin.Context) {
 		h.fail(c, err)
 		return
 	}
+	c.Header("Cache-Control", "private, no-store")
 	c.JSON(200, gin.H{"current_policy_version": h.consents.PolicyVersion(), "items": items})
 }
 

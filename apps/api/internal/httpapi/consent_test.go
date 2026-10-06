@@ -101,8 +101,12 @@ func TestConsentRoutes(t *testing.T) {
 		Current string           `json:"current_policy_version"`
 		Items   []map[string]any `json:"items"`
 	}
-	if err := json.Unmarshal(do("GET", path, "cand", ``, 200).Body.Bytes(), &list); err != nil || list.Current != "v1" || len(list.Items) != 2 {
+	listed := do("GET", path, "cand", ``, 200)
+	if err := json.Unmarshal(listed.Body.Bytes(), &list); err != nil || list.Current != "v1" || len(list.Items) != 2 {
 		t.Fatalf("список: %+v %v", list, err)
+	}
+	if listed.Header().Get("Cache-Control") != "private, no-store" {
+		t.Fatalf("история согласий — персональные данные, ответ не должен кешироваться: %q", listed.Header().Get("Cache-Control"))
 	}
 	if w := do("GET", path, "emp", ``, 403); w.Code != 403 {
 		t.Fatal("работодатель не должен видеть согласия")
