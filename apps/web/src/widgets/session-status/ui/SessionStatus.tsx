@@ -1,34 +1,11 @@
 import Link from 'next/link';
 
-import { ApiError } from '@/shared/api';
-import { getAccessToken } from '@/shared/auth/session.server';
-import { Badge } from '@/shared/ui/Badge';
-import { Button } from '@/shared/ui/Button';
-import { getMe, type SessionUser } from '@/entities/session';
+import { STATIC_ROUTES } from '@/shared/contants';
+import { Badge, Button } from '@/shared/ui';
+import { getRoleHomeRoute } from '@/entities/session';
+import { loadSession } from '@/entities/session/api/server';
 
-async function loadSession(): Promise<
-  | { kind: 'guest' }
-  | { kind: 'user'; user: SessionUser }
-  | { kind: 'error'; message: string }
-> {
-  const token = await getAccessToken();
-  if (!token) return { kind: 'guest' };
-
-  try {
-    const user = await getMe();
-    return { kind: 'user', user };
-  } catch (error) {
-    const message =
-      error instanceof ApiError
-        ? error.code === 'unauthorized'
-          ? 'Сессия недействительна'
-          : error.message
-        : 'Не удалось проверить сессию';
-    return { kind: 'error', message };
-  }
-}
-
-export async function SessionStatus() {
+export const SessionStatus = async () => {
   const session = await loadSession();
 
   if (session.kind === 'guest') {
@@ -36,10 +13,7 @@ export async function SessionStatus() {
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="outline">Гость</Badge>
         <Button asChild size="sm">
-          <Link href="/login">Войти</Link>
-        </Button>
-        <Button asChild size="sm" variant="secondary">
-          <Link href="/cabinet">Кабинет</Link>
+          <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
         </Button>
       </div>
     );
@@ -50,11 +24,15 @@ export async function SessionStatus() {
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="destructive">{session.message}</Badge>
         <Button asChild size="sm" variant="outline">
-          <Link href="/login">Войти снова</Link>
+          <Link href={STATIC_ROUTES.LOGIN}>Войти снова</Link>
         </Button>
       </div>
     );
   }
+
+  const cabinetHref = session.user.role
+    ? getRoleHomeRoute(session.user.role)
+    : STATIC_ROUTES.CABINET;
 
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -65,8 +43,8 @@ export async function SessionStatus() {
         <Badge variant="outline">email не подтверждён</Badge>
       )}
       <Button asChild size="sm">
-        <Link href="/cabinet">Кабинет</Link>
+        <Link href={cabinetHref}>Кабинет</Link>
       </Button>
     </div>
   );
-}
+};

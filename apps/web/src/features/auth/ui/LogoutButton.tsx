@@ -3,22 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { clearClientAccessToken } from '@/shared/auth';
-import { Button } from '@/shared/ui/Button';
+import { Button } from '@/shared/ui';
+
+import { logoutSession } from '../api';
 
 type LogoutButtonProps = {
   className?: string;
 };
 
-export function LogoutButton({ className }: LogoutButtonProps) {
+export const LogoutButton = ({ className }: LogoutButtonProps) => {
   const router = useRouter();
   const [pending, setPending] = useState(false);
 
   const onLogout = async () => {
     setPending(true);
+
     try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' });
-      clearClientAccessToken();
+      await logoutSession();
       router.push('/');
       router.refresh();
     } finally {
@@ -37,4 +38,4 @@ export function LogoutButton({ className }: LogoutButtonProps) {
       {pending ? 'Выход…' : 'Выйти'}
     </Button>
   );
-}
+};

@@ -1,3 +1,4 @@
+export { createOidcManager } from './oidc';
 export {
   clearClientAccessToken,
   emitSessionExpired,
