@@ -511,6 +511,53 @@ cd apps/api
 go test -race -tags=integration ./internal/httpapi -run 'Consent|CandidateContacts'
 ```
 
+### Навыки кандидата
+
+Кандидат ведёт список навыков из общего справочника (те же `skills.id`, что у потребностей работодателя) с самооценкой
+уровня. Нужен существующий профиль; отдельного согласия не требуется. Порядок для фронта:
+
+1. Показать справочник: `GET /api/v1/catalogs/skills?q=...` (поиск по коду, названию и синонимам).
+2. `PUT /api/v1/me/skills/{skill_id}` с `{"claimed_level": 1..5}`: добавляет навык или меняет его уровень.
+3. `GET /api/v1/me/skills`: список по названию. `DELETE /api/v1/me/skills/{skill_id}`: убрать навык.
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| GET | `/api/v1/me/skills` | Мои навыки: `skill_id`, `code`, `name`, `claimed_level`, `source`, `confidence`, `updated_at` |
+| PUT | `/api/v1/me/skills/{skill_id}` | Добавить навык или изменить уровень, 200 |
+| DELETE | `/api/v1/me/skills/{skill_id}` | Убрать навык, 204 |
+
+`claimed_level` обязателен и целый (1-5), это самооценка, а не подтверждённый грейд. `source` и `confidence` приходят только
+в ответе: клиент их передать не может (лишнее поле даст 400). Веса источников: `claimed` 0.3, `test` 0.8, `fsp` 1.0. Сейчас
+доступен только `claimed`, поэтому `confidence` везде 0.3; результаты тестов и достижения ФСП добавят остальные источники.
+
+Правила: навык должен быть в справочнике и активен (иначе 400); не более 50 навыков (иначе 400); навык, который выключили
+в справочнике после добавления, остаётся в списке, его можно менять и удалять. Работодатели навыки кандидата пока не видят,
+фильтры банка кандидатов не учитывают их.
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `validation_error` | 400 | Неверный UUID, уровень или JSON, лишнее поле, неизвестный или выключенный навык, лимит 50 |
+| `profile_not_found` | 404 | Профиль ещё не создан |
+| `skill_not_found` | 404 | Навыка нет в списке кандидата (при удалении) |
+| `request_too_large` | 413 | Тело JSON больше 2 МиБ |
+| `forbidden` / `user_inactive` | 403 | Не кандидат / учётная запись заблокирована |
+
+```sh
+curl --fail-with-body -X PUT "$API_URL/api/v1/me/skills/$SKILL_ID" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"claimed_level":4}'
+
+curl --fail-with-body "$API_URL/api/v1/me/skills" -H "Authorization: Bearer $TOKEN"
+```
+
+Данные лежат в `candidate_skills`; миграция `*_candidate_skills.sql` применяется после `consents_contacts`. Интеграционные тесты
+используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
+```
+
 ### Предложения кандидатам
 
 Компания отправляет кандидату предложение о работе. Это отдельный сценарий от приглашения сотрудника

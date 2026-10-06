@@ -40,6 +40,7 @@ type Options struct {
 	Candidates              *candidateservice.ProfileService
 	Avatars                 *candidateservice.AvatarService
 	CandidateContacts       *candidateservice.ContactsService
+	CandidateSkills         *candidateservice.SkillsService
 	Documents               *service.DocumentService
 	Needs                   *service.NeedsService
 	Members                 *service.MemberService
@@ -125,7 +126,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
 	consentweb.Register(api, log, verifier, opts.Users, opts.Consents)
-	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars, Contacts: opts.CandidateContacts})
+	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars, Contacts: opts.CandidateContacts, Skills: opts.CandidateSkills})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})

@@ -8,6 +8,7 @@ var (
 	ErrForbidden        = errors.New("профилем может управлять только активный кандидат")
 	ErrConflict         = errors.New("профиль кандидата уже создан")
 	ErrFileNotPending   = errors.New("файл уже не ожидает загрузки")
+	ErrSkillNotFound    = errors.New("навык не найден в списке кандидата")
 	ErrContactsNotFound = errors.New("контакты кандидата не найдены")
 	ErrConsentRequired  = errors.New("нужно согласие на обработку персональных данных")
 )
