@@ -8,9 +8,9 @@ import {
 } from '@/shared/ui';
 import { type SessionUser, USER_ROLES } from '@/entities/session';
 
-type CandidateHomePageProps = {
+interface CandidateHomePageProps {
   user: SessionUser;
-};
+}
 
 export const CandidateHomePage = ({ user }: CandidateHomePageProps) => {
   return (

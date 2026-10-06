@@ -10,21 +10,29 @@ export const AppHeader = async () => {
 
   return (
     <header className="border-b border-border/60">
-      <div className="mx-auto flex max-w-[1140px] items-center justify-between gap-4 px-8 py-4 max-md:px-5">
+      <div className="mx-auto flex max-w-285 items-center justify-between gap-4 px-8 py-4 max-md:px-5">
         <Link
           href={STATIC_ROUTES.HOME}
-          className="bg-primary px-[18px] py-3 text-[22px] font-black text-primary-foreground"
+          className="bg-primary px-4.5 py-3 text-[22px] font-black text-primary-foreground"
         >
           ФСП
         </Link>
 
-        {session.kind === 'user' ? (
-          <UserMenu user={session.user} />
-        ) : (
-          <Button asChild size="sm">
-            <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
+        <nav
+          aria-label="Основная навигация"
+          className="flex items-center gap-2"
+        >
+          <Button asChild variant="ghost" size="sm">
+            <Link href={STATIC_ROUTES.GUIDES}>Гайды</Link>
           </Button>
-        )}
+          {session.kind === 'user' ? (
+            <UserMenu user={session.user} />
+          ) : (
+            <Button asChild size="sm">
+              <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
+            </Button>
+          )}
+        </nav>
       </div>
     </header>
   );

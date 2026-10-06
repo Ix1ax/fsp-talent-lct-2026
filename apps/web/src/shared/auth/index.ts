@@ -1,4 +1,4 @@
-export { createOidcManager } from './oidc';
+export { clearOidcUser, createOidcManager } from './oidc';
 export {
   clearClientAccessToken,
   emitSessionExpired,

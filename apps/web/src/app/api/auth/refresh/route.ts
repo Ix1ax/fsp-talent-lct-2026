@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { ApiError } from '@/shared/api/errors';
 import {
   clearAuthTokens,
   getRefreshToken,
@@ -37,7 +38,12 @@ const doRefresh = async (): Promise<{
 
 /** Client refresh: returns new access token as JSON. */
 export const POST = async (): Promise<Response> => {
-  const tokens = await doRefresh();
+  let tokens;
+  try {
+    tokens = await doRefresh();
+  } catch (error) {
+    return refreshFailure(error);
+  }
 
   if (!tokens) {
     return NextResponse.json(
@@ -58,9 +64,27 @@ export const POST = async (): Promise<Response> => {
  */
 export const GET = async (request: NextRequest): Promise<Response> => {
   const next = sanitizeRedirectPath(request.nextUrl.searchParams.get('next'));
-  const tokens = await doRefresh();
+  let tokens;
+  try {
+    tokens = await doRefresh();
+  } catch (error) {
+    return refreshFailure(error);
+  }
   const destination = new URL(tokens ? next : '/login', request.url);
 
   return NextResponse.redirect(destination);
 };
 
+const refreshFailure = (error: unknown): Response =>
+  NextResponse.json(
+    {
+      error: {
+        code: 'auth_unavailable',
+        message:
+          error instanceof ApiError
+            ? error.message
+            : 'Не удалось обновить сессию. Попробуйте ещё раз.',
+      },
+    },
+    { status: 503 },
+  );

@@ -6,9 +6,9 @@ import { Button } from '@/shared/ui';
 
 import { startOidcLogin } from '../api';
 
-type LoginButtonProps = {
+interface LoginButtonProps {
   className?: string;
-};
+}
 
 export const LoginButton = ({ className }: LoginButtonProps) => {
   const [pending, setPending] = useState(false);

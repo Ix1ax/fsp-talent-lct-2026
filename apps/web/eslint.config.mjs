@@ -33,7 +33,7 @@ const eslintConfig = [
               '^@/entities',
               '^@/features',
               '^@/widgets',
-              '^@/pages',
+              '^@/screens',
             ],
             ['^@/'],
             ['^\\.'],

@@ -1,9 +1,9 @@
 import 'server-only';
 
-import { ApiError } from '@/shared/api';
+import { ApiError } from '@/shared/api/errors';
 import { getAccessToken } from '@/shared/auth/session.server';
 
-import type { SessionUser } from '../model/types';
+import type { SessionUser } from '../model';
 import { getMe } from './getMe';
 
 export type SessionState =
@@ -19,13 +19,12 @@ export const loadSession = async (): Promise<SessionState> => {
     const user = await getMe();
     return { kind: 'user', user };
   } catch (error) {
-    const message =
-      error instanceof ApiError
-        ? error.code === 'unauthorized'
-          ? 'Сессия недействительна'
-          : `${error.code}: ${error.message}`
-        : 'Не удалось проверить сессию';
-
-    return { kind: 'error', message };
+    if (!(error instanceof ApiError)) {
+      return { kind: 'error', message: 'Не удалось проверить сессию' };
+    }
+    if (error.code === 'unauthorized') {
+      return { kind: 'error', message: 'Сессия недействительна' };
+    }
+    return { kind: 'error', message: `${error.code}: ${error.message}` };
   }
 };

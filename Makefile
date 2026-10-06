@@ -3,6 +3,7 @@ SHELL := /bin/sh
 setup:
 	@test -f .env || cp .env.example .env
 	@test -f apps/api/.env || cp apps/api/.env.example apps/api/.env
+	@test -f apps/web/.env || cp apps/web/.env.example apps/web/.env
 	npm ci
 	cd apps/api && go mod download
 infra:
@@ -24,6 +25,8 @@ test:
 check:
 	sh scripts/check-openapi.sh
 	cd apps/api && test -z "$$(gofmt -l .)" && go vet ./... && go test -race ./...
+	npm run test
+	npm run typecheck
 	npm run lint
 	npm run build
 fmt:

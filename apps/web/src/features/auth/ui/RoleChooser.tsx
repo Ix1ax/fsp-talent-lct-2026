@@ -14,16 +14,16 @@ import {
 import {
   getRoleHomeRoute,
   registerRole,
+  type RegistrationRole,
   USER_ROLES,
-  type UserRole,
 } from '@/entities/session';
 
 export const RoleChooser = () => {
   const router = useRouter();
-  const [pending, setPending] = useState<UserRole | null>(null);
+  const [pending, setPending] = useState<RegistrationRole | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const choose = async (role: UserRole) => {
+  const choose = async (role: RegistrationRole) => {
     setPending(role);
     setError(null);
 
