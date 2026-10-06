@@ -38,6 +38,7 @@ func TestCandidateRepositoryProfile(t *testing.T) {
 	if err := in.Normalize(); err != nil {
 		t.Fatal(err)
 	}
+	grantConsentRows(t, db, user, "processing", "publication")
 	created, err := repo.Create(ctx, user, in)
 	if err != nil {
 		t.Fatal(err)
@@ -58,7 +59,9 @@ func TestCandidateRepositoryProfile(t *testing.T) {
 		}
 	}
 	var validation *entity.ValidationError
-	if _, err := repo.Create(ctx, newUser("candidate", "active"), entity.ProfileInput{SearchStatus: "hidden", WorkFormatIDs: []int16{999}}); !errors.As(err, &validation) {
+	withConsent := newUser("candidate", "active")
+	grantConsentRows(t, db, withConsent, "processing")
+	if _, err := repo.Create(ctx, withConsent, entity.ProfileInput{SearchStatus: "hidden", WorkFormatIDs: []int16{999}}); !errors.As(err, &validation) {
 		t.Fatalf("неизвестный формат работы: %v", err)
 	}
 
@@ -86,6 +89,7 @@ func TestCandidateRepositoryConcurrency(t *testing.T) {
 	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {
 		t.Fatal(err)
 	}
+	grantConsentRows(t, db, user, "processing")
 	var created, conflicts, other int32
 	var wg sync.WaitGroup
 	for i := 0; i < 20; i++ {
