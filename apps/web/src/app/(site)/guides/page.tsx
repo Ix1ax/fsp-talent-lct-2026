@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
+import { ApiError } from '@/shared/api/errors';
 import { getAllSkills, getCatalogs } from '@/entities/catalog/api';
-
 import { GuidesPage, parseSkillsQuery } from '@/screens/guides';
 
 export const metadata: Metadata = {
@@ -19,6 +19,15 @@ export default async function Page({ searchParams }: PageProps) {
     getAllSkills(query),
   ]);
 
+  let skillsError: string | undefined;
+  if (
+    skillsResult.status === 'rejected' &&
+    skillsResult.reason instanceof ApiError &&
+    skillsResult.reason.status === 400
+  ) {
+    skillsError = skillsResult.reason.message;
+  }
+
   return (
     <GuidesPage
       catalogs={
@@ -28,6 +37,7 @@ export default async function Page({ searchParams }: PageProps) {
         skillsResult.status === 'fulfilled' ? skillsResult.value : undefined
       }
       query={query}
+      skillsError={skillsError}
     />
   );
 }

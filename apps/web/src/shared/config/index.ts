@@ -1,1 +1,1 @@
-export { getApiProxyTarget } from './env'
+export { getApiProxyTarget } from './env';

@@ -18,7 +18,9 @@ const createSkill = (index: number): Skill => ({
 });
 
 describe('getAllSkills', () => {
-  beforeEach(() => mockGetSkills.mockReset());
+  beforeEach(() => {
+    mockGetSkills.mockReset();
+  });
 
   it('loads all matching skills across API pages', async () => {
     const firstItems = Array.from({ length: 100 }, (_, index) =>
@@ -33,16 +35,24 @@ describe('getAllSkills', () => {
       ...firstItems,
       ...lastItems,
     ]);
-    expect(mockGetSkills).toHaveBeenNthCalledWith(1, {
-      q: 'go',
-      limit: 100,
-      offset: 0,
-    });
-    expect(mockGetSkills).toHaveBeenNthCalledWith(2, {
-      q: 'go',
-      limit: 100,
-      offset: 100,
-    });
+    expect(mockGetSkills).toHaveBeenNthCalledWith(
+      1,
+      {
+        q: 'go',
+        limit: 100,
+        offset: 0,
+      },
+      expect.any(AbortSignal),
+    );
+    expect(mockGetSkills).toHaveBeenNthCalledWith(
+      2,
+      {
+        q: 'go',
+        limit: 100,
+        offset: 100,
+      },
+      expect.any(AbortSignal),
+    );
     expect(mockGetSkills).toHaveBeenCalledTimes(2);
   });
 
@@ -50,6 +60,35 @@ describe('getAllSkills', () => {
     mockGetSkills.mockResolvedValueOnce({ items: [], limit: 100, offset: 0 });
     expect(await getAllSkills({})).toEqual([]);
     expect(mockGetSkills).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads beyond offset 10000 without truncating the list', async () => {
+    mockGetSkills.mockImplementation(async ({ limit, offset }) => ({
+      items:
+        offset < 10100
+          ? Array.from({ length: limit }, (_, index) =>
+              createSkill(offset + index),
+            )
+          : [],
+      limit,
+      offset,
+    }));
+    expect(await getAllSkills({})).toHaveLength(10100);
+    expect(mockGetSkills).toHaveBeenLastCalledWith(
+      { limit: 100, offset: 10100 },
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('rejects invalid search input before calling the API', async () => {
+    await expect(getAllSkills({ q: 'x'.repeat(101) })).rejects.toMatchObject({
+      status: 400,
+      code: 'validation_error',
+    });
+    await expect(getAllSkills({ q: '\0' })).rejects.toMatchObject({
+      status: 400,
+    });
+    expect(mockGetSkills).not.toHaveBeenCalled();
   });
 
   it('rejects when a later API page fails instead of returning a partial list', async () => {

@@ -3,7 +3,7 @@
  * Renames kebab-case shadcn files in src/shared/ui to PascalCase
  * and rewrites local @/shared/ui/* imports.
  *
- * Usage after `pnpm dlx shadcn@latest add …`:
+ * Usage after `npx shadcn@latest add …`:
  *   node scripts/rename-shadcn-ui.mjs
  */
 import fs from 'node:fs';

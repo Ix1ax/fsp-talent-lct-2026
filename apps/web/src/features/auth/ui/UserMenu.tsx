@@ -21,23 +21,27 @@ import { getRoleHomeRoute, type SessionUser } from '@/entities/session';
 
 import { logoutSession } from '../api';
 
-type UserMenuProps = {
+interface UserMenuProps {
   user: SessionUser;
-};
+}
 
 const getInitials = (email: string): string => email.slice(0, 1).toUpperCase();
 
 export const UserMenu = ({ user }: UserMenuProps) => {
   const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const onLogout = async () => {
     setPending(true);
+    setError(null);
 
     try {
       await logoutSession();
       router.push(STATIC_ROUTES.HOME);
       router.refresh();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Не удалось выйти');
     } finally {
       setPending(false);
     }
@@ -82,13 +86,19 @@ export const UserMenu = ({ user }: UserMenuProps) => {
         <DropdownMenuItem
           variant="destructive"
           disabled={pending}
-          onSelect={() => {
+          onSelect={(event) => {
+            event.preventDefault();
             void onLogout();
           }}
         >
           <LogOutIcon />
           {pending ? 'Выход…' : 'Выйти'}
         </DropdownMenuItem>
+        {error && (
+          <p role="alert" className="px-2 py-1 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

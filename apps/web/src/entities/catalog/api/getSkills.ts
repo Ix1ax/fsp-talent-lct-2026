@@ -12,11 +12,15 @@ export interface SkillsQuery extends SkillsSearchQuery {
   offset: number;
 }
 
-export const getSkills = async (query: SkillsQuery): Promise<SkillsPage> => {
+export const getSkills = async (
+  query: SkillsQuery,
+  signal?: AbortSignal,
+): Promise<SkillsPage> => {
   const { data } = await publicServerApi.get<SkillsPage>(
     '/v1/catalogs/skills',
     {
       params: query,
+      signal,
     },
   );
 

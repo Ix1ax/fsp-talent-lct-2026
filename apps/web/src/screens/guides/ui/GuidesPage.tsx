@@ -8,9 +8,15 @@ interface GuidesPageProps {
   catalogs?: Catalogs;
   skills?: Skill[];
   query: SkillsSearchQuery;
+  skillsError?: string;
 }
 
-export const GuidesPage = ({ catalogs, skills, query }: GuidesPageProps) => {
+export const GuidesPage = ({
+  catalogs,
+  skills,
+  query,
+  skillsError,
+}: GuidesPageProps) => {
   return (
     <main className="mx-auto flex max-w-285 flex-col gap-10 px-8 py-10 max-md:px-5">
       <header className="flex flex-col gap-3">
@@ -26,7 +32,7 @@ export const GuidesPage = ({ catalogs, skills, query }: GuidesPageProps) => {
         </p>
       </header>
       <CatalogsSection catalogs={catalogs} />
-      <SkillsSection skills={skills} query={query} />
+      <SkillsSection skills={skills} query={query} error={skillsError} />
     </main>
   );
 };

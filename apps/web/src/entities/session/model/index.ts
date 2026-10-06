@@ -1,2 +1,7 @@
 export { getRoleHomeRoute } from './getRoleHomeRoute';
-export { type SessionUser, USER_ROLES, type UserRole } from './types';
+export {
+  type RegistrationRole,
+  type SessionUser,
+  USER_ROLES,
+  type UserRole,
+} from './types';

@@ -20,6 +20,7 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
           id="skill-search"
           name="q"
           type="search"
+          maxLength={100}
           defaultValue={query.q ?? ''}
           placeholder="Например, golang"
           className="h-9"

@@ -27,8 +27,11 @@ export const CallbackPage = () => {
   const [state, setState] = useState<CallbackViewState>({ status: 'loading' });
 
   useEffect(() => {
+    let active = true;
+
     const run = async () => {
-      const result = await completeOidcCallback();
+      const result = await completeOidcCallback(window.location.href);
+      if (!active) return;
 
       if (result.status === 'authenticated') {
         if (!result.user.role) {
@@ -49,6 +52,10 @@ export const CallbackPage = () => {
     };
 
     void run();
+
+    return () => {
+      active = false;
+    };
   }, [router]);
 
   if (state.status === 'loading') {

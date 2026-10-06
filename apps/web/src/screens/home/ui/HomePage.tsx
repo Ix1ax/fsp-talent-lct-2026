@@ -2,17 +2,17 @@ import { ApiStatus } from '@/widgets/api-status';
 
 export const HomePage = () => {
   return (
-    <main className="mx-auto max-w-[1140px] p-8 max-md:p-5">
-      <section className="pt-[90px] pb-14 max-md:pt-13">
+    <main className="mx-auto max-w-285 p-8 max-md:p-5">
+      <section className="pt-22.5 pb-14 max-md:pt-13">
         <p className="text-xs tracking-[3px] text-brand-soft">
           DEVELOPMENT WORKSPACE
         </p>
-        <h1 className="max-w-[900px] text-[clamp(32px,5vw,60px)] leading-[1.12] tracking-[-2px] max-md:tracking-[-1px]">
+        <h1 className="max-w-225 text-[clamp(32px,5vw,60px)] leading-[1.12] tracking-[-2px] max-md:tracking-[-1px]">
           Основа готова.
           <br />
           Дальше — ваш код.
         </h1>
-        <p className="mt-4 max-w-[620px] text-lg leading-relaxed text-muted-foreground">
+        <p className="mt-4 max-w-155 text-lg leading-relaxed text-muted-foreground">
           Стартовая страница монорепозитория. Здесь можно проверить, что
           фронтенд видит API.
         </p>
@@ -21,7 +21,7 @@ export const HomePage = () => {
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-[22px] sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5.5 sm:grid-cols-2">
         <article className="border-t-[3px] border-primary bg-surface p-7">
           <span className="text-[11px] tracking-[2px] text-muted-foreground">
             APPS / API

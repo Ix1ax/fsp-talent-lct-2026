@@ -6,9 +6,10 @@ import { SkillsSearchForm } from './SkillsSearchForm';
 interface SkillsSectionProps {
   skills?: Skill[];
   query: SkillsSearchQuery;
+  error?: string;
 }
 
-export const SkillsSection = ({ skills, query }: SkillsSectionProps) => {
+export const SkillsSection = ({ skills, query, error }: SkillsSectionProps) => {
   return (
     <section
       id="skills"
@@ -24,7 +25,7 @@ export const SkillsSection = ({ skills, query }: SkillsSectionProps) => {
         </p>
       </div>
       <SkillsSearchForm query={query} />
-      <SkillsResults skills={skills} query={query} />
+      <SkillsResults skills={skills} query={query} error={error} />
     </section>
   );
 };

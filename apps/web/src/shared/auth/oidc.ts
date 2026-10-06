@@ -1,4 +1,9 @@
-import { UserManager, type UserManagerSettings } from 'oidc-client-ts';
+import {
+  InMemoryWebStorage,
+  UserManager,
+  type UserManagerSettings,
+  WebStorageStateStore,
+} from 'oidc-client-ts';
 
 export const getAppOrigin = (): string => {
   if (process.env.NEXT_PUBLIC_APP_URL) {
@@ -29,10 +34,22 @@ export const createOidcManager = (
     redirect_uri: redirectUri,
     scope: 'openid profile email',
     automaticSilentRenew: false,
+    userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
   };
 
   manager = new UserManager(settings);
   managerKey = key;
 
   return manager;
+};
+
+export const clearOidcUser = async (): Promise<void> => {
+  if (manager) await manager.removeUser();
+  if (typeof window === 'undefined') return;
+
+  // Убираем токены, сохранённые предыдущей версией приложения.
+  const storage = window.sessionStorage;
+  for (const key of Object.keys(storage)) {
+    if (key.startsWith('oidc.user:')) storage.removeItem(key);
+  }
 };

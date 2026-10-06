@@ -1,22 +1,29 @@
 'use client';
 
 import { type ReactNode, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 import { ensureClientAccessToken } from '@/shared/api';
-import { onSessionExpired } from '@/shared/auth';
+import { clearOidcUser, onSessionExpired } from '@/shared/auth';
 import { STATIC_ROUTES } from '@/shared/contants';
 
-export const AuthBootstrap = ({ children }: { children: ReactNode }) => {
+interface AuthBootstrapProps {
+  children: ReactNode;
+}
+
+export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
-    void ensureClientAccessToken();
+    if (pathname !== '/auth/callback') {
+      void clearOidcUser().then(() => ensureClientAccessToken());
+    }
 
     return onSessionExpired(() => {
       router.push(STATIC_ROUTES.LOGIN);
     });
-  }, [router]);
+  }, [pathname, router]);
 
   return children;
 };

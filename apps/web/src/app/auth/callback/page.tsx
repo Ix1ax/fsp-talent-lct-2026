@@ -1,4 +1,4 @@
-import { CallbackPage } from '@/pages/auth-callback';
+import { CallbackPage } from '@/screens/auth-callback';
 
 export default function Page() {
   return <CallbackPage />;

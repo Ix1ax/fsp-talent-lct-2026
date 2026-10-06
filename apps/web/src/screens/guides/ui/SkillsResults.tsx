@@ -6,16 +6,18 @@ import { SkillCard } from './SkillCard';
 interface SkillsResultsProps {
   skills?: Skill[];
   query: SkillsSearchQuery;
+  error?: string;
 }
 
-export const SkillsResults = ({ skills, query }: SkillsResultsProps) => {
+export const SkillsResults = ({ skills, query, error }: SkillsResultsProps) => {
   if (!skills) {
     return (
       <p
         role="alert"
         className="rounded-lg border border-border bg-card p-4 text-muted-foreground"
       >
-        Не удалось загрузить навыки. Обновите страницу и попробуйте ещё раз.
+        {error ??
+          'Не удалось загрузить навыки. Обновите страницу и попробуйте ещё раз.'}
       </p>
     );
   }

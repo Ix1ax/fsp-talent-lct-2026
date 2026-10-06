@@ -22,11 +22,19 @@ const runRefreshRequest = async (): Promise<string | null> => {
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'same-origin',
+    signal: AbortSignal.timeout(12_000),
   });
 
-  if (!response.ok) {
+  if (response.status === 401) {
     clearClientAccessToken();
     return null;
+  }
+  if (!response.ok) {
+    throw new ApiError(
+      503,
+      'Не удалось обновить сессию. Попробуйте ещё раз.',
+      'auth_unavailable',
+    );
   }
 
   const data = (await response.json()) as { accessToken?: string };
@@ -38,20 +46,18 @@ const runRefreshRequest = async (): Promise<string | null> => {
 const refreshClientAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
 
-  const doRun = async () => {
-    if (!refreshPromise) {
-      refreshPromise = runRefreshRequest().finally(() => {
-        refreshPromise = null;
-      });
-    }
-    return refreshPromise;
-  };
-
-  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
-    return navigator.locks.request('auth-refresh', doRun);
+  if (!refreshPromise) {
+    const request = async (): Promise<string | null> => {
+      if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+        return await navigator.locks.request('auth-refresh', runRefreshRequest);
+      }
+      return runRefreshRequest();
+    };
+    refreshPromise = request().finally(() => {
+      refreshPromise = null;
+    });
   }
-
-  return doRun();
+  return refreshPromise;
 };
 
 export const ensureClientAccessToken = async (): Promise<string | null> => {

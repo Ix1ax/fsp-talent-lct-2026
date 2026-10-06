@@ -13,7 +13,8 @@
     "ui:rename": "node scripts/rename-shadcn-ui.mjs",
     "prepare": "cd ../.. && node apps/web/node_modules/husky/bin.js apps/web/.husky || node node_modules/husky/bin.js apps/web/.husky",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "axios": "^1.20.0",
