@@ -15,6 +15,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
+	candidateweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	catalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
@@ -29,6 +31,8 @@ type Options struct {
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
 	Companies               *service.CompanyService
+	Candidates              *candidateservice.ProfileService
+	Avatars                 *candidateservice.AvatarService
 	Documents               *service.DocumentService
 	Needs                   *service.NeedsService
 	Catalogs                *catalog.Service
@@ -51,6 +55,9 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		limit := int64(2 << 20)
 		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/companies/:company_id/files" {
 			limit = files.MaxSize + (64 << 10)
+		}
+		if c.Request.Method == http.MethodPut && c.FullPath() == "/api/v1/me/profile/avatar" {
+			limit = files.MaxLogoSize + (64 << 10)
 		}
 		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
 		start := time.Now()
@@ -104,6 +111,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
 	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs})
 	catalogweb.Register(api, log, opts.Catalogs)
+	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})

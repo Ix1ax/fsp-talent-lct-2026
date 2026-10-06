@@ -1001,6 +1001,359 @@ paths:
           $ref: '#/components/responses/NeedsInternal'
         '503':
           $ref: '#/components/responses/NeedsUnavailable'
+  /api/v1/me/profile:
+    post:
+      operationId: createCandidateProfile
+      summary: Создать свой профиль кандидата
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Требуется локальная роль candidate. Один пользователь может создать только один профиль. Статус поиска по умолчанию hidden: профиль
+        никому не виден, пока кандидат сам не выберет open или passive. Грейд и категория не задаются, они появляются после тестирования.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateProfileInput'
+      responses:
+        '201':
+          description: Профиль создан.
+          headers:
+            Location:
+              schema:
+                type: string
+                example: /api/v1/me/profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateProfile'
+        '400':
+          description: Некорректный JSON, неизвестное поле или значение вне допустимых границ (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Профиль уже создан (profile_exists).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: getCandidateProfile
+      summary: Получить свой профиль кандидата
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '200':
+          description: Профиль текущего кандидата.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateProfile'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль ещё не создан (profile_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      operationId: updateCandidateProfile
+      summary: Изменить свой профиль кандидата
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Отсутствующее поле сохраняет значение, null очищает необязательное поле. experience_months и search_status очистить нельзя.
+        Непустой work_format_ids заменяет набор целиком, пустой список очищает его. Поля id, user_id, avatar_file_id и updated_at изменить нельзя.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateProfilePatch'
+      responses:
+        '200':
+          description: Профиль после изменения.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateProfile'
+        '400':
+          description: Пустой PATCH, неизвестное поле или значение вне допустимых границ (validation_error).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль ещё не создан (profile_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/profile/avatar:
+    put:
+      operationId: uploadCandidateAvatar
+      summary: Загрузить или заменить свой аватар
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Только JPEG и PNG до 2 МиБ и до 4 мегапикселей; тип определяется по содержимому. Аватар видит только сам кандидат. Профиль должен существовать.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Аватар сохранён, профиль обновлён.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateProfile'
+        '400':
+          description: Нужен ровно один файл в поле file или файл повреждён (invalid_file).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль ещё не создан (profile_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Файл больше 2 МиБ (file_too_large).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '415':
+          description: Допустимы только JPEG и PNG (unsupported_file_type).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      operationId: getCandidateAvatar
+      summary: Получить свой аватар
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '200':
+          description: Изображение аватара (inline, Cache-Control private, no-store).
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль не создан (profile_not_found) или аватар не загружен (avatar_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteCandidateAvatar
+      summary: Удалить свой аватар
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      responses:
+        '204':
+          description: Аватар удалён.
+        '401':
+          description: Нужен действительный access token и подтверждённый email.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль не создан (profile_not_found) или аватар не загружен (avatar_not_found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис не настроен (candidate_unavailable, avatar_unavailable) или хранилище файлов недоступно (storage_unavailable, upload_busy).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -1634,6 +1987,155 @@ components:
           type: integer
         offset:
           type: integer
+    CandidateProfileInput:
+      type: object
+      additionalProperties: false
+      properties:
+        headline:
+          type: string
+          nullable: true
+          maxLength: 200
+          example: Go-разработчик
+        summary:
+          type: string
+          nullable: true
+          maxLength: 10000
+        city:
+          type: string
+          nullable: true
+          maxLength: 200
+          example: Казань
+        timezone:
+          type: string
+          nullable: true
+          maxLength: 64
+          description: Часовой пояс IANA.
+          example: Europe/Moscow
+        experience_months:
+          type: integer
+          minimum: 0
+          maximum: 600
+          default: 0
+        salary_min_rub:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          maximum: 1000000000
+          description: Желаемая минимальная зарплата, рублей в месяц.
+        search_status:
+          type: string
+          enum:
+            - open
+            - passive
+            - hidden
+          default: hidden
+        work_format_ids:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          description: ID из GET /api/v1/catalogs (work_formats).
+          items:
+            type: integer
+            minimum: 1
+    CandidateProfilePatch:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      description: Отсутствующее поле сохраняет значение, null очищает необязательное поле.
+      properties:
+        headline:
+          type: string
+          nullable: true
+          maxLength: 200
+        summary:
+          type: string
+          nullable: true
+          maxLength: 10000
+        city:
+          type: string
+          nullable: true
+          maxLength: 200
+        timezone:
+          type: string
+          nullable: true
+          maxLength: 64
+        experience_months:
+          type: integer
+          minimum: 0
+          maximum: 600
+        salary_min_rub:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          maximum: 1000000000
+        search_status:
+          type: string
+          enum:
+            - open
+            - passive
+            - hidden
+        work_format_ids:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items:
+            type: integer
+            minimum: 1
+    CandidateProfile:
+      type: object
+      required:
+        - id
+        - avatar_file_id
+        - headline
+        - summary
+        - city
+        - timezone
+        - experience_months
+        - salary_min_rub
+        - search_status
+        - work_format_ids
+        - updated_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        avatar_file_id:
+          type: string
+          format: uuid
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        summary:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        timezone:
+          type: string
+          nullable: true
+        experience_months:
+          type: integer
+        salary_min_rub:
+          type: integer
+          format: int64
+          nullable: true
+        search_status:
+          type: string
+          enum:
+            - open
+            - passive
+            - hidden
+        work_format_ids:
+          type: array
+          items:
+            type: integer
+        updated_at:
+          type: string
+          format: date-time
     Health:
       type: object
       required:

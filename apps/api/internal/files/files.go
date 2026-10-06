@@ -22,8 +22,11 @@ import (
 const MaxSize = 10 << 20
 const MaxLogoSize = 2 << 20
 
+// PurposeCandidateAvatar — аватар кандидата: только JPEG и PNG, лимит как у логотипа.
+const PurposeCandidateAvatar = "candidate_avatar"
+
 var ErrSize = errors.New("размер файла превышает допустимый")
-var ErrType = errors.New("допустимы PDF, JPEG и PNG; для логотипа — только JPEG и PNG")
+var ErrType = errors.New("допустимы PDF, JPEG и PNG; для логотипа и аватара — только JPEG и PNG")
 var ErrInvalid = errors.New("файл пустой, повреждён или содержит неверные параметры")
 
 type File struct {
@@ -48,10 +51,11 @@ type Objects interface {
 
 // Prepare не доверяет Content-Type браузера. SVG и HTML не принимаем.
 func Prepare(name, purpose string, data []byte) (File, error) {
-	if purpose != "company_document" && purpose != "company_logo" {
+	if purpose != "company_document" && purpose != "company_logo" && purpose != PurposeCandidateAvatar {
 		return File{}, ErrInvalid
 	}
-	if len(data) > MaxSize || purpose == "company_logo" && len(data) > MaxLogoSize {
+	imageOnly := purpose == "company_logo" || purpose == PurposeCandidateAvatar
+	if len(data) > MaxSize || imageOnly && len(data) > MaxLogoSize {
 		return File{}, ErrSize
 	}
 	if len(data) == 0 {
@@ -68,7 +72,7 @@ func Prepare(name, purpose string, data []byte) (File, error) {
 			return File{}, ErrInvalid
 		}
 	case "application/pdf":
-		if purpose == "company_logo" {
+		if imageOnly {
 			return File{}, ErrType
 		}
 	default:
@@ -90,5 +94,9 @@ func Prepare(name, purpose string, data []byte) (File, error) {
 	if _, err := rand.Read(key); err != nil {
 		return File{}, err
 	}
-	return File{ObjectKey: "companies/" + hex.EncodeToString(key), Purpose: purpose, OriginalName: name, MediaType: media, SizeBytes: int64(len(data)), ChecksumSHA256: hex.EncodeToString(hash[:]), Status: "pending"}, nil
+	prefix := "companies/"
+	if purpose == PurposeCandidateAvatar {
+		prefix = "candidates/"
+	}
+	return File{ObjectKey: prefix + hex.EncodeToString(key), Purpose: purpose, OriginalName: name, MediaType: media, SizeBytes: int64(len(data)), ChecksumSHA256: hex.EncodeToString(hash[:]), Status: "pending"}, nil
 }

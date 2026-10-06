@@ -13,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
+	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
+	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
@@ -54,6 +56,7 @@ func run(log *slog.Logger) error {
 		verifier = configured
 	}
 	companyRepo := repository.NewRepository(deps.DB)
+	candidateRepo := candidaterepository.NewRepository(deps.DB)
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
@@ -61,6 +64,8 @@ func run(log *slog.Logger) error {
 			OIDCIssuer:  c.OIDCIssuer,
 			Users:       user.NewService(user.NewRepository(deps.DB)),
 			Companies:   service.NewCompanyService(companyRepo),
+			Candidates:  candidateservice.NewProfileService(candidateRepo),
+			Avatars:     candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Needs:       service.NewNeedsService(companyRepo),
 			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
