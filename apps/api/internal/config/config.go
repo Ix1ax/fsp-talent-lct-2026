@@ -4,13 +4,18 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"regexp"
 )
+
+var policyVersion = regexp.MustCompile(`^[A-Za-z0-9._-]{1,32}$`)
 
 type Config struct {
 	OIDCAllowHTTP                                            bool
 	Env, Addr, DatabaseURL, RedisAddr, RedisPassword         string
 	S3Endpoint, S3Region, S3AccessKey, S3SecretKey, S3Bucket string
 	OIDCIssuer, OIDCClientID, OIDCInternalURL, CORSOrigins   string
+	// Версия политики обработки данных; кандидат подтверждает согласие именно с ней.
+	PrivacyPolicyVersion string
 }
 
 func Load() (Config, error) {
@@ -30,11 +35,16 @@ func Load() (Config, error) {
 		OIDCClientID:    os.Getenv("OIDC_CLIENT_ID"),
 		OIDCInternalURL: os.Getenv("OIDC_INTERNAL_URL"),
 		CORSOrigins:     value("CORS_ALLOWED_ORIGINS", "*"),
+
+		PrivacyPolicyVersion: value("PRIVACY_POLICY_VERSION", "2026-10-07"),
 	}
 	for name, v := range map[string]string{"DATABASE_URL": c.DatabaseURL, "REDIS_PASSWORD": c.RedisPassword, "S3_ENDPOINT": c.S3Endpoint, "S3_ACCESS_KEY": c.S3AccessKey, "S3_SECRET_KEY": c.S3SecretKey, "S3_BUCKET": c.S3Bucket} {
 		if v == "" {
 			return c, fmt.Errorf("Необходимо указать %s", name)
 		}
+	}
+	if !policyVersion.MatchString(c.PrivacyPolicyVersion) {
+		return c, fmt.Errorf("Недопустимое значение PRIVACY_POLICY_VERSION: до 32 символов из латиницы, цифр, точки, дефиса и подчёркивания")
 	}
 	if (c.OIDCIssuer == "") != (c.OIDCClientID == "") {
 		return c, fmt.Errorf("OIDC_ISSUER и OIDC_CLIENT_ID нужно указать вместе")
