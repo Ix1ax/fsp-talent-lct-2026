@@ -21,6 +21,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	offerrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
+	offerservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/platform"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
@@ -70,6 +72,7 @@ func run(log *slog.Logger) error {
 			Needs:       service.NewNeedsService(companyRepo),
 			Members:     service.NewMemberService(companyRepo),
 			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
+			Offers:      offerservice.New(offerrepository.New(deps.DB)),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,
