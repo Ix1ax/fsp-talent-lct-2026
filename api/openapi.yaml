@@ -3094,24 +3094,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/{kind}:
     parameters:
       - $ref: '#/components/parameters/AdminCatalogKind'
@@ -3140,6 +3163,7 @@ paths:
           schema:
             type: integer
             minimum: 0
+            maximum: 10000
             default: 0
       responses:
         '200':
@@ -3154,36 +3178,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '404':
           description: Неизвестный справочник.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '401':
           description: Нужна действующая сессия админки. Токены сайта не подходят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
     post:
       operationId: createAdminCatalogItem
       summary: Создать запись справочника
@@ -3213,48 +3268,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '404':
           description: Неизвестный справочник.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Код, название навыка или порядок грейда уже занят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_conflict
+                  message: Код, название навыка или порядок грейда уже занят
         '413':
           description: Превышен допустимый размер запроса.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: request_too_large
+                  message: Превышен допустимый размер запроса
         '401':
           description: Нужна действующая сессия админки. Токены сайта не подходят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/{kind}/{id}:
     parameters:
       - $ref: '#/components/parameters/AdminCatalogKind'
@@ -3283,36 +3377,67 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '404':
           description: Запись или справочник не найдены.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '401':
           description: Нужна действующая сессия админки. Токены сайта не подходят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
     patch:
       operationId: updateAdminCatalogItem
       summary: Изменить или архивировать запись
@@ -3343,48 +3468,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '404':
           description: Запись или справочник не найдены.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Запись используется, требуется модерация либо возник конфликт уникальности.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_conflict
+                  message: Код, название навыка или порядок грейда уже занят
         '413':
           description: Превышен допустимый размер запроса.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: request_too_large
+                  message: Превышен допустимый размер запроса
         '401':
           description: Нужна действующая сессия админки. Токены сайта не подходят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
     delete:
       operationId: deleteAdminCatalogItem
       summary: Удалить неиспользуемую запись
@@ -3404,42 +3568,77 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '404':
           description: Запись или справочник не найдены.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Запись используется, требуется модерация либо возник конфликт уникальности.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_in_use
+                  message: "Запись используется в профилях или потребностях: архивируйте её"
         '401':
           description: Нужна действующая сессия админки. Токены сайта не подходят.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Администратор не имеет доступа.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/skills/pending:
     get:
       operationId: listAdminPendingSkills
@@ -3463,6 +3662,7 @@ paths:
           schema:
             type: integer
             minimum: 0
+            maximum: 10000
             default: 0
       responses:
         '200':
@@ -3471,54 +3671,74 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AdminCatalogPage'
+              example:
+                items:
+                  - id: 49c891ae-17bd-443e-90a4-6bafbe31d169
+                    code: custom_d893bdc362c8777d12ea6b4f8b108f02
+                    name: PostgreSQL
+                    active: false
+                    moderation_status: pending
+                    submitted_by: 6799b286-486c-47a9-8fbc-2046c3dac4b7
+                    submitted_at: '2026-10-07T12:12:28Z'
+                limit: 20
+                offset: 0
         '400':
-          description: Некорректный ID, причина или целевой навык.
+          description: Некорректные limit или offset.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '401':
           description: Нужна действующая сессия админки.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Недостаточно прав администратора.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '404':
-          description: Навык не найден.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '413':
-          description: Превышен допустимый размер запроса.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/skills/{id}/approve:
     parameters:
       - name: id
@@ -3555,48 +3775,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '401':
           description: Нужна действующая сессия админки.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Недостаточно прав администратора.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '404':
           description: Навык не найден.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: skill_moderation_conflict
+                  message: Действие недоступно для текущего статуса навыка
         '413':
           description: Превышен допустимый размер запроса.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: request_too_large
+                  message: Превышен допустимый размер запроса
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/skills/{id}/reject:
     parameters:
       - name: id
@@ -3633,48 +3892,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '401':
           description: Нужна действующая сессия админки.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Недостаточно прав администратора.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '404':
           description: Навык не найден.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: skill_moderation_conflict
+                  message: Действие недоступно для текущего статуса навыка
         '413':
           description: Превышен допустимый размер запроса.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: request_too_large
+                  message: Превышен допустимый размер запроса
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
   /api/v1/admin/catalogs/skills/{id}/merge:
     parameters:
       - name: id
@@ -3711,48 +4009,88 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: validation_error
+                  message: Некорректные параметры запроса
         '401':
           description: Нужна действующая сессия админки.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: unauthorized
+                  message: Неверная почта, пароль или сессия
         '403':
           description: Недостаточно прав администратора.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: forbidden
+                  message: Недостаточно прав для управления справочниками
         '404':
           description: Навык не найден.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: catalog_item_not_found
+                  message: Запись справочника не найдена
         '409':
           description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: skill_moderation_conflict
+                  message: Действие недоступно для текущего статуса навыка
         '413':
           description: Превышен допустимый размер запроса.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: request_too_large
+                  message: Превышен допустимый размер запроса
         '500':
           description: Внутренняя ошибка сервера.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                error:
+                  code: internal_error
+                  message: Внутренняя ошибка сервера
         '503':
           description: Сервис админки или справочников не настроен.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              examples:
+                catalogsUnavailable:
+                  value:
+                    error:
+                      code: catalogs_unavailable
+                      message: Управление справочниками не настроено
+                adminUnavailable:
+                  value:
+                    error:
+                      code: admin_unavailable
+                      message: Сервис админки не настроен
+
 components:
   parameters:
     AdminCatalogKind:
@@ -3832,6 +4170,16 @@ components:
     AdminCatalogItem:
       type: object
       required: [id, code, name, active]
+      description: >-
+        Поля submitted_* и moderated_*, причина и merged_into возвращаются только
+        при наличии значений. rank есть только у грейдов, moderation_status — только
+        у навыков. Пустой aliases в ответе отсутствует. merged_into есть только у merged.
+      example:
+        id: 49c891ae-17bd-443e-90a4-6bafbe31d169
+        code: postgresql
+        name: PostgreSQL
+        active: true
+        moderation_status: approved
       properties:
         submitted_by:
           type: string
@@ -3884,8 +4232,14 @@ components:
             $ref: '#/components/schemas/AdminCatalogItem'
         limit:
           type: integer
+          minimum: 1
+          maximum: 100
+          example: 20
         offset:
           type: integer
+          minimum: 0
+          maximum: 10000
+          example: 0
     AdminCatalogCreateInput:
       type: object
       additionalProperties: false
@@ -5250,7 +5604,6 @@ components:
             message:
               type: string
               description: Понятное сообщение об ошибке на русском языке
-              example: Маршрут не найден
   responses:
     AdminUnauthorized:
       description: "Неверная почта, пароль или сессия"
