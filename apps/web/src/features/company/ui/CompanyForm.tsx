@@ -1,9 +1,11 @@
 'use client';
+
 import { useForm, useWatch } from 'react-hook-form';
 
-import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard';
+import { useUnsavedGuard } from '@/shared/hooks';
 import {
   Button,
+  ConfirmDiscardDialog,
   Input,
   Sheet,
   SheetContent,
@@ -12,8 +14,8 @@ import {
   SheetTitle,
   Textarea,
 } from '@/shared/ui';
-import { ConfirmDiscardDialog } from '@/shared/ui/ConfirmDiscardDialog';
 import type { Company, CompanyInput } from '@/entities/company';
+
 interface CompanyFormProps {
   company: Company | null;
   create: boolean;
@@ -23,6 +25,7 @@ interface CompanyFormProps {
   onOpenChange: (open: boolean) => void;
   onSave: (input: CompanyInput, create: boolean) => Promise<void>;
 }
+
 export const CompanyForm = ({
   company,
   create,
@@ -54,6 +57,7 @@ export const CompanyForm = ({
     if (!v) unsaved.guard(() => onOpenChange(false));
     else onOpenChange(v);
   };
+
   return (
     <>
       <ConfirmDiscardDialog
@@ -62,7 +66,7 @@ export const CompanyForm = ({
         onProceed={unsaved.proceed}
       />
       <Sheet open={open} onOpenChange={close}>
-        <SheetContent className="w-full overflow-y-auto sm:max-w-[460px]">
+        <SheetContent className="w-full overflow-y-auto sm:max-w-115">
           <SheetHeader>
             <SheetTitle className="text-2xl font-bold">
               {create ? 'Новая компания' : 'Профиль компании'}

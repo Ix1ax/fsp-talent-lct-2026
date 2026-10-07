@@ -1,2 +1,2 @@
-export { useCompanyActions } from './model/useCompanyActions';
-export { CompanyForm } from './ui/CompanyForm';
+export { useCompanyActions } from './model';
+export { CompanyForm } from './ui';
