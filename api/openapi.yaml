@@ -2841,8 +2841,161 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/admin/auth/login:
+    post:
+      operationId: loginAdmin
+      summary: Вход в отдельную админку
+      tags: [Админка]
+      description: "Почта и пароль администратора. Публичной регистрации нет. Все попытки ограничены: 10 на нормализованную почту и 30 на IP за 15 минут. Сессия на 8 часов, без refresh. Токен сайта Keycloak не используется."
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCredentials'
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminLogin'
+        '400':
+          $ref: '#/components/responses/AdminBadRequest'
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '413':
+          $ref: '#/components/responses/AdminRequestTooLarge'
+        '429':
+          $ref: '#/components/responses/AdminRateLimited'
+        '500':
+          $ref: '#/components/responses/AdminInternal'
+        '503':
+          $ref: '#/components/responses/AdminUnavailable'
+  /api/v1/admin/auth/me:
+    get:
+      operationId: getCurrentAdmin
+      summary: Текущий администратор
+      tags: [Админка]
+      description: "Только действующая админская сессия. Роль и статус проверяются в БД на каждом запросе."
+      security:
+        - adminSession: []
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAccount'
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '500':
+          $ref: '#/components/responses/AdminInternal'
+        '503':
+          $ref: '#/components/responses/AdminUnavailable'
+  /api/v1/admin/auth/logout:
+    post:
+      operationId: logoutAdmin
+      summary: Выйти из админки
+      tags: [Админка]
+      description: "Удаляет текущую сессию из БД. Остальные сессии сохраняются."
+      security:
+        - adminSession: []
+      responses:
+        '204':
+          description: Успешно
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '500':
+          $ref: '#/components/responses/AdminInternal'
+        '503':
+          $ref: '#/components/responses/AdminUnavailable'
+  /api/v1/admin/admins:
+    post:
+      operationId: createAdmin
+      summary: Создать администратора
+      tags: [Админка]
+      description: "Только активный superadmin. Создаётся роль admin, передать другую роль нельзя. Пароль от 12 до 72 байт, хранится bcrypt-хеш. Почта приводится к нижнему регистру. Публичной регистрации нет."
+      security:
+        - adminSession: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCreateInput'
+      responses:
+        '201':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAccount'
+        '400':
+          $ref: '#/components/responses/AdminBadRequest'
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '409':
+          $ref: '#/components/responses/AdminConflict'
+        '413':
+          $ref: '#/components/responses/AdminRequestTooLarge'
+        '500':
+          $ref: '#/components/responses/AdminInternal'
+        '503':
+          $ref: '#/components/responses/AdminUnavailable'
+    get:
+      operationId: listAdmins
+      summary: Список администраторов
+      tags: [Админка]
+      description: "Только активный superadmin. Сортировка по времени создания, затем ID. Хеши паролей и токены не возвращаются."
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - name: offset
+          in: query
+          schema: {type: integer, minimum: 0, maximum: 10000, default: 0}
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAccountPage'
+        '400':
+          $ref: '#/components/responses/AdminBadRequest'
+        '401':
+          $ref: '#/components/responses/AdminUnauthorized'
+        '403':
+          $ref: '#/components/responses/AdminForbidden'
+        '500':
+          $ref: '#/components/responses/AdminInternal'
+        '503':
+          $ref: '#/components/responses/AdminUnavailable'
 components:
   securitySchemes:
+    adminSession:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: Отдельный токен админки из /api/v1/admin/auth/login; токены Keycloak не подходят
     bearerAuth:
       type: http
       scheme: bearer
@@ -2858,6 +3011,52 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AdminCredentials:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: {type: string, format: email, maxLength: 254}
+        password: {type: string, format: password, writeOnly: true}
+    AdminCreateInput:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email: {type: string, format: email, maxLength: 254}
+        password:
+          type: string
+          format: password
+          writeOnly: true
+          description: От 12 до 72 байт UTF-8; пароль не обрезается и не нормализуется
+    AdminAccount:
+      type: object
+      required: [id, email, role, status, created_at]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        role: {type: string, enum: [superadmin, admin]}
+        status: {type: string, enum: [active, blocked]}
+        created_at: {type: string, format: date-time}
+    AdminLogin:
+      type: object
+      required: [access_token, token_type, expires_at, admin]
+      properties:
+        access_token:
+          type: string
+          description: Случайный непрозрачный токен; в БД хранится только SHA-256. Передавать в Authorization Bearer
+        token_type: {type: string, enum: [Bearer]}
+        expires_at: {type: string, format: date-time}
+        admin: {$ref: '#/components/schemas/AdminAccount'}
+    AdminAccountPage:
+      type: object
+      required: [items, limit, offset]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AdminAccount'}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0, maximum: 10000}
     CandidateBankCard:
       type: object
       description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
@@ -4110,6 +4309,81 @@ components:
               description: Понятное сообщение об ошибке на русском языке
               example: Маршрут не найден
   responses:
+    AdminUnauthorized:
+      description: "Неверная почта, пароль или сессия"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: unauthorized
+              message: "Неверная почта, пароль или сессия"
+    AdminForbidden:
+      description: "Создавать администраторов может только суперадмин"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: forbidden
+              message: "Создавать администраторов может только суперадмин"
+    AdminConflict:
+      description: "Администратор с такой почтой уже существует"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: admin_exists
+              message: "Администратор с такой почтой уже существует"
+    AdminRateLimited:
+      description: "Слишком много попыток входа: повторите через 15 минут"
+      headers:
+        Retry-After:
+          schema: {type: string, example: '900'}
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: rate_limited
+              message: "Слишком много попыток входа: повторите через 15 минут"
+    AdminBadRequest:
+      description: "Некорректный JSON или неизвестное поле"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: validation_error
+              message: "Некорректный JSON или неизвестное поле"
+    AdminRequestTooLarge:
+      description: "Превышен допустимый размер запроса"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: request_too_large
+              message: "Превышен допустимый размер запроса"
+    AdminInternal:
+      description: "Внутренняя ошибка сервера"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: internal_error
+              message: "Внутренняя ошибка сервера"
+    AdminUnavailable:
+      description: "Сервис админки не настроен"
+      content:
+        application/json:
+          schema: {$ref: '#/components/schemas/Error'}
+          example:
+            error:
+              code: admin_unavailable
+              message: "Сервис админки не настроен"
     CandidateBankBadRequest:
       description: "Неверный UUID, фильтр, диапазон стажа или ID формата работы"
       content:
