@@ -51,7 +51,16 @@ func (r *Repository) ListSkills(ctx context.Context, userID string) ([]entity.Sk
 	if err != nil {
 		return nil, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+skillColumns+skillJoin+` WHERE cs.candidate_id=$1 ORDER BY s.name,s.id`, profileID)
+	items, err := queryCandidateSkills(ctx, tx, profileID)
+	if err != nil {
+		return nil, err
+	}
+	return items, tx.Commit(ctx)
+}
+
+// queryCandidateSkills читает навыки профиля по названию. Общий запрос для списка навыков и полного профиля.
+func queryCandidateSkills(ctx context.Context, q querier, profileID string) ([]entity.Skill, error) {
+	rows, err := q.Query(ctx, `SELECT `+skillColumns+skillJoin+` WHERE cs.candidate_id=$1 ORDER BY s.name,s.id`, profileID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,11 +73,7 @@ func (r *Repository) ListSkills(ctx context.Context, userID string) ([]entity.Sk
 		}
 		items = append(items, sk)
 	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	rows.Close()
-	return items, tx.Commit(ctx)
+	return items, rows.Err()
 }
 
 // PutSkill добавляет навык или меняет уровень. Лимит и существование навыка проверяются под блокировкой профиля,

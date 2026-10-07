@@ -1,0 +1,64 @@
+package service
+
+import (
+	"context"
+
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
+	consententity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/entity"
+)
+
+type FullProfileStore interface {
+	FullSnapshot(ctx context.Context, userID string) (entity.FullSnapshot, error)
+}
+
+type FullProfileService struct {
+	store         FullProfileStore
+	policyVersion string
+}
+
+func NewFullProfileService(store FullProfileStore, policyVersion string) *FullProfileService {
+	return &FullProfileService{store: store, policyVersion: policyVersion}
+}
+
+// Get собирает полный профиль из снимка. Контакты видны только при активном общем согласии processing
+// (согласие с привязкой к компании его не заменяет). Готовность считается по тому, что реально показано.
+func (s *FullProfileService) Get(ctx context.Context, userID string) (entity.FullProfile, error) {
+	snapshot, err := s.store.FullSnapshot(ctx, userID)
+	if err != nil {
+		return entity.FullProfile{}, err
+	}
+	processing, publication := false, false
+	for _, c := range snapshot.Consents {
+		if c.CompanyID != nil || c.RevokedAt != nil {
+			continue
+		}
+		switch c.Kind {
+		case consententity.KindProcessing:
+			processing = true
+		case consententity.KindPublication:
+			publication = true
+		}
+	}
+	contacts := snapshot.Contacts
+	if !processing {
+		contacts = nil
+	}
+	consents, skills := snapshot.Consents, snapshot.Skills
+	if consents == nil {
+		consents = []consententity.Consent{}
+	}
+	if skills == nil {
+		skills = []entity.Skill{}
+	}
+	return entity.FullProfile{
+		Profile:      snapshot.Profile,
+		Consents:     entity.FullConsents{CurrentPolicyVersion: s.policyVersion, Items: consents},
+		Contacts:     contacts,
+		Skills:       skills,
+		Achievements: []any{},
+		Readiness: entity.BuildReadiness(entity.ReadinessInput{
+			ProcessingConsent: processing, PublicationConsent: publication,
+			Profile: snapshot.Profile, HasContacts: contacts != nil, SkillCount: len(skills),
+		}),
+	}, nil
+}

@@ -4091,6 +4091,59 @@ paths:
                       code: admin_unavailable
                       message: Сервис админки не настроен
 
+  /api/v1/me/profile/full:
+    get:
+      operationId: getMyFullProfile
+      summary: Полный профиль кандидата одним ответом
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: >-
+        Профиль, активные согласия, контакты, навыки и чек-лист готовности. Метод всегда отвечает 200 активному кандидату, даже если
+        профиля ещё нет (тогда profile равен null): так фронт после входа строит онбординг одним запросом. Контакты видны только при
+        активном согласии processing, иначе contacts равен null. В навыках показываются все навыки кандидата, в том числе ожидающие
+        модерации. Готовность это подсказка: условия публикации (согласия processing и publication) проверяет сервер при смене
+        search_status. Ответ содержит контакты и не кешируется.
+      responses:
+        '200':
+          description: Полный профиль.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateFullProfile'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/admin/assessments/questions:
     get:
       operationId: listAssessmentQuestions
@@ -6142,6 +6195,104 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateSkill'
+    CandidateFullProfile:
+      type: object
+      required:
+        - profile
+        - consents
+        - contacts
+        - skills
+        - category
+        - achievements
+        - readiness
+      properties:
+        profile:
+          nullable: true
+          description: Профиль или null, если он ещё не создан.
+          allOf:
+            - $ref: '#/components/schemas/CandidateProfile'
+        consents:
+          type: object
+          required:
+            - current_policy_version
+            - items
+          properties:
+            current_policy_version:
+              type: string
+            items:
+              type: array
+              description: Только активные согласия (revoked_at равен null).
+              items:
+                $ref: '#/components/schemas/Consent'
+        contacts:
+          nullable: true
+          description: Свои контакты или null, если их нет или нет активного согласия processing.
+          allOf:
+            - $ref: '#/components/schemas/CandidateOwnContacts'
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/CandidateSkill'
+        category:
+          nullable: true
+          description: Заготовка под категорию после тестирования; пока всегда null.
+          type: object
+        achievements:
+          type: array
+          description: Заготовка под достижения ФСП; пока всегда пустой массив.
+          items:
+            type: object
+        readiness:
+          $ref: '#/components/schemas/CandidateReadiness'
+    CandidateReadiness:
+      type: object
+      required:
+        - percent
+        - ready_to_publish
+        - items
+      properties:
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Доля выполненных пунктов от всех, округлённая.
+        ready_to_publish:
+          type: boolean
+          description: Истинно, когда выполнены все обязательные пункты.
+        items:
+          type: array
+          description: Пункты в фиксированном порядке, сначала шесть обязательных.
+          items:
+            $ref: '#/components/schemas/CandidateReadinessItem'
+    CandidateReadinessItem:
+      type: object
+      required:
+        - code
+        - title
+        - done
+        - required
+      properties:
+        code:
+          type: string
+          enum:
+            - consent_processing
+            - profile
+            - contacts
+            - skills
+            - work_formats
+            - consent_publication
+            - headline
+            - summary
+            - city
+            - salary
+            - avatar
+        title:
+          type: string
+          description: Название пункта для пользователя на русском языке.
+        done:
+          type: boolean
+        required:
+          type: boolean
     AssessmentOption:
       type: object
       additionalProperties: false
