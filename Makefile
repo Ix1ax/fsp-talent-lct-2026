@@ -40,3 +40,7 @@ integration:
 		go test -race -tags=integration ./internal/platform ./tests/integration
 auth-smoke:
 	sh scripts/keycloak-smoke.sh
+
+.PHONY: matching-evaluation
+matching-evaluation:
+	sh scripts/evaluate-matching.sh

@@ -18,6 +18,8 @@ import (
 
 func TestCandidateBankVisibilityAndAccess(t *testing.T) {
 	f := newOfferFixture(t)
+	confirmBankCandidate(t, f, "candidate")
+	confirmBankCandidate(t, f, "other_candidate")
 	old := f.auth.Store.Users
 	f.auth = testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateBank: service.New(repository.New(f.db))})
 	f.auth.Store.Users = old
@@ -86,6 +88,8 @@ func TestCandidateBankVisibilityAndAccess(t *testing.T) {
 
 func TestCandidateBankFilters(t *testing.T) {
 	f := newOfferFixture(t)
+	confirmBankCandidate(t, f, "candidate")
+	confirmBankCandidate(t, f, "other_candidate")
 	old := f.auth.Store.Users
 	f.auth = testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateBank: service.New(repository.New(f.db))})
 	f.auth.Store.Users = old

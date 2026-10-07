@@ -2106,7 +2106,7 @@ paths:
       operationId: listCandidateBank
       summary: Банк кандидатов компании
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сортировка по UUID профиля по возрастанию; это каталог, а не рейтинг квалификации. Профили, контакты и файлы не изменяются."
+      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive и действующими согласиями processing и publication. Неподтверждённые профили доступны по умолчанию; category=null, grade_status=unconfirmed. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сначала подтверждённые категории, затем результат их теста по убыванию, затем UUID. Без потребности это каталог, а не рейтинг сходства. Профили, контакты и файлы не изменяются."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2140,6 +2140,26 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: grade_status
+          in: query
+          description: "Статус подтверждения грейда. all — все публичные профили; confirmed — категория подтверждена успешным тестом; unconfirmed — подтверждённой категории нет."
+          schema: {type: string, enum: [all, confirmed, unconfirmed], default: all}
+        - name: specialization_id
+          in: query
+          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор последней попытки при отсутствии категории. Профили без выбранной специализации исключаются."
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: grade_id
+          in: query
+          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор последней попытки. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: skill_id
+          in: query
+          description: UUID активного одобренного навыка. По умолчанию подходят заявленные и подтверждённые навыки.
+          schema: {type: string, format: uuid}
+        - name: verified_skill_only
+          in: query
+          description: При true навык должен иметь подтверждение тестом. Требует skill_id.
+          schema: {type: boolean, default: false}
       responses:
         '200':
           description: Успешно
@@ -2208,9 +2228,9 @@ paths:
         schema: {type: string, format: uuid}
     get:
       operationId: recommendCandidatesForNeed
-      summary: Предварительная подборка по условиям потребности
+      summary: Подборка по степени соответствия потребности
       tags: [Банк кандидатов]
-      description: "Только активная потребность этой компании. Несовместимые форматы и известные ожидания выше salary_to_rub исключаются. Неизвестная зарплата допускается, если не задан явный salary_max_rub. Дополнительные фильтры сужают подборку. Сортировка по числу совпадений формата, бюджета, города и часового пояса по убыванию, затем по UUID по возрастанию; пагинация после сортировки. Это подбор условий работы, а не квалификации: специализация, подтверждённый грейд, навыки, результаты тестов и достижения ФСП пока не оцениваются."
+      description: "Активная потребность этой компании. Все доступные публичные профили участвуют в ранжировании, включая неподтверждённые. Условия потребности оценивают сходство и не исключают кандидатов: другая категория, отсутствие обязательного навыка, превышение бюджета и несовпадение формата снижают match_score и объясняются. Исключают только явные query-фильтры и правила доступа/приватности. Порядок: сначала подтверждённые категории, затем внутри каждой группы match_score по убыванию, результат теста по убыванию с null в конце, UUID. Пагинация после сортировки. Не отправляйте критерии потребности повторно как жёсткие query-фильтры, если нужны близкие варианты."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2244,6 +2264,26 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: grade_status
+          in: query
+          description: "Статус подтверждения грейда. all — все публичные профили; confirmed — категория подтверждена успешным тестом; unconfirmed — подтверждённой категории нет."
+          schema: {type: string, enum: [all, confirmed, unconfirmed], default: all}
+        - name: specialization_id
+          in: query
+          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор последней попытки при отсутствии категории. Профили без выбранной специализации исключаются."
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: grade_id
+          in: query
+          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор последней попытки. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: skill_id
+          in: query
+          description: UUID активного одобренного навыка. По умолчанию подходят заявленные и подтверждённые навыки.
+          schema: {type: string, format: uuid}
+        - name: verified_skill_only
+          in: query
+          description: При true навык должен иметь подтверждение тестом. Требует skill_id.
+          schema: {type: boolean, default: false}
       responses:
         '200':
           description: Успешно
@@ -5380,8 +5420,25 @@ components:
     CandidateBankCard:
       type: object
       description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
-      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids]
+      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids, category, declared_category, grade_status]
       properties:
+        grade_status: {type: string, enum: [confirmed, unconfirmed]}
+        declared_category:
+          type: object
+          nullable: true
+          description: Выбор специализации и грейда последней попытки теста. Это не подтверждённая категория; до первой попытки null.
+          required: [specialization_id, grade_id]
+          properties:
+            specialization_id: {type: integer, minimum: 1}
+            grade_id: {type: integer, minimum: 1}
+        category:
+          type: object
+          nullable: true
+          required: [specialization_id, grade_id]
+          description: Категория успешного теста. null означает отсутствие подтверждения.
+          properties:
+            specialization_id: {type: integer, minimum: 1}
+            grade_id: {type: integer, minimum: 1}
         id: {type: string, format: uuid}
         city: {type: string, nullable: true, maxLength: 200}
         timezone: {type: string, nullable: true, maxLength: 64}
@@ -5392,6 +5449,9 @@ components:
           type: array
           items: {type: integer, minimum: 1}
       example:
+        grade_status: confirmed
+        declared_category: {specialization_id: 1, grade_id: 2}
+        category: {specialization_id: 1, grade_id: 2}
         id: a76cb614-f634-41d6-9d19-76874fbcc842
         city: Москва
         timezone: Europe/Moscow
@@ -5417,8 +5477,59 @@ components:
       allOf:
         - $ref: '#/components/schemas/CandidateBankCard'
         - type: object
-          required: [matched_conditions, reasons, unknown_conditions]
+          required: [matched_conditions, reasons, unknown_conditions, category, skills, skill_match_score, test_score_percent, match_score, criteria, mismatched_conditions, missing_required_skills]
           properties:
+            match_score:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: "Общее сходство с потребностью, не вероятность найма. Веса: специализация 30, грейд 20, стек 30, формат 10, бюджет 5, город 3, часовой пояс 2. Неуказанные условия исключаются из знаменателя; неизвестное значение кандидата даёт 0. 100 × сумма(вес × доля совпадения) / сумма активных весов. Округление до двух знаков."
+            criteria:
+              type: array
+              description: Активные критерии потребности, использованные при расчёте match_score
+              items:
+                type: object
+                required: [code, weight, score, status]
+                properties:
+                  code: {type: string, enum: [specialization, grade, skills, work_format, salary, city, timezone]}
+                  weight: {type: number, minimum: 0}
+                  score: {type: number, minimum: 0, maximum: 100}
+                  status: {type: string, enum: [matched, mismatched, partial, unknown]}
+            mismatched_conditions:
+              type: array
+              items: {type: string}
+              description: Известные несовпадения specialization, grade, work_format, salary, city, timezone
+            missing_required_skills:
+              type: array
+              items: {type: string, format: uuid}
+              description: Обязательные навыки потребности, о которых нет данных в профиле. Они снижают оценку, но не исключают профиль.
+            skills:
+              type: array
+              description: Требуемые потребностью активные одобренные навыки с указанием источника. Не содержит снимков заданий или ответов.
+              items:
+                type: object
+                required: [id, name, required, weight, effective_weight, source, claimed_level, verified_level]
+                properties:
+                  id: {type: string, format: uuid}
+                  name: {type: string}
+                  required: {type: boolean}
+                  weight: {type: number, minimum: 0.01, maximum: 100}
+                  effective_weight: {type: number, minimum: 0.01, maximum: 200, description: "Вес требования; для обязательного навыка умножен на 2"}
+                  source: {type: string, enum: [test, claimed, missing]}
+                  claimed_level: {type: integer, nullable: true, minimum: 1, maximum: 5}
+                  verified_level: {type: integer, nullable: true, minimum: 1, maximum: 5}
+            skill_match_score:
+              type: number
+              nullable: true
+              minimum: 0
+              maximum: 100
+              description: "Взвешенное покрытие требований стека: test=1, claimed=0.5, missing=0. Формула 100 × сумма(effective_weight × коэффициент) / сумма(effective_weight). Если требований нет — null. Не вероятность найма и не грейд."
+            test_score_percent:
+              type: number
+              nullable: true
+              minimum: 0
+              maximum: 100
+              description: Процент баллов теста подтверждённой категории; без подтверждения null, а не 0
             matched_conditions:
               type: integer
               minimum: 0
@@ -5433,7 +5544,7 @@ components:
               description: "Не хватает значения кандидата или условия потребности. Известное несовпадение не включается в этот список."
               items:
                 type: string
-                enum: [work_format, salary, city, timezone]
+                description: "work_format, salary, city, timezone либо skill:<UUID> для отсутствующего необязательного навыка"
     CandidateRecommendationPage:
       type: object
       required: [items, total, limit, offset, need_id, matching_mode, unassessed_criteria]
@@ -5447,15 +5558,15 @@ components:
         need_id: {type: string, format: uuid}
         matching_mode:
           type: string
-          enum: [conditions_only]
-          description: Предварительная подборка только по условиям работы
+          enum: [similarity]
+          description: Ранжирование по сходству с усилением приоритета подтверждённых данных
         unassessed_criteria:
           type: array
           description: Критерии квалификации, которые пока не оцениваются
           items:
             type: string
-            enum: [specialization, confirmed_grade, skills, test_results, fsp_achievements]
-          example: [specialization, confirmed_grade, skills, test_results, fsp_achievements]
+            enum: [fsp_achievements]
+          example: [fsp_achievements]
     CandidateOfferInput:
       type: object
       additionalProperties: false
