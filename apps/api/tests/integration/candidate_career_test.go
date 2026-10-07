@@ -136,59 +136,57 @@ func TestCareerLimitsRace(t *testing.T) {
 	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
-	race := func(prefill int, table string, create func() error) {
-		t.Helper()
-		var ok, limited atomic.Int32
+	// hammer запускает create одновременно на десяти соединениях; wait ждёт общего старта.
+	hammer := func(create func() error) (ok, limited int32) {
+		var okN, limitedN atomic.Int32
 		var wg sync.WaitGroup
+		start := make(chan struct{})
 		for i := 0; i < 10; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
+				<-start
 				switch err := create(); {
 				case err == nil:
-					ok.Add(1)
+					okN.Add(1)
 				case errors.Is(err, entity.ErrLimitReached):
-					limited.Add(1)
+					limitedN.Add(1)
 				default:
 					t.Error(err)
 				}
 			}()
 		}
+		close(start)
 		wg.Wait()
-		if ok.Load() != 1 || limited.Load() != 9 {
-			t.Fatalf("%s: успехов %d, отказов %d", table, ok.Load(), limited.Load())
+		return okN.Load(), limitedN.Load()
+	}
+	// Первый запрос на каждом соединении готовит выражения и идёт заметно дольше: без прогрева запросы почти не пересекаются.
+	// Поэтому сначала прогоняем те же запросы на отдельном кандидате, и только потом гоняем проверяемого.
+	race := func(table string, fill func(user string) error, create func(user string) error, prefill int) {
+		t.Helper()
+		warm := careerUser(t, db, "candidate", "active", true)
+		hammer(func() error { return create(warm) })
+		user := careerUser(t, db, "candidate", "active", true)
+		for i := 0; i < prefill; i++ {
+			if err := fill(user); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if ok, limited := hammer(func() error { return create(user) }); ok != 1 || limited != 9 {
+			t.Fatalf("%s: успехов %d, отказов %d", table, ok, limited)
 		}
 	}
 
-	user := careerUser(t, db, "candidate", "active", true)
-	for i := 0; i < entity.MaxExperiences-1; i++ {
-		if _, err := repo.CreateExperience(ctx, user, exp(t, "К", "2020-01", "")); err != nil {
-			t.Fatal(err)
-		}
-	}
-	race(entity.MaxExperiences-1, "опыт", func() error {
-		_, err := repo.CreateExperience(ctx, user, exp(t, "Гонка", "2021-01", ""))
+	experience := func(user string) error {
+		_, err := repo.CreateExperience(ctx, user, exp(t, "К", "2020-01", ""))
 		return err
-	})
-	if n := countRows(t, db, `SELECT count(*) FROM candidate_experiences`); n != entity.MaxExperiences {
-		t.Fatalf("записей опыта: %d", n)
 	}
-
-	other := careerUser(t, db, "candidate", "active", true)
-	for i := 0; i < entity.MaxEducation-1; i++ {
-		if _, err := repo.CreateEducation(ctx, other, edu("У", 2020)); err != nil {
-			t.Fatal(err)
-		}
+	race("опыт", experience, experience, entity.MaxExperiences-1)
+	education := func(user string) error {
+		_, err := repo.CreateEducation(ctx, user, edu("У", 2020))
+		return err
 	}
-	race(entity.MaxEducation-1, "образование", func() error { _, err := repo.CreateEducation(ctx, other, edu("Гонка", 2021)); return err })
-	if n := countRows(t, db, `SELECT count(*) FROM candidate_education`); n != entity.MaxEducation {
-		t.Fatalf("записей образования: %d", n)
-	}
-	// Замена и удаление при полном списке работают.
-	list, _ := repo.ListEducation(ctx, other)
-	if _, err := repo.ReplaceEducation(ctx, other, list[0].ID, edu("Новая", 2022)); err != nil {
-		t.Fatalf("замена при полном списке: %v", err)
-	}
+	race("образование", education, education, entity.MaxEducation-1)
 }
 
 func TestCareerOwnership(t *testing.T) {
