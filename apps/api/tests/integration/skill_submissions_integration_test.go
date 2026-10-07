@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -14,11 +14,13 @@ import (
 	candidaterepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 func TestSkillSubmissions(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	repo := candidaterepo.NewRepository(db)
 	svc := candidateservice.NewSkillsService(repo)
@@ -69,11 +71,11 @@ func TestSkillSubmissions(t *testing.T) {
 		t.Fatal("Повторно добавлен отклонённый навык")
 	}
 	// Проверяем реальный маршрут и запрет клиенту выдавать себе одобрение.
-	env := newAuthEnvWithOptions(t, Options{CandidateSkills: svc})
-	env.store.users[testIssuer+"|submit"] = user.User{ID: first, Role: "candidate", Status: "active"}
-	token := env.token(t, "submit")
+	env := testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateSkills: svc})
+	env.Store.Users[testutil.Issuer+"|submit"] = user.User{ID: first, Role: "candidate", Status: "active"}
+	token := env.Token(t, "submit")
 	body := `{"name":"API-навык","claimed_level":4}`
-	w := env.do(t, "POST", "/api/v1/me/skills", token, body)
+	w := env.Do(t, "POST", "/api/v1/me/skills", token, body)
 	if w.Code != 200 {
 		t.Fatalf("POST: %d %s", w.Code, w.Body)
 	}
@@ -81,11 +83,11 @@ func TestSkillSubmissions(t *testing.T) {
 	if err = json.Unmarshal(w.Body.Bytes(), &skill); err != nil || skill.ModerationStatus != "pending" {
 		t.Fatal(skill, err)
 	}
-	w = env.do(t, "POST", "/api/v1/me/skills", token, `{"name":"Подлог","claimed_level":3,"moderation_status":"approved"}`)
+	w = env.Do(t, "POST", "/api/v1/me/skills", token, `{"name":"Подлог","claimed_level":3,"moderation_status":"approved"}`)
 	if w.Code != 400 {
 		t.Fatalf("Клиент задал статус: %d", w.Code)
 	}
-	if w = env.do(t, "POST", "/api/v1/me/skills", "", body); w.Code != 401 {
+	if w = env.Do(t, "POST", "/api/v1/me/skills", "", body); w.Code != 401 {
 		t.Fatalf("Без авторизации: %d", w.Code)
 	}
 	quotaUser := createCandidate()
@@ -111,7 +113,7 @@ func TestSkillSubmissions(t *testing.T) {
 }
 
 func TestSkillSubmissionConcurrency(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	svc := candidateservice.NewSkillsService(candidaterepo.NewRepository(db))
 	users := []string{}

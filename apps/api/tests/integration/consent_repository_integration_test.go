@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 )
 
 func TestConsentRepository(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := consentrepo.NewRepository(db)
 	ctx := context.Background()
 	newUser := func(role, status string) string {
@@ -132,7 +132,7 @@ func TestConsentRepository(t *testing.T) {
 }
 
 func TestConsentConcurrency(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := consentrepo.NewRepository(db)
 	ctx := context.Background()
 	var user string

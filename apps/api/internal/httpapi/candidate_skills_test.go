@@ -1,4 +1,4 @@
-package httpapi
+package httpapi_test
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -52,7 +54,7 @@ func (m *memSkills) DeleteSkill(_ context.Context, userID, skillID string) error
 
 func TestCandidateSkillsRoutes(t *testing.T) {
 	store := &memSkills{profiles: map[string]bool{"u-cand1": true, "u-cand2": true}, skills: map[string]map[string]entity.Skill{}}
-	e := newAuthEnvWithOptions(t, Options{CandidateSkills: candidateservice.NewSkillsService(store)})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateSkills: candidateservice.NewSkillsService(store)})
 	for sub, u := range map[string]user.User{
 		"cand1":     {ID: "u-cand1", Role: "candidate", Status: "active"},
 		"cand2":     {ID: "u-cand2", Role: "candidate", Status: "active"},
@@ -60,16 +62,16 @@ func TestCandidateSkillsRoutes(t *testing.T) {
 		"emp":       {ID: "u-emp", Role: "employer", Status: "active"},
 		"blk":       {ID: "u-blk", Role: "candidate", Status: "blocked"},
 	} {
-		e.store.users[testIssuer+"|"+sub] = u
+		e.Store.Users[testutil.Issuer+"|"+sub] = u
 	}
 	const skill = "/api/v1/me/skills/00000000-0000-4000-8000-000000000001"
 	do := func(method, path, sub, body string, status int) *httptest.ResponseRecorder {
 		t.Helper()
 		token := ""
 		if sub != "" {
-			token = e.token(t, sub)
+			token = e.Token(t, sub)
 		}
-		w := e.do(t, method, path, token, body)
+		w := e.Do(t, method, path, token, body)
 		if w.Code != status {
 			t.Fatalf("%s %s (%s) %s: %d %s, ожидали %d", method, path, sub, body, w.Code, w.Body, status)
 		}
@@ -77,7 +79,7 @@ func TestCandidateSkillsRoutes(t *testing.T) {
 	}
 	code := func(w *httptest.ResponseRecorder, want string) {
 		t.Helper()
-		if got := errorCode(t, w); got != want {
+		if got := testutil.ErrorCode(t, w); got != want {
 			t.Fatalf("код ошибки %q, ожидали %q: %s", got, want, w.Body)
 		}
 	}
@@ -124,10 +126,10 @@ func TestCandidateSkillsRoutes(t *testing.T) {
 }
 
 func TestCandidateSkillsUnavailable(t *testing.T) {
-	e := newAuthEnvWithOptions(t, Options{})
-	e.store.users[testIssuer+"|cand"] = user.User{ID: "u-cand", Role: "candidate", Status: "active"}
-	w := e.do(t, "GET", "/api/v1/me/skills", e.token(t, "cand"), "")
-	if w.Code != 503 || errorCode(t, w) != "candidate_unavailable" {
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{})
+	e.Store.Users[testutil.Issuer+"|cand"] = user.User{ID: "u-cand", Role: "candidate", Status: "active"}
+	w := e.Do(t, "GET", "/api/v1/me/skills", e.Token(t, "cand"), "")
+	if w.Code != 503 || testutil.ErrorCode(t, w) != "candidate_unavailable" {
 		t.Fatalf("без сервиса ожидали 503 candidate_unavailable: %d %s", w.Code, w.Body)
 	}
 }

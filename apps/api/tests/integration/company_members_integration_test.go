@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -15,15 +15,17 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 func TestCompanyMembers(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	repo := repository.NewRepository(db)
 	log := slog.New(slog.NewTextHandler(io.Discard, nil))
-	e := newAuthEnvWithOptions(t, Options{Companies: service.NewCompanyService(repo), Members: service.NewMemberService(repo), Needs: service.NewNeedsService(repo), Documents: service.NewDocumentService(repo, nil, "", log)})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Companies: service.NewCompanyService(repo), Members: service.NewMemberService(repo), Needs: service.NewNeedsService(repo), Documents: service.NewDocumentService(repo, nil, "", log)})
 	ids, tokens := map[string]string{}, map[string]string{}
 	for _, name := range []string{"owner", "staff", "viewer", "other", "candidate", "blocked"} {
 		role, status := "employer", "active"
@@ -38,8 +40,8 @@ func TestCompanyMembers(t *testing.T) {
 			t.Fatal(err)
 		}
 		ids[name] = id
-		e.store.users[testIssuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
-		tokens[name] = e.token(t, name)
+		e.Store.Users[testutil.Issuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
+		tokens[name] = e.Token(t, name)
 	}
 	a, err := repo.Create(ctx, ids["owner"], entity.Input{Name: "Компания", ContactEmail: "owner@example.test"})
 	if err != nil {
@@ -51,7 +53,7 @@ func TestCompanyMembers(t *testing.T) {
 	}
 	request := func(method, path, who, body string, status int) *httptest.ResponseRecorder {
 		t.Helper()
-		w := e.do(t, method, path, tokens[who], body)
+		w := e.Do(t, method, path, tokens[who], body)
 		if w.Code != status {
 			t.Fatalf("%s %s (%s): %d %s, ожидали %d", method, path, who, w.Code, w.Body, status)
 		}
@@ -103,7 +105,7 @@ func TestCompanyMembers(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			results <- e.do(t, "POST", "/api/v1/company-invitations/accept", tokens["staff"], `{"token":"`+i.Token+`"}`)
+			results <- e.Do(t, "POST", "/api/v1/company-invitations/accept", tokens["staff"], `{"token":"`+i.Token+`"}`)
 		}()
 	}
 	wg.Wait()

@@ -1,12 +1,14 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
 	"encoding/json"
 	"strings"
 	"testing"
+
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 )
 
 func TestCandidateContactsDisclosure(t *testing.T) {
@@ -26,11 +28,11 @@ func TestCandidateContactsDisclosure(t *testing.T) {
 	f.request(t, "POST", "/api/v1/me/offers/"+offer.ID+"/respond", "candidate", `{"status":"accepted"}`, 200)
 
 	// Оффер принят, но у кандидата нет согласия и контактов.
-	if w := f.request(t, "GET", path, "owner", "", 409); errorCode(t, w) != "contacts_unavailable" {
+	if w := f.request(t, "GET", path, "owner", "", 409); testutil.ErrorCode(t, w) != "contacts_unavailable" {
 		t.Fatalf("без согласия: %s", w.Body)
 	}
 	grantConsentRows(t, f.db, candidateUser, "processing")
-	if w := f.request(t, "GET", path, "owner", "", 409); errorCode(t, w) != "contacts_unavailable" {
+	if w := f.request(t, "GET", path, "owner", "", 409); testutil.ErrorCode(t, w) != "contacts_unavailable" {
 		t.Fatalf("без контактов: %s", w.Body)
 	}
 	f.exec(t, `INSERT INTO candidate_contacts(user_id,full_name,email,phone,telegram) VALUES($1,'Иван Иванов',$2,'+7 900 123-45-67','ivan_secret')`, candidateUser, secretEmail)
@@ -67,7 +69,12 @@ func TestCandidateContactsDisclosure(t *testing.T) {
 	if err := f.db.QueryRow(ctx, `SELECT count(*) FROM audit_events e WHERE e.action='contacts.disclosed' AND EXISTS (SELECT 1 FROM jsonb_object_keys(e.metadata) k WHERE k NOT IN ('company_id','offer_id'))`).Scan(&badKeys); err != nil || badKeys != 0 {
 		t.Fatalf("лишние ключи в metadata: %d (%v)", badKeys, err)
 	}
-	for _, secret := range []string{"Иван", "ivan.secret", "900", "ivan_secret"} {
+	// Сверяем значения целиком: часть телефона вроде «900» может случайно встретиться в UUID.
+	var unexpectedMetadata int
+	if err := f.db.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE action='contacts.disclosed' AND metadata <> jsonb_build_object('company_id',$1::text,'offer_id',$2::text)`, f.company, offer.ID).Scan(&unexpectedMetadata); err != nil || unexpectedMetadata != 0 {
+		t.Fatalf("неверные метаданные раскрытия: %d (%v)", unexpectedMetadata, err)
+	}
+	for _, secret := range []string{"Иван", "ivan.secret", "+7 900 123-45-67", "ivan_secret"} {
 		var leaks int
 		if err := f.db.QueryRow(ctx, `SELECT count(*) FROM audit_events WHERE metadata::text LIKE '%'||$1||'%'`, secret).Scan(&leaks); err != nil || leaks != 0 {
 			t.Fatalf("персональные данные %q попали в журнал: %d (%v)", secret, leaks, err)
@@ -84,7 +91,7 @@ func TestCandidateContactsDisclosure(t *testing.T) {
 	// После отзыва согласия контакты закрыты, и в ответе нет персональных данных.
 	f.exec(t, `UPDATE candidate_consents SET revoked_at=clock_timestamp() WHERE user_id=$1`, candidateUser)
 	w := f.request(t, "GET", path, "owner", "", 409)
-	if errorCode(t, w) != "contacts_unavailable" || strings.Contains(w.Body.String(), secretEmail) || strings.Contains(w.Body.String(), "Иван") {
+	if testutil.ErrorCode(t, w) != "contacts_unavailable" || strings.Contains(w.Body.String(), secretEmail) || strings.Contains(w.Body.String(), "Иван") {
 		t.Fatalf("после отзыва: %s", w.Body)
 	}
 }

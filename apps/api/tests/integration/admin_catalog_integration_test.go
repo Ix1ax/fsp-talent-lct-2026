@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestAdminCatalogStore(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	var actor string
 	if err := db.QueryRow(ctx, `SELECT id::text FROM admin_accounts WHERE role='superadmin'`).Scan(&actor); err != nil {

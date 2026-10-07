@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -11,16 +11,18 @@ import (
 
 	companyentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	companyrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 func TestOfferFlow(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
-	e := newAuthEnvWithOptions(t, Options{Offers: service.New(repository.New(db))})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Offers: service.New(repository.New(db))})
 	ids, tokens := map[string]string{}, map[string]string{}
 	for _, name := range []string{"owner", "candidate", "other"} {
 		role := "candidate"
@@ -32,8 +34,8 @@ func TestOfferFlow(t *testing.T) {
 			t.Fatal(err)
 		}
 		ids[name] = id
-		e.store.users[testIssuer+"|"+name] = user.User{ID: id, Role: role, Status: "active"}
-		tokens[name] = e.token(t, name)
+		e.Store.Users[testutil.Issuer+"|"+name] = user.User{ID: id, Role: role, Status: "active"}
+		tokens[name] = e.Token(t, name)
 	}
 	var profile string
 	if err := db.QueryRow(ctx, `INSERT INTO candidate_profiles(user_id,search_status) VALUES($1,'open') RETURNING id::text`, ids["candidate"]).Scan(&profile); err != nil {
@@ -46,7 +48,7 @@ func TestOfferFlow(t *testing.T) {
 	base := "/api/v1/companies/" + c.ID + "/offers"
 	request := func(method, path, who, body string, status int) *httptest.ResponseRecorder {
 		t.Helper()
-		w := e.do(t, method, path, tokens[who], body)
+		w := e.Do(t, method, path, tokens[who], body)
 		if w.Code != status {
 			t.Fatalf("%s %s (%s): %d %s, ожидали %d", method, path, who, w.Code, w.Body, status)
 		}

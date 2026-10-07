@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func grantConsentRows(t *testing.T, db *pgxpool.Pool, userID string, kinds ...st
 }
 
 func TestConsentsSchemaConstraints(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	newUser := func() string {
 		var id string

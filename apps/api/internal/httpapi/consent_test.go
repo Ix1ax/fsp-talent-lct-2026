@@ -1,4 +1,4 @@
-package httpapi
+package httpapi_test
 
 import (
 	"context"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/entity"
 	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -44,16 +46,16 @@ func (m *memConsents) Revoke(_ context.Context, userID, kind string, companyID *
 	return entity.ErrNotFound
 }
 
-func consentEnv(t *testing.T) *authEnv {
+func consentEnv(t *testing.T) *testutil.AuthEnv {
 	t.Helper()
 	svc := consentservice.NewService(&memConsents{byUser: map[string][]entity.Consent{}}, "v1")
-	e := newAuthEnvWithOptions(t, Options{Consents: svc})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Consents: svc})
 	for sub, u := range map[string]user.User{
 		"cand":  {ID: "u-cand", Role: "candidate", Status: "active"},
 		"emp":   {ID: "u-emp", Role: "employer", Status: "active"},
 		"block": {ID: "u-block", Role: "candidate", Status: "blocked"},
 	} {
-		e.store.users[testIssuer+"|"+sub] = u
+		e.Store.Users[testutil.Issuer+"|"+sub] = u
 	}
 	return e
 }
@@ -64,9 +66,9 @@ func TestConsentRoutes(t *testing.T) {
 		t.Helper()
 		token := ""
 		if sub != "" {
-			token = e.token(t, sub)
+			token = e.Token(t, sub)
 		}
-		w := e.do(t, method, path, token, body)
+		w := e.Do(t, method, path, token, body)
 		if w.Code != status {
 			t.Fatalf("%s %s (%s) %s: %d %s, ожидали %d", method, path, sub, body, w.Code, w.Body, status)
 		}
@@ -74,7 +76,7 @@ func TestConsentRoutes(t *testing.T) {
 	}
 	code := func(w *httptest.ResponseRecorder, want string) {
 		t.Helper()
-		if got := errorCode(t, w); got != want {
+		if got := testutil.ErrorCode(t, w); got != want {
 			t.Fatalf("код ошибки %q, ожидали %q: %s", got, want, w.Body)
 		}
 	}
@@ -84,7 +86,7 @@ func TestConsentRoutes(t *testing.T) {
 	code(do("POST", path, "block", `{"kind":"processing","policy_version":"v1"}`, 403), "user_inactive")
 
 	for name, body := range map[string]string{"битый JSON": `{`, "лишнее поле": `{"kind":"processing","policy_version":"v1","user_id":"x"}`, "неизвестный вид": `{"kind":"other","policy_version":"v1"}`, "processing с компанией": `{"kind":"processing","policy_version":"v1","company_id":"` + knownCompany + `"}`, "ats без компании": `{"kind":"ats_transfer","policy_version":"v1"}`} {
-		if w := do("POST", path, "cand", body, 400); errorCode(t, w) != "validation_error" {
+		if w := do("POST", path, "cand", body, 400); testutil.ErrorCode(t, w) != "validation_error" {
 			t.Fatalf("%s: %s", name, w.Body)
 		}
 	}
@@ -123,10 +125,10 @@ func TestConsentRoutes(t *testing.T) {
 }
 
 func TestConsentUnavailable(t *testing.T) {
-	e := newAuthEnvWithOptions(t, Options{})
-	e.store.users[testIssuer+"|cand"] = user.User{ID: "u-cand", Role: "candidate", Status: "active"}
-	w := e.do(t, "GET", "/api/v1/me/consents", e.token(t, "cand"), "")
-	if w.Code != 503 || errorCode(t, w) != "consent_unavailable" {
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{})
+	e.Store.Users[testutil.Issuer+"|cand"] = user.User{ID: "u-cand", Role: "candidate", Status: "active"}
+	w := e.Do(t, "GET", "/api/v1/me/consents", e.Token(t, "cand"), "")
+	if w.Code != 503 || testutil.ErrorCode(t, w) != "consent_unavailable" {
 		t.Fatalf("без сервиса ожидали 503 consent_unavailable: %d %s", w.Code, w.Body)
 	}
 }

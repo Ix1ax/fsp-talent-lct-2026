@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"bytes"
@@ -69,7 +69,7 @@ func pngBytes(t *testing.T, shade uint8) []byte {
 }
 
 func TestCandidateAvatarService(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	client, bucket := testS3(t, db)
 	ctx := context.Background()
 	storage := &faultyObjects{Objects: files.NewS3(client)}
@@ -211,7 +211,7 @@ func TestCandidateAvatarService(t *testing.T) {
 
 // DiscardFile закрывает только незавершённую загрузку: готовый файл (живой аватар) он трогать не должен.
 func TestCandidateRepositoryDiscardFile(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	profiles := candidateservice.NewProfileService(repo)
 	ctx := context.Background()
@@ -257,7 +257,7 @@ func TestCandidateRepositoryDiscardFile(t *testing.T) {
 
 // Аватар уже отвязан от профиля, поэтому сбой S3 при DELETE не должен превращаться в ошибку клиенту.
 func TestCandidateAvatarDeleteWhenStorageFails(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	client, bucket := testS3(t, db)
 	ctx := context.Background()
 	storage := &faultyObjects{Objects: files.NewS3(client)}

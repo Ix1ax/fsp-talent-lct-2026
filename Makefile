@@ -31,6 +31,12 @@ fmt:
 smoke:
 	sh scripts/smoke.sh
 integration:
-	cd apps/api && set -a && . ./.env && set +a && go test -race -tags=integration ./internal/platform
+	cd apps/api && set -a && . ./.env && set +a && \
+		TEST_DATABASE_URL="$${TEST_DATABASE_URL:-$$DATABASE_URL}" \
+		TEST_S3_ENDPOINT="$${TEST_S3_ENDPOINT:-$$S3_ENDPOINT}" \
+		TEST_S3_BUCKET="$${TEST_S3_BUCKET:-$$S3_BUCKET}" \
+		TEST_S3_ACCESS_KEY="$${TEST_S3_ACCESS_KEY:-$$S3_ACCESS_KEY}" \
+		TEST_S3_SECRET_KEY="$${TEST_S3_SECRET_KEY:-$$S3_SECRET_KEY}" \
+		go test -race -tags=integration ./internal/platform ./tests/integration
 auth-smoke:
 	sh scripts/keycloak-smoke.sh

@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 func TestOfferSchemaConstraints(t *testing.T) {
 	// Общий помощник создаёт отдельную схему и проверяет Up -> Down -> Up новой миграции.
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	var employer, candidate, profile, company, otherCompany, need string
 	for _, item := range []struct {

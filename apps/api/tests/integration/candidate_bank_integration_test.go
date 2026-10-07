@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -12,15 +12,17 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 )
 
 func TestCandidateBankVisibilityAndAccess(t *testing.T) {
 	f := newOfferFixture(t)
-	old := f.auth.store.users
-	f.auth = newAuthEnvWithOptions(t, Options{CandidateBank: service.New(repository.New(f.db))})
-	f.auth.store.users = old
+	old := f.auth.Store.Users
+	f.auth = testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateBank: service.New(repository.New(f.db))})
+	f.auth.Store.Users = old
 	for who := range f.tokens {
-		f.tokens[who] = f.auth.token(t, who)
+		f.tokens[who] = f.auth.Token(t, who)
 	}
 	base := "/api/v1/companies/" + f.company + "/candidates"
 	card := base + "/" + f.profiles["candidate"]
@@ -84,11 +86,11 @@ func TestCandidateBankVisibilityAndAccess(t *testing.T) {
 
 func TestCandidateBankFilters(t *testing.T) {
 	f := newOfferFixture(t)
-	old := f.auth.store.users
-	f.auth = newAuthEnvWithOptions(t, Options{CandidateBank: service.New(repository.New(f.db))})
-	f.auth.store.users = old
+	old := f.auth.Store.Users
+	f.auth = testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateBank: service.New(repository.New(f.db))})
+	f.auth.Store.Users = old
 	for who := range f.tokens {
-		f.tokens[who] = f.auth.token(t, who)
+		f.tokens[who] = f.auth.Token(t, who)
 	}
 	base := "/api/v1/companies/" + f.company + "/candidates"
 	var format int16

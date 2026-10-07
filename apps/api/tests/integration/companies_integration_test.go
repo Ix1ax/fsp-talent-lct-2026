@@ -1,13 +1,12 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"image"
 	"image/png"
 	"io"
@@ -24,15 +23,14 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	companyservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/migrations"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/jackc/pgx/v5/stdlib"
-	"github.com/pressly/goose/v3"
 )
 
 type faultyObjects struct {
@@ -53,58 +51,8 @@ func (s *faultyObjects) Delete(ctx context.Context, f files.File) error {
 	return s.Objects.Delete(ctx, f)
 }
 
-// Тест создаёт отдельную схему, не трогая таблицы из DATABASE_URL.
-func companyTestDB(t *testing.T) *pgxpool.Pool {
-	t.Helper()
-	dsn := os.Getenv("TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("Для интеграции компаний нужен TEST_DATABASE_URL")
-	}
-	ctx := context.Background()
-	admin, err := pgxpool.New(ctx, dsn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(admin.Close)
-	schema := fmt.Sprintf("company_test_%d", time.Now().UnixNano())
-	if _, err = admin.Exec(ctx, `CREATE SCHEMA `+schema); err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() {
-		if _, err := admin.Exec(context.Background(), `DROP SCHEMA `+schema+` CASCADE`); err != nil {
-			t.Error(err)
-		}
-	})
-	cfg, err := pgxpool.ParseConfig(dsn)
-	if err != nil {
-		t.Fatal(err)
-	}
-	cfg.ConnConfig.RuntimeParams["search_path"] = schema
-	db, err := pgxpool.NewWithConfig(ctx, cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(db.Close)
-	sqlDB := stdlib.OpenDB(*cfg.ConnConfig)
-	defer sqlDB.Close()
-	provider, err := goose.NewProvider(goose.DialectPostgres, sqlDB, migrations.Files)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = provider.Up(ctx); err != nil {
-		t.Fatal(err)
-	}
-	// Проверяем откат именно новой миграции и повторное применение поверх users.
-	if _, err = provider.Down(ctx); err != nil {
-		t.Fatal(err)
-	}
-	if _, err = provider.Up(ctx); err != nil {
-		t.Fatal(err)
-	}
-	return db
-}
 func TestCompaniesAndPrivateS3(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	endpoint := os.Getenv("TEST_S3_ENDPOINT")
 	if endpoint == "" {
 		t.Fatal("Нужен TEST_S3_ENDPOINT")
@@ -143,7 +91,7 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 	repo := repository.NewRepository(db)
 	profileService := companyservice.NewCompanyService(repo)
 	documentService := companyservice.NewDocumentService(repo, storage, bucket, log)
-	e := newAuthEnvWithOptions(t, Options{Companies: profileService, Documents: documentService})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Companies: profileService, Documents: documentService})
 	tokens := map[string]string{}
 	ids := map[string]string{}
 	ctx := context.Background()
@@ -160,12 +108,12 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 			t.Fatal(err)
 		}
 		ids[name] = id
-		e.store.users[testIssuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
-		tokens[name] = e.token(t, name)
+		e.Store.Users[testutil.Issuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
+		tokens[name] = e.Token(t, name)
 	}
 	request := func(method, path, who, body string, status int) *httptest.ResponseRecorder {
 		t.Helper()
-		w := e.do(t, method, path, tokens[who], body)
+		w := e.Do(t, method, path, tokens[who], body)
 		if w.Code != status {
 			t.Fatalf("%s %s (%s): %d %s, ожидали %d", method, path, who, w.Code, w.Body, status)
 		}
@@ -229,7 +177,7 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 		wg.Add(1)
 		go func(patch string) {
 			defer wg.Done()
-			w := e.do(t, "PATCH", path, tokens["owner"], patch)
+			w := e.Do(t, "PATCH", path, tokens["owner"], patch)
 			if w.Code != 200 {
 				errs <- w.Body.String()
 			}
@@ -265,7 +213,7 @@ func TestCompaniesAndPrivateS3(t *testing.T) {
 		req.Header.Set("Content-Type", mp.FormDataContentType())
 		req.Header.Set("Authorization", "Bearer "+tokens[who])
 		w := httptest.NewRecorder()
-		e.router.ServeHTTP(w, req)
+		e.Router.ServeHTTP(w, req)
 		if w.Code != status {
 			t.Fatalf("загрузка (%s): %d %s, ожидали %d", who, w.Code, w.Body, status)
 		}

@@ -1,4 +1,4 @@
-package httpapi
+package httpapi_test
 
 import (
 	"bytes"
@@ -17,6 +17,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
@@ -78,24 +80,24 @@ func (m *memObjects) Delete(_ context.Context, f files.File) error {
 	return nil
 }
 
-func avatarEnv(t *testing.T) *authEnv {
+func avatarEnv(t *testing.T) *testutil.AuthEnv {
 	t.Helper()
 	store := &memAvatars{hasProfile: map[string]bool{"u-cand1": true, "u-cand2": true}, current: map[string]files.File{}, reserved: map[string]files.File{}}
 	avatars := candidateservice.NewAvatarService(store, &memObjects{data: map[string][]byte{}}, "bucket", slog.New(slog.NewTextHandler(io.Discard, nil)))
 	profiles := candidateservice.NewProfileService(&memProfiles{byUser: map[string]entity.Profile{}})
-	e := newAuthEnvWithOptions(t, Options{Candidates: profiles, Avatars: avatars})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Candidates: profiles, Avatars: avatars})
 	for sub, u := range map[string]user.User{
 		"cand1":     {ID: "u-cand1", Role: "candidate", Status: "active"},
 		"cand2":     {ID: "u-cand2", Role: "candidate", Status: "active"},
 		"noprofile": {ID: "u-none", Role: "candidate", Status: "active"},
 		"emp":       {ID: "u-emp", Role: "employer", Status: "active"},
 	} {
-		e.store.users[testIssuer+"|"+sub] = u
+		e.Store.Users[testutil.Issuer+"|"+sub] = u
 	}
 	return e
 }
 
-func upload(t *testing.T, e *authEnv, sub, field, name string, data []byte) *httptest.ResponseRecorder {
+func upload(t *testing.T, e *testutil.AuthEnv, sub, field, name string, data []byte) *httptest.ResponseRecorder {
 	t.Helper()
 	var body bytes.Buffer
 	w := multipart.NewWriter(&body)
@@ -106,10 +108,10 @@ func upload(t *testing.T, e *authEnv, sub, field, name string, data []byte) *htt
 	part.Write(data)
 	w.Close()
 	req := httptest.NewRequest("PUT", "/api/v1/me/profile/avatar", &body)
-	req.Header.Set("Authorization", "Bearer "+e.token(t, sub))
+	req.Header.Set("Authorization", "Bearer "+e.Token(t, sub))
 	req.Header.Set("Content-Type", w.FormDataContentType())
 	rec := httptest.NewRecorder()
-	e.router.ServeHTTP(rec, req)
+	e.Router.ServeHTTP(rec, req)
 	return rec
 }
 
@@ -121,7 +123,7 @@ func TestCandidateAvatarRoutes(t *testing.T) {
 	}
 	do := func(method, sub string, status int) *httptest.ResponseRecorder {
 		t.Helper()
-		w := e.do(t, method, "/api/v1/me/profile/avatar", e.token(t, sub), "")
+		w := e.Do(t, method, "/api/v1/me/profile/avatar", e.Token(t, sub), "")
 		if w.Code != status {
 			t.Fatalf("%s avatar (%s): %d %s, ожидали %d", method, sub, w.Code, w.Body, status)
 		}
@@ -129,12 +131,12 @@ func TestCandidateAvatarRoutes(t *testing.T) {
 	}
 	check := func(w *httptest.ResponseRecorder, status int, code string) {
 		t.Helper()
-		if w.Code != status || errorCode(t, w) != code {
+		if w.Code != status || testutil.ErrorCode(t, w) != code {
 			t.Fatalf("ожидали %d %s, получили %d %s", status, code, w.Code, w.Body)
 		}
 	}
 
-	if w := e.do(t, "PUT", "/api/v1/me/profile/avatar", e.token(t, "cand1"), `{}`); w.Code != 400 || errorCode(t, w) != "invalid_file" {
+	if w := e.Do(t, "PUT", "/api/v1/me/profile/avatar", e.Token(t, "cand1"), `{}`); w.Code != 400 || testutil.ErrorCode(t, w) != "invalid_file" {
 		t.Fatalf("не multipart: %d %s", w.Code, w.Body)
 	}
 	check(upload(t, e, "cand1", "avatar", "a.png", image1.Bytes()), 400, "invalid_file")
@@ -161,10 +163,10 @@ func TestCandidateAvatarRoutes(t *testing.T) {
 }
 
 func TestCandidateAvatarUnavailable(t *testing.T) {
-	e := newAuthEnvWithOptions(t, Options{Candidates: candidateservice.NewProfileService(&memProfiles{byUser: map[string]entity.Profile{}})})
-	e.store.users[testIssuer+"|cand1"] = user.User{ID: "u-cand1", Role: "candidate", Status: "active"}
-	w := e.do(t, "GET", "/api/v1/me/profile/avatar", e.token(t, "cand1"), "")
-	if w.Code != http.StatusServiceUnavailable || errorCode(t, w) != "avatar_unavailable" {
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Candidates: candidateservice.NewProfileService(&memProfiles{byUser: map[string]entity.Profile{}})})
+	e.Store.Users[testutil.Issuer+"|cand1"] = user.User{ID: "u-cand1", Role: "candidate", Status: "active"}
+	w := e.Do(t, "GET", "/api/v1/me/profile/avatar", e.Token(t, "cand1"), "")
+	if w.Code != http.StatusServiceUnavailable || testutil.ErrorCode(t, w) != "avatar_unavailable" {
 		t.Fatalf("без сервиса аватара ожидали 503 avatar_unavailable: %d %s", w.Code, w.Body)
 	}
 }

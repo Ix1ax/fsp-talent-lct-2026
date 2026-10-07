@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -18,10 +18,12 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	companyentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	companyrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 )
 
 func TestAdminCatalogRoutes(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	admins := adminservice.New(adminrepo.New(db))
 	const password = "Catalog-Admin-Password-2026"
@@ -40,10 +42,10 @@ func TestAdminCatalogRoutes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	env := newAuthEnvWithOptions(t, Options{Admins: admins, AdminCatalogs: catalogservice.New(catalogrepo.New(db)), Catalogs: catalog.NewService(catalog.NewRepository(db))})
+	env := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Admins: admins, AdminCatalogs: catalogservice.New(catalogrepo.New(db)), Catalogs: catalog.NewService(catalog.NewRepository(db))})
 	request := func(method, path, token, body string, status int) string {
 		t.Helper()
-		w := env.do(t, method, path, token, body)
+		w := env.Do(t, method, path, token, body)
 		if w.Code != status {
 			t.Fatalf("%s %s: %d %s, ожидали %d", method, path, w.Code, w.Body, status)
 		}
@@ -54,7 +56,7 @@ func TestAdminCatalogRoutes(t *testing.T) {
 	}
 	base := "/api/v1/admin/catalogs"
 	request("GET", base, "", "", 401)
-	request("GET", base, env.token(t, "site-user"), "", 401)
+	request("GET", base, env.Token(t, "site-user"), "", 401)
 	request("GET", base, login.AccessToken, "", 200)
 	request("GET", base+"/roles", login.AccessToken, "", 404)
 	request("GET", base+"/skills/not-a-uuid", login.AccessToken, "", 400)
@@ -103,7 +105,7 @@ func TestAdminCatalogRoutes(t *testing.T) {
 }
 
 func TestCatalogArchiveKeepsReferences(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	svc := catalogservice.New(catalogrepo.New(db))
 	var actor, candidate, profile, owner, company, need string
