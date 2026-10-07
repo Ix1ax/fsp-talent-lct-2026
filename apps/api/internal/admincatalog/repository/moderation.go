@@ -88,6 +88,16 @@ func (r *Repository) Moderate(ctx context.Context, actor, id, action string, in 
 			return result, err
 		}
 		result.NeedLinks = int(tag.RowsAffected())
+		// Подтверждения тестов переезжают на целевой навык с сохранением лучшего уровня.
+		if _, err = tx.Exec(ctx, `INSERT INTO skill_evidence(candidate_id,skill_id,source,level,attempt_id,updated_at)
+   SELECT candidate_id,$2,source,level,attempt_id,clock_timestamp() FROM skill_evidence WHERE skill_id=$1
+   ON CONFLICT(candidate_id,skill_id,source) DO UPDATE SET level=EXCLUDED.level,attempt_id=EXCLUDED.attempt_id,updated_at=clock_timestamp()
+    WHERE skill_evidence.level<EXCLUDED.level`, id, in.TargetID); err != nil {
+			return result, err
+		}
+		if _, err = tx.Exec(ctx, `DELETE FROM skill_evidence WHERE skill_id=$1`, id); err != nil {
+			return result, err
+		}
 		if _, err = tx.Exec(ctx, `DELETE FROM candidate_skills WHERE skill_id=$1`, id); err != nil {
 			return result, err
 		}

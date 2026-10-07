@@ -55,6 +55,7 @@ func (s *FullProfileService) Get(ctx context.Context, userID string) (entity.Ful
 		Consents:     entity.FullConsents{CurrentPolicyVersion: s.policyVersion, Items: consents},
 		Contacts:     contacts,
 		Skills:       skills,
+		Category:     snapshot.Category,
 		Achievements: []any{},
 		Readiness: entity.BuildReadiness(entity.ReadinessInput{
 			ProcessingConsent: processing, PublicationConsent: publication,

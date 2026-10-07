@@ -86,3 +86,13 @@ func TestFullProfileReady(t *testing.T) {
 		t.Fatalf("навыки: %+v", got.Skills)
 	}
 }
+
+func TestFullProfileCarriesCategory(t *testing.T) {
+	now := time.Now()
+	category := &entity.Category{SpecializationID: 1, Specialization: "Бэкенд", GradeID: 2, Grade: "Junior", ConfirmedAt: now}
+	s := NewFullProfileService(fullStub{entity.FullSnapshot{Category: category}}, "v1")
+	got, err := s.Get(context.Background(), "u1")
+	if err != nil || got.Category == nil || got.Category.Grade != "Junior" || !got.Category.ConfirmedAt.Equal(now) {
+		t.Fatalf("категория: %+v (%v)", got.Category, err)
+	}
+}

@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/entity"
@@ -18,6 +19,12 @@ func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 type querier interface {
 	Query(context.Context, string, ...any) (pgx.Rows, error)
 	QueryRow(context.Context, string, ...any) pgx.Row
+}
+
+// isInvalidUUID — идентификатор не разобрался как uuid (SQLSTATE 22P02): такой записи точно нет.
+func isInvalidUUID(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
 }
 
 func dbError(err error) error {

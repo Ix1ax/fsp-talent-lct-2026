@@ -4741,6 +4741,400 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /api/v1/me/assessments/available:
+    get:
+      operationId: listMyAvailableAssessments
+      summary: "Тесты, которые можно пройти, и их состояние"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Опубликованные шаблоны тестов по парам специализация и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, already_confirmed, consent_required), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
+      responses:
+        '200':
+          description: "Список тестов."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAvailableList'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/assessments/attempts:
+    post:
+      operationId: startMyAssessmentAttempt
+      summary: "Начать тест"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Создаёт попытку по паре специализация и грейд: выбирает случайные задания по составу шаблона и фиксирует их снимок, запускает таймер. Правила проверки и правильные ответы не возвращаются. Нужны профиль и активное согласие processing. Одновременно может быть одна активная попытка."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentStartRequest'
+      responses:
+        '201':
+          description: "Попытка создана."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAttempt'
+        '400':
+          description: "Некорректное тело (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "attempt_active (в error есть attempt_id), retake_cooldown (в error есть retry_at), already_confirmed, assessment_unavailable (нет опубликованного шаблона или не хватает заданий), consent_required."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentConflictError'
+              examples:
+                retake_cooldown:
+                  value: {error: {code: retake_cooldown, message: "Пересдать этот тест можно позже", retry_at: "2026-10-14T12:00:00Z"}}
+                attempt_active:
+                  value: {error: {code: attempt_active, message: "У вас уже есть активная попытка тестирования", attempt_id: "11111111-1111-4111-8111-111111111111"}}
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/assessments/attempts/current:
+    get:
+      operationId: getMyCurrentAssessmentAttempt
+      summary: "Активная попытка"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Активная попытка с заданиями и сохранёнными ответами. Если дедлайн прошёл, попытка закрывается (итоги сохраняются) и метод отвечает 404 attempt_not_found; итог просроченной попытки читается по её id."
+      responses:
+        '200':
+          description: "Активная попытка."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAttempt'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Нет активной попытки (attempt_not_found) или профиль не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/assessments/attempts/{id}:
+    get:
+      operationId: getMyAssessmentAttempt
+      summary: "Попытка или её итог"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Пока попытка активна, возвращает задания и сохранённые ответы (questions), result равен null. После завершения questions пуст, а result содержит итог: процент, разбор по навыкам, категорию при успехе и retry_at при провале. Правильные ответы не раскрываются."
+      parameters:
+        - {name: id, in: path, required: true, description: "ID попытки", schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: "Попытка."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAttempt'
+        '400':
+          description: "Некорректный UUID (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Попытка не найдена или принадлежит другому кандидату (attempt_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/assessments/attempts/{id}/answers/{question_id}:
+    put:
+      operationId: putMyAssessmentAnswer
+      summary: "Сохранить или заменить ответ"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Для заданий с вариантами передайте selected (id вариантов), для текстовых text (до 500 символов). Ответ можно менять до отправки или дедлайна. После дедлайна попытка закрывается по ранее сохранённым ответам, а новый ответ отклоняется (attempt_closed)."
+      parameters:
+        - {name: id, in: path, required: true, description: "ID попытки", schema: {type: string, format: uuid}}
+        - {name: question_id, in: path, required: true, description: "ID задания в попытке", schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentAnswerRequest'
+      responses:
+        '204':
+          description: "Ответ сохранён."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+        '400':
+          description: "Форма ответа не подходит заданию или некорректные данные (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Попытка или задание не найдены (attempt_not_found, question_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Попытка уже завершена или время вышло (attempt_closed), либо отозвано согласие processing (consent_required)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/assessments/attempts/{id}/submit:
+    post:
+      operationId: submitMyAssessmentAttempt
+      summary: "Завершить попытку и получить итог"
+      tags: [Кандидаты — тестирование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Оценивает сохранённые ответы. Нужно активное согласие processing (иначе 409 consent_required). При успехе в той же транзакции подтверждаются навыки (источник test, вес 0.8), пишется история грейдов и обновляется категория кандидата. Повторный вызов возвращает тот же итог."
+      parameters:
+        - {name: id, in: path, required: true, description: "ID попытки", schema: {type: string, format: uuid}}
+      responses:
+        '200':
+          description: "Итог попытки."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentAttempt'
+        '400':
+          description: "Некорректный UUID (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Отозвано согласие processing (consent_required)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Попытка не найдена (attempt_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Тестирование не настроено (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
   parameters:
     AdminCatalogKind:
@@ -6149,6 +6543,7 @@ components:
         - code
         - name
         - claimed_level
+        - verified_level
         - source
         - confidence
         - updated_at
@@ -6172,13 +6567,19 @@ components:
           nullable: true
           minimum: 1
           maximum: 5
+        verified_level:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 5
+          description: Лучший уровень, подтверждённый тестом; null, если теста по навыку не было.
         source:
           type: string
           enum:
             - claimed
             - test
             - fsp
-          description: Источник подтверждения. Сейчас всегда claimed.
+          description: "Самый весомый источник: test, если навык подтверждён тестом, иначе claimed (fsp добавится позже)."
         confidence:
           type: number
           description: Вес источника, claimed 0.3, test 0.8, fsp 1.0.
@@ -6235,8 +6636,9 @@ components:
             $ref: '#/components/schemas/CandidateSkill'
         category:
           nullable: true
-          description: Заготовка под категорию после тестирования; пока всегда null.
-          type: object
+          description: Категория после последнего пройденного теста или null, если тест не пройден.
+          allOf:
+            - $ref: '#/components/schemas/CandidateCategory'
         achievements:
           type: array
           description: Заготовка под достижения ФСП; пока всегда пустой массив.
@@ -6481,6 +6883,136 @@ components:
         shortages:
           type: array
           items: {$ref: '#/components/schemas/AssessmentShortage'}
+    AssessmentConflictError:
+      description: "Ошибка 409 со справочными полями: attempt_id при attempt_active, retry_at при retake_cooldown."
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string, example: retake_cooldown}
+            message: {type: string}
+            attempt_id: {type: string, format: uuid, description: "Только при attempt_active."}
+            retry_at: {type: string, format: date-time, description: "Только при retake_cooldown: когда можно пересдать."}
+    AssessmentStartRequest:
+      type: object
+      additionalProperties: false
+      required: [specialization_id, grade_id]
+      properties:
+        specialization_id: {type: integer, minimum: 1, example: 1}
+        grade_id: {type: integer, minimum: 1, example: 2}
+    AssessmentAnswerRequest:
+      type: object
+      additionalProperties: false
+      description: "Ровно одно из полей: selected для заданий с вариантами, text для текстовых."
+      properties:
+        selected:
+          type: array
+          items: {type: string}
+          example: [a]
+        text:
+          type: string
+          maxLength: 500
+    AssessmentAvailable:
+      type: object
+      required: [specialization_id, grade_id, time_limit_sec, pass_score, question_count, can_start, reason, retry_at, confirmed]
+      properties:
+        specialization_id: {type: integer}
+        grade_id: {type: integer}
+        time_limit_sec: {type: integer}
+        pass_score: {type: number, description: "Проходной балл в процентах."}
+        question_count: {type: integer}
+        can_start: {type: boolean}
+        reason: {type: string, enum: [ok, attempt_active, retake_cooldown, already_confirmed, consent_required]}
+        retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (при retake_cooldown)."}
+        confirmed: {type: boolean, description: "Этот грейд уже подтверждён."}
+    AssessmentAvailableList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentAvailable'}
+    AssessmentAnswer:
+      type: object
+      properties:
+        selected:
+          type: array
+          items: {type: string}
+        text: {type: string}
+    AssessmentAttemptQuestion:
+      type: object
+      required: [id, position, skill_id, difficulty, multiple, prompt, answer]
+      properties:
+        id: {type: string, format: uuid}
+        position: {type: integer, minimum: 1}
+        multiple: {type: boolean, description: "Можно выбрать несколько вариантов (передайте несколько id в selected); для заданий с одним вариантом и текстовых false."}
+        skill_id: {type: string, format: uuid}
+        difficulty: {type: integer, minimum: 1, maximum: 5}
+        prompt: {$ref: '#/components/schemas/AssessmentPrompt'}
+        answer:
+          nullable: true
+          description: "Сохранённый ответ или null."
+          allOf:
+            - $ref: '#/components/schemas/AssessmentAnswer'
+    AssessmentSkillResult:
+      type: object
+      required: [skill_id, name, percent, confirmed, level]
+      properties:
+        skill_id: {type: string, format: uuid}
+        name: {type: string}
+        percent: {type: number, description: "Доля набранных баллов по навыку."}
+        confirmed: {type: boolean, description: "Навык подтверждён: тест пройден и процент по навыку не ниже проходного."}
+        level: {type: integer, nullable: true, minimum: 1, maximum: 5}
+    CandidateCategory:
+      type: object
+      required: [specialization_id, specialization, grade_id, grade, confirmed_at]
+      properties:
+        specialization_id: {type: integer}
+        specialization: {type: string, example: Бэкенд}
+        grade_id: {type: integer}
+        grade: {type: string, example: Junior}
+        confirmed_at: {type: string, format: date-time}
+    AssessmentAttemptResult:
+      type: object
+      required: [passed, score_percent, pass_score, skills, category, retry_at]
+      properties:
+        passed: {type: boolean}
+        score_percent: {type: number}
+        pass_score: {type: number}
+        skills:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentSkillResult'}
+        category:
+          nullable: true
+          description: "Категория кандидата после успешной попытки."
+          allOf:
+            - $ref: '#/components/schemas/CandidateCategory'
+        retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (если не пройден)."}
+    AssessmentAttempt:
+      type: object
+      required: [id, status, specialization_id, grade_id, started_at, deadline_at, finished_at, time_limit_sec, questions, result]
+      properties:
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [active, passed, failed, expired]}
+        specialization_id: {type: integer}
+        grade_id: {type: integer}
+        started_at: {type: string, format: date-time}
+        deadline_at: {type: string, format: date-time}
+        finished_at: {type: string, format: date-time, nullable: true}
+        time_limit_sec: {type: integer}
+        questions:
+          type: array
+          description: "Задания (только у активной попытки; без правил проверки)."
+          items: {$ref: '#/components/schemas/AssessmentAttemptQuestion'}
+        result:
+          nullable: true
+          description: "Итог (только у завершённой попытки)."
+          allOf:
+            - $ref: '#/components/schemas/AssessmentAttemptResult'
+
     Health:
       type: object
       required:

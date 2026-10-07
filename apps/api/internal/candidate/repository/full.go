@@ -65,5 +65,17 @@ func (r *Repository) FullSnapshot(ctx context.Context, userID string) (entity.Fu
 			return snapshot, err
 		}
 	}
+	if snapshot.Profile != nil {
+		var c entity.Category
+		err = tx.QueryRow(ctx, `SELECT c.specialization_id,sp.name,c.grade_id,g.name,c.confirmed_at FROM candidate_categories c
+ JOIN specializations sp ON sp.id=c.specialization_id JOIN grades g ON g.id=c.grade_id WHERE c.candidate_id=$1`, snapshot.Profile.ID).
+			Scan(&c.SpecializationID, &c.Specialization, &c.GradeID, &c.Grade, &c.ConfirmedAt)
+		switch {
+		case err == nil:
+			snapshot.Category = &c
+		case !errors.Is(err, pgx.ErrNoRows):
+			return snapshot, err
+		}
+	}
 	return snapshot, tx.Commit(ctx)
 }
