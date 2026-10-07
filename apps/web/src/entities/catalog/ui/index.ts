@@ -1,0 +1,1 @@
+export { SpecializationBadge } from './SpecializationBadge';

@@ -20,6 +20,7 @@ export const addCandidateSkill = async (
   input: AddCandidateSkillInput,
 ): Promise<CandidateSkill> => {
   const { data } = await clientApi.post<CandidateSkill>('/v1/me/skills', input);
+
   return data;
 };
 

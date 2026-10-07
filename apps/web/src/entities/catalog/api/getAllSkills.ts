@@ -1,9 +1,10 @@
 import 'server-only';
 
 import { ApiError } from '@/shared/api/errors';
-import type { Skill } from '@/entities/catalog';
 
-import { getSkills, type SkillsSearchQuery } from './getSkills';
+import type { Skill } from '../model';
+import { getSkills } from './getSkills';
+import type { SkillsSearchQuery } from './types';
 
 export const getAllSkills = async (
   query: SkillsSearchQuery,
@@ -15,8 +16,10 @@ export const getAllSkills = async (
       'validation_error',
     );
   }
+
   const skills: Skill[] = [];
   const limit = 100;
+
   let offset = 0;
   const signal = AbortSignal.timeout(30_000);
 

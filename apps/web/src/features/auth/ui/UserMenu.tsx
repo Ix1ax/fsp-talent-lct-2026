@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/shared/ui';
+import { AccountAvatar } from '@/shared/ui/AccountAvatar';
 import { getRoleHomeRoute, type SessionUser } from '@/entities/session';
 
 import { logoutSession } from '../api';
@@ -24,6 +25,7 @@ import { useAccountAvatar } from '../model';
 
 interface UserMenuProps {
   user: SessionUser;
+  compact?: boolean;
 }
 
 const getInitials = (name: string): string =>
@@ -34,7 +36,7 @@ const getInitials = (name: string): string =>
     .join('')
     .toUpperCase();
 
-export const UserMenu = ({ user }: UserMenuProps) => {
+export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
   const avatarUrl = useAccountAvatar(user);
   const displayName = user.name?.trim() || user.email;
   const [pending, setPending] = useState(false);
@@ -58,18 +60,26 @@ export const UserMenu = ({ user }: UserMenuProps) => {
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant={compact ? 'ghost' : 'outline'}
           size="sm"
-          className="gap-2"
+          className={compact ? 'size-10 p-0' : 'gap-2'}
           aria-label={`Аккаунт: ${displayName}`}
           disabled={pending}
         >
-          <Avatar size="sm">
-            <AvatarImage src={avatarUrl} alt="" />
-            <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
-          </Avatar>
-          <span className="max-w-40 truncate max-sm:hidden">{displayName}</span>
-          <ChevronDownIcon className="size-3.5 opacity-60" />
+          {compact ? (
+            <AccountAvatar name={displayName} src={avatarUrl} />
+          ) : (
+            <>
+              <Avatar size="sm">
+                <AvatarImage src={avatarUrl} alt="" />
+                <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
+              </Avatar>
+              <span className="max-w-40 truncate max-sm:hidden">
+                {displayName}
+              </span>
+              <ChevronDownIcon className="size-3.5 opacity-60" />
+            </>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

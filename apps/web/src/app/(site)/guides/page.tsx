@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { ApiError } from '@/shared/api/errors';
-import { getAllSkills, getCatalogs } from '@/entities/catalog/api';
+import { getAllSkills, getCatalogs } from '@/entities/catalog/api/server';
 import { GuidesPage, parseSkillsQuery } from '@/screens/guides';
 
 export const metadata: Metadata = {

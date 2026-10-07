@@ -8,3 +8,7 @@
 **/.env
 **/.env.*
 **/*.tsbuildinfo
+
+# Локальные дизайн-материалы и маршруты просмотра
+design-handoff
+apps/web/src/app/preview

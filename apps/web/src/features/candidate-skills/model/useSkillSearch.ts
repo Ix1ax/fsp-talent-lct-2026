@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { useDebounce } from '@/shared/hooks';
-import type { Skill } from '@/entities/catalog';
-import { searchCatalogSkills } from '@/entities/catalog/api/client';
+import { searchCatalogSkills, type Skill } from '@/entities/catalog';
 
 type Result = {
   q: string;
