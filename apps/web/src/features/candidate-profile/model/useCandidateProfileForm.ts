@@ -47,15 +47,20 @@ export const useCandidateProfileForm = ({
   const values = useWatch({ control: form.control }) as ProfileFormValues;
   const { dirtyFields } = form.formState;
   const previousStatus = useRef(profile?.searchStatus);
-  const { setValue } = form;
+  const previousProfile = useRef(profile);
+  const { reset, setValue } = form;
   useEffect(() => {
+    if (previousProfile.current !== profile) {
+      reset(toProfileFormValues(profile), { keepDirtyValues: true });
+      previousProfile.current = profile;
+    }
     if (
       previousStatus.current !== profile?.searchStatus &&
       profile?.searchStatus === 'hidden'
     )
       setValue('searchStatus', 'hidden', { shouldDirty: true });
     previousStatus.current = profile?.searchStatus;
-  }, [profile?.searchStatus, setValue]);
+  }, [profile, reset, setValue]);
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState('');
   const saving = useRef(false);

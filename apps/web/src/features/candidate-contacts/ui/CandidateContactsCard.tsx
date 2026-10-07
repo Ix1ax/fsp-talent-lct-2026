@@ -23,10 +23,12 @@ interface CandidateContactsCardProps {
   onBusyChange: (busy: boolean) => void;
   onContactsChange: (contacts: CandidateContacts) => void;
   onConsentRequired: () => Promise<void>;
+  onGoToConsents?: () => void;
 }
 
 export const CandidateContactsCard = ({
   consents,
+  onGoToConsents,
   ...props
 }: CandidateContactsCardProps) => {
   const { processing } = getConsentPermissions(consents);
@@ -50,7 +52,17 @@ export const CandidateContactsCard = ({
               персональных данных.
             </p>
             <Button asChild variant="outline" className="self-start">
-              <a href="#consents">Перейти к согласиям</a>
+              <a
+                href="#consents"
+                onClick={(event) => {
+                  if (onGoToConsents) {
+                    event.preventDefault();
+                    onGoToConsents();
+                  }
+                }}
+              >
+                Перейти к согласиям
+              </a>
             </Button>
           </div>
         )}
