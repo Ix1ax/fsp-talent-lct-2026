@@ -3,10 +3,9 @@
 import Link from 'next/link';
 
 import { Button } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { AssessmentRunner } from '@/features/assessment-runner';
 
 import { useAssessmentAttempt } from '../model';
-import { AssessmentQuestions } from './AssessmentQuestions';
 
 interface AssessmentAttemptPageProps {
   attemptId: string;
@@ -25,22 +24,8 @@ export const AssessmentAttemptPage = ({
       <h1 className="text-3xl font-semibold">Попытка тестирования</h1>
       {error && <p role="alert">{error}</p>}
       {loading && <p role="status">Загружаем попытку…</p>}
-      {attempt?.result && (
-        <p>
-          Результат: {attempt.result.scorePercent}%. Проходной балл:{' '}
-          {attempt.result.passScore}%.{' '}
-          {attempt.result.passed ? 'Тест пройден.' : 'Тест не пройден.'}
-        </p>
-      )}
-      {attempt && !attempt.result && (
-        <>
-          <p>Дедлайн: {formatDate(attempt.deadlineAt)}</p>
-          <p role="status">
-            Попытка загружена. Интерфейс ответа на задания будет добавлен на
-            следующем этапе.
-          </p>
-          <AssessmentQuestions questions={attempt.questions} />
-        </>
+      {attempt && (
+        <AssessmentRunner key={attempt.id} initialAttempt={attempt} />
       )}
     </main>
   );
