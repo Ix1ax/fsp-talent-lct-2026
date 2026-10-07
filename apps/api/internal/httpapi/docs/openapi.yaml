@@ -2667,6 +2667,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
   /api/v1/me/skills:
+    post:
+      operationId: submitMySkill
+      summary: Добавить навык по названию
+      tags:
+        - Кандидаты
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      description: >-
+        Требуются профиль кандидата и действующая авторизация. Название, код и альтернативные названия
+        проверяются без учёта регистра. Существующий навык переиспользуется; неизвестный создаётся как pending
+        и прикрепляется к резюме одной транзакцией. Pending виден в личном списке, но не в публичном справочнике.
+        Повторное предложение не создаёт дубликат. Максимум 50 навыков в резюме и 20 новых предложений за 24 часа.
+        Архивированные, отклонённые и объединённые навыки добавлять нельзя. Клиент не задаёт статус модерации.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateSkillSubmissionInput'
+      responses:
+        '200':
+          description: Существующий или новый навык прикреплён к резюме; самооценка обновлена.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateSkill'
+        '400':
+          description: Некорректное название или уровень, превышен лимит, навык недоступен либо название неоднозначно.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужен действительный токен пользователя сайта.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Аккаунт заблокирован или пользователь не кандидат.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Профиль кандидата ещё не создан.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис профилей кандидатов не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     get:
       operationId: listMySkills
       summary: Мои навыки
@@ -4189,6 +4258,22 @@ components:
         telegram:
           type: string
           nullable: true
+    CandidateSkillSubmissionInput:
+      type: object
+      additionalProperties: false
+      required: [name, claimed_level]
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: Svelte
+          description: Название навыка. Лишние пробелы убираются.
+        claimed_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+          description: Самооценка, не подтверждённый грейд.
     CandidateSkillInput:
       type: object
       additionalProperties: false
@@ -4210,7 +4295,12 @@ components:
         - source
         - confidence
         - updated_at
+        - moderation_status
       properties:
+        moderation_status:
+          type: string
+          enum: [approved, pending, rejected, merged]
+          description: Одобрение справочника не подтверждает уровень владения навыком. Pending ожидает модерации.
         skill_id:
           type: string
           format: uuid

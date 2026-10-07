@@ -41,3 +41,19 @@ func (h profileHandler) deleteSkill(c *gin.Context) {
 	}
 	c.Status(204)
 }
+
+func (h profileHandler) submitSkill(c *gin.Context) {
+	var in entity.SkillSubmissionInput
+	if err := request.JSON(c, &in); err != nil {
+		h.fail(c, err)
+		return
+	}
+	u, _ := middleware.UserFrom(c)
+	skill, err := h.skills.Submit(c.Request.Context(), u.ID, in)
+	if err != nil {
+		h.fail(c, err)
+		return
+	}
+	// Метод идемпотентен по названию: может вернуть и уже существующий навык.
+	c.JSON(200, skill)
+}

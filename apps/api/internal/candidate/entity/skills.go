@@ -4,6 +4,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 // MaxSkills — предел числа навыков одного кандидата.
@@ -37,13 +39,14 @@ type SkillInput struct {
 
 // Skill — навык кандидата вместе с названием из справочника, источником и весом подтверждения.
 type Skill struct {
-	SkillID      string    `json:"skill_id"`
-	Code         string    `json:"code"`
-	Name         string    `json:"name"`
-	ClaimedLevel *int16    `json:"claimed_level"`
-	Source       string    `json:"source"`
-	Confidence   float64   `json:"confidence"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ModerationStatus string    `json:"moderation_status"`
+	SkillID          string    `json:"skill_id"`
+	Code             string    `json:"code"`
+	Name             string    `json:"name"`
+	ClaimedLevel     *int16    `json:"claimed_level"`
+	Source           string    `json:"source"`
+	Confidence       float64   `json:"confidence"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 func (in *SkillInput) Normalize() error {
@@ -61,4 +64,23 @@ func NormalizeSkillID(id string) (string, error) {
 		return "", invalid("Некорректный UUID навыка в адресе запроса")
 	}
 	return strings.ToLower(id), nil
+}
+
+// Новый навык сразу прикрепляется к резюме, но ждёт модерации перед публикацией в справочнике.
+type SkillSubmissionInput struct {
+	Name         string `json:"name"`
+	ClaimedLevel *int16 `json:"claimed_level"`
+}
+
+func (in *SkillSubmissionInput) Normalize() error {
+	in.Name = strings.Join(strings.Fields(in.Name), " ")
+	if n := utf8.RuneCountInString(in.Name); n < 1 || n > 100 {
+		return invalid("Название навыка должно содержать от 1 до 100 символов")
+	}
+	for _, r := range in.Name {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			return invalid("Название навыка содержит недопустимые символы")
+		}
+	}
+	return (&SkillInput{ClaimedLevel: in.ClaimedLevel}).Normalize()
 }
