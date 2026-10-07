@@ -9,6 +9,7 @@ export type CandidateSkill = {
   code: string;
   name: string;
   claimedLevel: ClaimedLevel;
+  verifiedLevel?: ClaimedLevel | null;
   source: SkillConfirmationSource;
   confidence: number;
   updatedAt: string;

@@ -62,6 +62,7 @@ const refreshClientAccessToken = async (): Promise<string | null> => {
 
 export const ensureClientAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
+
   const cached = getClientAccessToken();
   if (cached) return cached;
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -78,6 +79,9 @@ export const CandidateHomePage = ({
         <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
           {user.email}
         </p>
+        <Button asChild variant="outline" className="self-start">
+          <Link href="/candidate/assessments">Тестирование навыков</Link>
+        </Button>
       </header>
       {loadError ? (
         <Card>
