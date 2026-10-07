@@ -79,6 +79,7 @@ func registerSkills(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifi
 		c.Next()
 	})
 	g.GET("", h.listSkills)
+	g.POST("", h.submitSkill)
 	g.PUT("/:skill_id", h.putSkill)
 	g.DELETE("/:skill_id", h.deleteSkill)
 }

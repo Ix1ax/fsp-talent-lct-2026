@@ -7,6 +7,7 @@ import (
 )
 
 type SkillsStore interface {
+	SubmitSkill(context.Context, string, entity.SkillSubmissionInput) (entity.Skill, error)
 	ListSkills(ctx context.Context, userID string) ([]entity.Skill, error)
 	PutSkill(ctx context.Context, userID, skillID string, in entity.SkillInput) (entity.Skill, error)
 	DeleteSkill(ctx context.Context, userID, skillID string) error
@@ -37,4 +38,11 @@ func (s *SkillsService) Delete(ctx context.Context, userID, skillID string) erro
 		return err
 	}
 	return s.store.DeleteSkill(ctx, userID, id)
+}
+
+func (s *SkillsService) Submit(ctx context.Context, userID string, in entity.SkillSubmissionInput) (entity.Skill, error) {
+	if err := in.Normalize(); err != nil {
+		return entity.Skill{}, err
+	}
+	return s.store.SubmitSkill(ctx, userID, in)
 }
