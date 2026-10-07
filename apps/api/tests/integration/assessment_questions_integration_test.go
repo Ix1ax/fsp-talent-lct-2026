@@ -30,6 +30,16 @@ func assessmentAdmin(t *testing.T, db *pgxpool.Pool) string {
 	return id
 }
 
+// clearDemoBank убирает демо-данные банка во временной схеме: тесты, которые считают задания и шаблоны, работают с чистым банком.
+func clearDemoBank(t *testing.T, db *pgxpool.Pool) {
+	t.Helper()
+	for _, query := range []string{`DELETE FROM assessment_templates`, `DELETE FROM assessment_questions`} {
+		if _, err := db.Exec(context.Background(), query); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
 func shortQuestion(skill string, difficulty int16) entity.QuestionInput {
 	return entity.QuestionInput{SkillID: skill, Difficulty: difficulty, Kind: entity.KindShortAnswer,
 		Prompt: entity.Prompt{Text: "Какая команда показывает статус репозитория?"}, GradingSpec: entity.GradingSpec{Type: "text", Accepted: []string{"git status"}}}
@@ -46,6 +56,7 @@ func newSkill(t *testing.T, db *pgxpool.Pool, code string, active bool, status s
 
 func TestAssessmentQuestions(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	repo := assessmentrepo.New(db)
 	admin := assessmentAdmin(t, db)
@@ -213,6 +224,7 @@ func TestAssessmentQuestions(t *testing.T) {
 // Параллельная публикация разных версий одного задания: в итоге ровно одна опубликованная.
 func TestAssessmentPublishConcurrency(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	repo := assessmentrepo.New(db)
 	admin := assessmentAdmin(t, db)

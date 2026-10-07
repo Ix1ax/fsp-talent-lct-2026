@@ -19,6 +19,7 @@ import (
 
 func TestAssessmentRoutes(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	admins := adminservice.New(adminrepo.New(db))
 	const password = "Assessments-Admin-Password-2026"

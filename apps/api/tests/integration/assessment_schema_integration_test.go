@@ -9,6 +9,7 @@ import (
 
 func TestAssessmentSchema(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	exec := func(query string, args ...any) error {
 		_, err := db.Exec(ctx, query, args...)

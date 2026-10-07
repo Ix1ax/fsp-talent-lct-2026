@@ -59,6 +59,7 @@ func availability(t *testing.T, repo *assessmentrepo.Repository, id string) map[
 
 func TestAssessmentTemplates(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	repo := assessmentrepo.New(db)
 	admin := assessmentAdmin(t, db)
@@ -253,6 +254,7 @@ func TestAssessmentTemplates(t *testing.T) {
 // Два черновика шаблонов одной пары публикуются параллельно: в итоге ровно один опубликованный.
 func TestAssessmentTemplatePublishConcurrency(t *testing.T) {
 	db := testDB(t)
+	clearDemoBank(t, db)
 	ctx := context.Background()
 	repo := assessmentrepo.New(db)
 	admin := assessmentAdmin(t, db)
