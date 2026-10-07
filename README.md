@@ -574,6 +574,9 @@ go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
   "skills": [ "как GET /api/v1/me/skills, со статусом модерации" ],
   "category": null,  // после пройденного теста: {specialization_id, specialization, grade_id, grade, confirmed_at}
   "achievements": [],
+  "experience": [ "места работы, как GET /api/v1/me/experience" ],
+  "education": [ "образование, как GET /api/v1/me/education" ],
+  "experience_estimated_months": 14,  // подсказка по стажу или null, если мест работы нет
   "readiness": { "percent": 55, "ready_to_publish": true, "items": [ { "code": "profile", "title": "Профиль создан", "done": true, "required": true } ] }
 }
 ```
@@ -581,6 +584,7 @@ go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
 - `contacts` равен `null`, если контактов нет **или нет активного согласия `processing`**; ошибка при этом не возвращается.
 - `skills` содержит все навыки кандидата, в том числе ожидающие модерации (`moderation_status: pending`). Они засчитываются в готовность.
 - `category` равна `null`, пока кандидат не прошёл ни одного теста, затем это специализация и грейд последнего пройденного теста (см. «Тестирование кандидата»). `achievements` пока заготовка под достижения ФСП: всегда `[]`. В навыках после теста появляются `source: "test"`, `confidence: 0.8` и `verified_level`.
+- `experience` и `education` это списки из «Опыт работы и образование кандидата». `experience_estimated_months` — подсказка: стаж по местам работы в месяцах (пересекающиеся периоды не считаются дважды, текущая работа считается до текущего месяца). Поле профиля `experience_months` она не заменяет и не меняет: решать, переносить ли значение, должен кандидат. В чек-лист готовности эти разделы не входят.
 - `consents.current_policy_version` нужно показать кандидату и вернуть при выдаче согласия (`POST /api/v1/me/consents`).
 
 **Готовность** это подсказка для интерфейса, а не ограничение: условия публикации (`processing` и `publication`) по-прежнему
@@ -614,6 +618,64 @@ curl --fail-with-body "$API_URL/api/v1/me/profile/full" -H "Authorization: Beare
 ```sh
 cd apps/api
 go test -race -tags=integration ./internal/httpapi -run 'CandidateFullProfile'
+```
+
+### Опыт работы и образование кандидата
+
+Кандидат ведёт в профиле списки мест работы и образования. Роль `candidate`, нужен созданный профиль (иначе `404 profile_not_found`).
+Согласие `processing` для этих данных не требуется. Пока данные видит и меняет только сам кандидат: работодателям они не отдаются.
+Ответы не кешируются (`Cache-Control: private, no-store`).
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| GET | `/api/v1/me/experience` | Места работы: сначала текущее, затем по началу от новых к старым |
+| POST | `/api/v1/me/experience` | Добавить место работы (до 30) |
+| PUT | `/api/v1/me/experience/{id}` | Заменить запись целиком |
+| DELETE | `/api/v1/me/experience/{id}` | Удалить запись (204) |
+| GET | `/api/v1/me/education` | Образование по году окончания от новых к старым |
+| POST | `/api/v1/me/education` | Добавить запись (до 10) |
+| PUT | `/api/v1/me/education/{id}` | Заменить запись целиком |
+| DELETE | `/api/v1/me/education/{id}` | Удалить запись (204) |
+
+Списки приходят как `{"items": [...]}`. Частичных правок (PATCH) нет: PUT заменяет запись целиком.
+
+```json
+{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null,"description":"Разработка REST API"}
+{"level":"higher","institution":"Университет «Дубна»","specialty":"Программная инженерия","graduation_year":2027}
+```
+
+- Месяц передаётся и приходит строкой `ГГГГ-ММ` (`2022-11`; `2022-5` и `2022-13` дают 400). `ended_on: null` или отсутствие поля значит «по
+  настоящее время». Начало и окончание не могут быть в будущем, окончание не раньше начала.
+- Длины: `company`, `position`, `institution`, `specialty` до 200 символов (первые три обязательны), `description` до 2000. Пробелы по краям
+  обрезаются.
+- `level`: `secondary`, `vocational`, `incomplete_higher`, `higher`, `bachelor`, `master`, `phd`, `doctor`. `graduation_year` от 1950 до 2100;
+  будущий год допустим (учится сейчас).
+- Подсказка по стажу приходит в `GET /api/v1/me/profile/full` как `experience_estimated_months` (см. «Полный профиль кандидата»).
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `validation_error` | 400 | Неверное тело, месяц, уровень, длина, неизвестное поле |
+| `unauthorized` | 401 | Нет действительного токена |
+| `forbidden` | 403 | Роль не candidate |
+| `user_inactive` | 403 | Пользователь заблокирован |
+| `profile_not_found` | 404 | Профиль кандидата не создан |
+| `experience_not_found` | 404 | Место работы не найдено или чужое (в том числе неверный UUID) |
+| `education_not_found` | 404 | Запись об образовании не найдена или чужая |
+| `limit_reached` | 409 | Уже 30 мест работы или 10 записей образования |
+| `request_too_large` | 413 | Тело больше 2 МиБ |
+| `candidate_unavailable` | 503 | Сервис профилей не настроен |
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/me/experience" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null}'
+```
+
+Интеграционные тесты используют `TEST_DATABASE_URL`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./tests/integration -run 'TestCareer|TestFullProfileCareer'
 ```
 
 ### Тестирование кандидата
