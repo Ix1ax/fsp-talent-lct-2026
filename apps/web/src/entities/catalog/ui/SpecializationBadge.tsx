@@ -1,19 +1,14 @@
+import { SPECIALIZATIONS } from '@/shared/contants';
 import { Badge } from '@/shared/ui';
 
 import type { CatalogItem } from '../model/types';
-const abbreviations: Record<string, string> = {
-  frontend: 'FE',
-  backend: 'BE',
-  mobile: 'MOB',
-  qa: 'QA',
-  data: 'DATA',
-  devops: 'OPS',
-};
+
 interface SpecializationBadgeProps {
   specialization?: CatalogItem;
   grade?: CatalogItem;
   active?: boolean;
 }
+
 export const SpecializationBadge = ({
   specialization,
   grade,
@@ -31,10 +26,10 @@ export const SpecializationBadge = ({
       }
     >
       {specialization
-        ? (abbreviations[specialization.code] ?? specialization.name)
+        ? (SPECIALIZATIONS[specialization.code] ?? specialization.name)
         : '—'}
     </Badge>
-    <Badge className="h-6 bg-foreground font-mono text-[11px] text-primary-foreground dark:text-background">
+    <Badge className="h-6 bg-foreground font-mono text-[11px] text-primary-foreground">
       {grade?.name ?? 'любой'}
     </Badge>
   </span>

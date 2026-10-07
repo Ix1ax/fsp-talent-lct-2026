@@ -1,5 +1,5 @@
 import { ensureClientAccessToken } from '@/shared/api/client';
-import { getClientCatalogs, getClientSkills } from '@/entities/catalog/client';
+import { getClientCatalogs, getClientSkills } from '@/entities/catalog';
 import {
   createCompany,
   listCompanies,

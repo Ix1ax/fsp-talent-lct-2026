@@ -1,7 +1,7 @@
 import { formatSalaryRange } from '@/shared/lib/formatSalaryRange';
 import { cn } from '@/shared/lib/utils';
 import type { Catalogs } from '@/entities/catalog';
-import { SpecializationBadge } from '@/entities/catalog/client';
+import { SpecializationBadge } from '@/entities/catalog';
 import {
   type EmployerNeed,
   getMissingNeedFields,

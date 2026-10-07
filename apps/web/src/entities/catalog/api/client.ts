@@ -1,13 +1,16 @@
 import { clientApi } from '@/shared/api/client';
 
 import type { Catalogs, Skill, SkillsPage } from '../model';
+
 export const getClientCatalogs = async (signal?: AbortSignal) =>
   (await clientApi.get<Catalogs>('/v1/catalogs', { signal })).data;
+
 export const getClientSkills = async (
   q: string,
   signal?: AbortSignal,
 ): Promise<Skill[]> => {
   const items: Skill[] = [];
+
   for (let offset = 0; offset <= 10000; offset += 100) {
     const page = (
       await clientApi.get<SkillsPage>('/v1/catalogs/skills', {
@@ -15,9 +18,13 @@ export const getClientSkills = async (
         signal,
       })
     ).data;
+
     items.push(...page.items);
+
+    // TODO: add pagination
     if (page.items.length < 100) return items;
   }
+
   throw new Error('Слишком много навыков. Уточните поиск.');
 };
 

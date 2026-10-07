@@ -1,4 +1,4 @@
 export type { SkillsQuery, SkillsSearchQuery } from './api';
-export { getAllSkills, getCatalogs, getSkills } from './api';
+export { getClientCatalogs, getClientSkills, searchCatalogSkills } from './api';
 export type { CatalogItem, Catalogs, Grade, Skill, SkillsPage } from './model';
-export { SpecializationBadge } from './ui/SpecializationBadge';
+export { SpecializationBadge } from './ui';

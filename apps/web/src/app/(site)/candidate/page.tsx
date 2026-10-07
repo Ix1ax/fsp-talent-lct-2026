@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { getCandidateFullProfile } from '@/entities/candidate-profile/api/server';
-import { getCatalogs } from '@/entities/catalog/api';
+import { getCatalogs } from '@/entities/catalog/api/server';
 import { USER_ROLES } from '@/entities/session';
 import { requireRole } from '@/entities/session/api/server';
 import { CandidateHomePage } from '@/screens/candidate';
