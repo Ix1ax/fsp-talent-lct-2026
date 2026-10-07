@@ -1,18 +1,19 @@
-'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
+import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import type { NeedInput, NeedStatus } from '@/entities/employer-need';
 
-import { toNeedInput, validateNeed } from '../lib/needForm';
+import { toNeedInput, validateNeed } from '../lib';
 
-export interface NeedEditorOptions {
+export type NeedEditorOptions = {
   initial: NeedInput;
   isNew?: boolean;
   onSave: (value: NeedInput) => Promise<void>;
   onCancel: () => void;
   onDirtyChange: (dirty: boolean) => void;
-}
+};
+
 export const useNeedEditor = ({
   initial,
   isNew,
@@ -30,6 +31,7 @@ export const useNeedEditor = ({
   const [editing, setEditing] = useState(!!isNew);
   const [advanced, setAdvanced] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState('');
   const [attemptedStatus, setAttemptedStatus] = useState<NeedStatus | null>(
     null,
   );
@@ -54,6 +56,7 @@ export const useNeedEditor = ({
     return () => window.removeEventListener('beforeunload', beforeUnload);
   }, [dirty]);
   const submit = async (status: NeedStatus) => {
+    setSaveError('');
     const normalized = {
       ...value,
       title: value.title.trim(),
@@ -67,17 +70,21 @@ export const useNeedEditor = ({
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
       setEditing(true);
+      if (nextErrors.city || nextErrors.timezone || nextErrors.skills) {
+        setAdvanced(true);
+      }
       return;
     }
     try {
       await onSave(normalized);
-    } catch {
-      /* Ошибка записи отображается родителем. Значения остаются в форме. */
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error));
     }
   };
   const cancel = () => {
     form.reset(defaults);
     setErrors({});
+    setSaveError('');
     setAttemptedStatus(null);
     setEditing(!!isNew);
     onCancel();
@@ -90,6 +97,7 @@ export const useNeedEditor = ({
     advanced,
     setAdvanced,
     errors,
+    saveError,
     change,
     changeValue,
     submit,

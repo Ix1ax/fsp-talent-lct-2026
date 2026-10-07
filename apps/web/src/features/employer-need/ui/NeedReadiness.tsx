@@ -3,7 +3,12 @@ import { CheckIcon, MinusIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
 import { getMissingNeedFields, type NeedInput } from '@/entities/employer-need';
-export const NeedReadiness = ({ value }: { value: NeedInput }) => {
+
+interface NeedReadinessProps {
+  value: NeedInput;
+}
+
+export const NeedReadiness = ({ value }: NeedReadinessProps) => {
   const missing = getMissingNeedFields(value);
   return (
     <div

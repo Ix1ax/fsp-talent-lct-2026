@@ -15,6 +15,34 @@ const draft = () => ({
   specializationId: 1,
 });
 describe('Правила потребности', () => {
+  it('допускает 50 навыков и отклоняет 51 для черновика и активной потребности', () => {
+    const skills = Array.from({ length: 51 }, (_, index) => ({
+      skillId: `skill-${index}`,
+      required: index % 2 === 0,
+      weight: 1,
+    }));
+    for (const status of ['draft', 'active'] as const) {
+      const input = { ...draft(), workFormatIds: [1] };
+      expect(
+        validateNeed({ ...input, skills: skills.slice(0, 50) }, status),
+      ).toEqual({});
+      expect(validateNeed({ ...input, skills }, status).skills).toBeTruthy();
+    }
+  });
+  it.each(['+03:00', '-04:00', 'Local', 'wrong/timezone'])(
+    'отклоняет пояс %s',
+    (timezone) => {
+      expect(
+        validateNeed({ ...draft(), timezone }, 'draft').timezone,
+      ).toBeTruthy();
+    },
+  );
+  it.each(['Europe/Moscow', 'UTC', 'Etc/UTC', null])(
+    'допускает пояс %s',
+    (timezone) => {
+      expect(validateNeed({ ...draft(), timezone }, 'draft')).toEqual({});
+    },
+  );
   it('сохраняет минимальный черновик без вилки и грейда', () => {
     expect(validateNeed(draft(), 'draft')).toEqual({});
   });

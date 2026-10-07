@@ -7,7 +7,8 @@ import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
 
-import { useNeedEditor } from '../model/useNeedEditor';
+import { getNeedSaveLabel, getNeedStatusLabel } from '../lib';
+import { useNeedEditor } from '../model';
 import { BriefPhrase } from './BriefPhrase';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedReadiness } from './NeedReadiness';
@@ -45,11 +46,13 @@ export const NeedEditor = ({
     advanced,
     setAdvanced,
     errors,
+    saveError,
     change,
     changeValue,
     submit,
     cancel,
   } = useNeedEditor({ initial, isNew, onSave, onCancel, onDirtyChange });
+  const displayedError = saveError || error;
   const fieldError = (key: string) =>
     errors[key] && (
       <p id={`${key}-error`} className="text-sm text-destructive">
@@ -66,13 +69,7 @@ export const NeedEditor = ({
           {isNew ? 'Новая потребность' : 'Бриф потребности'}
         </MetaLabel>
         <MetaLabel className="ml-auto text-[11px] text-muted-foreground">
-          {readonly
-            ? 'Только просмотр'
-            : value.status === 'active'
-              ? 'Активна'
-              : value.status === 'archived'
-                ? 'В архиве'
-                : 'Черновик'}
+          {getNeedStatusLabel(value.status, readonly)}
         </MetaLabel>
       </div>
       <form
@@ -188,9 +185,9 @@ export const NeedEditor = ({
             />
           )}
         </fieldset>
-        {error && (
+        {displayedError && (
           <p role="alert" className="text-sm text-destructive">
-            {error}
+            {displayedError}
           </p>
         )}
         {!readonly && (isNew || value.status === 'draft') && (
@@ -213,13 +210,7 @@ export const NeedEditor = ({
                 }
                 className="max-md:w-full"
               >
-                {pending
-                  ? 'Сохраняем…'
-                  : isNew
-                    ? 'Создать и найти кандидатов'
-                    : value.status === 'draft'
-                      ? 'Активировать потребность'
-                      : 'Сохранить изменения'}
+                {getNeedSaveLabel(value.status, pending, isNew)}
                 <ArrowRightIcon />
               </Button>
               {(isNew || value.status === 'draft') && (

@@ -13,6 +13,8 @@ import { formatSalaryRange } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
 
+import { MAX_NEED_SKILLS } from '../constants';
+
 interface BriefPhraseProps {
   value: NeedInput;
   onChange: (value: NeedInput) => void;
@@ -90,6 +92,11 @@ export const BriefPhrase = ({
             .map((s) => (
               <label key={s.id} className="flex items-center gap-2 text-sm">
                 <Checkbox
+                  disabled={
+                    disabled ||
+                    (value.skills.length >= MAX_NEED_SKILLS &&
+                      !value.skills.some((skill) => skill.skillId === s.id))
+                  }
                   checked={value.skills.some(
                     (v) => v.skillId === s.id && v.required === required,
                   )}
@@ -97,6 +104,12 @@ export const BriefPhrase = ({
                     const previous = value.skills.find(
                       (v) => v.skillId === s.id,
                     );
+                    if (
+                      checked &&
+                      !previous &&
+                      value.skills.length >= MAX_NEED_SKILLS
+                    )
+                      return;
                     change({
                       skills: checked
                         ? [
@@ -115,6 +128,10 @@ export const BriefPhrase = ({
               </label>
             ))}
         </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Выбрано {value.skills.length} из {MAX_NEED_SKILLS} навыков. Лимит
+          общий для обязательных и желательных.
+        </p>
       </BriefToken>
     );
   };
