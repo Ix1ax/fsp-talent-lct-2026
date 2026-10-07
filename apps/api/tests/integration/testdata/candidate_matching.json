@@ -1,0 +1,22 @@
+{
+  "candidates": [
+    {"code":"anna","specialization":"backend","grade":"junior","score":96,"salary":150000,"format":"remote","published":true,"tested":true,"go":"test","sql":"test"},
+    {"code":"boris","specialization":"backend","grade":"junior","score":90,"salary":170000,"format":"remote","published":true,"tested":true,"go":"test","sql":"claimed"},
+    {"code":"vera","specialization":"backend","grade":"junior","score":99,"salary":140000,"format":"remote","published":true,"tested":true,"go":"claimed","sql":"test"},
+    {"code":"gleb","specialization":"backend","grade":"junior","score":99,"salary":140000,"format":"remote","published":true,"tested":true,"go":"missing","sql":"test"},
+    {"code":"dina","specialization":"backend","grade":"middle","score":95,"salary":180000,"format":"remote","published":true,"tested":true,"go":"test","sql":"test"},
+    {"code":"egor","specialization":"frontend","grade":"junior","score":99,"salary":130000,"format":"remote","published":true,"tested":true,"go":"test","sql":"test"},
+    {"code":"fedor","specialization":"backend","grade":"junior","score":98,"salary":250000,"format":"remote","published":true,"tested":true,"go":"test","sql":"test"},
+    {"code":"galina","specialization":"backend","grade":"junior","score":97,"salary":130000,"format":"office","published":true,"tested":true,"go":"test","sql":"test"},
+    {"code":"ivan","specialization":"backend","grade":"junior","score":100,"salary":120000,"format":"remote","published":false,"tested":true,"go":"test","sql":"test"},
+    {"code":"julia","specialization":"backend","grade":"junior","score":0,"salary":100000,"format":"remote","published":true,"tested":false,"go":"claimed","sql":"claimed"},
+    {"code":"kirill","specialization":"backend","grade":"junior","score":100,"salary":160000,"format":"remote","published":true,"tested":true,"go":"test","sql":"missing"}
+  ],
+  "scenarios": [
+    {"code":"go_optional_sql","grade":"junior","go_required":true,"sql_required":false,"expected":["anna","boris","kirill","vera"],"scores":[100,87.5,75,62.5]},
+    {"code":"go_and_sql_required","grade":"junior","go_required":true,"sql_required":true,"expected":["anna","boris","vera"],"scores":[100,87.5,62.5]},
+    {"code":"middle_only","grade":"middle","go_required":true,"sql_required":true,"expected":["dina"],"scores":[100]},
+    {"code":"no_grade_requirement","go_required":true,"sql_required":true,"expected":["anna","dina","boris","vera"],"scores":[100,100,87.5,62.5]},
+    {"code":"senior_empty","grade":"senior","go_required":true,"sql_required":true,"expected":[],"scores":[]}
+  ]
+}
