@@ -10,16 +10,19 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
 )
 
-const skillColumns = `s.id::text,s.code,s.name,s.moderation_status,cs.claimed_level,cs.updated_at`
-const skillJoin = ` FROM candidate_skills cs JOIN skills s ON s.id=cs.skill_id`
+const skillColumns = `s.id::text,s.code,s.name,s.moderation_status,cs.claimed_level,cs.updated_at,e.level`
+const skillJoin = ` FROM candidate_skills cs JOIN skills s ON s.id=cs.skill_id LEFT JOIN skill_evidence e ON e.candidate_id=cs.candidate_id AND e.skill_id=cs.skill_id AND e.source='test'`
 
 func scanSkill(row pgx.Row) (entity.Skill, error) {
 	var sk entity.Skill
-	if err := row.Scan(&sk.SkillID, &sk.Code, &sk.Name, &sk.ModerationStatus, &sk.ClaimedLevel, &sk.UpdatedAt); err != nil {
+	if err := row.Scan(&sk.SkillID, &sk.Code, &sk.Name, &sk.ModerationStatus, &sk.ClaimedLevel, &sk.UpdatedAt, &sk.VerifiedLevel); err != nil {
 		return sk, err
 	}
-	// Сейчас единственный источник — самооценка. Подтверждения тестов и ФСП добавят свои источники.
-	if sk.ClaimedLevel != nil {
+	// Источник — самый весомый из имеющихся: подтверждение теста выше самооценки. Достижения ФСП добавят свой источник.
+	switch {
+	case sk.VerifiedLevel != nil:
+		sk.Source = entity.SourceTest
+	case sk.ClaimedLevel != nil:
 		sk.Source = entity.SourceClaimed
 	}
 	sk.Confidence = entity.Confidence(sk.Source)

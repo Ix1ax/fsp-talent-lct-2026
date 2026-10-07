@@ -39,14 +39,16 @@ type SkillInput struct {
 
 // Skill — навык кандидата вместе с названием из справочника, источником и весом подтверждения.
 type Skill struct {
-	ModerationStatus string    `json:"moderation_status"`
-	SkillID          string    `json:"skill_id"`
-	Code             string    `json:"code"`
-	Name             string    `json:"name"`
-	ClaimedLevel     *int16    `json:"claimed_level"`
-	Source           string    `json:"source"`
-	Confidence       float64   `json:"confidence"`
-	UpdatedAt        time.Time `json:"updated_at"`
+	ModerationStatus string `json:"moderation_status"`
+	SkillID          string `json:"skill_id"`
+	Code             string `json:"code"`
+	Name             string `json:"name"`
+	ClaimedLevel     *int16 `json:"claimed_level"`
+	// VerifiedLevel — лучший уровень, подтверждённый тестом; nil, если теста по навыку не было.
+	VerifiedLevel *int16    `json:"verified_level"`
+	Source        string    `json:"source"`
+	Confidence    float64   `json:"confidence"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 func (in *SkillInput) Normalize() error {

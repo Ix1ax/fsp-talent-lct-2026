@@ -1,6 +1,10 @@
 package entity
 
-import consententity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/entity"
+import (
+	"time"
+
+	consententity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/entity"
+)
 
 // ReadinessItem — один пункт чек-листа готовности профиля.
 type ReadinessItem struct {
@@ -65,15 +69,25 @@ type FullSnapshot struct {
 	Consents []consententity.Consent
 	Contacts *Contacts
 	Skills   []Skill
+	Category *Category
 }
 
-// FullProfile — ответ GET /me/profile/full. Category и Achievements пока заготовки под тестирование и ФСП.
+// Category — текущая категория кандидата: специализация и грейд, подтверждённые последним пройденным тестом.
+type Category struct {
+	SpecializationID int16     `json:"specialization_id"`
+	Specialization   string    `json:"specialization"`
+	GradeID          int16     `json:"grade_id"`
+	Grade            string    `json:"grade"`
+	ConfirmedAt      time.Time `json:"confirmed_at"`
+}
+
+// FullProfile — ответ GET /me/profile/full. Achievements пока заготовка под достижения ФСП.
 type FullProfile struct {
 	Profile      *Profile     `json:"profile"`
 	Consents     FullConsents `json:"consents"`
 	Contacts     *Contacts    `json:"contacts"`
 	Skills       []Skill      `json:"skills"`
-	Category     any          `json:"category"`
+	Category     *Category    `json:"category"`
 	Achievements []any        `json:"achievements"`
 	Readiness    Readiness    `json:"readiness"`
 }
