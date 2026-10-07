@@ -15,6 +15,28 @@ export {
 export type { CandidateContacts, SaveCandidateContactsInput } from './contacts';
 export { getCandidateContacts, saveCandidateContacts } from './contacts';
 export type {
+  CandidateEducation,
+  CandidateEducations,
+  SaveCandidateEducationInput,
+} from './education';
+export {
+  addCandidateEducation,
+  deleteCandidateEducation,
+  getCandidateEducations,
+  saveCandidateEducation,
+} from './education';
+export type {
+  CandidateExperience,
+  CandidateExperiences,
+  SaveCandidateExperienceInput,
+} from './experience';
+export {
+  addCandidateExperience,
+  deleteCandidateExperience,
+  getCandidateExperiences,
+  saveCandidateExperience,
+} from './experience';
+export type {
   CandidateCategory,
   CandidateFullProfile,
   CandidateProfile,
