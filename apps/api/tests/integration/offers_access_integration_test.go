@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -10,27 +10,30 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
 	companyentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 	companyrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type offerFixture struct {
 	db                    *pgxpool.Pool
-	auth                  *authEnv
+	auth                  *testutil.AuthEnv
 	ids, tokens, profiles map[string]string
 	company, otherCompany string
 }
 
 func newOfferFixture(t *testing.T) *offerFixture {
 	t.Helper()
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
-	f := &offerFixture{db: db, auth: newAuthEnvWithOptions(t, Options{Offers: service.New(repository.New(db))}), ids: map[string]string{}, tokens: map[string]string{}, profiles: map[string]string{}}
+	f := &offerFixture{db: db, auth: testutil.NewAuthEnvWithOptions(t, httpapi.Options{Offers: service.New(repository.New(db))}), ids: map[string]string{}, tokens: map[string]string{}, profiles: map[string]string{}}
 	for _, name := range []string{"owner", "recruiter", "viewer", "outsider", "candidate", "other_candidate", "no_profile", "blocked"} {
 		role := "employer"
 		if name == "candidate" || name == "other_candidate" || name == "no_profile" {
@@ -45,8 +48,8 @@ func newOfferFixture(t *testing.T) *offerFixture {
 			t.Fatal(err)
 		}
 		f.ids[name] = id
-		f.auth.store.users[testIssuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
-		f.tokens[name] = f.auth.token(t, name)
+		f.auth.Store.Users[testutil.Issuer+"|"+name] = user.User{ID: id, Role: role, Status: status}
+		f.tokens[name] = f.auth.Token(t, name)
 		if role == "candidate" && name != "no_profile" {
 			var profile string
 			if err := db.QueryRow(ctx, `INSERT INTO candidate_profiles(user_id,search_status) VALUES($1,'open') RETURNING id::text`, id).Scan(&profile); err != nil {
@@ -79,7 +82,7 @@ func (f *offerFixture) body() string {
 }
 func (f *offerFixture) request(t *testing.T, method, path, who, body string, status int) *httptest.ResponseRecorder {
 	t.Helper()
-	w := f.auth.do(t, method, path, f.tokens[who], body)
+	w := f.auth.Do(t, method, path, f.tokens[who], body)
 	if w.Code != status {
 		t.Fatalf("%s %s (%s): %d %s, ожидали %d", method, path, who, w.Code, w.Body, status)
 	}
@@ -211,7 +214,7 @@ func TestOfferConcurrentResponses(t *testing.T) {
 						suffix = "/view"
 						body = ""
 					}
-					results <- f.auth.do(t, "POST", path+suffix, f.tokens["candidate"], body)
+					results <- f.auth.Do(t, "POST", path+suffix, f.tokens["candidate"], body)
 				}(status)
 			}
 			close(start)

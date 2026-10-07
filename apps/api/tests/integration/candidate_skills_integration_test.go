@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 const goSkill = "00000000-0000-4000-8000-000000000001"
 
 func TestCandidateSkillsSchema(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	var user, profile string
 	if err := db.QueryRow(ctx, `INSERT INTO users(role) VALUES('candidate') RETURNING id::text`).Scan(&user); err != nil {

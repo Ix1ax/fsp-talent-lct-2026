@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -16,7 +16,7 @@ import (
 )
 
 func TestCandidateProfileConsentGate(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	consents := consentrepo.NewRepository(db)
 	ctx := context.Background()
@@ -83,7 +83,7 @@ func TestCandidateProfileConsentGate(t *testing.T) {
 
 // Отзыв processing и публикация одновременно: профиль не должен остаться опубликованным без согласия.
 func TestCandidateConsentRevokeVsPublish(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	consents := consentrepo.NewRepository(db)
 	ctx := context.Background()

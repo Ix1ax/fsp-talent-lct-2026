@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -9,22 +9,25 @@ import (
 	"testing"
 	"time"
 
+	"golang.org/x/crypto/bcrypt"
+
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
-	"golang.org/x/crypto/bcrypt"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 )
 
 func TestAdminAuthIsolationAndPermissions(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	admins := service.New(repository.New(db))
-	e := newAuthEnvWithOptions(t, Options{Admins: admins})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Admins: admins})
 	const password = "Test-Admin-Password-2026"
 	login := func(email, password string, status int) entity.Login {
 		t.Helper()
 		body, _ := json.Marshal(entity.Credentials{Email: email, Password: password})
-		w := e.do(t, "POST", "/api/v1/admin/auth/login", "", string(body))
+		w := e.Do(t, "POST", "/api/v1/admin/auth/login", "", string(body))
 		if w.Code != status {
 			t.Fatalf("Вход: %d %s, ожидали %d", w.Code, w.Body, status)
 		}
@@ -62,14 +65,14 @@ func TestAdminAuthIsolationAndPermissions(t *testing.T) {
 	login("root@example.test", "incorrect", 401)
 	request := func(method, path, token, body string, status int) string {
 		t.Helper()
-		w := e.do(t, method, path, token, body)
+		w := e.Do(t, method, path, token, body)
 		if w.Code != status {
 			t.Fatalf("%s %s: %d %s, ожидали %d", method, path, w.Code, w.Body, status)
 		}
 		return w.Body.String()
 	}
 	request("GET", "/api/v1/admin/auth/me", root.AccessToken, "", 200)
-	request("GET", "/api/v1/admin/auth/me", e.token(t, "candidate"), "", 401)
+	request("GET", "/api/v1/admin/auth/me", e.Token(t, "candidate"), "", 401)
 	request("GET", "/api/v1/me", root.AccessToken, "", 401)
 	request("POST", "/api/v1/admin/auth/register", "", `{}`, 404)
 	body := `{"email":"staff@example.test","password":"Staff-Password-2026"}`
@@ -104,11 +107,11 @@ func TestAdminAuthIsolationAndPermissions(t *testing.T) {
 }
 
 func TestAdminLoginRateLimit(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	admins := service.New(repository.New(db))
-	e := newAuthEnvWithOptions(t, Options{Admins: admins})
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Admins: admins})
 	for i := 0; i < 11; i++ {
-		w := e.do(t, "POST", "/api/v1/admin/auth/login", "", `{"email":"unknown@example.test","password":"Test-Password-2026"}`)
+		w := e.Do(t, "POST", "/api/v1/admin/auth/login", "", `{"email":"unknown@example.test","password":"Test-Password-2026"}`)
 		want := 401
 		if i == 10 {
 			want = 429

@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -20,10 +20,10 @@ func TestOfferQueriesDoNotDeadlockWithRevoke(t *testing.T) {
 		name string
 		run  func() int
 	}{
-		{"создание предложения", func() int { return f.auth.do(t, "POST", f.base(), f.tokens["recruiter"], f.body()).Code }},
-		{"список предложений кандидата", func() int { return f.auth.do(t, "GET", "/api/v1/me/offers", f.tokens["candidate"], "").Code }},
+		{"создание предложения", func() int { return f.auth.Do(t, "POST", f.base(), f.tokens["recruiter"], f.body()).Code }},
+		{"список предложений кандидата", func() int { return f.auth.Do(t, "GET", "/api/v1/me/offers", f.tokens["candidate"], "").Code }},
 		{"просмотр предложения", func() int {
-			return f.auth.do(t, "POST", "/api/v1/me/offers/"+offer.ID+"/view", f.tokens["candidate"], "").Code
+			return f.auth.Do(t, "POST", "/api/v1/me/offers/"+offer.ID+"/view", f.tokens["candidate"], "").Code
 		}},
 	}
 	for _, tc := range cases {

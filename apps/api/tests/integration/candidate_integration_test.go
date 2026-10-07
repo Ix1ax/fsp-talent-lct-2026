@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func pgCode(err error) string {
 }
 
 func TestCandidateSchemaConstraints(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	newUser := func() string {
 		var id string

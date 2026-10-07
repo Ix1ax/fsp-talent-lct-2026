@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -20,10 +20,12 @@ import (
 	candidaterepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 )
 
 func TestSkillModeration(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx := context.Background()
 	admins := adminservice.New(adminrepo.New(db))
 	const password = "Moderation-Password-2026"
@@ -35,11 +37,11 @@ func TestSkillModeration(t *testing.T) {
 		t.Fatal(err)
 	}
 	svc := catalogservice.New(catalogrepo.New(db))
-	env := newAuthEnvWithOptions(t, Options{Admins: admins, AdminCatalogs: svc})
+	env := testutil.NewAuthEnvWithOptions(t, httpapi.Options{Admins: admins, AdminCatalogs: svc})
 	base := "/api/v1/admin/catalogs/skills"
 	do := func(path, body string, status int) entity.ModerationResult {
 		t.Helper()
-		w := env.do(t, "POST", base+path, login.AccessToken, body)
+		w := env.Do(t, "POST", base+path, login.AccessToken, body)
 		if w.Code != status {
 			t.Fatalf("POST %s: %d %s ожидали %d", path, w.Code, w.Body, status)
 		}
@@ -69,7 +71,7 @@ func TestSkillModeration(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	queue := env.do(t, "GET", base+"/pending", login.AccessToken, "")
+	queue := env.Do(t, "GET", base+"/pending", login.AccessToken, "")
 	if queue.Code != 200 {
 		t.Fatalf("Очередь: %d %s", queue.Code, queue.Body)
 	}
@@ -149,7 +151,7 @@ func TestSkillModeration(t *testing.T) {
 	if _, err = svc.Moderate(ctx, login.Admin.ID, goSkill, "approved", entity.ModerationInput{}); !errors.Is(err, entity.ErrInvalidTransition) {
 		t.Fatal(err)
 	}
-	if w := env.do(t, "POST", base+"/"+old+"/approve", env.token(t, "site-user"), ""); w.Code != 401 {
+	if w := env.Do(t, "POST", base+"/"+old+"/approve", env.Token(t, "site-user"), ""); w.Code != 401 {
 		t.Fatal("Токен сайта позволил модерацию", w.Code)
 	}
 	var events int
@@ -159,7 +161,7 @@ func TestSkillModeration(t *testing.T) {
 }
 
 func TestSkillMergeDuringSubmission(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	svc := catalogservice.New(catalogrepo.New(db))

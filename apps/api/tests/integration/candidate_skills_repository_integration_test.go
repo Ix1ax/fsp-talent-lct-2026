@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -21,7 +21,7 @@ const (
 func skillLevel(n int16) entity.SkillInput { return entity.SkillInput{ClaimedLevel: &n} }
 
 func TestCandidateSkillsRepository(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
 	newUser := func(role, status string, withProfile bool) string {
@@ -127,7 +127,7 @@ func TestCandidateSkillsRepository(t *testing.T) {
 }
 
 func TestCandidateSkillsConcurrency(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
 	rows, err := db.Query(ctx, `INSERT INTO skills(code,name) SELECT 'extra'||g, 'Extra '||g FROM generate_series(1,60) g RETURNING id::text`)

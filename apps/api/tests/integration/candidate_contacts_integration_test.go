@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestCandidateContactsRepository(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
 	newUser := func(role, status string) string {

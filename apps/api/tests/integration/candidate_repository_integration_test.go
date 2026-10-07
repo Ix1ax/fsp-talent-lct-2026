@@ -1,6 +1,6 @@
 //go:build integration
 
-package httpapi
+package integration
 
 import (
 	"context"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestCandidateRepositoryProfile(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
 	newUser := func(role, status string) string {
@@ -82,7 +82,7 @@ func TestCandidateRepositoryProfile(t *testing.T) {
 }
 
 func TestCandidateRepositoryConcurrency(t *testing.T) {
-	db := companyTestDB(t)
+	db := testDB(t)
 	repo := candidaterepo.NewRepository(db)
 	ctx := context.Background()
 	var user string
