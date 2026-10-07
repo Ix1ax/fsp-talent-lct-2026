@@ -5,8 +5,8 @@ import {
   archiveNeed,
   createNeed,
   getNeed,
-  listNeeds,
-  listRecommendations,
+  getNeeds,
+  getRecommendations,
   updateNeed,
 } from '@/entities/employer-need';
 export const employerGateway = {
@@ -16,11 +16,11 @@ export const employerGateway = {
   companies: getCompanies,
   createCompany,
   updateCompany,
-  needs: listNeeds,
+  needs: getNeeds,
   need: getNeed,
   createNeed,
   updateNeed,
   archiveNeed,
-  recommendations: listRecommendations,
+  recommendations: getRecommendations,
 };
 export type EmployerGateway = typeof employerGateway;

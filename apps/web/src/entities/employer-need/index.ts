@@ -1,14 +1,12 @@
+export type { NeedMutationApi } from './api';
 export {
   archiveNeed,
   createNeed,
   getNeed,
-  listNeeds,
-  listRecommendations,
+  getNeeds,
+  getRecommendations,
   updateNeed,
-} from './api/needs';
-export type { NeedMutationApi } from './api/types';
-export { getMissingNeedFields } from './model/getMissingNeedFields';
-export { NEED_STATUS_LABELS } from './model/labels';
+} from './api';
 export type {
   EmployerNeed,
   NeedInput,
@@ -16,4 +14,5 @@ export type {
   NeedStatus,
   Recommendation,
   RecommendationPage,
-} from './model/types';
+} from './model';
+export { getMissingNeedFields, NEED_STATUS_LABELS } from './model';

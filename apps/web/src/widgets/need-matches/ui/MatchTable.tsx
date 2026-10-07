@@ -4,14 +4,15 @@ import { Button, Skeleton } from '@/shared/ui';
 import { AsyncState } from '@/shared/ui/AsyncState';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { Catalogs } from '@/entities/catalog';
-import { listRecommendations } from '@/entities/employer-need';
+import { getRecommendations } from '@/entities/employer-need';
 
 import { useNeedMatches } from '../model/useNeedMatches';
+
 interface MatchTableProps {
   companyId: string;
   needId: string;
   catalogs: Catalogs;
-  load?: typeof listRecommendations;
+  load?: typeof getRecommendations;
 }
 const conditions: Record<string, string> = {
   work_format: 'формат работы',
@@ -23,7 +24,7 @@ export const MatchTable = ({
   companyId,
   needId,
   catalogs,
-  load = listRecommendations,
+  load = getRecommendations,
 }: MatchTableProps) => {
   const { data, error, offset, setOffset, retry } = useNeedMatches(
     companyId,

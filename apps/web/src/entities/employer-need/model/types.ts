@@ -1,10 +1,12 @@
 export type NeedStatus = 'active' | 'draft' | 'archived';
-export interface NeedSkill {
+
+export type NeedSkill = {
   skillId: string;
   required: boolean;
   weight: number;
-}
-export interface NeedInput {
+};
+
+export type NeedInput = {
   title: string;
   description: string;
   specializationId: number;
@@ -16,14 +18,16 @@ export interface NeedInput {
   skills: NeedSkill[];
   workFormatIds: number[];
   status: NeedStatus;
-}
-export interface EmployerNeed extends NeedInput {
+};
+
+export type EmployerNeed = NeedInput & {
   id: string;
   companyId: string;
   createdBy: string;
   createdAt: string;
-}
-export interface Recommendation {
+};
+
+export type Recommendation = {
   id: string;
   city: string | null;
   timezone: string | null;
@@ -34,8 +38,9 @@ export interface Recommendation {
   matchedConditions: number;
   reasons: string[];
   unknownConditions: string[];
-}
-export interface RecommendationPage {
+};
+
+export type RecommendationPage = {
   items: Recommendation[];
   total: number;
   limit: number;
@@ -43,4 +48,4 @@ export interface RecommendationPage {
   needId: string;
   matchingMode: string;
   unassessedCriteria: string[];
-}
+};
