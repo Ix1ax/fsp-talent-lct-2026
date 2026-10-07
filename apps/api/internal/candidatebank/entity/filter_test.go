@@ -29,3 +29,17 @@ func TestQualificationFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestGradeStatusFilter(t *testing.T) {
+	for _, status := range []string{"all", "confirmed", "unconfirmed"} {
+		f, err := ParseFilter("grade_status=" + status)
+		if err != nil || f.GradeStatus != status {
+			t.Fatalf("Неверный статус: %+v, %v", f, err)
+		}
+	}
+	for _, query := range []string{"grade_status=pending", "grade_status=", "grade_status=confirmed&grade_status=all"} {
+		if _, err := ParseFilter(query); err == nil {
+			t.Fatalf("Принят неверный статус: %s", query)
+		}
+	}
+}

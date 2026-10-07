@@ -17,15 +17,16 @@ type Filter struct {
 	SpecializationID, GradeID                *int16
 	SkillID                                  *string
 	VerifiedSkillOnly                        bool
+	GradeStatus                              string
 }
 
 func ParseFilter(raw string) (Filter, error) {
-	f := Filter{Limit: 20}
+	f := Filter{Limit: 20, GradeStatus: "all"}
 	q, err := url.ParseQuery(raw)
 	if err != nil {
 		return f, fmt.Errorf("Некорректная строка параметров")
 	}
-	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true}
+	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true, "grade_status": true}
 	for key, values := range q {
 		if !allowed[key] {
 			return f, fmt.Errorf("Неизвестный параметр: %s", key)
@@ -107,6 +108,12 @@ func ParseFilter(raw string) (Filter, error) {
 		if f.SkillID == nil {
 			return f, fmt.Errorf("Для verified_skill_only укажите skill_id")
 		}
+	}
+	if v := q.Get("grade_status"); v != "" {
+		if v != "all" && v != "confirmed" && v != "unconfirmed" {
+			return f, fmt.Errorf("grade_status должен быть all, confirmed или unconfirmed")
+		}
+		f.GradeStatus = v
 	}
 	return f, nil
 }

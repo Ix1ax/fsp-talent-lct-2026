@@ -16,19 +16,26 @@ type Repository struct{ db *pgxpool.Pool }
 func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
 const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
- JOIN candidate_categories category ON category.candidate_id=p.id
- JOIN assessment_attempts test ON test.id=category.attempt_id AND test.candidate_id=p.id
- AND test.status='passed' AND test.specialization_id=category.specialization_id AND test.grade_id=category.grade_id
+ LEFT JOIN LATERAL (
+ SELECT c.specialization_id,c.grade_id,a.score_percent FROM candidate_categories c
+ JOIN assessment_attempts a ON a.id=c.attempt_id AND a.candidate_id=c.candidate_id
+ AND a.status='passed' AND a.specialization_id=c.specialization_id AND a.grade_id=c.grade_id
+ WHERE c.candidate_id=p.id) category ON true
+ LEFT JOIN LATERAL (
+ SELECT a.specialization_id,a.grade_id FROM assessment_attempts a WHERE a.candidate_id=p.id
+ ORDER BY a.started_at DESC,a.id DESC LIMIT 1) declared ON true
  WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL)
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL)`
 const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_rub,p.search_status,
  ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id),
- jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id) AS category`
+ CASE WHEN category.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id) END AS category,
+ CASE WHEN declared.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',declared.specialization_id,'grade_id',declared.grade_id) END AS declared_category,
+ CASE WHEN category.grade_id IS NOT NULL THEN 'confirmed' ELSE 'unconfirmed' END AS grade_status`
 
 func scan(row pgx.Row) (entity.Card, error) {
 	var c entity.Card
-	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category)
+	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category, &c.DeclaredCategory, &c.GradeStatus)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, entity.ErrNotFound
 	}
@@ -76,7 +83,7 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+fmt.Sprintf(` ORDER BY p.id LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
+	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+fmt.Sprintf(` ORDER BY (category.grade_id IS NOT NULL) DESC,category.score_percent DESC NULLS LAST,p.id LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
 
 	if err != nil {
 		return page, err

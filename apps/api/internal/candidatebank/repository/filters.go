@@ -7,21 +7,20 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Категория берётся из успешного теста, а не из заявленного грейда в резюме.
+// Числовые фильтры сравнивают подтверждённую категорию, а при её отсутствии — выбор последней попытки.
+// Если специализация или грейд ещё не выбраны, они не считаются совпадением.
 func qualificationConditions(f entity.Filter, offset int) (string, []any) {
-	args := []any{f.SpecializationID, f.GradeID, f.SkillID, f.VerifiedSkillOnly}
+	args := []any{f.SpecializationID, f.GradeID, f.SkillID, f.VerifiedSkillOnly, f.GradeStatus}
 	sql := fmt.Sprintf(`
- AND (($%d::smallint IS NULL AND $%d::smallint IS NULL) OR EXISTS (
- SELECT 1 FROM candidate_categories c JOIN assessment_attempts a ON a.id=c.attempt_id
- WHERE c.candidate_id=p.id AND a.candidate_id=p.id AND a.status='passed'
- AND ($%d::smallint IS NULL OR c.specialization_id=$%d)
- AND ($%d::smallint IS NULL OR c.grade_id=$%d)))
- AND ($%d::uuid IS NULL OR EXISTS (
- SELECT 1 FROM candidate_skills cs JOIN skills s ON s.id=cs.skill_id
+ AND ($%d::smallint IS NULL OR COALESCE(category.specialization_id,declared.specialization_id)=$%d)
+ AND ($%d::smallint IS NULL OR COALESCE(category.grade_id,declared.grade_id)=$%d)
+ AND ($%d::uuid IS NULL OR EXISTS(SELECT 1 FROM candidate_skills cs JOIN skills s ON s.id=cs.skill_id
  WHERE cs.candidate_id=p.id AND s.id=$%d AND s.active AND s.moderation_status='approved'
- AND (NOT $%d::boolean OR EXISTS (SELECT 1 FROM skill_evidence e
- WHERE e.candidate_id=p.id AND e.skill_id=s.id AND e.source='test'))))`,
-		offset+1, offset+2, offset+1, offset+1, offset+2, offset+2, offset+3, offset+3, offset+4)
+ AND (cs.claimed_level IS NOT NULL OR EXISTS(SELECT 1 FROM skill_evidence e WHERE e.candidate_id=p.id AND e.skill_id=s.id AND e.source='test'))
+ AND (NOT $%d::boolean OR EXISTS(SELECT 1 FROM skill_evidence e WHERE e.candidate_id=p.id AND e.skill_id=s.id AND e.source='test'))))
+ AND (COALESCE(NULLIF($%d::text,''),'all')='all'
+ OR ($%d='confirmed' AND category.grade_id IS NOT NULL)
+ OR ($%d='unconfirmed' AND category.grade_id IS NULL))`, offset+1, offset+1, offset+2, offset+2, offset+3, offset+3, offset+4, offset+5, offset+5, offset+5)
 	return sql, args
 }
 

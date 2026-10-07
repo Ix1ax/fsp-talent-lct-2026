@@ -3,15 +3,14 @@ package repository
 import (
 	"context"
 	"errors"
-
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
 	"github.com/jackc/pgx/v5"
 )
 
-// Recommend сравнивает кандидатов внутри подтверждённой категории потребности.
+// Recommend ранжирует по сходству с потребностью. Исключают только явные фильтры и приватность.
 // TODO: подключить подтверждённые достижения ФСП к ранжированию внутри категории.
 func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID string, filter entity.Filter) (entity.RecommendationPage, error) {
-	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "qualification_and_conditions", UnassessedCriteria: []string{"fsp_achievements"}}
+	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "similarity", UnassessedCriteria: []string{"fsp_achievements"}}
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
 		return page, err
@@ -41,50 +40,46 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 	if selected == nil {
 		selected = []int16{}
 	}
-	// Условия потребности и дополнительные фильтры пересекаются; запрос не расширяет доступ.
-	conditions := visible + filterConditions + `
- AND (cardinality($5::smallint[])=0 OR EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($5::smallint[])))
- AND ($6::bigint IS NULL OR p.salary_min_rub IS NULL OR p.salary_min_rub <= $6)`
-	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, selected, formats, salary}
+	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, selected}
 	extra, extraArgs := qualificationConditions(filter, len(args))
-	conditions += extra
-	countArgs := append(args, extraArgs...)
-	countArgs = append(countArgs, needID, specialization, grade)
-	conditions += qualificationEligibility
-
-	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, countArgs...).Scan(&page.Total); err != nil {
+	conditions := visible + filterConditions + extra
+	args = append(args, extraArgs...)
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	// Неизвестные значения дают NULL и не прибавляют совпадений. Город сравниваем без учёта регистра.
-	signals := `CASE WHEN cardinality($5::smallint[])>0 THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($5::smallint[])) END AS format_match,
- CASE WHEN $6::bigint IS NOT NULL THEN p.salary_min_rub <= $6 END AS salary_match,
- CASE WHEN $14::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($14)) END AS city_match,
- CASE WHEN $15::text IS NOT NULL THEN p.timezone=$15 END AS timezone_match`
-	query := `WITH matched AS (SELECT ` + columns + `,` + signals + `,
- test.score_percent::float8 AS test_score,
- ` + skillMatches + ` AS skills ` + conditions + `), scored AS (
- SELECT matched.*,` + weightedSkillScore + ` AS skill_score FROM matched)
- SELECT * FROM scored ORDER BY skill_score DESC NULLS LAST,test_score DESC,
- (CASE WHEN format_match THEN 1 ELSE 0 END + CASE WHEN salary_match THEN 1 ELSE 0 END + CASE WHEN city_match THEN 1 ELSE 0 END + CASE WHEN timezone_match THEN 1 ELSE 0 END) DESC,id
- LIMIT $16 OFFSET $17`
-	rows, err := tx.Query(ctx, query, append(countArgs, city, timezone, filter.Limit, filter.Offset)...)
+	// Параметры потребности участвуют только в оценке, а не в WHERE.
+	args = append(args, needID, formats, salary, specialization, grade, city, timezone, filter.Limit, filter.Offset)
+	signals := `CASE WHEN cardinality($11::smallint[])>0 AND EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id) THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($11::smallint[])) END AS format_match,
+ CASE WHEN $12::bigint IS NOT NULL THEN p.salary_min_rub <= $12 END AS salary_match,
+ CASE WHEN $15::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($15)) END AS city_match,
+ CASE WHEN $16::text IS NOT NULL THEN p.timezone=$16 END AS timezone_match,
+ COALESCE(category.specialization_id,declared.specialization_id)=$13::smallint AS specialization_match,
+ CASE WHEN $14::smallint IS NOT NULL THEN COALESCE(category.grade_id,declared.grade_id)=$14 END AS grade_match`
+	query := `WITH matched AS (SELECT ` + columns + `,` + signals + `,category.score_percent::float8 AS test_score,` + skillMatches + ` AS skills ` + conditions + `),
+ scored AS (SELECT matched.*,` + weightedSkillScore + ` AS skill_score FROM matched),
+ ranked AS (SELECT scored.*,` + similarityScore + ` AS match_score,` + similarityCriteria + ` AS criteria FROM scored)
+ SELECT * FROM ranked ORDER BY (grade_status='confirmed') DESC,match_score DESC,test_score DESC NULLS LAST,id
+ LIMIT $17 OFFSET $18`
+	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
 		return page, err
 	}
 	for rows.Next() {
 		var card entity.Card
-		var fm, sm, cm, tm *bool
+		var fm, sm, cm, tm, specMatch, gradeMatch *bool
 		var skills []entity.SkillMatch
-		var score *float64
-		var testScore float64
-		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &fm, &sm, &cm, &tm, &testScore, &skills, &score)
+		var score, testScore *float64
+		var matchScore float64
+		var criteria []entity.MatchCriterion
+		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus,
+			&fm, &sm, &cm, &tm, &specMatch, &gradeMatch, &testScore, &skills, &score, &matchScore, &criteria)
 		if err != nil {
 			rows.Close()
 			return page, err
 		}
 		item := entity.Explain(card, fm, sm, cm, tm)
-		item.Skills, item.SkillMatchScore, item.TestScorePercent = skills, score, testScore
-		item.ExplainQualification(grade != nil)
+		item.Skills, item.SkillMatchScore, item.TestScorePercent, item.MatchScore, item.Criteria = skills, score, testScore, matchScore, criteria
+		item.ExplainQualification(specMatch, gradeMatch, grade != nil)
 		page.Items = append(page.Items, item)
 	}
 	err = rows.Err()
