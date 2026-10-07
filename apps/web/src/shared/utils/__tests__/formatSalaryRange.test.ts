@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { formatSalaryRange } from '../formatSalaryRange';
+
 describe('Форматирование зарплатной вилки', () => {
   it('различает отсутствие значения, ноль и одностороннюю границу', () => {
     expect(formatSalaryRange(null, null)).toBe('Вилка не указана');

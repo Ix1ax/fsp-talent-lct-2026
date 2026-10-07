@@ -1,6 +1,7 @@
 import { cn } from '@/shared/lib/utils';
 
 import { Button } from './Button';
+
 interface AsyncStateProps {
   title: string;
   description?: string;
@@ -8,6 +9,7 @@ interface AsyncStateProps {
   error?: boolean;
   className?: string;
 }
+
 export const AsyncState = ({
   title,
   description,

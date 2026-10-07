@@ -1,17 +1,20 @@
-import { formatSalaryRange } from '@/shared/lib/formatSalaryRange';
 import { cn } from '@/shared/lib/utils';
+import { Button } from '@/shared/ui';
+import { formatSalaryRange } from '@/shared/utils';
 import type { Catalogs } from '@/entities/catalog';
 import { SpecializationBadge } from '@/entities/catalog';
 import {
   type EmployerNeed,
   getMissingNeedFields,
 } from '@/entities/employer-need';
+
 interface NeedListItemProps {
   need: EmployerNeed;
   catalogs: Catalogs;
   selected: boolean;
   onSelect: () => void;
 }
+
 export const NeedListItem = ({
   need,
   catalogs,
@@ -26,13 +29,17 @@ export const NeedListItem = ({
     .filter((f) => need.workFormatIds.includes(f.id))
     .map((f) => f.name)
     .join(', ');
+
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="default"
       type="button"
       aria-current={selected ? 'true' : undefined}
       onClick={onSelect}
       className={cn(
-        'flex w-full flex-col gap-2 border-b border-border p-4 text-left transition-colors hover:bg-muted xl:px-5',
+        'h-auto w-full justify-start rounded-none border-0 bg-transparent p-4 text-left whitespace-normal hover:bg-muted',
+        'flex-col gap-2 border-b border-border xl:px-5',
         selected && 'bg-muted shadow-[inset_3px_0_0_var(--primary)]',
       )}
     >
@@ -67,6 +74,6 @@ export const NeedListItem = ({
       {need.status === 'archived' && (
         <span className="text-xs text-caption">В архиве</span>
       )}
-    </button>
+    </Button>
   );
 };

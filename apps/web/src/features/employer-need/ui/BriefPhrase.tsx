@@ -1,12 +1,18 @@
 'use client';
+
 import { useState } from 'react';
 
-import { formatSalaryRange } from '@/shared/lib/formatSalaryRange';
-import { Button, Checkbox, Input } from '@/shared/ui';
-import { BriefToken } from '@/shared/ui/BriefToken';
-import { SalaryRangeInput } from '@/shared/ui/SalaryRangeInput';
+import {
+  BriefToken,
+  Button,
+  Checkbox,
+  Input,
+  SalaryRangeInput,
+} from '@/shared/ui';
+import { formatSalaryRange } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
+
 interface BriefPhraseProps {
   value: NeedInput;
   onChange: (value: NeedInput) => void;
@@ -15,6 +21,7 @@ interface BriefPhraseProps {
   disabled?: boolean;
   errors: Record<string, string>;
 }
+
 export const BriefPhrase = ({
   value,
   onChange,
@@ -32,6 +39,7 @@ export const BriefPhrase = ({
     onOpenChange: (v: boolean) => setOpen(v ? key : null),
     disabled,
   });
+
   const option = (
     id: number | null,
     label: string,
@@ -52,10 +60,12 @@ export const BriefPhrase = ({
       {selected ? ' ✓' : ''}
     </Button>
   );
+
   const skillToken = (required: boolean) => {
     const selected = skills.filter((s) =>
       value.skills.some((v) => v.skillId === s.id && v.required === required),
     );
+
     return (
       <BriefToken
         {...token(required ? 'requiredSkills' : 'optionalSkills')}

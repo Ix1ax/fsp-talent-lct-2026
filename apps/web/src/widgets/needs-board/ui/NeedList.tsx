@@ -1,24 +1,15 @@
 import { cn } from '@/shared/lib/utils';
-import { Button, Skeleton } from '@/shared/ui';
-import { AsyncState } from '@/shared/ui/AsyncState';
+import { AsyncState, Button, Skeleton } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
-import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
+import type { NeedStatus } from '@/entities/employer-need';
 
+import type { NeedList as List } from '../model';
 import { CountTabs } from './CountTabs';
 import { NeedListItem } from './NeedListItem';
 import { NewNeedTemplate } from './NewNeedTemplate';
+
 interface NeedListProps {
-  list: {
-    status: NeedStatus;
-    pending: boolean;
-    loading: boolean;
-    listError: string;
-    items: EmployerNeed[];
-    selectedId: string;
-    offset: number;
-    hasMore: boolean;
-    reload: () => void;
-  };
+  list: List;
   catalogs: Catalogs;
   canWrite: boolean;
   detail: boolean;
@@ -28,6 +19,7 @@ interface NeedListProps {
   onSelect: (id: string) => void;
   onPage: (offset: number) => void;
 }
+
 export const NeedList = ({
   list,
   catalogs,
