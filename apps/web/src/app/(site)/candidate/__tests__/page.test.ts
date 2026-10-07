@@ -10,7 +10,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/entities/candidate-profile/api/server', () => ({
   getCandidateFullProfile: mocks.getFullProfile,
 }));
-vi.mock('@/entities/catalog/api', () => ({ getCatalogs: mocks.getCatalogs }));
+vi.mock('@/entities/catalog/api/server', () => ({
+  getCatalogs: mocks.getCatalogs,
+}));
 vi.mock('@/entities/session/api/server', () => ({
   requireRole: mocks.requireRole,
 }));

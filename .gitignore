@@ -16,3 +16,7 @@ bin/
 .idea/
 .tmp/
 *.tsbuildinfo
+
+# Локальные макеты, инструкции, скриншоты и демо
+/design-handoff/
+/apps/web/src/app/preview/
