@@ -73,8 +73,15 @@ CREATE INDEX assessment_events_entity_idx ON assessment_events (entity_type, ent
 -- +goose StatementBegin
 CREATE FUNCTION assessment_version_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF OLD.status <> 'draft' AND (NEW.prompt IS DISTINCT FROM OLD.prompt OR NEW.grading_spec IS DISTINCT FROM OLD.grading_spec) THEN
-        RAISE EXCEPTION 'Содержимое опубликованной версии задания менять нельзя: создайте новую версию';
+    IF OLD.status <> 'draft' THEN
+        IF NEW.prompt IS DISTINCT FROM OLD.prompt OR NEW.grading_spec IS DISTINCT FROM OLD.grading_spec
+            OR NEW.question_id IS DISTINCT FROM OLD.question_id OR NEW.version IS DISTINCT FROM OLD.version THEN
+            RAISE EXCEPTION 'Содержимое опубликованной версии задания менять нельзя: создайте новую версию';
+        END IF;
+        -- Из опубликованной версии разрешён только переход в архив; возврат в черновик открыл бы правку содержимого.
+        IF NEW.status <> OLD.status AND NOT (OLD.status = 'published' AND NEW.status = 'archived') THEN
+            RAISE EXCEPTION 'Версию задания можно только перевести из опубликованной в архивную';
+        END IF;
     END IF;
     RETURN NEW;
 END;
@@ -87,9 +94,14 @@ CREATE TRIGGER assessment_version_immutable BEFORE UPDATE ON assessment_question
 -- +goose StatementBegin
 CREATE FUNCTION assessment_template_immutable() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
-    IF OLD.status <> 'draft' AND (NEW.specialization_id IS DISTINCT FROM OLD.specialization_id OR NEW.grade_id IS DISTINCT FROM OLD.grade_id
-        OR NEW.version IS DISTINCT FROM OLD.version OR NEW.time_limit_sec IS DISTINCT FROM OLD.time_limit_sec OR NEW.pass_score IS DISTINCT FROM OLD.pass_score) THEN
-        RAISE EXCEPTION 'Параметры опубликованного шаблона менять нельзя: создайте новую версию';
+    IF OLD.status <> 'draft' THEN
+        IF NEW.specialization_id IS DISTINCT FROM OLD.specialization_id OR NEW.grade_id IS DISTINCT FROM OLD.grade_id
+            OR NEW.version IS DISTINCT FROM OLD.version OR NEW.time_limit_sec IS DISTINCT FROM OLD.time_limit_sec OR NEW.pass_score IS DISTINCT FROM OLD.pass_score THEN
+            RAISE EXCEPTION 'Параметры опубликованного шаблона менять нельзя: создайте новую версию';
+        END IF;
+        IF NEW.status <> OLD.status AND NOT (OLD.status = 'published' AND NEW.status = 'archived') THEN
+            RAISE EXCEPTION 'Шаблон можно только перевести из опубликованного в архивный';
+        END IF;
     END IF;
     RETURN NEW;
 END;

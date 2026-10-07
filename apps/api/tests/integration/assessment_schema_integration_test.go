@@ -45,6 +45,10 @@ func TestAssessmentSchema(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	q2, err := newQuestion(3, "short_answer")
+	if err != nil {
+		t.Fatal(err)
+	}
 	expect("версия 0", "23514", version(q, 0, "draft"))
 	expect("неизвестный статус версии", "23514", version(q, 1, "deleted"))
 	if err = version(q, 1, "published"); err != nil {
@@ -52,6 +56,10 @@ func TestAssessmentSchema(t *testing.T) {
 	}
 	expect("повтор номера версии", "23505", version(q, 1, "draft"))
 	expect("вторая опубликованная версия", "23505", version(q, 2, "published"))
+	// Обход через возврат в черновик: из опубликованной версии разрешён только переход в архив.
+	mustFail("возврат опубликованной версии в черновик", exec(`UPDATE assessment_question_versions SET status='draft' WHERE question_id=$1 AND version=1`, q))
+	mustFail("смена question_id опубликованной версии", exec(`UPDATE assessment_question_versions SET question_id=$2 WHERE question_id=$1 AND version=1`, q, q2))
+	mustFail("смена номера опубликованной версии", exec(`UPDATE assessment_question_versions SET version=5 WHERE question_id=$1 AND version=1`, q))
 	if err = exec(`UPDATE assessment_question_versions SET status='archived' WHERE question_id=$1 AND version=1`, q); err != nil {
 		t.Fatalf("смена только статуса опубликованной версии должна проходить: %v", err)
 	}
@@ -60,6 +68,8 @@ func TestAssessmentSchema(t *testing.T) {
 	}
 	mustFail("правка prompt опубликованной версии", exec(`UPDATE assessment_question_versions SET prompt='{"text":"b"}' WHERE question_id=$1 AND version=2`, q))
 	mustFail("правка grading_spec опубликованной версии", exec(`UPDATE assessment_question_versions SET grading_spec='{"type":"text","accepted":["y"]}' WHERE question_id=$1 AND version=2`, q))
+	mustFail("возврат архивной версии в черновик", exec(`UPDATE assessment_question_versions SET status='draft' WHERE question_id=$1 AND version=1`, q))
+	mustFail("возврат архивной версии в опубликованную", exec(`UPDATE assessment_question_versions SET status='published' WHERE question_id=$1 AND version=1`, q))
 	mustFail("правка prompt архивной версии", exec(`UPDATE assessment_question_versions SET prompt='{"text":"b"}' WHERE question_id=$1 AND version=1`, q))
 	if err = version(q, 3, "draft"); err != nil {
 		t.Fatal(err)
@@ -125,6 +135,7 @@ func TestAssessmentSchema(t *testing.T) {
 		t.Fatalf("смена статуса черновика: %v", err)
 	}
 	expect("второй опубликованный шаблон пары", "23505", exec(`UPDATE assessment_templates SET status='published' WHERE id=$1`, t2))
+	mustFail("возврат опубликованного шаблона в черновик", exec(`UPDATE assessment_templates SET status='draft' WHERE id=$1`, t1))
 	mustFail("время опубликованного шаблона", exec(`UPDATE assessment_templates SET time_limit_sec=700 WHERE id=$1`, t1))
 	mustFail("проходной балл опубликованного шаблона", exec(`UPDATE assessment_templates SET pass_score=50 WHERE id=$1`, t1))
 	mustFail("добавление строки в опубликованный шаблон", row(t1, 2, 1, 1))
@@ -133,6 +144,9 @@ func TestAssessmentSchema(t *testing.T) {
 	if err = exec(`UPDATE assessment_templates SET status='archived' WHERE id=$1`, t1); err != nil {
 		t.Fatalf("архивация опубликованного шаблона: %v", err)
 	}
+	mustFail("возврат архивного шаблона в черновик", exec(`UPDATE assessment_templates SET status='draft' WHERE id=$1`, t1))
+	mustFail("возврат архивного шаблона в опубликованный", exec(`UPDATE assessment_templates SET status='published' WHERE id=$1`, t1))
+	mustFail("смена версии архивного шаблона", exec(`UPDATE assessment_templates SET version=9 WHERE id=$1`, t1))
 	if err = exec(`UPDATE assessment_templates SET status='published' WHERE id=$1`, t2); err != nil {
 		t.Fatalf("после архивации первого второй публикуется: %v", err)
 	}
