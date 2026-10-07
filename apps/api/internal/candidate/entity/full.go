@@ -65,11 +65,13 @@ type FullConsents struct {
 
 // FullSnapshot — согласованный снимок данных кандидата из хранилища.
 type FullSnapshot struct {
-	Profile  *Profile
-	Consents []consententity.Consent
-	Contacts *Contacts
-	Skills   []Skill
-	Category *Category
+	Profile    *Profile
+	Consents   []consententity.Consent
+	Contacts   *Contacts
+	Skills     []Skill
+	Category   *Category
+	Experience []Experience
+	Education  []Education
 }
 
 // Category — текущая категория кандидата: специализация и грейд, подтверждённые последним пройденным тестом.
@@ -89,5 +91,9 @@ type FullProfile struct {
 	Skills       []Skill      `json:"skills"`
 	Category     *Category    `json:"category"`
 	Achievements []any        `json:"achievements"`
-	Readiness    Readiness    `json:"readiness"`
+	// Опыт и образование кандидата; ExperienceEstimatedMonths — подсказка по местам работы (nil, если их нет).
+	Experience                []Experience `json:"experience"`
+	Education                 []Education  `json:"education"`
+	ExperienceEstimatedMonths *int         `json:"experience_estimated_months"`
+	Readiness                 Readiness    `json:"readiness"`
 }

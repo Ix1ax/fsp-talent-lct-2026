@@ -574,6 +574,9 @@ go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
   "skills": [ "как GET /api/v1/me/skills, со статусом модерации" ],
   "category": null,  // после пройденного теста: {specialization_id, specialization, grade_id, grade, confirmed_at}
   "achievements": [],
+  "experience": [ "места работы, как GET /api/v1/me/experience" ],
+  "education": [ "образование, как GET /api/v1/me/education" ],
+  "experience_estimated_months": 14,  // подсказка по стажу или null, если мест работы нет
   "readiness": { "percent": 55, "ready_to_publish": true, "items": [ { "code": "profile", "title": "Профиль создан", "done": true, "required": true } ] }
 }
 ```
@@ -581,6 +584,7 @@ go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
 - `contacts` равен `null`, если контактов нет **или нет активного согласия `processing`**; ошибка при этом не возвращается.
 - `skills` содержит все навыки кандидата, в том числе ожидающие модерации (`moderation_status: pending`). Они засчитываются в готовность.
 - `category` равна `null`, пока кандидат не прошёл ни одного теста, затем это специализация и грейд последнего пройденного теста (см. «Тестирование кандидата»). `achievements` пока заготовка под достижения ФСП: всегда `[]`. В навыках после теста появляются `source: "test"`, `confidence: 0.8` и `verified_level`.
+- `experience` и `education` это списки из «Опыт работы и образование кандидата». `experience_estimated_months` — подсказка: стаж по местам работы в месяцах (пересекающиеся периоды не считаются дважды, текущая работа считается до текущего месяца). Поле профиля `experience_months` она не заменяет и не меняет: решать, переносить ли значение, должен кандидат. В чек-лист готовности эти разделы не входят.
 - `consents.current_policy_version` нужно показать кандидату и вернуть при выдаче согласия (`POST /api/v1/me/consents`).
 
 **Готовность** это подсказка для интерфейса, а не ограничение: условия публикации (`processing` и `publication`) по-прежнему
@@ -614,6 +618,141 @@ curl --fail-with-body "$API_URL/api/v1/me/profile/full" -H "Authorization: Beare
 ```sh
 cd apps/api
 go test -race -tags=integration ./internal/httpapi -run 'CandidateFullProfile'
+```
+
+### Опыт работы и образование кандидата
+
+Кандидат ведёт в профиле списки мест работы и образования. Роль `candidate`, нужен созданный профиль (иначе `404 profile_not_found`).
+Согласие `processing` для этих данных не требуется. Пока данные видит и меняет только сам кандидат: работодателям они не отдаются.
+Ответы не кешируются (`Cache-Control: private, no-store`).
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| GET | `/api/v1/me/experience` | Места работы: сначала текущее, затем по началу от новых к старым |
+| POST | `/api/v1/me/experience` | Добавить место работы (до 30) |
+| PUT | `/api/v1/me/experience/{id}` | Заменить запись целиком |
+| DELETE | `/api/v1/me/experience/{id}` | Удалить запись (204) |
+| GET | `/api/v1/me/education` | Образование по году окончания от новых к старым |
+| POST | `/api/v1/me/education` | Добавить запись (до 10) |
+| PUT | `/api/v1/me/education/{id}` | Заменить запись целиком |
+| DELETE | `/api/v1/me/education/{id}` | Удалить запись (204) |
+
+Списки приходят как `{"items": [...]}`. Частичных правок (PATCH) нет: PUT заменяет запись целиком.
+
+```json
+{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null,"description":"Разработка REST API"}
+{"level":"higher","institution":"Университет «Дубна»","specialty":"Программная инженерия","graduation_year":2027}
+```
+
+- Месяц передаётся и приходит строкой `ГГГГ-ММ` (`2022-11`; `2022-5` и `2022-13` дают 400). `ended_on: null` или отсутствие поля значит «по
+  настоящее время». Начало и окончание не могут быть в будущем (граница по самому восточному часовому поясу, UTC+14, чтобы кандидат в любом поясе мог указать свой текущий месяц), окончание не раньше начала.
+- Длины: `company`, `position`, `institution`, `specialty` до 200 символов (первые три обязательны), `description` до 2000. Пробелы по краям
+  обрезаются.
+- `level`: `secondary`, `vocational`, `incomplete_higher`, `higher`, `bachelor`, `master`, `phd`, `doctor`. `graduation_year` от 1950 до 2100;
+  будущий год допустим (учится сейчас).
+- Подсказка по стажу приходит в `GET /api/v1/me/profile/full` как `experience_estimated_months` (см. «Полный профиль кандидата»).
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `validation_error` | 400 | Неверное тело, месяц, уровень, длина, неизвестное поле |
+| `unauthorized` | 401 | Нет действительного токена |
+| `forbidden` | 403 | Роль не candidate |
+| `user_inactive` | 403 | Пользователь заблокирован |
+| `profile_not_found` | 404 | Профиль кандидата не создан |
+| `experience_not_found` | 404 | Место работы не найдено или чужое (в том числе неверный UUID) |
+| `education_not_found` | 404 | Запись об образовании не найдена или чужая |
+| `limit_reached` | 409 | Уже 30 мест работы или 10 записей образования |
+| `request_too_large` | 413 | Тело больше 2 МиБ |
+| `candidate_unavailable` | 503 | Сервис профилей не настроен |
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/me/experience" \
+  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
+  -d '{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null}'
+```
+
+Интеграционные тесты используют `TEST_DATABASE_URL`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./tests/integration -run 'TestCareer|TestFullProfileCareer'
+```
+
+### Импорт резюме из PDF
+
+`POST /api/v1/me/profile/import/resume` принимает PDF резюме с hh.ru и возвращает **черновик** профиля. Метод ничего не сохраняет:
+ни файл, ни разобранные данные. Фронт показывает черновик в формах, кандидат правит его и сохраняет обычными методами
+(`POST /me/profile`, `PUT /me/skills/{id}`, `PUT /me/contacts`, `POST /me/experience`, `POST /me/education`). Роль `candidate`, нужно
+активное согласие `processing` (в файле персональные данные), профиль не обязателен: импорт можно запускать при онбординге до
+создания профиля. Ответ не кешируется (`Cache-Control: private, no-store`).
+
+Запрос `multipart/form-data` с одним файлом в поле `file` и без других полей: PDF до 5 МиБ, до 10 страниц, с текстовым слоем
+(скан не читается).
+
+```json
+{
+  "draft": {
+    "headline": "Backend разработчик (Go)",
+    "city": "Тверь",
+    "summary": "Текст из блока «Обо мне»",
+    "salary_min_rub": null,
+    "work_format_ids": [3, 2],
+    "contacts": {"full_name": "Иванов Иван", "email": "ivan@example.test", "phone": "+7 (900) 000-00-00", "telegram": "@ivanov"},
+    "skills": [{"name": "PostgreSQL", "skill_id": "<uuid>"}, {"name": "ASP.NET Core", "skill_id": null}],
+    "experience": [{"company": "ООО Пример", "position": "Go-разработчик", "started_on": "2022-11", "ended_on": null, "description": "…"}],
+    "education": [{"level": "higher", "institution": "Университет «Дубна»", "specialty": "Программная инженерия", "graduation_year": 2027}],
+    "languages": [{"name": "Английский", "level": "B1"}]
+  },
+  "warnings": ["Не удалось разобрать период места работы «…»: запись пропущена"]
+}
+```
+
+- Поля, которые не удалось определить, равны `null` (строки и числа) или `[]` (списки); `warnings` всегда массив. Показывайте
+  предупреждения кандидату рядом с формами.
+- `experience` и `education` в том же формате, что тела `POST /me/experience` и `POST /me/education`: можно отправлять без преобразования
+  (месяцы `ГГГГ-ММ`, уровни образования как в схеме).
+- Навыки сопоставляются со справочником по названию, коду и алиасам без учёта регистра (только одобренные и активные).
+  `skill_id: null` значит, что такого навыка нет: предложите добавить его через `POST /me/skills` (он уйдёт на модерацию).
+  Навыки из черновика с `skill_id` добавляются через `PUT /me/skills/{skill_id}` с уровнем `claimed_level`, которого в резюме нет:
+  его выбирает кандидат.
+- `work_format_ids` соответствуют справочнику форматов работы (`GET /api/v1/catalogs`).
+- **Точность.** Должность, город, формат работы, контакты, навыки и языки распознаются надёжно. Места работы и образование
+  разбираются приблизительно, потому что макет PDF может отличаться: кандидат всегда проверяет их перед сохранением. Если
+  hh.ru изменит шаблон, часть данных не распознается и появятся предупреждения.
+- В `summary` попадает весь текст блока «Обо мне», в том числе внутренние заголовки («Ключевые навыки», «Опыт работы»):
+  это оформление самого кандидата, а не разделы резюме. Длинный текст обрезается до 10000 символов с предупреждением.
+- Из файла берётся только текст. Файл и черновик нигде не хранятся: файл читается в память и не пишется даже во временные файлы.
+- Разбор идёт в **отдельном процессе** (тот же бинарник API в служебном режиме) с ограничениями по времени, процессорному времени и
+  памяти: специально собранный PDF не может зациклить или перегрузить сервер, такой процесс просто убивается (`422`).
+
+**Ограничения.** Не больше двух разборов одновременно (слот занят только на время самого разбора): при занятости `503 import_busy` с
+заголовком `Retry-After: 5`, повторите запрос через несколько секунд. Разбор ограничен по времени (10 секунд), в документе не больше
+200 тысяч символов, повреждённый или вредоносный файл не роняет сервер.
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `validation_error` | 400 | Нет поля `file`, не multipart, лишние поля |
+| `unauthorized` | 401 | Нет действительного токена |
+| `forbidden` | 403 | Роль не candidate |
+| `user_inactive` | 403 | Пользователь заблокирован |
+| `consent_required` | 409 | Нет активного согласия `processing` |
+| `resume_too_large` | 413 | Файл больше 5 МиБ |
+| `resume_unrecognized` | 422 | Не PDF, повреждён, без текста (скан) или не похож на резюме hh.ru |
+| `import_busy` | 503 | Идут другие разборы |
+| `candidate_unavailable` | 503 | Сервис не настроен |
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/me/profile/import/resume" \
+  -H "Authorization: Bearer $TOKEN" -F "file=@./resume.pdf;type=application/pdf"
+```
+
+Тестовый PDF в `apps/api/internal/candidate/resume/testdata/` синтетический (выдуманный человек), его генерирует
+`gen_fixture.py` в том же каталоге. Тесты:
+
+```sh
+cd apps/api
+go test -race ./internal/candidate/resume ./internal/candidate/service
+go test -race -tags=integration ./tests/integration -run 'TestResume'
 ```
 
 ### Тестирование кандидата

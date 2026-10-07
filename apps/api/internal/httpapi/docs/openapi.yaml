@@ -4131,6 +4131,562 @@ paths:
                       code: admin_unavailable
                       message: Сервис админки не настроен
 
+  /api/v1/me/experience:
+    get:
+      operationId: listMyExperience
+      summary: "Список: место работы"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Только свои записи. Порядок: сначала текущая работа, затем по началу от новых к старым. Ответ не кешируется."
+      responses:
+        '200':
+          description: "Список записей."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateExperienceList'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createMyExperience
+      summary: "Добавить: место работы"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Не больше 30 записей на кандидата, иначе 409 limit_reached. Согласие processing не требуется."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateExperienceInput'
+      responses:
+        '201':
+          description: "Запись создана."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateExperience'
+        '400':
+          description: "Некорректные данные (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Достигнут предел числа записей (limit_reached)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/experience/{id}:
+    put:
+      operationId: replaceMyExperience
+      summary: "Заменить: место работы"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Запись заменяется целиком (частичных правок нет). Чужая или несуществующая запись даёт 404 experience_not_found."
+      parameters:
+        - {name: id, in: path, required: true, description: "ID записи", schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateExperienceInput'
+      responses:
+        '200':
+          description: "Запись заменена."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateExperience'
+        '400':
+          description: "Некорректные данные (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Место работы не найдено (experience_not_found) или профиль не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMyExperience
+      summary: "Удалить: место работы"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      parameters:
+        - {name: id, in: path, required: true, description: "ID записи", schema: {type: string, format: uuid}}
+      responses:
+        '204':
+          description: "Запись удалена."
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Место работы не найдено (experience_not_found) или профиль не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/education:
+    get:
+      operationId: listMyEducation
+      summary: "Список: образование"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Только свои записи. Порядок: по году окончания от новых к старым. Ответ не кешируется."
+      responses:
+        '200':
+          description: "Список записей."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateEducationList'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createMyEducation
+      summary: "Добавить: образование"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Не больше 10 записей на кандидата, иначе 409 limit_reached. Согласие processing не требуется."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateEducationInput'
+      responses:
+        '201':
+          description: "Запись создана."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateEducation'
+        '400':
+          description: "Некорректные данные (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Профиль кандидата не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Достигнут предел числа записей (limit_reached)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/education/{id}:
+    put:
+      operationId: replaceMyEducation
+      summary: "Заменить: образование"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Запись заменяется целиком (частичных правок нет). Чужая или несуществующая запись даёт 404 education_not_found."
+      parameters:
+        - {name: id, in: path, required: true, description: "ID записи", schema: {type: string, format: uuid}}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CandidateEducationInput'
+      responses:
+        '200':
+          description: "Запись заменена."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateEducation'
+        '400':
+          description: "Некорректные данные (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Запись об образовании не найдена (education_not_found) или профиль не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Слишком большое тело (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteMyEducation
+      summary: "Удалить: образование"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      parameters:
+        - {name: id, in: path, required: true, description: "ID записи", schema: {type: string, format: uuid}}
+      responses:
+        '204':
+          description: "Запись удалена."
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Запись об образовании не найдена (education_not_found) или профиль не создан (profile_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис профилей кандидатов не настроен (candidate_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/me/profile/import/resume:
+    post:
+      operationId: importMyResume
+      summary: "Импорт резюме из PDF: черновик профиля"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Принимает PDF резюме с hh.ru и возвращает черновик профиля. Ничего не сохраняет: ни файл, ни разобранные данные. Фронт показывает черновик в формах, кандидат правит его и сохраняет обычными методами профиля, навыков, контактов, опыта и образования. Нужны активный кандидат и активное согласие processing (профиль не обязателен). Разбор по лучшей попытке: что не удалось распознать, остаётся пустым и сопровождается предупреждением в warnings; опыт работы и образование разбираются приблизительно, их нужно проверять. Одновременно разбираются не больше двух файлов, при занятости 503 import_busy с Retry-After. Ответ содержит персональные данные и не кешируется."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              additionalProperties: false
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "PDF резюме, скачанный с hh.ru (с текстовым слоем, не скан): до 5 МиБ, до 10 страниц."
+      responses:
+        '200':
+          description: "Черновик профиля."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeImportResult'
+        '400':
+          description: "Нет поля file, не multipart или лишние поля (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Нет активного согласия processing (consent_required)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Файл больше 5 МиБ (resume_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: "Файл не PDF, повреждён, без текстового слоя или не похож на резюме hh.ru (resume_unrecognized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис не настроен (candidate_unavailable) или идут другие разборы (import_busy, заголовок Retry-After: 5)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/me/profile/full:
     get:
       operationId: getMyFullProfile
@@ -6707,6 +7263,124 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateSkill'
+    ResumeDraftSkill:
+      type: object
+      required: [name, skill_id]
+      properties:
+        name: {type: string, example: PostgreSQL}
+        skill_id: {type: string, format: uuid, nullable: true, description: "Навык из справочника; null, если такого нет: фронт может предложить его через POST /me/skills."}
+    ResumeDraftLanguage:
+      type: object
+      required: [name, level]
+      properties:
+        name: {type: string, example: Английский}
+        level: {type: string, example: B1, description: "Код CEFR (B1) или текст из резюме (Родной)."}
+    ResumeDraftContacts:
+      type: object
+      required: [full_name, email, phone, telegram]
+      properties:
+        full_name: {type: string, nullable: true}
+        email: {type: string, nullable: true}
+        phone: {type: string, nullable: true}
+        telegram: {type: string, nullable: true, example: "@ivanov"}
+    ResumeDraft:
+      type: object
+      required: [headline, city, summary, salary_min_rub, work_format_ids, contacts, skills, experience, education, languages]
+      properties:
+        headline: {type: string, nullable: true, maxLength: 200, description: "Желаемая должность."}
+        city: {type: string, nullable: true, maxLength: 200}
+        summary: {type: string, nullable: true, maxLength: 10000, description: "Весь текст блока «Обо мне», включая его внутренние заголовки (абзацы разделены пустой строкой)."}
+        salary_min_rub: {type: integer, nullable: true}
+        work_format_ids:
+          type: array
+          items: {type: integer}
+        contacts:
+          type: object
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ResumeDraftContacts'
+        skills:
+          type: array
+          maxItems: 50
+          items: {$ref: '#/components/schemas/ResumeDraftSkill'}
+        experience:
+          type: array
+          maxItems: 30
+          description: "В формате тела POST /me/experience: можно отправлять без преобразования."
+          items: {$ref: '#/components/schemas/CandidateExperienceInput'}
+        education:
+          type: array
+          maxItems: 10
+          description: "В формате тела POST /me/education: можно отправлять без преобразования."
+          items: {$ref: '#/components/schemas/CandidateEducationInput'}
+        languages:
+          type: array
+          items: {$ref: '#/components/schemas/ResumeDraftLanguage'}
+    ResumeImportResult:
+      type: object
+      required: [draft, warnings]
+      properties:
+        draft: {$ref: '#/components/schemas/ResumeDraft'}
+        warnings:
+          type: array
+          description: "Что не удалось распознать или пришлось пропустить; показывайте кандидату."
+          items: {type: string}
+    CandidateExperienceInput:
+      type: object
+      additionalProperties: false
+      required: [company, position, started_on]
+      properties:
+        company: {type: string, minLength: 1, maxLength: 200, example: LazurMedia}
+        position: {type: string, minLength: 1, maxLength: 200, example: PHP-программист}
+        started_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', example: "2022-11", description: "Месяц начала, формат ГГГГ-ММ, не в будущем (граница учитывает самый восточный часовой пояс, UTC+14)."}
+        ended_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', nullable: true, example: null, description: "Месяц окончания; null или отсутствие поля значит «по настоящее время» (пустая строка недопустима). Не раньше начала и не в будущем."}
+        description: {type: string, maxLength: 2000, default: ""}
+    CandidateExperience:
+      type: object
+      required: [id, company, position, started_on, ended_on, description, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        company: {type: string, minLength: 1, maxLength: 200}
+        position: {type: string, minLength: 1, maxLength: 200}
+        started_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', example: "2022-11"}
+        ended_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', nullable: true, description: "null значит «по настоящее время»."}
+        description: {type: string, maxLength: 2000}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    CandidateExperienceList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateExperience'}
+    CandidateEducationInput:
+      type: object
+      additionalProperties: false
+      required: [level, institution, graduation_year]
+      properties:
+        level: {type: string, enum: [secondary, vocational, incomplete_higher, higher, bachelor, master, phd, doctor]}
+        institution: {type: string, minLength: 1, maxLength: 200}
+        specialty: {type: string, maxLength: 200, default: ""}
+        graduation_year: {type: integer, minimum: 1950, maximum: 2100, description: "Год окончания; будущий год допустим (учится сейчас)."}
+    CandidateEducation:
+      type: object
+      required: [id, level, institution, specialty, graduation_year, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        level: {type: string, enum: [secondary, vocational, incomplete_higher, higher, bachelor, master, phd, doctor]}
+        institution: {type: string, minLength: 1, maxLength: 200}
+        specialty: {type: string, maxLength: 200}
+        graduation_year: {type: integer, minimum: 1950, maximum: 2100}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
+    CandidateEducationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/CandidateEducation'}
     CandidateFullProfile:
       type: object
       required:
@@ -6716,6 +7390,9 @@ components:
         - skills
         - category
         - achievements
+        - experience
+        - education
+        - experience_estimated_months
         - readiness
       properties:
         profile:
@@ -6755,6 +7432,20 @@ components:
           description: Заготовка под достижения ФСП; пока всегда пустой массив.
           items:
             type: object
+        experience:
+          type: array
+          description: "Места работы: сначала текущее, затем по началу от новых к старым."
+          items: {$ref: '#/components/schemas/CandidateExperience'}
+        education:
+          type: array
+          description: "Образование по году окончания от новых к старым."
+          items: {$ref: '#/components/schemas/CandidateEducation'}
+        experience_estimated_months:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 600
+          description: "Подсказка: стаж по местам работы в месяцах (пересечения не считаются дважды); null, если мест работы нет. Поле experience_months профиля не меняется."
         readiness:
           $ref: '#/components/schemas/CandidateReadiness'
     CandidateReadiness:

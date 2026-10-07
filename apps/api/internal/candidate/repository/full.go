@@ -64,6 +64,12 @@ func (r *Repository) FullSnapshot(ctx context.Context, userID string) (entity.Fu
 		if snapshot.Skills, err = queryCandidateSkills(ctx, tx, snapshot.Profile.ID); err != nil {
 			return snapshot, err
 		}
+		if snapshot.Experience, err = queryExperience(ctx, tx, snapshot.Profile.ID); err != nil {
+			return snapshot, err
+		}
+		if snapshot.Education, err = queryEducation(ctx, tx, snapshot.Profile.ID); err != nil {
+			return snapshot, err
+		}
 	}
 	if snapshot.Profile != nil {
 		var c entity.Category
