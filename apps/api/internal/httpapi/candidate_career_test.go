@@ -128,6 +128,12 @@ func TestCareerRoutesBadInput(t *testing.T) {
 			t.Errorf("%s: %d %s", name, w.Code, w.Body)
 		}
 	}
+	// Сообщение о неверном месяце приходит из проверки месяца, а не общее про JSON.
+	w := e.Do(t, "POST", expPath, tok, `{"company":"К","position":"Р","started_on":"2024-13"}`)
+	var body struct{ Error struct{ Message string } }
+	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil || !strings.Contains(body.Error.Message, "ГГГГ-ММ") {
+		t.Errorf("сообщение о неверном месяце: %s", w.Body)
+	}
 	big := `{"company":"` + strings.Repeat("a", 3<<20) + `"}`
 	if w := e.Do(t, "POST", expPath, tok, big); w.Code != 413 || testutil.ErrorCode(t, w) != "request_too_large" {
 		t.Errorf("большое тело: %d", w.Code)

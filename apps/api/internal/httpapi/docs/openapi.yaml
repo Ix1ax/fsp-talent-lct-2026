@@ -7186,18 +7186,21 @@ components:
       properties:
         company: {type: string, minLength: 1, maxLength: 200, example: LazurMedia}
         position: {type: string, minLength: 1, maxLength: 200, example: PHP-программист}
-        started_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', example: "2022-11", description: "Месяц начала, формат ГГГГ-ММ, не в будущем."}
-        ended_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', nullable: true, example: null, description: "Месяц окончания; пусто или null значит «по настоящее время». Не раньше начала и не в будущем."}
+        started_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', example: "2022-11", description: "Месяц начала, формат ГГГГ-ММ, не в будущем (граница учитывает самый восточный часовой пояс, UTC+14)."}
+        ended_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', nullable: true, example: null, description: "Месяц окончания; null или отсутствие поля значит «по настоящее время» (пустая строка недопустима). Не раньше начала и не в будущем."}
         description: {type: string, maxLength: 2000, default: ""}
     CandidateExperience:
-      allOf:
-        - $ref: '#/components/schemas/CandidateExperienceInput'
-        - type: object
-          required: [id, created_at, updated_at]
-          properties:
-            id: {type: string, format: uuid}
-            created_at: {type: string, format: date-time}
-            updated_at: {type: string, format: date-time}
+      type: object
+      required: [id, company, position, started_on, ended_on, description, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        company: {type: string, minLength: 1, maxLength: 200}
+        position: {type: string, minLength: 1, maxLength: 200}
+        started_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', example: "2022-11"}
+        ended_on: {type: string, pattern: '^[0-9]{4}-(0[1-9]|1[0-2])$', nullable: true, description: "null значит «по настоящее время»."}
+        description: {type: string, maxLength: 2000}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
     CandidateExperienceList:
       type: object
       required: [items]
@@ -7215,14 +7218,16 @@ components:
         specialty: {type: string, maxLength: 200, default: ""}
         graduation_year: {type: integer, minimum: 1950, maximum: 2100, description: "Год окончания; будущий год допустим (учится сейчас)."}
     CandidateEducation:
-      allOf:
-        - $ref: '#/components/schemas/CandidateEducationInput'
-        - type: object
-          required: [id, created_at, updated_at]
-          properties:
-            id: {type: string, format: uuid}
-            created_at: {type: string, format: date-time}
-            updated_at: {type: string, format: date-time}
+      type: object
+      required: [id, level, institution, specialty, graduation_year, created_at, updated_at]
+      properties:
+        id: {type: string, format: uuid}
+        level: {type: string, enum: [secondary, vocational, incomplete_higher, higher, bachelor, master, phd, doctor]}
+        institution: {type: string, minLength: 1, maxLength: 200}
+        specialty: {type: string, maxLength: 200}
+        graduation_year: {type: integer, minimum: 1950, maximum: 2100}
+        created_at: {type: string, format: date-time}
+        updated_at: {type: string, format: date-time}
     CandidateEducationList:
       type: object
       required: [items]

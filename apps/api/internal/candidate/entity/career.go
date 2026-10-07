@@ -111,7 +111,8 @@ func (in *ExperienceInput) Normalize(now time.Time) error {
 	if in.StartedOn.IsZero() {
 		return invalid("Укажите started_on в формате ГГГГ-ММ")
 	}
-	limit := currentMonth(now)
+	// Месяц не должен быть в будущем ни в одном часовом поясе: берём самый восточный (UTC+14).
+	limit := currentMonth(now.Add(14 * time.Hour))
 	if in.StartedOn.index() > limit.index() {
 		return invalid("Начало работы не может быть в будущем")
 	}

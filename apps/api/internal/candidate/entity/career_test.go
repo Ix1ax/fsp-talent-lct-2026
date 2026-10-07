@@ -155,3 +155,18 @@ func TestEstimateExperienceMonths(t *testing.T) {
 		}
 	}
 }
+
+// «Не в будущем» считается так, чтобы кандидат в любом часовом поясе мог указать свой текущий месяц.
+func TestExperienceNormalizeTimezoneBoundary(t *testing.T) {
+	// 2026-10-31 22:00 UTC: в Москве и дальше на восток уже ноябрь.
+	now := time.Date(2026, 10, 31, 22, 0, 0, 0, time.UTC)
+	ok := ExperienceInput{Company: "К", Position: "Р", StartedOn: month(t, "2026-11")}
+	if err := ok.Normalize(now); err != nil {
+		t.Fatalf("следующий месяц по UTC, но текущий у кандидата на востоке: %v", err)
+	}
+	far := ExperienceInput{Company: "К", Position: "Р", StartedOn: month(t, "2026-12")}
+	var v *ValidationError
+	if err := far.Normalize(now); !errors.As(err, &v) {
+		t.Fatalf("через два месяца это будущее везде: %v", err)
+	}
+}

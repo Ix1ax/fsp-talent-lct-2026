@@ -16,7 +16,10 @@ var (
 type ValidationError struct{ Message string }
 
 func (e *ValidationError) Error() string { return e.Message }
-func invalid(message string) error       { return &ValidationError{message} }
+
+// ValidationMessage отдаёт сообщение для пользователя: его используют разборщики тела запроса.
+func (e *ValidationError) ValidationMessage() string { return e.Message }
+func invalid(message string) error                   { return &ValidationError{message} }
 
 var (
 	ErrExperienceNotFound = errors.New("место работы не найдено")
