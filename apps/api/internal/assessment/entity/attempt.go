@@ -15,6 +15,7 @@ var (
 	ErrUnavailable      = errors.New("Тест по этой специализации и грейду сейчас недоступен")
 	ErrAttemptClosed    = errors.New("Попытка уже завершена")
 	ErrAttemptNotFound  = errors.New("Попытка не найдена")
+	ErrQuestionNotFound = errors.New("Задание не найдено в этой попытке")
 )
 
 // ActiveError сообщает, какая попытка уже идёт.
