@@ -2,21 +2,16 @@
 
 import { useEffect, useState } from 'react';
 
-import {
-  getRecommendations,
-  type RecommendationPage,
-} from '@/entities/employer-need';
+import { getRecommendations } from '@/entities/employer-need';
+
+import type { NeedMatchesResult } from './types';
 
 export const useNeedMatches = (
   companyId: string,
   needId: string,
   load: typeof getRecommendations = getRecommendations,
 ) => {
-  const [result, setResult] = useState<{
-    key: string;
-    data: RecommendationPage | null;
-    error: string;
-  } | null>(null);
+  const [result, setResult] = useState<NeedMatchesResult | null>(null);
 
   const [offset, setOffset] = useState(0);
   const [retry, setRetry] = useState(0);

@@ -1,12 +1,12 @@
 'use client';
 
-import { Button, Skeleton } from '@/shared/ui';
-import { AsyncState } from '@/shared/ui/AsyncState';
+import { AsyncState, Button, Skeleton } from '@/shared/ui';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { Catalogs } from '@/entities/catalog';
 import { getRecommendations } from '@/entities/employer-need';
 
-import { useNeedMatches } from '../model/useNeedMatches';
+import { useNeedMatches } from '../model';
+import { MatchTableItem } from './MatchTableItem';
 
 interface MatchTableProps {
   companyId: string;
@@ -14,12 +14,7 @@ interface MatchTableProps {
   catalogs: Catalogs;
   load?: typeof getRecommendations;
 }
-const conditions: Record<string, string> = {
-  work_format: 'формат работы',
-  salary: 'зарплата',
-  city: 'город',
-  timezone: 'часовой пояс',
-};
+
 export const MatchTable = ({
   companyId,
   needId,
@@ -31,6 +26,7 @@ export const MatchTable = ({
     needId,
     load,
   );
+
   return (
     <section
       className="border border-border bg-card"
@@ -62,43 +58,11 @@ export const MatchTable = ({
         </div>
       ) : data.items.length ? (
         data.items.map((candidate) => (
-          <article
+          <MatchTableItem
             key={candidate.id}
-            className="grid gap-3 border-b border-border p-4 xl:grid-cols-[150px_1fr] xl:px-5"
-          >
-            <div>
-              <p className="font-mono text-sm font-medium">
-                Профиль · {candidate.id.slice(0, 8)}
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {[candidate.city, candidate.timezone]
-                  .filter(Boolean)
-                  .join(' · ') || 'Город и пояс не указаны'}
-              </p>
-            </div>
-            <div className="grid gap-1.5">
-              <p className="text-[13px]">
-                {candidate.reasons.join(' · ') || 'Совпадения не подтверждены'}
-              </p>
-              {candidate.unknownConditions.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  Неизвестно:{' '}
-                  {candidate.unknownConditions
-                    .map((c) => conditions[c] ?? c)
-                    .join(', ')}
-                </p>
-              )}
-              <p className="text-xs text-muted-foreground">
-                {catalogs.workFormats
-                  .filter((f) => candidate.workFormatIds.includes(f.id))
-                  .map((f) => f.name)
-                  .join(', ') || 'Формат не указан'}
-                {candidate.salaryMinRub !== null
-                  ? ` · от ${new Intl.NumberFormat('ru-RU').format(candidate.salaryMinRub)} ₽/мес`
-                  : ''}
-              </p>
-            </div>
-          </article>
+            candidate={candidate}
+            catalogs={catalogs}
+          />
         ))
       ) : (
         <div className="p-5">

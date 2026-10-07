@@ -1,1 +1,1 @@
-export { MatchTable } from './ui/MatchTable';
+export { MatchTable, MatchTableItem } from './ui';
