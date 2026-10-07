@@ -79,6 +79,7 @@ func run(log *slog.Logger) error {
 			Candidates:        candidateservice.NewProfileService(candidateRepo),
 			CandidateContacts: candidateservice.NewContactsService(candidateRepo),
 			CandidateSkills:   candidateservice.NewSkillsService(candidateRepo),
+			CandidateFull:     candidateservice.NewFullProfileService(candidateRepo, c.PrivacyPolicyVersion),
 			Avatars:           candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Documents:         service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Needs:             service.NewNeedsService(companyRepo),
