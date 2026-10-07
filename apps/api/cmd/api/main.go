@@ -12,6 +12,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/repository"
+	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
@@ -66,6 +68,7 @@ func run(log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
+			Admins:            adminservice.New(adminrepository.New(deps.DB)),
 			CORSOrigins:       c.CORSOrigins,
 			OIDCIssuer:        c.OIDCIssuer,
 			Users:             user.NewService(user.NewRepository(deps.DB)),

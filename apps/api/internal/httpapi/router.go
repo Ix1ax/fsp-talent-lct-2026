@@ -14,6 +14,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
+	adminweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	candidateweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/web"
@@ -34,6 +36,7 @@ import (
 type Checker interface{ Check(context.Context) error }
 
 type Options struct {
+	Admins                  *adminservice.Service
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
 	Companies               *service.CompanyService
@@ -111,6 +114,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		c.Data(200, "application/yaml; charset=utf-8", b)
 	})
 	api := r.Group("/api/v1")
+	adminweb.Register(api, log, opts.Admins)
 	api.GET("/auth/config", func(c *gin.Context) {
 		if opts.OIDCIssuer == "" {
 			c.JSON(503, gin.H{"error": gin.H{"code": "auth_unavailable", "message": "Сервис авторизации не настроен"}})
