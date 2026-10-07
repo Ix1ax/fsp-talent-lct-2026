@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import {
   Badge,
   Button,
@@ -68,22 +70,33 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
                   <Badge variant="outline">На модерации</Badge>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Источник: {skill.source}. Вес подтверждения:{' '}
-                  {skill.confidence}
+                  Источник:{' '}
+                  {skill.source === 'test' ? 'Тестирование' : skill.source}. Вес
+                  подтверждения: {skill.confidence}
                 </p>
               </div>
-              <SkillLevelSelect
-                value={skill.claimedLevel}
-                label={`Самооценка: ${skill.name}`}
-                disabled={
-                  props.busy ||
-                  !['approved', 'pending'].includes(skill.moderationStatus)
-                }
-                onChange={(level: ClaimedLevel) => {
-                  if (level !== skill.claimedLevel)
-                    void actions.changeLevel(skill.skillId, level);
-                }}
-              />
+              <div className="flex flex-col gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Самооценка
+                </span>
+                <SkillLevelSelect
+                  value={skill.claimedLevel}
+                  label={`Самооценка: ${skill.name}`}
+                  disabled={
+                    props.busy ||
+                    !['approved', 'pending'].includes(skill.moderationStatus)
+                  }
+                  onChange={(level: ClaimedLevel) => {
+                    if (level !== skill.claimedLevel)
+                      void actions.changeLevel(skill.skillId, level);
+                  }}
+                />
+              </div>
+              <Badge variant="secondary">
+                {skill.verifiedLevel != null
+                  ? `Подтверждённый уровень: ${skill.verifiedLevel}/5`
+                  : 'Уровень не подтверждён'}
+              </Badge>
               <Button
                 type="button"
                 variant="outline"
@@ -112,4 +125,3 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
     </Card>
   );
 };
-import { useState } from 'react';

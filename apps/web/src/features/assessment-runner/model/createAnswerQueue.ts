@@ -9,7 +9,7 @@ export type AnswerState = {
 };
 
 type QueueOptions = {
-  save: (id: string, answer: AssessmentAnswer) => Promise<void>;
+  save: (id: string, answer: AssessmentAnswer) => Promise<void | boolean>;
   onChange: () => void;
 };
 
@@ -54,7 +54,10 @@ export const createAnswerQueue = ({ save, onChange }: QueueOptions) => {
       try {
         while (!equal(entry.saved, entry.answer)) {
           const answer = entry.answer;
-          await save(id, answer);
+          if ((await save(id, answer)) === false) {
+            entry.error = 'Ответ не сохранён. Повторите отправку.';
+            return false;
+          }
           entry.saved = answer;
         }
         return true;

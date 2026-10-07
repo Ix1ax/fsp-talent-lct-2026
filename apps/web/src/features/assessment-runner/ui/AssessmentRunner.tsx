@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 
 import {
   Button,
@@ -17,6 +18,7 @@ import { formatDuration } from '@/shared/utils';
 import type { AssessmentAttempt } from '@/entities/assessment';
 
 import { useAssessmentRunner } from '../model';
+import { AssessmentResultCard } from './AssessmentResultCard';
 import { QuestionAnswerForm } from './QuestionAnswerForm';
 
 interface AssessmentRunnerProps {
@@ -24,8 +26,19 @@ interface AssessmentRunnerProps {
 }
 
 export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
-  const { attempt, remaining, busy, error, queue, update, finish } =
-    useAssessmentRunner(initialAttempt);
+  const {
+    attempt,
+    remaining,
+    busy,
+    error,
+    queue,
+    update,
+    finish,
+    locked,
+    consentBlocked,
+    refreshResult,
+    resultLoading,
+  } = useAssessmentRunner(initialAttempt);
 
   const [index, setIndex] = useState(0);
   const [confirm, setConfirm] = useState(false);
@@ -39,23 +52,17 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     return !!(saved?.selected?.length || saved?.text?.trim());
   }).length;
 
+  const unanswered = questions.filter((item) => {
+    const draft = queue.get(item.id)?.answer;
+    return !draft?.selected?.length && !draft?.text?.trim();
+  }).length;
+
   const navigate = (next: number) => {
-    if (question) void queue.flush(question.id);
+    if (question && !locked) void queue.flush(question.id);
     setIndex(next);
   };
 
-  if (attempt.result)
-    return (
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">
-          {attempt.result.passed ? 'Тест пройден' : 'Тест не пройден'}
-        </h2>
-        <p>
-          Результат: {attempt.result.scorePercent}%. Проходной балл:{' '}
-          {attempt.result.passScore}%.
-        </p>
-      </section>
-    );
+  if (attempt.result) return <AssessmentResultCard result={attempt.result} />;
 
   return (
     <>
@@ -74,6 +81,26 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
         aria-label="Прогресс ответов"
       />
       {error && <p role="alert">{error}</p>}
+      {consentBlocked && (
+        <Button asChild variant="outline">
+          <Link href="/candidate">Настроить согласия</Link>
+        </Button>
+      )}
+      {locked && !consentBlocked && (
+        <div className="flex flex-col gap-3">
+          <p role="status">
+            Ответы больше не принимаются. Итог рассчитывается по сохранённым
+            ответам.
+          </p>
+          <Button
+            variant="outline"
+            disabled={resultLoading}
+            onClick={() => void refreshResult()}
+          >
+            {resultLoading ? 'Получаем итог…' : 'Получить итог'}
+          </Button>
+        </div>
+      )}
       <nav aria-label="Задания" className="flex flex-wrap gap-2">
         {questions.map((item, position) => (
           <Button
@@ -105,9 +132,11 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
               key={question.id}
               question={question}
               state={queue.get(question.id)!}
-              disabled={busy || remaining === 0}
+              disabled={busy || locked}
               onChange={(answer) => update(question.id, answer)}
-              onSave={() => queue.flush(question.id)}
+              onSave={() =>
+                locked ? Promise.resolve(false) : queue.flush(question.id)
+              }
             />
           </CardContent>
         </Card>
@@ -128,14 +157,11 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           Далее
         </Button>
       </div>
-      <Button
-        disabled={busy || remaining === 0}
-        onClick={() => setConfirm(true)}
-      >
+      <Button disabled={busy || locked} onClick={() => setConfirm(true)}>
         Завершить тест
       </Button>
       <Dialog
-        open={confirm}
+        open={confirm && !locked}
         onOpenChange={(open) => {
           if (!busy) setConfirm(open);
         }}
@@ -144,9 +170,8 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           <DialogHeader>
             <DialogTitle>Завершить тест?</DialogTitle>
             <DialogDescription>
-              Без сохранённого ответа: {questions.length - answered}. Перед
-              завершением отправим все текущие ответы. После отправки изменить
-              их нельзя.
+              Без ответа: {unanswered}. Перед завершением отправим все текущие
+              ответы. После отправки изменить их нельзя.
             </DialogDescription>
           </DialogHeader>
           {error && <p role="alert">{error}</p>}

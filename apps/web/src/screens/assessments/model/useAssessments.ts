@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { ApiError } from '@/shared/api';
+import { CANDIDATE_DATA_UPDATED_EVENT } from '@/shared/contants';
 import {
   type AvailableAssessment,
   getAvailableAssessments,
@@ -52,6 +53,13 @@ export const useAssessments = () => {
 
     return () => controller.abort();
   }, [reload]);
+
+  useEffect(() => {
+    const reloadList = () => setReload((value) => value + 1);
+    window.addEventListener(CANDIDATE_DATA_UPDATED_EVENT, reloadList);
+    return () =>
+      window.removeEventListener(CANDIDATE_DATA_UPDATED_EVENT, reloadList);
+  }, []);
 
   const start = async () => {
     if (!selected || lock.current) return;

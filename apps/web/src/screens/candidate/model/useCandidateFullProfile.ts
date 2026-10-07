@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { ensureClientAccessToken } from '@/shared/api';
+import { CANDIDATE_DATA_UPDATED_EVENT } from '@/shared/contants';
 import {
   type CandidateFullProfile,
   getCandidateFullProfileClient,
@@ -28,6 +29,15 @@ export const useCandidateFullProfile = (initial?: CandidateFullProfile) => {
     setFullProfile(initial);
   }
   useEffect(() => () => controller.invalidate(), [controller, initial]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void controller.refresh().catch(() => {});
+    };
+    window.addEventListener(CANDIDATE_DATA_UPDATED_EVENT, refresh);
+    return () =>
+      window.removeEventListener(CANDIDATE_DATA_UPDATED_EVENT, refresh);
+  }, [controller]);
 
   const refreshFullProfile = async (signal?: AbortSignal) => {
     const id = ++refreshingRequest.current;
