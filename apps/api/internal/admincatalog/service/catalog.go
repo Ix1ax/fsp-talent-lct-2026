@@ -12,6 +12,8 @@ import (
 )
 
 type Store interface {
+	Pending(context.Context, string, int, int) ([]entity.Item, error)
+	Moderate(context.Context, string, string, string, entity.ModerationInput) (entity.ModerationResult, error)
 	List(context.Context, string, string, string, int, int) ([]entity.Item, error)
 	Create(context.Context, string, string, entity.CreateInput) (entity.Item, error)
 	Get(context.Context, string, string, string) (entity.Item, error)
@@ -81,4 +83,31 @@ func (s *Service) Delete(ctx context.Context, actor, kind, id string) error {
 		return err
 	}
 	return s.store.Delete(ctx, actor, kind, id)
+}
+
+func (s *Service) Pending(ctx context.Context, actor string, limit, offset int) ([]entity.Item, error) {
+	if limit < 1 || limit > 100 || offset < 0 {
+		return nil, &entity.ValidationError{Message: "Некорректные параметры списка"}
+	}
+	return s.store.Pending(ctx, actor, limit, offset)
+}
+func (s *Service) Moderate(ctx context.Context, actor, id, action string, in entity.ModerationInput) (entity.ModerationResult, error) {
+	id, err := normalizeID("skills", id)
+	if err != nil {
+		return entity.ModerationResult{}, err
+	}
+	in, err = entity.NormalizeModeration(action, in)
+	if err != nil {
+		return entity.ModerationResult{}, err
+	}
+	if action == "merged" {
+		in.TargetID, err = normalizeID("skills", in.TargetID)
+		if err != nil {
+			return entity.ModerationResult{}, err
+		}
+		if id == in.TargetID {
+			return entity.ModerationResult{}, &entity.ValidationError{Message: "Нельзя объединить навык с самим собой"}
+		}
+	}
+	return s.store.Moderate(ctx, actor, id, action, in)
 }

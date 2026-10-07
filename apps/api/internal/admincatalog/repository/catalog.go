@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/entity"
 	"github.com/jackc/pgx/v5"
@@ -19,20 +20,20 @@ func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 func columns(kind string) (string, error) {
 	switch kind {
 	case "skills":
-		return "id::text, code, name, active, NULL::smallint, aliases, moderation_status", nil
+		return "id::text, code, name, active, NULL::smallint, aliases, moderation_status, submitted_by::text, submitted_at, moderated_by::text, moderated_at, moderation_reason, merged_into::text", nil
 	case "specializations":
-		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text", nil
+		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text, NULL::text, NULL::timestamptz, NULL::text, NULL::timestamptz, NULL::text, NULL::text", nil
 	case "grades":
-		return "id::text, code, name, active, rank, '{}'::text[], NULL::text", nil
+		return "id::text, code, name, active, rank, '{}'::text[], NULL::text, NULL::text, NULL::timestamptz, NULL::text, NULL::timestamptz, NULL::text, NULL::text", nil
 	case "work_formats":
-		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text", nil
+		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text, NULL::text, NULL::timestamptz, NULL::text, NULL::timestamptz, NULL::text, NULL::text", nil
 	default:
 		return "", entity.ErrNotFound
 	}
 }
 func scan(row pgx.Row) (entity.Item, error) {
 	var item entity.Item
-	err := row.Scan(&item.ID, &item.Code, &item.Name, &item.Active, &item.Rank, &item.Aliases, &item.ModerationStatus)
+	err := row.Scan(&item.ID, &item.Code, &item.Name, &item.Active, &item.Rank, &item.Aliases, &item.ModerationStatus, &item.SubmittedBy, &item.SubmittedAt, &item.ModeratedBy, &item.ModeratedAt, &item.ModerationReason, &item.MergedInto)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return item, entity.ErrNotFound
 	}
@@ -109,6 +110,11 @@ func (r *Repository) Create(ctx context.Context, actor, kind string, in entity.C
 		return entity.Item{}, err
 	}
 	defer tx.Rollback(ctx)
+	if kind == "skills" {
+		if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+			return entity.Item{}, err
+		}
+	}
 	fields, values := "code,name", "$1,$2"
 	args := []any{in.Code, in.Name}
 	if kind == "skills" {
@@ -140,6 +146,11 @@ func (r *Repository) Update(ctx context.Context, actor, kind, id string, in enti
 		return entity.Item{}, err
 	}
 	defer tx.Rollback(ctx)
+	if kind == "skills" {
+		if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+			return entity.Item{}, err
+		}
+	}
 	set := "name=COALESCE($2,name),active=COALESCE($3,active)"
 	args := []any{id, in.Name, in.Active}
 	if kind == "skills" {
@@ -213,6 +224,11 @@ func (r *Repository) Delete(ctx context.Context, actor, kind, id string) error {
 		return err
 	}
 	defer tx.Rollback(ctx)
+	if kind == "skills" {
+		if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+			return err
+		}
+	}
 	cast := "smallint"
 	if kind == "skills" {
 		cast = "uuid"

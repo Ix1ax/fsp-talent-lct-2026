@@ -21,6 +21,8 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 		var large *http.MaxBytesError
 		status, code, message := 500, "internal_error", "Внутренняя ошибка сервера"
 		switch {
+		case errors.Is(err, entity.ErrInvalidTransition):
+			status, code, message = 409, "skill_moderation_conflict", err.Error()
 		case errors.Is(err, entity.ErrNotFound):
 			status, code, message = 404, "catalog_item_not_found", err.Error()
 		case errors.Is(err, entity.ErrInUse):
@@ -113,4 +115,35 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 		}
 		c.Status(204)
 	})
+	g.GET("/skills/pending", func(c *gin.Context) {
+		limit, offset, err := request.Page(c)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		items, err := catalogs.Pending(c.Request.Context(), actor(c), limit, offset)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	})
+	for _, entry := range []struct{ path, action string }{{"approve", "approved"}, {"reject", "rejected"}, {"merge", "merged"}} {
+		g.POST("/skills/:id/"+entry.path, func(c *gin.Context) {
+			var in entity.ModerationInput
+			if c.Request.ContentLength != 0 {
+				if err := request.JSON(c, &in); err != nil {
+					fail(c, err)
+					return
+				}
+			}
+			result, err := catalogs.Moderate(c.Request.Context(), actor(c), c.Param("id"), entry.action, in)
+			if err != nil {
+				fail(c, err)
+				return
+			}
+			c.JSON(200, result)
+		})
+	}
+
 }

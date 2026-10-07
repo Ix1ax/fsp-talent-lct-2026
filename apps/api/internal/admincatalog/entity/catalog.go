@@ -5,6 +5,7 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 )
@@ -12,6 +13,7 @@ import (
 var (
 	ErrNotFound           = errors.New("Запись справочника не найдена")
 	ErrConflict           = errors.New("Код, название навыка или порядок грейда уже занят")
+	ErrInvalidTransition  = errors.New("Действие недоступно для текущего статуса навыка")
 	ErrInUse              = errors.New("Запись используется в профилях или потребностях: архивируйте её")
 	ErrModerationRequired = errors.New("Для этого навыка нужны отдельные действия модерации")
 	ErrForbidden          = errors.New("Недостаточно прав для управления справочниками")
@@ -24,13 +26,19 @@ func (e *ValidationError) Error() string { return e.Message }
 
 // Строковый ID позволяет одинаково возвращать UUID навыков и числовые ID остальных справочников.
 type Item struct {
-	ModerationStatus *string  `json:"moderation_status,omitempty"`
-	ID               string   `json:"id"`
-	Code             string   `json:"code"`
-	Name             string   `json:"name"`
-	Active           *bool    `json:"active,omitempty"`
-	Rank             *int16   `json:"rank,omitempty"`
-	Aliases          []string `json:"aliases,omitempty"`
+	SubmittedBy      *string    `json:"submitted_by,omitempty"`
+	SubmittedAt      *time.Time `json:"submitted_at,omitempty"`
+	ModeratedBy      *string    `json:"moderated_by,omitempty"`
+	ModeratedAt      *time.Time `json:"moderated_at,omitempty"`
+	ModerationReason *string    `json:"moderation_reason,omitempty"`
+	MergedInto       *string    `json:"merged_into,omitempty"`
+	ModerationStatus *string    `json:"moderation_status,omitempty"`
+	ID               string     `json:"id"`
+	Code             string     `json:"code"`
+	Name             string     `json:"name"`
+	Active           *bool      `json:"active,omitempty"`
+	Rank             *int16     `json:"rank,omitempty"`
+	Aliases          []string   `json:"aliases,omitempty"`
 }
 type CreateInput struct {
 	Code    string   `json:"code"`

@@ -2680,7 +2680,7 @@ paths:
         проверяются без учёта регистра. Существующий навык переиспользуется; неизвестный создаётся как pending
         и прикрепляется к резюме одной транзакцией. Pending виден в личном списке, но не в публичном справочнике.
         Повторное предложение не создаёт дубликат. Максимум 50 навыков в резюме и 20 новых предложений за 24 часа.
-        Архивированные, отклонённые и объединённые навыки добавлять нельзя. Клиент не задаёт статус модерации.
+        Архивированные и отклонённые навыки добавлять нельзя. Название объединённого навыка ведёт к канонической записи. Клиент не задаёт статус модерации.
       requestBody:
         required: true
         content:
@@ -3440,6 +3440,319 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/pending:
+    get:
+      operationId: listAdminPendingSkills
+      summary: Очередь предложенных навыков
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Доступно админу и суперадмину. Только pending, сначала ранние предложения.
+        Карточка содержит автора и время предложения, если они известны.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Очередь модерации.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogPage'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/approve:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: approveAdminSkill
+      summary: Одобрить предложенный навык
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Только pending. Навык становится approved и active, появляется в общем справочнике. Это одобрение записи, а не подтверждение уровня кандидата.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillApproveInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/reject:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: rejectAdminSkill
+      summary: Отклонить навык и убрать его из резюме и потребностей
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Доступно для pending и approved. Причина обязательна. Все связи с резюме и потребностями удаляются одной транзакцией. Активная потребность, потерявшая последний навык, становится черновиком. Запись остаётся rejected, повторное предложение того же названия блокируется.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillRejectInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/merge:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: mergeAdminSkill
+      summary: Объединить навык с одобренной записью
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Исходный навык должен быть pending или approved, цель — другой approved и active. Связи переносятся атомарно. При дубле в резюме сохраняется большая самооценка; в потребности — обязательность любого из дублей и больший вес. Старое название ведёт к каноническому навыку, цепочки объединений сокращаются до одной ссылки.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillMergeInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   parameters:
     AdminCatalogKind:
@@ -3470,10 +3783,77 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AdminSkillApproveInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+    AdminSkillRejectInput:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    AdminSkillMergeInput:
+      type: object
+      additionalProperties: false
+      required: [target_id]
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Другая одобренная и активная запись skills.
+        reason:
+          type: string
+          maxLength: 1000
+    AdminSkillModerationResult:
+      type: object
+      required: [skill, candidate_links, need_links, drafted_needs]
+      properties:
+        skill:
+          $ref: '#/components/schemas/AdminCatalogItem'
+        candidate_links:
+          type: integer
+          minimum: 0
+          description: Количество перенесённых или удалённых связей с резюме.
+        need_links:
+          type: integer
+          minimum: 0
+          description: Количество перенесённых или удалённых связей с потребностями.
+        drafted_needs:
+          type: integer
+          minimum: 0
+          description: Количество активных потребностей, ставших черновиками после отклонения последнего навыка.
     AdminCatalogItem:
       type: object
       required: [id, code, name, active]
       properties:
+        submitted_by:
+          type: string
+          format: uuid
+          description: Автор предложения, если известен. Только для навыков.
+        submitted_at:
+          type: string
+          format: date-time
+        moderated_by:
+          type: string
+          format: uuid
+          description: ID админского аккаунта, принявшего последнее решение.
+        moderated_at:
+          type: string
+          format: date-time
+        moderation_reason:
+          type: string
+          maxLength: 1000
+        merged_into:
+          type: string
+          format: uuid
+          description: Канонический навык для записи со статусом merged.
         id:
           type: string
           description: UUID навыка или числовой ID, возвращённый строкой.

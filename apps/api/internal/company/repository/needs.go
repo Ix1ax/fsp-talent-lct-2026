@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 
 	"github.com/jackc/pgx/v5"
 
@@ -97,6 +98,9 @@ func (r *Repository) CreateNeed(ctx context.Context, user, company string, in en
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
@@ -146,6 +150,9 @@ func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, p
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
