@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -15,13 +16,19 @@ type Repository struct{ db *pgxpool.Pool }
 func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
 const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
- WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')`
+ JOIN candidate_categories category ON category.candidate_id=p.id
+ JOIN assessment_attempts test ON test.id=category.attempt_id AND test.candidate_id=p.id
+ AND test.status='passed' AND test.specialization_id=category.specialization_id AND test.grade_id=category.grade_id
+ WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
+ AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL)
+ AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL)`
 const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_rub,p.search_status,
- ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id)`
+ ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id),
+ jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id) AS category`
 
 func scan(row pgx.Row) (entity.Card, error) {
 	var c entity.Card
-	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs)
+	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, entity.ErrNotFound
 	}

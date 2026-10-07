@@ -19,6 +19,7 @@ func abort(c *gin.Context, status int, code, message string) {
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, users *user.Service, bank *service.Service) {
 	g := api.Group("/companies/:company_id", auth.Middleware(verifier), middleware.CurrentUser(log, users), middleware.RequireRole(user.RoleEmployer))
 	g.Use(func(c *gin.Context) {
+		c.Header("Cache-Control", "private, no-store")
 		if bank == nil {
 			abort(c, 503, "candidate_bank_unavailable", "Банк кандидатов не настроен")
 			return

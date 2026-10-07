@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"encoding/json"
+	assessmentrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/repository"
 	"strings"
 	"testing"
 
@@ -24,8 +25,13 @@ func TestCandidateRecommendations(t *testing.T) {
 		f.tokens[who] = f.auth.Token(t, who)
 	}
 	ctx := context.Background()
+	spec, grade := pairIDs(t, f.db, "backend", "junior")
+	for _, who := range []string{"candidate", "other_candidate"} {
+		confirmBankCandidate(t, f, who)
+	}
+
 	var need string
-	if err := f.db.QueryRow(ctx, `INSERT INTO employer_needs(company_id,created_by,specialization_id,grade_id,title,description,status,salary_to_rub,city,timezone) VALUES($1,$2,1,3,'Go','Команда','active',200000,'Москва','Europe/Moscow') RETURNING id::text`, f.company, f.ids["owner"]).Scan(&need); err != nil {
+	if err := f.db.QueryRow(ctx, `INSERT INTO employer_needs(company_id,created_by,specialization_id,grade_id,title,description,status,salary_to_rub,city,timezone) VALUES($1,$2,$3,$4,'Go','Команда','active',200000,'Москва','Europe/Moscow') RETURNING id::text`, f.company, f.ids["owner"], spec, grade).Scan(&need); err != nil {
 		t.Fatal(err)
 	}
 	f.exec(t, `INSERT INTO need_work_formats(need_id,work_format_id) VALUES($1,3)`, need)
@@ -42,10 +48,13 @@ func TestCandidateRecommendations(t *testing.T) {
 		return page
 	}
 	p := read("")
-	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "conditions_only" || len(p.UnassessedCriteria) != 5 {
+	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "qualification_and_conditions" || len(p.UnassessedCriteria) != 1 {
 		t.Fatalf("Неверная подборка: %+v", p)
 	}
-	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchedConditions != 4 || len(p.Items[0].Reasons) != 4 {
+	if p.Items[0].SkillMatchScore != nil || len(p.Items[0].Skills) != 0 {
+		t.Fatal("Без требований стека оценка должна отсутствовать")
+	}
+	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchedConditions != 4 || len(p.Items[0].Reasons) != 5 {
 		t.Fatalf("Объяснение и порядок не соответствуют условиям: %+v", p.Items)
 	}
 	if p.Items[1].MatchedConditions != 1 || len(p.Items[1].UnknownConditions) != 3 {
@@ -81,4 +90,20 @@ func TestCandidateRecommendations(t *testing.T) {
 	}
 	f.exec(t, `UPDATE employer_needs SET status='active',company_id=$2 WHERE id=$1`, need, f.otherCompany)
 	f.request(t, "GET", path, "owner", "", 404)
+}
+
+func confirmBankCandidate(t *testing.T, f *offerFixture, who string) {
+	t.Helper()
+	ctx := context.Background()
+	grantConsentRows(t, f.db, f.ids[who], "processing", "publication")
+	spec, grade := pairIDs(t, f.db, "backend", "junior")
+	repo := assessmentrepo.New(f.db)
+	attempt, err := repo.StartAttempt(ctx, f.ids[who], spec, grade, retakeDays)
+	if err != nil {
+		t.Fatal(err)
+	}
+	answerWith(t, f.db, repo, f.ids[who], attempt, all)
+	if _, err = repo.SubmitAttempt(ctx, f.ids[who], attempt.ID, retakeDays); err != nil {
+		t.Fatal(err)
+	}
 }
