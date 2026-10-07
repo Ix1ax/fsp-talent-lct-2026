@@ -96,3 +96,25 @@ func TestFullProfileCarriesCategory(t *testing.T) {
 		t.Fatalf("категория: %+v (%v)", got.Category, err)
 	}
 }
+
+func TestFullProfileCareerEmptyAndEstimate(t *testing.T) {
+	now := time.Date(2026, 10, 8, 0, 0, 0, 0, time.UTC)
+	s := NewFullProfileService(fullStub{entity.FullSnapshot{}}, "v1")
+	s.now = func() time.Time { return now }
+	got, err := s.Get(context.Background(), "u1")
+	if err != nil || got.Experience == nil || got.Education == nil || len(got.Experience) != 0 || len(got.Education) != 0 || got.ExperienceEstimatedMonths != nil {
+		t.Fatalf("пустой снимок: %+v (%v)", got, err)
+	}
+
+	from, to := entity.NewMonth(2022, 11), entity.NewMonth(2023, 1)
+	snapshot := entity.FullSnapshot{
+		Experience: []entity.Experience{{ID: "e1", ExperienceInput: entity.ExperienceInput{Company: "К", Position: "Р", StartedOn: from, EndedOn: &to}}},
+		Education:  []entity.Education{{ID: "d1", EducationInput: entity.EducationInput{Level: "higher", Institution: "У", GraduationYear: 2027}}},
+	}
+	s = NewFullProfileService(fullStub{snapshot}, "v1")
+	s.now = func() time.Time { return now }
+	got, err = s.Get(context.Background(), "u1")
+	if err != nil || len(got.Experience) != 1 || len(got.Education) != 1 || got.ExperienceEstimatedMonths == nil || *got.ExperienceEstimatedMonths != 3 {
+		t.Fatalf("с записями: %+v (%v)", got, err)
+	}
+}
