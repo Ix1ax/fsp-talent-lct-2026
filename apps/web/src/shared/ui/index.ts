@@ -5,6 +5,7 @@ export * from './Card';
 export * from './Checkbox';
 export * from './Combobox';
 export * from './Command';
+export * from './ConfirmDeleteDialog';
 export * from './Dialog';
 export * from './DropdownMenu';
 export * from './Input';

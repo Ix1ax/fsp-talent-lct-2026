@@ -17,6 +17,7 @@ interface CandidateContactsFormProps {
 
 export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
   const { form, message, dirty, save } = useCandidateContactsForm(props);
+  useUnsavedChanges(form.formState.isDirty);
   return (
     <form
       noValidate
@@ -52,3 +53,4 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
     </form>
   );
 };
+import { useUnsavedChanges } from '@/shared/hooks';

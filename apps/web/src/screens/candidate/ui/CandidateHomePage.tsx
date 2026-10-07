@@ -29,7 +29,7 @@ import { CandidateProfileForm } from '@/features/candidate-profile';
 import { CandidateSkillsCard } from '@/features/candidate-skills';
 
 import { PROFILE_STEPS, type ProfileStep } from '../constants';
-import { useCandidateFullProfile } from '../model';
+import { getSavedProfileSteps, useCandidateFullProfile } from '../model';
 import { ProfileReadinessCard, ProfileStepNavigation } from './steps';
 
 interface CandidateHomePageProps {
@@ -119,11 +119,12 @@ export const CandidateHomePage = ({
                 consents={fullProfile.consents}
                 busy={busy}
                 onBusyChange={setBusy}
-                onConsentsChange={(consents) =>
+                onConsentsChange={(consents) => {
                   updateFullProfile((current) =>
                     reconcileConsents(current, consents),
-                  )
-                }
+                  );
+                  refreshAfterSave();
+                }}
                 onRevoked={(input) =>
                   updateFullProfile((current) =>
                     applyConsentRevocation(current, input),
@@ -233,7 +234,11 @@ export const CandidateHomePage = ({
               </Button>
             </div>
           )}
-          <ProfileStepNavigation step={step} busy={busy} />
+          <ProfileStepNavigation
+            step={step}
+            busy={busy}
+            savedSteps={getSavedProfileSteps(fullProfile)}
+          />
         </Tabs>
       )}
     </main>

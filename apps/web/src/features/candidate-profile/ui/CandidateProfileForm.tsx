@@ -1,3 +1,4 @@
+import { useUnsavedChanges } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 import {
@@ -38,6 +39,7 @@ export const CandidateProfileForm = ({
       onBusyChange,
       onProfileChange,
     });
+  useUnsavedChanges(form.formState.isDirty);
   return (
     <form
       noValidate
@@ -59,6 +61,7 @@ export const CandidateProfileForm = ({
           workFormats={workFormats}
           canPublish={getConsentPermissions(consents).canPublish}
           busy={busy}
+          savedSearchStatus={profile?.searchStatus}
           control={form.control}
         />
         {message && (

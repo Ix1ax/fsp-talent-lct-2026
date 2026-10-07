@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  ConfirmDeleteDialog,
 } from '@/shared/ui';
 import type { CandidateSkill, ClaimedLevel } from '@/entities/candidate-skill';
 
@@ -23,6 +24,7 @@ interface CandidateSkillsCardProps {
 }
 export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
   const actions = useCandidateSkills(props);
+  const [deletingSkill, setDeletingSkill] = useState<CandidateSkill>();
   return (
     <Card>
       <CardHeader>
@@ -87,7 +89,7 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
                 variant="outline"
                 disabled={props.busy}
                 aria-label={`Удалить навык ${skill.name}`}
-                onClick={() => void actions.remove(skill.skillId)}
+                onClick={() => setDeletingSkill(skill)}
               >
                 Удалить
               </Button>
@@ -98,6 +100,16 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
           <p className="text-sm text-muted-foreground">Навыков пока нет.</p>
         )}
       </CardContent>
+      {deletingSkill && (
+        <ConfirmDeleteDialog
+          title={`Удалить навык «${deletingSkill.name}»?`}
+          description="Навык и его самооценка будут убраны из вашего списка."
+          busy={props.busy}
+          onConfirm={() => actions.remove(deletingSkill.skillId)}
+          onClose={() => setDeletingSkill(undefined)}
+        />
+      )}
     </Card>
   );
 };
+import { useState } from 'react';

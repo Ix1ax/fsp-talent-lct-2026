@@ -4,7 +4,8 @@ import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
-import { Button, Input, toast } from '@/shared/ui';
+import { useUnsavedChanges } from '@/shared/hooks';
+import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
 import type { CandidateProfile } from '@/entities/candidate-profile';
 import {
   deleteCandidateAvatar,
@@ -49,9 +50,11 @@ export const CandidateAvatar = ({
   const [originalFile, setOriginalFile] = useState<File>();
   const [editorFile, setEditorFile] = useState<File>();
   const [checking, setChecking] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [revision, setRevision] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const mutating = useRef(false);
+  useUnsavedChanges(!!selectedFile || !!editorFile);
 
   const disabled = formDisabled || checking || !!editorFile;
 
@@ -135,7 +138,7 @@ export const CandidateAvatar = ({
   };
 
   const remove = async () => {
-    if (!profile || busy || mutating.current) return;
+    if (!profile || busy || mutating.current) return false;
     mutating.current = true;
     onBusyChange(true);
     form.clearErrors();
@@ -145,11 +148,15 @@ export const CandidateAvatar = ({
       await deleteCandidateAvatar();
       onProfileChange({ ...profile, avatarFileId: null });
       reportSuccess('Аватар удалён.');
+      return true;
     } catch (error) {
       if (error instanceof ApiError && error.code === 'avatar_not_found') {
         onProfileChange({ ...profile, avatarFileId: null });
         reportSuccess('Аватар уже удалён.');
-      } else reportError(getAvatarError(error));
+        return true;
+      }
+      reportError(getAvatarError(error));
+      return false;
     } finally {
       mutating.current = false;
       onBusyChange(false);
@@ -293,7 +300,7 @@ export const CandidateAvatar = ({
           variant="outline"
           disabled={disabled}
           className="self-start"
-          onClick={() => void remove()}
+          onClick={() => setDeleting(true)}
         >
           Удалить аватар
         </Button>
@@ -302,6 +309,15 @@ export const CandidateAvatar = ({
         <p role="status" className="text-sm text-muted-foreground">
           {message}
         </p>
+      )}
+      {deleting && (
+        <ConfirmDeleteDialog
+          title="Удалить аватар?"
+          description="Фото будет удалено из профиля. Чтобы вернуть его, понадобится загрузить фото заново."
+          busy={busy}
+          onConfirm={remove}
+          onClose={() => setDeleting(false)}
+        />
       )}
       {editorFile && (
         <AvatarCropDialog

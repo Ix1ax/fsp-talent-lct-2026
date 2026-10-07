@@ -1,0 +1,17 @@
+import { getConsentPermissions } from '@/entities/candidate-consent';
+import type { CandidateFullProfile } from '@/entities/candidate-profile';
+
+import type { ProfileStep } from '../constants';
+
+export const getSavedProfileSteps = (
+  full?: CandidateFullProfile,
+): ProfileStep[] => {
+  if (!full) return [];
+  const saved: ProfileStep[] = [];
+  if (getConsentPermissions(full.consents).canPublish) saved.push('consents');
+  if (full.profile) saved.push('profile');
+  if (full.contacts) saved.push('contacts');
+  if (full.skills.length > 0) saved.push('skills');
+  if (full.readiness.readyToPublish) saved.push('readiness');
+  return saved;
+};

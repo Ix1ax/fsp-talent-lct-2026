@@ -3,6 +3,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
+import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel } from '@/entities/candidate-skill';
 
@@ -23,6 +24,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
   const name = useWatch({ control: form.control, name: 'name' });
   const search = useSkillSearch(name);
   const [selectedId, setSelectedId] = useState<string>();
+  useUnsavedChanges(form.formState.isDirty);
   return (
     <form
       className="flex flex-col gap-3"

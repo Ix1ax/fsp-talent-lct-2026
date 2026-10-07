@@ -55,6 +55,7 @@ export const useCandidateProfileForm = ({
       previousProfile.current = profile;
     }
     if (
+      previousStatus.current !== undefined &&
       previousStatus.current !== profile?.searchStatus &&
       profile?.searchStatus === 'hidden'
     )
