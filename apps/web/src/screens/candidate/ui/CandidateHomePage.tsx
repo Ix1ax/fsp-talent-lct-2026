@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
@@ -17,6 +17,7 @@ import {
   CandidateConsentsCard,
   reconcileConsents,
 } from '@/features/candidate-consents';
+import { CandidateContactsCard } from '@/features/candidate-contacts';
 import { CandidateProfileForm } from '@/features/candidate-profile';
 
 interface CandidateHomePageProps {
@@ -33,19 +34,23 @@ export const CandidateHomePage = ({
 }: CandidateHomePageProps) => {
   const router = useRouter();
   const [fullProfile, setFullProfile] = useState(initialFullProfile);
+  const dataRevision = useRef(0);
   const [busy, setBusy] = useState(false);
   const [refreshing, startTransition] = useTransition();
 
   const profile = fullProfile?.profile ?? undefined;
 
   const setProfile = (next: CandidateProfile | undefined) => {
+    dataRevision.current += 1;
     setFullProfile(
       (current) => current && { ...current, profile: next ?? null },
     );
   };
   const refreshFullProfile = async (signal?: AbortSignal) => {
+    const revision = dataRevision.current;
     const latest = await getCandidateFullProfileClient(signal);
-    if (!signal?.aborted) setFullProfile(latest);
+    if (!signal?.aborted && revision === dataRevision.current)
+      setFullProfile(latest);
   };
 
   return (
@@ -124,6 +129,23 @@ export const CandidateHomePage = ({
               )}
             </CardContent>
           </Card>
+          {fullProfile && (
+            <CandidateContactsCard
+              contacts={fullProfile.contacts}
+              consents={fullProfile.consents}
+              defaultName={user.name}
+              defaultEmail={user.email}
+              busy={busy}
+              onBusyChange={setBusy}
+              onConsentRequired={refreshFullProfile}
+              onContactsChange={(contacts) => {
+                dataRevision.current += 1;
+                setFullProfile(
+                  (current) => current && { ...current, contacts },
+                );
+              }}
+            />
+          )}
         </>
       )}
     </main>

@@ -1,0 +1,1 @@
+export { CandidateContactsCard } from './CandidateContactsCard';
