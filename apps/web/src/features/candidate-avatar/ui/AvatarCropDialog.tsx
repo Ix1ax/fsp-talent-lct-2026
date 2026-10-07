@@ -48,7 +48,7 @@ export const AvatarCropDialog = ({
 
   const reportError = (message: string) => {
     setError(message);
-    toast.error(message);
+    toast.error(message, { id: 'candidate-avatar' });
   };
 
   const apply = async () => {

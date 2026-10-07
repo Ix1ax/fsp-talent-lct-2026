@@ -36,12 +36,12 @@ export const useCandidateSkills = (options: Options) => {
       await ensureClientAccessToken();
       const next = await action();
       options.onSkillsChange(next);
-      toast.success(success);
+      toast.success(success, { id: 'candidate-skills' });
       return true;
     } catch (error) {
       const text = getSkillErrorMessage(error);
       setMessage(text);
-      toast.error(text);
+      toast.error(text, { id: 'candidate-skills' });
       return false;
     } finally {
       mutating.current = false;

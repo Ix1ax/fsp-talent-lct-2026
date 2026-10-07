@@ -26,17 +26,11 @@ export const NewNeedTemplate = ({
           НОВАЯ
         </span>
       </span>
-      <span className="font-semibold text-brand-text">Новая потребность</span>
-      <span className="text-[13px] leading-7 text-muted-foreground">
-        Ищем специалиста{' '}
-        <span className="border-b border-dashed border-input font-mono">
-          специализация
-        </span>{' '}
-        уровня{' '}
-        <span className="border-b border-dashed border-input font-mono">
-          грейд
-        </span>
-        , формат — …
+      <span className="text-base font-semibold text-brand-text">
+        Создать потребность
+      </span>
+      <span className="text-sm text-muted-foreground">
+        Опишите задачи, навыки и условия работы
       </span>
     </Button>
   );

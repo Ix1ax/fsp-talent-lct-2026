@@ -1,8 +1,6 @@
 import { useState } from 'react';
 
 import {
-  Badge,
-  Button,
   Card,
   CardContent,
   CardDescription,
@@ -10,12 +8,12 @@ import {
   CardTitle,
   ConfirmDeleteDialog,
 } from '@/shared/ui';
-import type { CandidateSkill, ClaimedLevel } from '@/entities/candidate';
+import type { CandidateSkill } from '@/entities/candidate';
 
 import { SKILL_LIMIT } from '../constants';
 import { useCandidateSkills } from '../model';
 import { AddSkillForm } from './AddSkillForm';
-import { SkillLevelSelect } from './SkillLevelSelect';
+import { CandidateSkillItem } from './CandidateSkillItem';
 
 interface CandidateSkillsCardProps {
   skills: CandidateSkill[];
@@ -26,14 +24,17 @@ interface CandidateSkillsCardProps {
 }
 export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
   const actions = useCandidateSkills(props);
+  const sortedSkills = [...props.skills].sort((a, b) =>
+    a.name.localeCompare(b.name, 'ru'),
+  );
   const [deletingSkill, setDeletingSkill] = useState<CandidateSkill>();
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <CardTitle>Навыки</CardTitle>
         <CardDescription>
-          Самооценка и подтверждение навыков. Работодателям навыки пока не
-          видны.
+          Добавьте навыки и оцените свой уровень. Подтвердить его можно с
+          помощью тестирования.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -50,63 +51,26 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
           }
           onAdd={actions.add}
         />
-        {actions.message && (
-          <p role="alert" className="text-sm text-destructive">
+        <div className="flex flex-col gap-2">
+          <p role="alert" className="min-h-5 text-sm text-destructive">
             {actions.message}
           </p>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Добавлено: {props.skills.length} из {SKILL_LIMIT}
-        </p>
+          <p className="text-sm text-muted-foreground">
+            Добавлено: {props.skills.length} из {SKILL_LIMIT}
+          </p>
+        </div>
         <ul className="flex flex-col gap-3">
-          {props.skills.map((skill) => (
-            <li
+          {sortedSkills.map((skill) => (
+            <CandidateSkillItem
               key={skill.skillId}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3"
-            >
-              <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
-                <p className="font-medium">{skill.name}</p>
-                {skill.moderationStatus === 'pending' && (
-                  <Badge variant="outline">На модерации</Badge>
-                )}
-                <p className="text-xs text-muted-foreground">
-                  Источник:{' '}
-                  {skill.source === 'test' ? 'Тестирование' : skill.source}. Вес
-                  подтверждения: {skill.confidence}
-                </p>
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="text-xs text-muted-foreground">
-                  Самооценка
-                </span>
-                <SkillLevelSelect
-                  value={skill.claimedLevel}
-                  label={`Самооценка: ${skill.name}`}
-                  disabled={
-                    props.busy ||
-                    !['approved', 'pending'].includes(skill.moderationStatus)
-                  }
-                  onChange={(level: ClaimedLevel) => {
-                    if (level !== skill.claimedLevel)
-                      void actions.changeLevel(skill.skillId, level);
-                  }}
-                />
-              </div>
-              <Badge variant="secondary">
-                {skill.verifiedLevel != null
-                  ? `Подтверждённый уровень: ${skill.verifiedLevel}/5`
-                  : 'Уровень не подтверждён'}
-              </Badge>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={props.busy}
-                aria-label={`Удалить навык ${skill.name}`}
-                onClick={() => setDeletingSkill(skill)}
-              >
-                Удалить
-              </Button>
-            </li>
+              skill={skill}
+              busy={props.busy}
+              onLevelChange={(level) => {
+                if (level !== skill.claimedLevel)
+                  void actions.changeLevel(skill.skillId, level);
+              }}
+              onDelete={() => setDeletingSkill(skill)}
+            />
           ))}
         </ul>
         {props.skills.length === 0 && (

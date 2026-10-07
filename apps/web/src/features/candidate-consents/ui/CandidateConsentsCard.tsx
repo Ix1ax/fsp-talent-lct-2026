@@ -1,7 +1,6 @@
 import { useState } from 'react';
 
 import {
-  Badge,
   Button,
   Card,
   CardContent,
@@ -15,10 +14,10 @@ import {
   type RevokeConsentInput,
 } from '@/entities/candidate';
 
-import { CONSENT_LABELS } from '../constants';
 import { useCandidateConsents } from '../model';
 import { ConsentGrantDialog } from './ConsentGrantDialog';
 import { ConsentHistory } from './ConsentHistory';
+import { ConsentOption } from './ConsentOption';
 import { ConsentRevokeDialog } from './ConsentRevokeDialog';
 
 interface CandidateConsentsCardProps {
@@ -52,51 +51,26 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
   return (
     <Card id="consents">
       <CardHeader>
-        <CardTitle>Согласия</CardTitle>
+        <CardTitle>Согласия и видимость профиля</CardTitle>
         <CardDescription>
-          Версия политики: {consents.currentPolicyVersion}
+          Для заполнения профиля нужно согласие на обработку данных. Публикацию
+          вы разрешаете отдельно и можете отложить.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        {(['processing', 'publication'] as const).map((kind) => {
-          const active = hasActiveConsent(consents, kind);
-          return (
-            <div
+        <div className="flex flex-col gap-4">
+          {(['processing', 'publication'] as const).map((kind) => (
+            <ConsentOption
               key={kind}
-              className="flex flex-wrap items-center justify-between gap-3"
-            >
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium">{CONSENT_LABELS[kind]}</p>
-                <Badge
-                  variant={active ? 'secondary' : 'outline'}
-                  className="self-start"
-                >
-                  {active ? 'Действует' : 'Не дано'}
-                </Badge>
-              </div>
-              {active ? (
-                <Button
-                  variant="outline"
-                  disabled={disabled}
-                  onClick={() => setRevokeInput({ kind })}
-                >
-                  Отозвать
-                </Button>
-              ) : (
-                <Button
-                  disabled={disabled || !consents.currentPolicyVersion}
-                  onClick={() => setGrantKind(kind)}
-                >
-                  Ознакомиться и дать согласие
-                </Button>
-              )}
-            </div>
-          );
-        })}
-        <p className="text-sm text-muted-foreground">
-          Для создания профиля нужно согласие на обработку. Для публикации нужны
-          оба согласия; статус поиска вы выбираете отдельно.
-        </p>
+              kind={kind}
+              active={hasActiveConsent(consents, kind)}
+              disabled={disabled}
+              policyAvailable={!!consents.currentPolicyVersion}
+              onGrant={() => setGrantKind(kind)}
+              onRevoke={() => setRevokeInput({ kind })}
+            />
+          ))}
+        </div>
         {!consents.currentPolicyVersion && (
           <p role="alert" className="text-sm text-destructive">
             Версия политики недоступна. Обновите данные.
@@ -124,10 +98,10 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
         )}
         <Button
           variant="ghost"
-          disabled={disabled || historyLoading}
+          disabled={disabled}
           aria-expanded={showHistory}
           aria-controls="consent-history"
-          className="self-start"
+          className="min-h-11 self-start"
           onClick={() => {
             setShowHistory(!showHistory);
             if (!showHistory) void loadHistory();
@@ -135,6 +109,9 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
         >
           {showHistory ? 'Скрыть историю' : 'История согласий'}
         </Button>
+        <p className="text-xs text-muted-foreground">
+          Версия политики: {consents.currentPolicyVersion}
+        </p>
         {showHistory && (
           <ConsentHistory
             history={history}
@@ -151,6 +128,7 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
           kind={grantKind}
           policyVersion={consents.currentPolicyVersion}
           busy={disabled}
+          error={message}
           onConfirm={() => grant(grantKind)}
           onClose={() => setGrantKind(undefined)}
         />
@@ -159,6 +137,7 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
         <ConsentRevokeDialog
           input={revokeInput}
           busy={disabled}
+          error={message}
           onConfirm={() => revoke(revokeInput)}
           onClose={() => setRevokeInput(undefined)}
         />

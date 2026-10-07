@@ -38,7 +38,10 @@ export const BriefPhrase = ({
     onChange({ ...value, ...patch });
   const token = (key: string) => ({
     open: open === key,
-    onOpenChange: (v: boolean) => setOpen(v ? key : null),
+    onOpenChange: (v: boolean) => {
+      setQ('');
+      setOpen(v ? key : null);
+    },
     disabled,
   });
 
@@ -52,7 +55,7 @@ export const BriefPhrase = ({
       type="button"
       variant={selected ? 'secondary' : 'ghost'}
       key={id ?? 'none'}
-      className="w-full justify-start"
+      className="min-h-11 w-full justify-start whitespace-normal text-left"
       onClick={() => {
         pick();
         setOpen(null);
@@ -90,7 +93,10 @@ export const BriefPhrase = ({
                 .includes(q.toLowerCase()),
             )
             .map((s) => (
-              <label key={s.id} className="flex items-center gap-2 text-sm">
+              <label
+                key={s.id}
+                className="flex min-h-11 items-center gap-3 text-base"
+              >
                 <Checkbox
                   disabled={
                     disabled ||
@@ -136,8 +142,7 @@ export const BriefPhrase = ({
     );
   };
   return (
-    <div className="text-lg font-medium leading-[1.75] text-muted-foreground md:text-[19px] xl:text-[22px]">
-      Ищем специалиста
+    <div className="grid gap-3 sm:grid-cols-2">
       <BriefToken
         {...token('specialization')}
         title="Специализация"
@@ -158,7 +163,6 @@ export const BriefPhrase = ({
           )}
         </div>
       </BriefToken>
-      уровня
       <BriefToken
         {...token('grade')}
         title="Грейд"
@@ -183,7 +187,6 @@ export const BriefPhrase = ({
           ),
         )}
       </BriefToken>
-      , формат —
       <BriefToken
         {...token('formats')}
         title="Форматы работы"
@@ -197,7 +200,10 @@ export const BriefPhrase = ({
       >
         <div className="grid gap-3">
           {catalogs.workFormats.map((f) => (
-            <label key={f.id} className="flex items-center gap-2 text-sm">
+            <label
+              key={f.id}
+              className="flex min-h-11 items-center gap-3 text-base"
+            >
               <Checkbox
                 checked={value.workFormatIds.includes(f.id)}
                 onCheckedChange={(checked) =>
@@ -213,7 +219,6 @@ export const BriefPhrase = ({
           ))}
         </div>
       </BriefToken>
-      , вилка
       <BriefToken
         {...token('salary')}
         title="Зарплатная вилка"
@@ -233,7 +238,8 @@ export const BriefPhrase = ({
           кандидату.
         </p>
       </BriefToken>
-      . Обязательно — {skillToken(true)}, желательно — {skillToken(false)}.
+      {skillToken(true)}
+      {skillToken(false)}
     </div>
   );
 };

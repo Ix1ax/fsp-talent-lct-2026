@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
@@ -8,7 +7,7 @@ import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel } from '@/entities/candidate';
 
 import { skillSchema } from '../constants';
-import { useSkillSearch } from '../model';
+import { useSkillAutocomplete } from '../model';
 import { SkillLevelSelect } from './SkillLevelSelect';
 
 type Values = z.infer<typeof skillSchema>;
@@ -22,9 +21,29 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
     defaultValues: { name: '', claimedLevel: 1 },
   });
   const name = useWatch({ control: form.control, name: 'name' });
-  const search = useSkillSearch(name);
-  const [selectedId, setSelectedId] = useState<string>();
+  const error = form.formState.errors.name?.message;
+  const autocomplete = useSkillAutocomplete({
+    name,
+    disabled,
+    error,
+    onSelect: (skill) =>
+      form.setValue('name', skill.name, {
+        shouldDirty: true,
+        shouldValidate: true,
+      }),
+  });
+  const {
+    selectedId,
+    listId,
+    open,
+    activeSkill,
+    activeIndex,
+    hint,
+    items,
+    selectSkill,
+  } = autocomplete;
   useUnsavedChanges(form.formState.isDirty);
+
   return (
     <form
       className="flex flex-col gap-3"
@@ -32,89 +51,96 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
         if (disabled) return;
         if (await onAdd(values.name, values.claimedLevel, selectedId)) {
           form.reset();
-          setSelectedId(undefined);
+          autocomplete.reset();
         }
       })}
     >
       <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-3">
         <Label htmlFor="candidate-skill-name">Найти или предложить навык</Label>
-        <Input
-          id="candidate-skill-name"
-          placeholder="Например, Go или Svelte"
-          aria-invalid={!!form.formState.errors.name}
-          aria-describedby={
-            form.formState.errors.name ? 'candidate-skill-error' : undefined
-          }
-          {...form.register('name', {
-            onChange: () => setSelectedId(undefined),
-          })}
-        />
-        {form.formState.errors.name && (
-          <p
-            id="candidate-skill-error"
-            role="alert"
-            className="text-sm text-destructive"
-          >
-            {form.formState.errors.name.message}
-          </p>
-        )}
-        {!selectedId && search.loading && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Поиск навыков…
-          </p>
-        )}
-        {!selectedId && search.error && (
-          <p role="alert" className="text-sm text-muted-foreground">
-            {search.error}
-          </p>
-        )}
-        {!selectedId && search.items.length > 0 && (
-          <ul
-            aria-label="Навыки из справочника"
-            className="flex max-h-48 flex-col gap-1 overflow-y-auto"
-          >
-            {search.items.map((skill) => (
-              <li key={skill.id}>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="h-auto w-full justify-start whitespace-normal text-left [overflow-wrap:anywhere]"
-                  disabled={disabled}
-                  onClick={() => {
-                    form.setValue('name', skill.name, {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    });
-                    setSelectedId(skill.id);
-                  }}
-                >
-                  {skill.name}
-                </Button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-sm">Самооценка</span>
-          <Controller
-            name="claimedLevel"
-            control={form.control}
-            render={({ field }) => (
-              <SkillLevelSelect
-                value={field.value}
-                disabled={disabled}
-                label="Самооценка нового навыка"
-                onChange={field.onChange}
-              />
-            )}
+        <div className="relative">
+          <Input
+            id="candidate-skill-name"
+            placeholder="Например, Go или Svelte"
+            autoComplete="off"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded={open}
+            aria-controls={open ? listId : undefined}
+            aria-activedescendant={
+              activeSkill ? `${listId}-${activeSkill.id}` : undefined
+            }
+            aria-invalid={!!error}
+            aria-describedby="candidate-skill-hint"
+            {...form.register('name', { onChange: autocomplete.onQueryChange })}
+            onFocus={autocomplete.onFocus}
+            onBlur={(event) => {
+              void form.register('name').onBlur(event);
+              autocomplete.onBlur();
+            }}
+            onKeyDown={autocomplete.onKeyDown}
           />
-          <Button type="submit" disabled={disabled}>
+          {open && (
+            <ul
+              id={listId}
+              role="listbox"
+              aria-label="Навыки из справочника"
+              className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto border border-border bg-popover p-1 shadow-popover"
+            >
+              {items.map((skill, index) => (
+                <li key={skill.id} role="presentation">
+                  <Button
+                    id={`${listId}-${skill.id}`}
+                    type="button"
+                    role="option"
+                    aria-selected={index === activeIndex}
+                    tabIndex={-1}
+                    variant={index === activeIndex ? 'secondary' : 'ghost'}
+                    className="h-auto min-h-11 w-full justify-start py-3 text-left whitespace-normal [overflow-wrap:anywhere]"
+                    onPointerDown={(event) => event.preventDefault()}
+                    onClick={() => selectSkill(skill)}
+                  >
+                    {skill.name}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <p
+          id="candidate-skill-hint"
+          aria-live="polite"
+          className={`min-h-10 text-sm ${error ? 'text-destructive' : 'text-muted-foreground'}`}
+        >
+          {hint}
+        </p>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="candidate-skill-level">Самооценка</Label>
+            <Controller
+              name="claimedLevel"
+              control={form.control}
+              render={({ field }) => (
+                <SkillLevelSelect
+                  id="candidate-skill-level"
+                  value={field.value}
+                  disabled={disabled}
+                  label="Самооценка нового навыка"
+                  onChange={field.onChange}
+                />
+              )}
+            />
+          </div>
+          <Button
+            type="submit"
+            className="h-11"
+            disabled={disabled || !name.trim()}
+          >
             Добавить навык
           </Button>
         </div>
         <p className="text-sm text-muted-foreground">
-          1 — начальный уровень, 5 — высокий. Неизвестный навык отправится на
-          модерацию. До 50 навыков и 20 новых предложений в сутки.
+          1 — начальный уровень, 5 — высокий. Новый навык отправится на
+          проверку. До 50 навыков и 20 новых предложений в сутки.
         </p>
       </fieldset>
     </form>

@@ -5,7 +5,7 @@ import { getAllSkills, getCatalogs } from '@/entities/catalog/api/server';
 import { GuidesPage, parseSkillsQuery } from '@/screens/guides';
 
 export const metadata: Metadata = {
-  title: 'Гайды и справочники · ФСП',
+  title: 'Справочник · ФСП Скаут',
 };
 
 interface PageProps {

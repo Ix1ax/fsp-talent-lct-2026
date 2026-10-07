@@ -71,7 +71,7 @@ export const useCandidateContactsForm = ({
       !areContactsEqual(values, defaults));
 
   const save = async (values: ContactsFormValues) => {
-    if (saving.current || !processing || !dirty) return;
+    if (saving.current || !processing || !dirty) return false;
 
     saving.current = true;
     setMessage('');
@@ -89,11 +89,12 @@ export const useCandidateContactsForm = ({
 
       previousDefaults.current = savedDefaults;
       reset(savedDefaults);
-      toast.success('Контакты сохранены.');
+      toast.success('Контакты сохранены.', { id: 'candidate-contacts' });
+      return true;
     } catch (error) {
       const text = getContactsErrorMessage(error);
       setMessage(text);
-      toast.error(text);
+      toast.error(text, { id: 'candidate-contacts' });
 
       if (error instanceof ApiError && error.code === 'consent_required') {
         try {
@@ -104,6 +105,7 @@ export const useCandidateContactsForm = ({
           );
         }
       }
+      return false;
     } finally {
       saving.current = false;
       onBusyChange(false);

@@ -39,17 +39,17 @@ export const NeedListItem = ({
       onClick={onSelect}
       className={cn(
         'h-auto w-full justify-start rounded-none border-0 bg-transparent p-4 text-left whitespace-normal hover:bg-muted',
-        'flex-col gap-2 border-b border-border xl:px-5',
+        'flex-col items-stretch gap-2 border-b border-border xl:px-5',
         selected && 'bg-muted shadow-[inset_3px_0_0_var(--primary)]',
       )}
     >
-      <span className="flex flex-wrap items-center gap-y-2">
+      <span className="flex w-full flex-wrap items-center gap-y-2">
         <SpecializationBadge
           specialization={spec}
           grade={grade}
           active={need.status === 'active'}
         />
-        <span className="min-w-0 flex-1 truncate pl-2 text-xs text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate pl-2 text-sm text-muted-foreground">
           {[formats, need.city].filter(Boolean).join(' · ')}
         </span>
         <span

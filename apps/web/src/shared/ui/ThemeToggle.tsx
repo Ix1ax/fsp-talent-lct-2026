@@ -8,7 +8,8 @@ export const ThemeToggle = () => {
   return (
     <Button
       type="button"
-      size="icon-sm"
+      size="icon-lg"
+      className="size-11"
       variant="outline"
       aria-label="Сменить тему"
       title="Сменить тему"

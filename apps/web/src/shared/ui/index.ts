@@ -1,6 +1,7 @@
 export * from './AsyncState';
 export * from './Avatar';
 export * from './Badge';
+export * from './BrandLogo';
 export * from './BriefToken';
 export * from './Button';
 export * from './Card';
@@ -24,4 +25,5 @@ export * from './Sonner';
 export * from './Switch';
 export * from './Tabs';
 export * from './Textarea';
+export * from './ThemeToggle';
 export * from './Tooltip';

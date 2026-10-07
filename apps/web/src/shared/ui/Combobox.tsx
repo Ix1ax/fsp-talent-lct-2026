@@ -55,7 +55,7 @@ export const Combobox = ({
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
-          className="w-full justify-between font-normal"
+          className="min-h-11 w-full justify-between font-normal"
           {...props}
         >
           <span className="truncate">{selected?.label ?? placeholder}</span>

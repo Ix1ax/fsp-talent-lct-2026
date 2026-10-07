@@ -68,7 +68,7 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
       aria-busy={isPending}
       className="flex flex-wrap items-end gap-3"
     >
-      <div className="flex min-w-56 flex-1 flex-col gap-2">
+      <div className="flex min-w-0 basis-56 flex-1 flex-col gap-2">
         <label htmlFor="skill-search" className="text-sm font-medium">
           Найти навык
         </label>
@@ -80,7 +80,7 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
           value={value}
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Например, golang"
-          className="h-9"
+          className="h-12"
         />
       </div>
       <Button

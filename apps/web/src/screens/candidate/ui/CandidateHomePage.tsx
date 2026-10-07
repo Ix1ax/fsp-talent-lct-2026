@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useRef, useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -13,9 +13,10 @@ import {
   Tabs,
   TabsContent,
 } from '@/shared/ui';
-import type {
-  CandidateFullProfile,
-  CandidateProfile,
+import {
+  type CandidateFullProfile,
+  type CandidateProfile,
+  getConsentPermissions,
 } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
@@ -31,7 +32,11 @@ import { CandidateSkillsCard } from '@/features/candidate-skills';
 
 import { PROFILE_STEPS, type ProfileStep } from '../constants';
 import { getSavedProfileSteps, useCandidateFullProfile } from '../model';
-import { ProfileReadinessCard, ProfileStepNavigation } from './steps';
+import {
+  ProfileReadinessCard,
+  ProfileStepActions,
+  ProfileStepNavigation,
+} from './steps';
 
 interface CandidateHomePageProps {
   user: SessionUser;
@@ -57,8 +62,12 @@ export const CandidateHomePage = ({
   const [busy, setBusy] = useState(false);
   const [step, setStep] = useState<ProfileStep>('consents');
   const [refreshing, startTransition] = useTransition();
+  const navigationRef = useRef<HTMLDivElement>(null);
 
   const profile = fullProfile?.profile ?? undefined;
+  const permissions = fullProfile
+    ? getConsentPermissions(fullProfile.consents)
+    : { processing: false, canPublish: false };
 
   const setProfile = (next: CandidateProfile | undefined) => {
     updateFullProfile((current) => ({ ...current, profile: next ?? null }));
@@ -70,18 +79,20 @@ export const CandidateHomePage = ({
   const changeStep = (next: ProfileStep) => {
     if (busy) return;
     setStep(next);
+    navigationRef.current?.scrollIntoView({ block: 'start' });
   };
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-6 py-10">
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6 sm:py-10">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold">Кабинет кандидата</h1>
         <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
           {user.email}
         </p>
-        <Button asChild variant="outline" className="self-start">
-          <Link href="/candidate/assessments">Тестирование навыков</Link>
-        </Button>
+        <p className="text-base text-muted-foreground">
+          Расскажите об опыте и условиях работы. Публикацией профиля управляете
+          вы.
+        </p>
       </header>
       {loadError ? (
         <Card>
@@ -108,11 +119,17 @@ export const CandidateHomePage = ({
           }}
           className="flex-1 gap-6"
         >
-          {busy && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Сохранение изменений…
-            </p>
-          )}
+          <div ref={navigationRef} className="scroll-mt-4">
+            <ProfileStepNavigation
+              step={step}
+              busy={busy}
+              savedSteps={getSavedProfileSteps(fullProfile)}
+              onStepChange={changeStep}
+            />
+          </div>
+          <p role="status" className="sr-only">
+            {busy ? 'Сохранение изменений…' : ''}
+          </p>
           {fullProfile && (
             <TabsContent
               value="consents"
@@ -150,12 +167,6 @@ export const CandidateHomePage = ({
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-6">
-                <CandidateAvatar
-                  profile={profile}
-                  busy={busy}
-                  onBusyChange={handleFormBusyChange}
-                  onProfileChange={setProfile}
-                />
                 {fullProfile && (
                   <CandidateProfileForm
                     profile={profile}
@@ -165,8 +176,17 @@ export const CandidateHomePage = ({
                     busy={busy}
                     onBusyChange={handleFormBusyChange}
                     onProfileChange={setProfile}
+                    onSaved={() => changeStep('contacts')}
                   />
                 )}
+                <div className="border-t border-border pt-5">
+                  <CandidateAvatar
+                    profile={profile}
+                    busy={busy}
+                    onBusyChange={handleFormBusyChange}
+                    onProfileChange={setProfile}
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -185,6 +205,7 @@ export const CandidateHomePage = ({
                 onBusyChange={handleFormBusyChange}
                 onConsentRequired={refreshFullProfile}
                 onGoToConsents={() => changeStep('consents')}
+                onSaved={() => changeStep('skills')}
                 onContactsChange={(contacts) => {
                   updateFullProfile((current) => ({ ...current, contacts }));
                 }}
@@ -198,6 +219,16 @@ export const CandidateHomePage = ({
                 forceMount
                 className="data-[state=inactive]:hidden"
               >
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm text-muted-foreground">
+                    Подтвердите навыки с помощью тестов.
+                  </p>
+                  <Button asChild variant="outline" size="lg">
+                    <Link href="/candidate/assessments">
+                      Тестирование навыков
+                    </Link>
+                  </Button>
+                </div>
                 <CandidateSkillsCard
                   skills={fullProfile.skills}
                   profileExists={!!profile}
@@ -219,6 +250,8 @@ export const CandidateHomePage = ({
                   refreshing={dataRefreshing}
                   error={refreshError}
                   onRefresh={() => void refreshFullProfile().catch(() => {})}
+                  onGoToProfile={() => changeStep('profile')}
+                  onGoToConsents={() => changeStep('consents')}
                 />
               </TabsContent>
             </>
@@ -238,10 +271,11 @@ export const CandidateHomePage = ({
               </Button>
             </div>
           )}
-          <ProfileStepNavigation
+          <ProfileStepActions
             step={step}
             busy={busy}
-            savedSteps={getSavedProfileSteps(fullProfile)}
+            processing={permissions.processing}
+            onStepChange={changeStep}
           />
         </Tabs>
       )}

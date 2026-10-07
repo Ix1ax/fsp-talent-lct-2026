@@ -24,6 +24,7 @@ interface CandidateContactsCardProps {
   onContactsChange: (contacts: CandidateContacts) => void;
   onConsentRequired: () => Promise<void>;
   onGoToConsents?: () => void;
+  onSaved?: () => void;
 }
 
 export const CandidateContactsCard = ({

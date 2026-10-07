@@ -56,6 +56,15 @@ const render = (initialFullProfile = full) =>
   );
 
 describe('candidate profile steps', () => {
+  it('places navigation before the form and offers continuation after processing consent', () => {
+    const html = render();
+    expect(html.indexOf('aria-label="Шаги настройки профиля"')).toBeLessThan(
+      html.indexOf('name="headline"'),
+    );
+    expect(html).toContain('Перейти к профилю');
+    expect(html).toContain('Сохранить и продолжить');
+    expect(html).toContain('Публикацию можно разрешить позже');
+  });
   it('keeps inactive forms mounted so switching steps can preserve drafts', () => {
     const html = render();
     expect(html.match(/role="tabpanel"/g)).toHaveLength(5);

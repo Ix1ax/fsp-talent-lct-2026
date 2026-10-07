@@ -1,5 +1,15 @@
+import { CheckIcon, LoaderCircleIcon } from 'lucide-react';
+
 import { cn } from '@/shared/lib/utils';
-import { TabsList, TabsTrigger } from '@/shared/ui';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  TabsList,
+  TabsTrigger,
+} from '@/shared/ui';
 
 import { PROFILE_STEPS, type ProfileStep } from '../../constants';
 
@@ -7,23 +17,53 @@ interface ProfileStepNavigationProps {
   step: ProfileStep;
   busy: boolean;
   savedSteps: ProfileStep[];
+  onStepChange: (step: ProfileStep) => void;
 }
 
 export const ProfileStepNavigation = ({
   step,
   busy,
   savedSteps,
+  onStepChange,
 }: ProfileStepNavigationProps) => {
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   return (
-    <footer className="mt-auto flex min-w-0 shrink-0 flex-col gap-4">
-      <p className="text-sm text-muted-foreground" aria-live="polite">
-        Шаг {index + 1} из {PROFILE_STEPS.length}
+    <div className="relative flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <p className="pr-7 text-sm font-medium" aria-live="polite">
+        Шаг {index + 1} из {PROFILE_STEPS.length} · {PROFILE_STEPS[index].title}
       </p>
+      {busy && (
+        <LoaderCircleIcon
+          className="absolute top-4 right-4 size-5 animate-spin text-muted-foreground motion-reduce:animate-none"
+          aria-hidden="true"
+        />
+      )}
+      <Select
+        value={step}
+        disabled={busy}
+        onValueChange={(next) => {
+          const item = PROFILE_STEPS.find((item) => item.id === next);
+          if (item) onStepChange(item.id);
+        }}
+      >
+        <SelectTrigger
+          className="h-11! w-full sm:hidden"
+          aria-label="Перейти к шагу настройки профиля"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PROFILE_STEPS.map((item, position) => (
+            <SelectItem key={item.id} value={item.id}>
+              {position + 1}. {item.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <TabsList
         aria-label="Шаги настройки профиля"
         variant="line"
-        className="grid h-auto! w-full grid-cols-5 items-start gap-2 p-0"
+        className="hidden h-auto! w-full grid-cols-5 gap-2 p-0 sm:grid"
       >
         {PROFILE_STEPS.map((item, position) => (
           <TabsTrigger
@@ -31,34 +71,27 @@ export const ProfileStepNavigation = ({
             value={item.id}
             disabled={busy}
             aria-current={item.id === step ? 'step' : undefined}
-            className="h-auto min-w-0 flex-col gap-2 whitespace-normal rounded-none p-0 pb-2 after:hidden"
+            className={cn(
+              'min-h-11 min-w-0 gap-1 rounded-md px-2 py-3 text-sm whitespace-normal after:hidden',
+              item.id === step && 'bg-accent text-accent-foreground',
+            )}
           >
-            <span
-              aria-hidden="true"
-              className={cn(
-                'h-2 w-full rounded-full bg-muted',
-                savedSteps.includes(item.id) && 'bg-primary',
-                item.id === step &&
-                  'ring-2 ring-ring ring-offset-2 ring-offset-background',
-              )}
-            />
-            <span className="text-center text-xs sm:text-sm">
+            <span>
               {position + 1}. {item.title}
-              <span className="sr-only">
-                {savedSteps.includes(item.id)
-                  ? ' — данные сохранены'
-                  : ' — нет сохранённых данных'}
-              </span>
             </span>
+            {savedSteps.includes(item.id) && (
+              <CheckIcon
+                className="size-4 shrink-0 text-success"
+                aria-label="Данные сохранены"
+              />
+            )}
           </TabsTrigger>
         ))}
       </TabsList>
-      <p className="text-xs text-muted-foreground">
-        Заполненные сегменты означают сохранённые данные; рамка отмечает текущий
-        шаг. Выберите любой шаг, чтобы перейти к нему или пропустить текущий.
-        Переход не сохраняет изменения. Черновики сохраняются, пока эта страница
-        открыта.
+      <p className="text-sm text-muted-foreground">
+        Черновик сохраняется при переключении шагов. Чтобы записать данные,
+        нажмите «Сохранить».
       </p>
-    </footer>
+    </div>
   );
 };

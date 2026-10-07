@@ -67,11 +67,11 @@ export const useCandidateProfileForm = ({
   const saving = useRef(false);
   const reportError = (message: string) => {
     setMessage(message);
-    toast.error(message);
+    toast.error(message, { id: 'candidate-profile' });
   };
   const reportSuccess = (message: string) => {
     setSuccess(message);
-    toast.success(message);
+    toast.success(message, { id: 'candidate-profile' });
   };
   const dirty =
     !profile || Object.keys(buildProfilePatch(profile, values)).length > 0;
@@ -82,10 +82,10 @@ export const useCandidateProfileForm = ({
   );
 
   const save = async (values: ProfileFormValues) => {
-    if (saving.current) return;
+    if (saving.current) return false;
     setMessage('');
     setSuccess('');
-    if (!dirty) return;
+    if (!dirty) return false;
     const permissionError = getProfileConsentError(
       consents,
       !!profile,
@@ -93,7 +93,7 @@ export const useCandidateProfileForm = ({
     );
     if (permissionError) {
       reportError(permissionError);
-      return;
+      return false;
     }
     const changedFields = (
       Object.keys(values) as (keyof ProfileFormValues)[]
@@ -107,6 +107,7 @@ export const useCandidateProfileForm = ({
       onProfileChange(next);
       form.reset(toProfileFormValues(next));
       reportSuccess('Профиль сохранён.');
+      return true;
     } catch (error) {
       if (error instanceof ApiError && error.code === 'profile_exists') {
         try {
@@ -142,6 +143,7 @@ export const useCandidateProfileForm = ({
           'Профиль не найден. Ваш ввод сохранён: создайте профиль снова.',
         );
       } else reportError(getProfileErrorMessage(error));
+      return false;
     } finally {
       saving.current = false;
       onBusyChange(false);

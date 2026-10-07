@@ -1,50 +1,63 @@
-import { ApiStatus } from '@/widgets/api-status';
+import Link from 'next/link';
+import { ArrowRightIcon } from 'lucide-react';
+
+import { Button } from '@/shared/ui';
 
 export const HomePage = () => {
   return (
-    <main className="mx-auto max-w-285 p-8 max-md:p-5">
-      <section className="pt-22.5 pb-14 max-md:pt-13">
-        <p className="text-xs tracking-[3px] text-brand-soft">
-          DEVELOPMENT WORKSPACE
-        </p>
-        <h1 className="max-w-225 text-[clamp(32px,5vw,60px)] leading-[1.12] tracking-[-2px] max-md:tracking-[-1px]">
-          Основа готова.
-          <br />
-          Дальше — ваш код.
+    <main className="mx-auto w-full max-w-6xl px-5 py-12 sm:px-8 sm:py-20">
+      <section className="max-w-3xl space-y-6">
+        <p className="text-sm font-medium text-brand-text">ФСП Скаут</p>
+        <h1 className="text-4xl font-semibold leading-tight tracking-tight sm:text-5xl">
+          Навыки, которые помогают найти свою команду
         </h1>
-        <p className="mt-4 max-w-155 text-lg leading-relaxed text-muted-foreground">
-          Стартовая страница монорепозитория. Здесь можно проверить, что
-          фронтенд видит API.
+        <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          Создайте профиль и подтвердите свои навыки. Или опишите, кого ищет
+          ваша команда, и получите подборку по условиям работы.
         </p>
-        <div className="mt-4">
-          <ApiStatus />
-        </div>
       </section>
-
-      <div className="grid grid-cols-1 gap-5.5 sm:grid-cols-2">
-        <article className="border-t-[3px] border-primary bg-surface p-7">
-          <span className="text-[11px] tracking-[2px] text-muted-foreground">
-            APPS / API
-          </span>
-          <h2 className="mt-1 text-2xl">Go + Gin</h2>
-          <p className="mt-2 leading-relaxed text-muted-foreground">
-            Postgres, Redis, S3 и миграции.
+      <div className="mt-12 grid gap-6 md:grid-cols-2">
+        <section className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:p-8">
+          <p className="text-sm font-medium text-muted-foreground">
+            Кандидатам
           </p>
-        </article>
-        <article className="border-t-[3px] border-primary bg-surface p-7">
-          <span className="text-[11px] tracking-[2px] text-muted-foreground">
-            APPS / WEB
-          </span>
-          <h2 className="mt-1 text-2xl">Next.js + FSD</h2>
-          <p className="mt-2 leading-relaxed text-muted-foreground">
-            App Router, TypeScript и общий API-контракт.
+          <h2 className="text-2xl font-semibold">Расскажите, что вы умеете</h2>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            Укажите опыт, навыки и удобные условия работы. Вы управляете
+            публикацией профиля и доступом к своим данным.
           </p>
-        </article>
+          <Button asChild size="lg" className="mt-auto w-full sm:w-auto">
+            <Link href="/candidate">
+              Создать профиль <ArrowRightIcon />
+            </Link>
+          </Button>
+        </section>
+        <section className="flex flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:p-8">
+          <p className="text-sm font-medium text-muted-foreground">
+            Работодателям
+          </p>
+          <h2 className="text-2xl font-semibold">
+            Найдите специалистов для команды
+          </h2>
+          <p className="text-base leading-relaxed text-muted-foreground">
+            Добавьте компанию, опишите задачи и условия. Сравните анонимные
+            профили по формату работы, зарплате и часовому поясу.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            variant="outline"
+            className="mt-auto w-full sm:w-auto"
+          >
+            <Link href="/employer">
+              Подобрать специалистов <ArrowRightIcon />
+            </Link>
+          </Button>
+        </section>
       </div>
-
-      <footer className="pt-12 text-xs text-muted-foreground">
-        Технический бойлерплейт · продуктовые сценарии ещё не реализованы
-      </footer>
+      <p className="mt-8 text-sm text-muted-foreground">
+        Для начала работы понадобится аккаунт ФСП.
+      </p>
     </main>
   );
 };

@@ -10,7 +10,7 @@ export const getSavedProfileSteps = (
 ): ProfileStep[] => {
   if (!full) return [];
   const saved: ProfileStep[] = [];
-  if (getConsentPermissions(full.consents).canPublish) saved.push('consents');
+  if (getConsentPermissions(full.consents).processing) saved.push('consents');
   if (full.profile) saved.push('profile');
   if (full.contacts) saved.push('contacts');
   if (full.skills.length > 0) saved.push('skills');

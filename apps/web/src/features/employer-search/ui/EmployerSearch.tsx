@@ -83,7 +83,7 @@ export const EmployerSearch = ({
         disabled={disabled || !companyId}
         aria-label="Поиск потребностей компании"
         placeholder="Поиск потребностей"
-        className="h-[34px] text-[13px]"
+        className="h-11 text-sm"
       >
         <input
           role="combobox"
