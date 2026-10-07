@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	"strings"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
@@ -18,23 +19,34 @@ func (r *Repository) SubmitSkill(ctx context.Context, userID string, in entity.S
 		return entity.Skill{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Skill{}, err
+	}
 	profileID, err := lockedProfile(ctx, tx, userID, true)
 	if err != nil {
 		return entity.Skill{}, err
 	}
 	key := strings.ToLower(in.Name)
-	rows, err := tx.Query(ctx, `SELECT id::text FROM skills WHERE name_key=$1 OR lower(code)=$1 OR EXISTS(SELECT 1 FROM unnest(aliases) a WHERE lower(regexp_replace(btrim(a),'\s+',' ','g'))=$1) ORDER BY id FOR SHARE`, key)
+	rows, err := tx.Query(ctx, `SELECT id::text,merged_into::text FROM skills WHERE name_key=$1 OR lower(code)=$1 OR EXISTS(SELECT 1 FROM unnest(aliases) a WHERE lower(regexp_replace(btrim(a),'\s+',' ','g'))=$1) ORDER BY id FOR SHARE`, key)
 	if err != nil {
 		return entity.Skill{}, err
 	}
 	ids := []string{}
+	seen := map[string]bool{}
 	for rows.Next() {
 		var id string
-		if err = rows.Scan(&id); err != nil {
+		var merged *string
+		if err = rows.Scan(&id, &merged); err != nil {
 			rows.Close()
 			return entity.Skill{}, err
 		}
-		ids = append(ids, id)
+		if merged != nil {
+			id = *merged
+		}
+		if !seen[id] {
+			ids = append(ids, id)
+			seen[id] = true
+		}
 	}
 	err = rows.Err()
 	rows.Close()

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 
 	"github.com/jackc/pgx/v5"
 
@@ -78,6 +79,9 @@ func (r *Repository) PutSkill(ctx context.Context, userID, skillID string, in en
 		return entity.Skill{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Skill{}, err
+	}
 	profileID, err := lockedProfile(ctx, tx, userID, true)
 	if err != nil {
 		return entity.Skill{}, err
@@ -131,6 +135,9 @@ func (r *Repository) DeleteSkill(ctx context.Context, userID, skillID string) er
 		return err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return err
+	}
 	profileID, err := lockedProfile(ctx, tx, userID, true)
 	if err != nil {
 		return err

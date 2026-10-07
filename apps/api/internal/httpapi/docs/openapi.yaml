@@ -2680,7 +2680,7 @@ paths:
         проверяются без учёта регистра. Существующий навык переиспользуется; неизвестный создаётся как pending
         и прикрепляется к резюме одной транзакцией. Pending виден в личном списке, но не в публичном справочнике.
         Повторное предложение не создаёт дубликат. Максимум 50 навыков в резюме и 20 новых предложений за 24 часа.
-        Архивированные, отклонённые и объединённые навыки добавлять нельзя. Клиент не задаёт статус модерации.
+        Архивированные и отклонённые навыки добавлять нельзя. Название объединённого навыка ведёт к канонической записи. Клиент не задаёт статус модерации.
       requestBody:
         required: true
         content:
@@ -3058,7 +3058,710 @@ paths:
           $ref: '#/components/responses/AdminInternal'
         '503':
           $ref: '#/components/responses/AdminUnavailable'
+  /api/v1/admin/catalogs:
+    get:
+      operationId: listAdminCatalogKinds
+      summary: Доступные справочники админки
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      responses:
+        '200':
+          description: Четыре поддерживаемых справочника и типы их ID.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [code, name, id_type]
+                      properties:
+                        code:
+                          type: string
+                          enum: [specializations, skills, grades, work_formats]
+                        name:
+                          type: string
+                        id_type:
+                          type: string
+                          enum: [integer, uuid]
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/{kind}:
+    parameters:
+      - $ref: '#/components/parameters/AdminCatalogKind'
+    get:
+      operationId: listAdminCatalogItems
+      summary: Записи справочника, включая архивные
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      parameters:
+        - name: q
+          in: query
+          description: Буквальный поиск по названию, коду и альтернативным названиям навыков.
+          schema:
+            type: string
+            maxLength: 100
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Успешно.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogPage'
+        '400':
+          description: Некорректные параметры запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Неизвестный справочник.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createAdminCatalogItem
+      summary: Создать запись справочника
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Доступно админу и суперадмину. ID выдаёт БД, код остаётся неизменным.
+        Для грейда обязателен положительный уникальный rank; менять его после создания нельзя.
+        Альтернативные названия доступны только для навыков. Навык, созданный админом, сразу approved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCatalogCreateInput'
+      responses:
+        '201':
+          description: Успешно.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogItem'
+        '400':
+          description: Некорректные параметры запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Неизвестный справочник.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Код, название навыка или порядок грейда уже занят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/{kind}/{id}:
+    parameters:
+      - $ref: '#/components/parameters/AdminCatalogKind'
+      - name: id
+        in: path
+        required: true
+        description: UUID навыка либо положительный числовой ID остальных справочников.
+        schema:
+          type: string
+    get:
+      operationId: getAdminCatalogItem
+      summary: Получить запись справочника
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      responses:
+        '200':
+          description: Запись справочника.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogItem'
+        '400':
+          description: Некорректный ID или тело запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Запись или справочник не найдены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    patch:
+      operationId: updateAdminCatalogItem
+      summary: Изменить или архивировать запись
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Передавайте только изменяемые поля. active=false архивирует запись, active=true возвращает её в выбор.
+        Существующие связи сохраняются, архивные значения можно оставить при редактировании старых профилей
+        и потребностей. Новые связи с ними создавать нельзя. Код и порядок грейда не меняются.
+        Навыки pending, rejected и merged требуют отдельных действий модерации и здесь возвращают 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminCatalogUpdateInput'
+      responses:
+        '200':
+          description: Запись справочника.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogItem'
+        '400':
+          description: Некорректный ID или тело запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Запись или справочник не найдены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Запись используется, требуется модерация либо возник конфликт уникальности.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      operationId: deleteAdminCatalogItem
+      summary: Удалить неиспользуемую запись
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Удаляет только неиспользуемые записи. Если есть ссылки из профилей или потребностей, возвращает
+        409 catalog_item_in_use. Навыки pending, rejected и merged возвращают 409 skill_moderation_required:
+        историю модерации нельзя удалить этим методом. Успешные изменения записываются в аудит.
+      responses:
+        '204':
+          description: Запись удалена.
+        '400':
+          description: Некорректный ID или тело запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Запись или справочник не найдены.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Запись используется, требуется модерация либо возник конфликт уникальности.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки. Токены сайта не подходят.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Администратор не имеет доступа.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/pending:
+    get:
+      operationId: listAdminPendingSkills
+      summary: Очередь предложенных навыков
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Доступно админу и суперадмину. Только pending, сначала ранние предложения.
+        Карточка содержит автора и время предложения, если они известны.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Очередь модерации.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCatalogPage'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/approve:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: approveAdminSkill
+      summary: Одобрить предложенный навык
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Только pending. Навык становится approved и active, появляется в общем справочнике. Это одобрение записи, а не подтверждение уровня кандидата.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillApproveInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/reject:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: rejectAdminSkill
+      summary: Отклонить навык и убрать его из резюме и потребностей
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Доступно для pending и approved. Причина обязательна. Все связи с резюме и потребностями удаляются одной транзакцией. Активная потребность, потерявшая последний навык, становится черновиком. Запись остаётся rejected, повторное предложение того же названия блокируется.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillRejectInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/catalogs/skills/{id}/merge:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    post:
+      operationId: mergeAdminSkill
+      summary: Объединить навык с одобренной записью
+      tags: [Админские справочники]
+      security:
+        - adminSession: []
+      description: >-
+        Исходный навык должен быть pending или approved, цель — другой approved и active. Связи переносятся атомарно. При дубле в резюме сохраняется большая самооценка; в потребности — обязательность любого из дублей и больший вес. Старое название ведёт к каноническому навыку, цепочки объединений сокращаются до одной ссылки.
+        Действие записывается в аудит. Повторное несовместимое действие возвращает 409.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminSkillMergeInput'
+      responses:
+        '200':
+          description: Карточка после модерации и число затронутых связей.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminSkillModerationResult'
+        '400':
+          description: Некорректный ID, причина или целевой навык.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нужна действующая сессия админки.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Недостаточно прав администратора.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Навык не найден.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Действие недоступно для текущего статуса либо цель объединения не одобрена или архивирована.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: Превышен допустимый размер запроса.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: Сервис админки или справочников не настроен.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
+  parameters:
+    AdminCatalogKind:
+      name: kind
+      in: path
+      required: true
+      schema:
+        type: string
+        enum: [specializations, skills, grades, work_formats]
   securitySchemes:
     adminSession:
       type: http
@@ -3080,6 +3783,156 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AdminSkillApproveInput:
+      type: object
+      additionalProperties: false
+      properties:
+        reason:
+          type: string
+          maxLength: 1000
+    AdminSkillRejectInput:
+      type: object
+      additionalProperties: false
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 1000
+    AdminSkillMergeInput:
+      type: object
+      additionalProperties: false
+      required: [target_id]
+      properties:
+        target_id:
+          type: string
+          format: uuid
+          description: Другая одобренная и активная запись skills.
+        reason:
+          type: string
+          maxLength: 1000
+    AdminSkillModerationResult:
+      type: object
+      required: [skill, candidate_links, need_links, drafted_needs]
+      properties:
+        skill:
+          $ref: '#/components/schemas/AdminCatalogItem'
+        candidate_links:
+          type: integer
+          minimum: 0
+          description: Количество перенесённых или удалённых связей с резюме.
+        need_links:
+          type: integer
+          minimum: 0
+          description: Количество перенесённых или удалённых связей с потребностями.
+        drafted_needs:
+          type: integer
+          minimum: 0
+          description: Количество активных потребностей, ставших черновиками после отклонения последнего навыка.
+    AdminCatalogItem:
+      type: object
+      required: [id, code, name, active]
+      properties:
+        submitted_by:
+          type: string
+          format: uuid
+          description: Автор предложения, если известен. Только для навыков.
+        submitted_at:
+          type: string
+          format: date-time
+        moderated_by:
+          type: string
+          format: uuid
+          description: ID админского аккаунта, принявшего последнее решение.
+        moderated_at:
+          type: string
+          format: date-time
+        moderation_reason:
+          type: string
+          maxLength: 1000
+        merged_into:
+          type: string
+          format: uuid
+          description: Канонический навык для записи со статусом merged.
+        id:
+          type: string
+          description: UUID навыка или числовой ID, возвращённый строкой.
+        code:
+          type: string
+        name:
+          type: string
+        active:
+          type: boolean
+        rank:
+          type: integer
+          description: Только для грейдов. Неизменяемый порядок уровня.
+        aliases:
+          type: array
+          items:
+            type: string
+        moderation_status:
+          type: string
+          enum: [approved, pending, rejected, merged]
+          description: Только для навыков. Одобрение записи не подтверждает уровень кандидата.
+    AdminCatalogPage:
+      type: object
+      required: [items, limit, offset]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCatalogItem'
+        limit:
+          type: integer
+        offset:
+          type: integer
+    AdminCatalogCreateInput:
+      type: object
+      additionalProperties: false
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          pattern: '^[a-z][a-z0-9_-]*$'
+          maxLength: 64
+          description: Для грейдов и форматов работы максимум 32 символа.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 32767
+          description: Обязателен только для грейда, для остальных справочников запрещён.
+        aliases:
+          type: array
+          maxItems: 30
+          description: Только для навыков.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
+    AdminCatalogUpdateInput:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        active:
+          type: boolean
+          description: false — архивировать, true — восстановить.
+        aliases:
+          type: array
+          maxItems: 30
+          description: Только для навыков. Пустой массив очищает альтернативные названия.
+          items:
+            type: string
+            minLength: 1
+            maxLength: 200
     AdminCredentials:
       type: object
       additionalProperties: false

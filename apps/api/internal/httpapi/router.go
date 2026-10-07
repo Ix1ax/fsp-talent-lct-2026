@@ -16,6 +16,8 @@ import (
 
 	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
 	adminweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/web"
+	admincatalogservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/service"
+	admincatalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	candidateweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/web"
@@ -37,6 +39,7 @@ type Checker interface{ Check(context.Context) error }
 
 type Options struct {
 	Admins                  *adminservice.Service
+	AdminCatalogs           *admincatalogservice.Service
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
 	Companies               *service.CompanyService
@@ -115,6 +118,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	})
 	api := r.Group("/api/v1")
 	adminweb.Register(api, log, opts.Admins)
+	admincatalogweb.Register(api, log, opts.Admins, opts.AdminCatalogs)
 	api.GET("/auth/config", func(c *gin.Context) {
 		if opts.OIDCIssuer == "" {
 			c.JSON(503, gin.H{"error": gin.H{"code": "auth_unavailable", "message": "Сервис авторизации не настроен"}})

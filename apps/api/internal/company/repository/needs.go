@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 
 	"github.com/jackc/pgx/v5"
 
@@ -37,16 +38,16 @@ func needWriter(ctx context.Context, tx pgx.Tx, user, company string) error {
 	}
 	return nil
 }
-func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput) error {
+func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput, currentID any) error {
 	var found bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations WHERE id=$1 AND active)`, in.SpecializationID).Scan(&found); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations s WHERE id=$1 AND (active OR EXISTS(SELECT 1 FROM employer_needs n WHERE n.id=$2 AND n.specialization_id=s.id)) FOR SHARE OF s)`, in.SpecializationID, currentID).Scan(&found); err != nil {
 		return err
 	}
 	if !found {
 		return validationError("Специализация не существует или отключена")
 	}
 	if in.GradeID != nil {
-		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM grades WHERE id=$1)`, *in.GradeID).Scan(&found); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM grades g WHERE id=$1 AND (active OR EXISTS(SELECT 1 FROM employer_needs n WHERE n.id=$2 AND n.grade_id=g.id)) FOR SHARE OF g)`, *in.GradeID, currentID).Scan(&found); err != nil {
 			return err
 		}
 		if !found {
@@ -58,13 +59,13 @@ func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput) error {
 		skillIDs = append(skillIDs, s.SkillID)
 	}
 	var count int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM skills WHERE id=ANY($1::uuid[]) AND active AND moderation_status='approved'`, skillIDs).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM (SELECT s.id FROM skills s WHERE id=ANY($1::uuid[]) AND moderation_status='approved' AND (active OR EXISTS(SELECT 1 FROM need_skills ns WHERE ns.need_id=$2 AND ns.skill_id=s.id)) ORDER BY s.id FOR SHARE OF s) selected`, skillIDs, currentID).Scan(&count); err != nil {
 		return err
 	}
 	if count != len(skillIDs) {
 		return validationError("Один из навыков не существует или отключён")
 	}
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM work_formats WHERE id=ANY($1::smallint[])`, in.WorkFormatIDs).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM (SELECT f.id FROM work_formats f WHERE id=ANY($1::smallint[]) AND (active OR EXISTS(SELECT 1 FROM need_work_formats nf WHERE nf.need_id=$2 AND nf.work_format_id=f.id)) ORDER BY f.id FOR SHARE OF f) selected`, in.WorkFormatIDs, currentID).Scan(&count); err != nil {
 		return err
 	}
 	if count != len(in.WorkFormatIDs) {
@@ -97,10 +98,13 @@ func (r *Repository) CreateNeed(ctx context.Context, user, company string, in en
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
-	if err = needReferences(ctx, tx, in); err != nil {
+	if err = needReferences(ctx, tx, in, nil); err != nil {
 		return entity.Need{}, err
 	}
 	var id string
@@ -146,6 +150,9 @@ func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, p
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
@@ -157,7 +164,7 @@ func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, p
 	if err != nil {
 		return n, err
 	}
-	if err = needReferences(ctx, tx, in); err != nil {
+	if err = needReferences(ctx, tx, in, id); err != nil {
 		return n, err
 	}
 	_, err = tx.Exec(ctx, `UPDATE employer_needs SET specialization_id=$2,grade_id=$3,title=$4,description=$5,salary_from_rub=$6,salary_to_rub=$7,city=$8,timezone=$9,status=$10 WHERE id=$1`, id, in.SpecializationID, in.GradeID, in.Title, in.Description, in.SalaryFromRUB, in.SalaryToRUB, in.City, in.Timezone, in.Status)

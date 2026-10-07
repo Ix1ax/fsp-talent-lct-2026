@@ -14,6 +14,8 @@ import (
 
 	adminrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/repository"
 	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
+	admincatalogrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/repository"
+	admincatalogservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
@@ -69,6 +71,7 @@ func run(log *slog.Logger) error {
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
 			Admins:            adminservice.New(adminrepository.New(deps.DB)),
+			AdminCatalogs:     admincatalogservice.New(admincatalogrepo.New(deps.DB)),
 			CORSOrigins:       c.CORSOrigins,
 			OIDCIssuer:        c.OIDCIssuer,
 			Users:             user.NewService(user.NewRepository(deps.DB)),
