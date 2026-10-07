@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
-import type { CandidateReadiness } from '@/entities/candidate-profile';
+import type { CandidateReadiness } from '@/entities/candidate';
 
 interface ProfileReadinessCardProps {
   readiness: CandidateReadiness;
@@ -14,6 +14,8 @@ interface ProfileReadinessCardProps {
   refreshing: boolean;
   error: string;
   onRefresh: () => void;
+  onGoToProfile: () => void;
+  onGoToConsents: () => void;
 }
 export const ProfileReadinessCard = ({
   readiness,
@@ -21,6 +23,8 @@ export const ProfileReadinessCard = ({
   refreshing,
   error,
   onRefresh,
+  onGoToProfile,
+  onGoToConsents,
 }: ProfileReadinessCardProps) => (
   <Card>
     <CardHeader>
@@ -69,12 +73,33 @@ export const ProfileReadinessCard = ({
           {error}
         </p>
       )}
+      <div className="flex flex-wrap gap-3">
+        <Button
+          type="button"
+          disabled={busy || refreshing}
+          className="min-h-11"
+          onClick={onGoToProfile}
+        >
+          {readiness.readyToPublish
+            ? 'Изменить статус поиска'
+            : 'Проверить профиль'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={busy || refreshing}
+          className="min-h-11"
+          onClick={onGoToConsents}
+        >
+          Проверить согласия
+        </Button>
+      </div>
       <Button
         type="button"
         variant="outline"
         disabled={busy || refreshing}
         onClick={onRefresh}
-        className="self-start"
+        className="min-h-11 self-start"
       >
         {refreshing ? 'Обновление…' : 'Обновить данные'}
       </Button>

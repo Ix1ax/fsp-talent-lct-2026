@@ -1,7 +1,7 @@
 import type {
   CandidateContacts,
   SaveCandidateContactsInput,
-} from '@/entities/candidate-contacts';
+} from '@/entities/candidate';
 
 import type { ContactsFormValues } from '../model';
 

@@ -1,7 +1,11 @@
-'use client';
 import type { ReactNode } from 'react';
+import { ChevronDownIcon } from 'lucide-react';
 
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui';
+import { cn } from '@/shared/lib/utils';
+
+import { Button } from './Button';
+import { Popover, PopoverContent, PopoverTrigger } from './Popover';
+
 interface BriefTokenProps {
   label: string;
   title: string;
@@ -11,6 +15,7 @@ interface BriefTokenProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
+
 export const BriefToken = ({
   label,
   title,
@@ -20,28 +25,35 @@ export const BriefToken = ({
   open,
   onOpenChange,
 }: BriefTokenProps) => (
-  <Popover open={open} onOpenChange={onOpenChange}>
+  <Popover open={disabled ? false : open} onOpenChange={onOpenChange}>
     <PopoverTrigger asChild>
-      <button
+      <Button
         type="button"
+        variant="outline"
         disabled={disabled}
-        className={
-          empty
-            ? 'mx-1 inline border-b border-dashed border-input px-1.5 font-mono text-[.84em] text-caption disabled:cursor-default'
-            : 'mx-1 inline border-b border-primary bg-token px-1.5 font-mono text-[.84em] text-brand-text disabled:cursor-default'
-        }
+        className="h-auto min-h-20 w-full items-start justify-between gap-3 whitespace-normal rounded-md bg-transparent px-4 py-3 text-left disabled:bg-transparent disabled:text-foreground"
         aria-label={`${title}: ${label}`}
       >
-        {label}
-      </button>
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-sm font-normal text-muted-foreground">
+            {title}
+          </span>
+          <span
+            className={cn(
+              'text-base font-medium wrap-anywhere',
+              empty && 'text-muted-foreground',
+            )}
+          >
+            {label}
+          </span>
+        </span>
+        {!disabled && (
+          <ChevronDownIcon className="mt-1 size-4 shrink-0 text-muted-foreground" />
+        )}
+      </Button>
     </PopoverTrigger>
-    <PopoverContent
-      align="start"
-      className="w-72 max-w-[calc(100vw-2rem)] rounded-none border-input p-4 shadow-popover"
-    >
-      <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-caption">
-        {title}
-      </p>
+    <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)] p-4">
+      <p className="mb-3 text-base font-semibold">{title}</p>
       {children}
     </PopoverContent>
   </Popover>

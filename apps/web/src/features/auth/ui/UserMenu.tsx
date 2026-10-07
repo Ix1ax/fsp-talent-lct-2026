@@ -61,8 +61,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
         <Button
           type="button"
           variant={compact ? 'ghost' : 'outline'}
-          size="sm"
-          className={compact ? 'size-10 p-0' : 'gap-2'}
+          className={compact ? 'size-11 p-0' : 'h-11 gap-2 px-3'}
           aria-label={`Аккаунт: ${displayName}`}
           disabled={pending}
         >

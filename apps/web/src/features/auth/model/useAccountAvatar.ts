@@ -6,7 +6,7 @@ import { ensureClientAccessToken } from '@/shared/api';
 import {
   CANDIDATE_AVATAR_UPDATED_EVENT,
   getCandidateAvatar,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 import type { SessionUser } from '@/entities/session';
 
 type AccountAvatar = {

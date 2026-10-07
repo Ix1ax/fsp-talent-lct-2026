@@ -14,7 +14,7 @@ export const CatalogsSection = ({ catalogs }: CatalogsSectionProps) => {
       </h2>
 
       {catalogs ? (
-        <div className="grid auto-rows-fr gap-4 md:grid-cols-2">
+        <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
           <CatalogCard title="Специализации" items={catalogs.specializations} />
           <CatalogCard
             title="Грейды"

@@ -8,23 +8,28 @@ interface CatalogCardProps {
 
 export const CatalogCard = ({ title, items }: CatalogCardProps) => {
   return (
-    <Card>
+    <Card className="border border-border ring-0">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
+        <CardTitle>
+          <h3>{title}</h3>
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <ul className="flex flex-wrap gap-2">
           {items.map((item) => (
             <li key={item.id}>
               <Badge
-                variant="secondary"
-                className="h-auto min-h-7 px-3 py-1 text-sm"
+                variant="outline"
+                className="h-auto min-h-8 max-w-full px-2 py-1 text-sm whitespace-normal"
               >
                 {item.name}
               </Badge>
             </li>
           ))}
         </ul>
+        {items.length === 0 && (
+          <p className="text-sm text-muted-foreground">Пока нет значений.</p>
+        )}
       </CardContent>
     </Card>
   );

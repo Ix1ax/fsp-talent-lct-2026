@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CandidateConsent } from '@/entities/candidate-consent';
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import type {
+  CandidateConsent,
+  CandidateFullProfile,
+} from '@/entities/candidate';
 
 import { applyConsentRevocation } from '../applyConsentRevocation';
 import { reconcileConsents } from '../reconcileConsents';

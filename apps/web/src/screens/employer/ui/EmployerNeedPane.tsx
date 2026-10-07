@@ -27,6 +27,7 @@ interface EmployerNeedPaneProps {
   onFind: () => void;
   onArchive: () => void;
   onDuplicate: () => void;
+  onStartCreate: () => void;
 }
 export const EmployerNeedPane = ({
   board,
@@ -46,6 +47,7 @@ export const EmployerNeedPane = ({
   onFind,
   onArchive,
   onDuplicate,
+  onStartCreate,
 }: EmployerNeedPaneProps) => (
   <main
     className={cn(
@@ -129,11 +131,26 @@ export const EmployerNeedPane = ({
         )}
       </>
     ) : !detail ? (
-      <AsyncState
-        className="min-h-80"
-        title="Выберите потребность"
-        description="Слева — список. Здесь появятся бриф и подборка по условиям работы."
-      />
+      <section className="max-w-xl space-y-4 py-6">
+        <h2 className="text-2xl font-semibold">Потребности команды</h2>
+        <p className="text-base leading-relaxed text-muted-foreground">
+          Выберите потребность в списке, чтобы посмотреть условия и подборку
+          кандидатов.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Потребностей на этой странице: {board.items.length}.
+        </p>
+        {canWrite && (
+          <Button
+            type="button"
+            size="lg"
+            variant="outline"
+            onClick={onStartCreate}
+          >
+            Создать потребность
+          </Button>
+        )}
+      </section>
     ) : board.detailError || board.listError ? (
       <AsyncState
         error

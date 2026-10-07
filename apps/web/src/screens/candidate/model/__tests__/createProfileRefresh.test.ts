@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import type { CandidateFullProfile } from '@/entities/candidate';
 
 import { createProfileRefresh } from '../createProfileRefresh';
 

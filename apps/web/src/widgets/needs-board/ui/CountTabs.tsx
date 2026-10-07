@@ -32,7 +32,7 @@ export const CountTabs = ({
             key={status}
             value={status}
             disabled={disabled}
-            className="h-14 min-h-14 rounded-none border-r border-border px-4 font-mono text-[11px] uppercase tracking-widest shadow-none after:bg-primary data-[state=active]:after:opacity-100 after:bottom-0! dark:data-active:bg-transparent dark:data-active:text-brand-text data-active:text-brand-text data-[state=active]:bg-transparent data-[state=active]:text-brand-text"
+            className="h-12 min-h-12 rounded-none border-r border-border px-3 text-sm shadow-none after:bg-primary data-[state=active]:after:opacity-100 after:bottom-0! dark:data-active:bg-transparent dark:data-active:text-brand-text data-active:text-brand-text data-[state=active]:bg-transparent data-[state=active]:text-brand-text"
           >
             {NEED_STATUS_LABELS[status]}
           </TabsTrigger>

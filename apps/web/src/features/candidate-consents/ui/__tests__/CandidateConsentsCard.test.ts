@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { CandidateConsents } from '@/entities/candidate-consent';
+import type { CandidateConsents } from '@/entities/candidate';
 
 import { CandidateConsentsCard } from '../CandidateConsentsCard';
 
@@ -12,8 +12,8 @@ const { grant, revoke, getHistory } = vi.hoisted(() => ({
   getHistory: vi.fn(),
 }));
 
-vi.mock('@/entities/candidate-consent', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/entities/candidate-consent')>()),
+vi.mock('@/entities/candidate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/entities/candidate')>()),
   grantCandidateConsent: grant,
   revokeCandidateConsent: revoke,
   getCandidateConsents: getHistory,

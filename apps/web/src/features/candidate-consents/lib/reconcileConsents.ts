@@ -1,8 +1,8 @@
 import {
   type CandidateConsents,
+  type CandidateFullProfile,
   getConsentPermissions,
-} from '@/entities/candidate-consent';
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 
 import { applyConsentRevocation } from './applyConsentRevocation';
 

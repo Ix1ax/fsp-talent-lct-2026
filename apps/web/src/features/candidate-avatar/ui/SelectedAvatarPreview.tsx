@@ -24,7 +24,7 @@ export const SelectedAvatarPreview = ({
     };
   }, [file]);
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
       <AvatarAction
         label="Редактировать выбранное фото"
         disabled={disabled}
@@ -35,7 +35,9 @@ export const SelectedAvatarPreview = ({
           <AvatarFallback>Фото</AvatarFallback>
         </Avatar>
       </AvatarAction>
-      <p className="text-sm text-muted-foreground">{file.name}</p>
+      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
+        {file.name}
+      </p>
     </div>
   );
 };

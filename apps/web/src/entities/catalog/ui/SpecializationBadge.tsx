@@ -29,7 +29,7 @@ export const SpecializationBadge = ({
         ? (SPECIALIZATIONS[specialization.code] ?? specialization.name)
         : '—'}
     </Badge>
-    <Badge className="h-6 bg-foreground font-mono text-[11px] text-primary-foreground">
+    <Badge className="h-6 bg-foreground text-sm text-background">
       {grade?.name ?? 'любой'}
     </Badge>
   </span>

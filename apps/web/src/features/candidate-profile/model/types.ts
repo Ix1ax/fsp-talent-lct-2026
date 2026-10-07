@@ -1,4 +1,4 @@
-import type { SearchStatus } from '@/entities/candidate-profile';
+import type { SearchStatus } from '@/entities/candidate';
 
 export type ProfileFormValues = {
   headline: string;

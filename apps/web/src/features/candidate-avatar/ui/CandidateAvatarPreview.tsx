@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { isCancel } from 'axios';
+import { LoaderCircleIcon } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage, Button } from '@/shared/ui';
-import { getCandidateAvatar } from '@/entities/candidate-profile';
+import { getCandidateAvatar } from '@/entities/candidate';
 
 import { getAvatarError } from '../lib/getAvatarError';
 import { AvatarAction } from './AvatarAction';
@@ -58,17 +59,22 @@ export const CandidateAvatarPreview = ({
         <Avatar className="size-24">
           <AvatarImage src={url} alt="Ваш аватар" />
           <AvatarFallback>
-            <span className="text-xs">
-              {hasAvatar ? 'Фото' : 'Добавить фото'}
-            </span>
+            {loading ? (
+              <LoaderCircleIcon
+                className="size-5 animate-spin motion-reduce:animate-none"
+                aria-hidden="true"
+              />
+            ) : (
+              <span className="text-xs">
+                {hasAvatar ? 'Фото' : 'Добавить фото'}
+              </span>
+            )}
           </AvatarFallback>
         </Avatar>
       </AvatarAction>
-      {loading && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Загрузка аватара…
-        </p>
-      )}
+      <p role="status" className="sr-only">
+        {loading ? 'Загрузка фото…' : ''}
+      </p>
       {error && (
         <>
           <p role="alert" className="text-sm text-destructive">

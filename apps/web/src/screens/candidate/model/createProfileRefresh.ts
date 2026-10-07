@@ -1,4 +1,4 @@
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import type { CandidateFullProfile } from '@/entities/candidate';
 
 type Options = {
   load: (signal: AbortSignal) => Promise<CandidateFullProfile>;

@@ -1,5 +1,5 @@
 import { Button, toast } from '@/shared/ui';
-import type { CandidateContacts } from '@/entities/candidate-contacts';
+import type { CandidateContacts } from '@/entities/candidate';
 
 import { useCandidateContactsForm } from '../model';
 import { ContactsTextFields } from './ContactsTextFields';
@@ -13,6 +13,7 @@ interface CandidateContactsFormProps {
   onBusyChange: (busy: boolean) => void;
   onContactsChange: (contacts: CandidateContacts) => void;
   onConsentRequired: () => Promise<void>;
+  onSaved?: () => void;
 }
 
 export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
@@ -24,7 +25,7 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
       aria-busy={props.busy}
       onSubmit={form.handleSubmit(
         async (values) => {
-          if (!props.busy) await save(values);
+          if (!props.busy && (await save(values))) props.onSaved?.();
         },
         () => toast.error('Проверьте контактные данные перед сохранением.'),
       )}
@@ -44,10 +45,10 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
         )}
         <Button
           type="submit"
-          className="self-start"
+          className="min-h-11 w-full sm:w-auto sm:self-start"
           disabled={props.busy || !props.processing || !dirty}
         >
-          Сохранить контакты
+          {props.onSaved ? 'Сохранить и продолжить' : 'Сохранить контакты'}
         </Button>
       </fieldset>
     </form>

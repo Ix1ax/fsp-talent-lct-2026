@@ -3,9 +3,9 @@ import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 import {
   type CandidateConsents,
+  type CandidateProfile,
   getConsentPermissions,
-} from '@/entities/candidate-consent';
-import type { CandidateProfile } from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
 import { useCandidateProfileForm } from '../model';
@@ -20,6 +20,7 @@ interface CandidateProfileFormProps {
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onProfileChange: (profile: CandidateProfile | undefined) => void;
+  onSaved?: () => void;
 }
 
 export const CandidateProfileForm = ({
@@ -30,6 +31,7 @@ export const CandidateProfileForm = ({
   busy,
   onBusyChange,
   onProfileChange,
+  onSaved,
 }: CandidateProfileFormProps) => {
   const { form, message, success, dirty, consentError, save } =
     useCandidateProfileForm({
@@ -40,12 +42,14 @@ export const CandidateProfileForm = ({
       onProfileChange,
     });
   useUnsavedChanges(form.formState.isDirty);
+  let submitLabel = profile ? 'Сохранить изменения' : 'Создать профиль';
+  if (onSaved) submitLabel = 'Сохранить и продолжить';
   return (
     <form
       noValidate
       onSubmit={form.handleSubmit(
         async (values) => {
-          if (!busy) await save(values);
+          if (!busy && (await save(values))) onSaved?.();
         },
         () => toast.error('Проверьте поля профиля перед сохранением.'),
       )}
@@ -80,9 +84,9 @@ export const CandidateProfileForm = ({
         <Button
           type="submit"
           disabled={busy || !dirty || !!consentError}
-          className="self-start"
+          className="min-h-11 w-full sm:w-auto sm:self-start"
         >
-          {profile ? 'Сохранить изменения' : 'Создать профиль'}
+          {submitLabel}
         </Button>
       </fieldset>
     </form>

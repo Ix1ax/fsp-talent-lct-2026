@@ -5,17 +5,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
-import type { ClaimedLevel } from '@/entities/candidate-skill';
+import type { ClaimedLevel } from '@/entities/candidate';
 
 import { SKILL_LEVELS } from '../constants';
 
 interface SkillLevelSelectProps {
+  id?: string;
   value: ClaimedLevel;
   disabled?: boolean;
   label: string;
   onChange: (value: ClaimedLevel) => void;
 }
 export const SkillLevelSelect = ({
+  id,
   value,
   disabled,
   label,
@@ -26,12 +28,20 @@ export const SkillLevelSelect = ({
     disabled={disabled}
     onValueChange={(next) => onChange(Number(next) as ClaimedLevel)}
   >
-    <SelectTrigger aria-label={label}>
+    <SelectTrigger
+      id={id}
+      aria-label={label}
+      className="w-full min-w-28 data-[size=default]:h-11"
+    >
       <SelectValue />
     </SelectTrigger>
     <SelectContent>
       {SKILL_LEVELS.map((level) => (
-        <SelectItem key={level} value={String(level)}>
+        <SelectItem
+          key={level}
+          value={String(level)}
+          className="min-h-11 text-base sm:text-sm"
+        >
           {level} из 5
         </SelectItem>
       ))}

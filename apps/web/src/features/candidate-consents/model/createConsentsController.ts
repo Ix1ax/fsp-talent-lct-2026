@@ -6,7 +6,7 @@ import {
   grantCandidateConsent,
   revokeCandidateConsent,
   type RevokeConsentInput,
-} from '@/entities/candidate-consent';
+} from '@/entities/candidate';
 
 import {
   type CandidateConsentsState,
@@ -35,7 +35,7 @@ export const createConsentsController = (
     message: string,
   ) => {
     update({ [field]: message });
-    toast.error(message);
+    toast.error(message, { id: 'candidate-consents' });
   };
 
   const invalidateReads = () => {
@@ -147,7 +147,7 @@ export const createConsentsController = (
       try {
         commit();
         await synchronize(requestRevision);
-        toast.success(successMessage);
+        toast.success(successMessage, { id: 'candidate-consents' });
       } catch {
         reportError(
           'syncError',

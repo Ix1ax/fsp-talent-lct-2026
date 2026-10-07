@@ -21,6 +21,7 @@ interface EmployerShellProps {
   company: Company | null;
   pending: boolean;
   onCompany: (id: string) => void;
+  onShowNeeds: () => void;
   onSettings: () => void;
   onCreateCompany: () => void;
   children: ReactNode;
@@ -35,14 +36,19 @@ export const EmployerShell = ({
   company,
   pending,
   onCompany,
+  onShowNeeds,
   onSettings,
   onCreateCompany,
   children,
 }: EmployerShellProps) => (
-  <div className="min-h-screen pb-16 md:pb-0">
-    <header className="flex h-14 items-stretch border-b border-border bg-card">
+  <div className="min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+    <header className="flex min-h-14 flex-wrap items-stretch border-b border-border bg-card md:flex-nowrap">
       <Link
         href={homeHref}
+        onClick={(event) => {
+          event.preventDefault();
+          onShowNeeds();
+        }}
         className="flex shrink-0 items-center border-r border-border px-3 md:px-4"
         aria-label="ФСП Скаут — потребности"
       >
@@ -68,27 +74,15 @@ export const EmployerShell = ({
       >
         <a
           href={homeHref}
+          onClick={(event) => {
+            event.preventDefault();
+            onShowNeeds();
+          }}
           aria-current="page"
           className="flex items-center border-b-2 border-primary px-3 text-sm font-semibold"
         >
           Потребности
         </a>
-        <Button
-          variant="ghost"
-          disabled
-          className="h-full px-3 disabled:bg-transparent max-lg:hidden"
-          title="Следующий экран: банк кандидатов"
-        >
-          Банк кандидатов
-        </Button>
-        <Button
-          variant="ghost"
-          disabled
-          className="h-full px-3 disabled:bg-transparent max-lg:hidden"
-          title="Следующий экран: отправленные предложения"
-        >
-          Приглашения
-        </Button>
         <Button
           variant="ghost"
           className="h-full px-3"
@@ -98,7 +92,7 @@ export const EmployerShell = ({
           Компания
         </Button>
       </nav>
-      <div className="ml-auto hidden min-w-0 flex-1 items-center px-3 md:flex">
+      <div className="order-last flex w-full min-w-0 items-center border-t border-border px-3 py-2 md:order-none md:ml-auto md:w-auto md:flex-1 md:border-0">
         {search}
       </div>
       <div className="ml-auto flex shrink-0 items-center gap-2 border-l border-border px-2 md:ml-0 md:px-3">
@@ -108,6 +102,7 @@ export const EmployerShell = ({
     </header>
     {children}
     <EmployerBottomNav
+      onShowNeeds={onShowNeeds}
       company={!!company}
       pending={pending}
       onSettings={onSettings}

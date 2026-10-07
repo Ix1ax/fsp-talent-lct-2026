@@ -1,5 +1,5 @@
 import { Button } from '@/shared/ui';
-import type { CandidateConsents } from '@/entities/candidate-consent';
+import type { CandidateConsents } from '@/entities/candidate';
 
 import { CONSENT_LABELS } from '../constants';
 

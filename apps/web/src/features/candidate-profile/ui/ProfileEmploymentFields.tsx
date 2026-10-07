@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
-import type { SearchStatus } from '@/entities/candidate-profile';
+import type { SearchStatus } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
 import { getSearchStatusHint } from '../lib';
@@ -47,7 +47,7 @@ export const ProfileEmploymentFields = ({
             {workFormats?.map((format, index) => (
               <label
                 key={format.id}
-                className="flex items-center gap-2 text-sm"
+                className="flex min-h-11 items-center gap-2 text-base sm:text-sm"
               >
                 <Checkbox
                   ref={index === 0 ? field.ref : undefined}
@@ -94,6 +94,7 @@ export const ProfileEmploymentFields = ({
               disabled={busy}
             >
               <SelectTrigger
+                className="h-11! w-full text-base sm:text-sm"
                 ref={field.ref}
                 id="profile-search-status"
                 onBlur={field.onBlur}

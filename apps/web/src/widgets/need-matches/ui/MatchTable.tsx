@@ -1,7 +1,6 @@
 'use client';
 
 import { AsyncState, Button, Skeleton } from '@/shared/ui';
-import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { Catalogs } from '@/entities/catalog';
 import { getRecommendations } from '@/entities/employer-need';
 
@@ -33,9 +32,12 @@ export const MatchTable = ({
       aria-label="Подборка кандидатов"
     >
       <div className="border-b border-border px-5 py-4">
-        <MetaLabel className="text-[11px]">
-          Совпадения по условиям {data ? `· ${data.total}` : ''}
-        </MetaLabel>
+        <h2 className="text-lg font-semibold">
+          Подборка кандидатов {data ? `· ${data.total}` : ''}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Совпадения по формату работы, зарплате, городу и часовому поясу.
+        </p>
       </div>
       {error ? (
         <div className="p-4">
@@ -57,11 +59,12 @@ export const MatchTable = ({
           ))}
         </div>
       ) : data.items.length ? (
-        data.items.map((candidate) => (
+        data.items.map((candidate, index) => (
           <MatchTableItem
             key={candidate.id}
             candidate={candidate}
             catalogs={catalogs}
+            position={offset + index + 1}
           />
         ))
       ) : (
@@ -94,10 +97,8 @@ export const MatchTable = ({
           </Button>
         </div>
       )}
-      <p className="px-5 py-3 text-xs leading-relaxed text-muted-foreground">
-        Сравниваем формат, вилку, город и часовой пояс. Квалификация не
-        оценивается. Профили анонимны; контакты после принятия предложения
-        запрашиваются отдельно и могут быть недоступны.
+      <p className="px-5 py-4 text-sm leading-relaxed text-muted-foreground">
+        Профили анонимны, контакты скрыты. Подборка не оценивает квалификацию.
       </p>
     </section>
   );

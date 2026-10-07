@@ -39,7 +39,7 @@ export const CompanySwitcher = ({
         aria-label={`Компания: ${company?.name ?? 'выбрать компанию'}`}
         variant="ghost"
         disabled={pending}
-        className="h-full min-w-0 gap-2 rounded-none border-r border-border px-3 max-md:flex-1"
+        className="h-auto min-h-14 min-w-0 gap-2 self-stretch rounded-none border-r border-border px-3 max-md:flex-1"
       >
         <span className="hidden size-6 shrink-0 items-center justify-center bg-primary font-mono text-[10px] text-primary-foreground sm:flex">
           {company?.name

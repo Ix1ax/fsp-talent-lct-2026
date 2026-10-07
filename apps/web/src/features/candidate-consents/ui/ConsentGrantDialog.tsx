@@ -18,6 +18,7 @@ interface ConsentGrantDialogProps {
   kind: 'processing' | 'publication';
   policyVersion: string;
   busy: boolean;
+  error?: string;
   onConfirm: () => Promise<boolean>;
   onClose: () => void;
 }
@@ -26,10 +27,12 @@ export const ConsentGrantDialog = ({
   kind,
   policyVersion,
   busy,
+  error,
   onConfirm,
   onClose,
 }: ConsentGrantDialogProps) => {
   const [checked, setChecked] = useState(false);
+  const [attempted, setAttempted] = useState(false);
   return (
     <Dialog
       open
@@ -52,7 +55,7 @@ export const ConsentGrantDialog = ({
           утверждённой политикой.
         </p>
         <p className="text-sm">{CONSENT_PLACEHOLDER_TEXT[kind]}</p>
-        <Label className="items-start leading-normal">
+        <Label className="min-h-11 items-start leading-normal">
           <Checkbox
             checked={checked}
             disabled={busy}
@@ -61,6 +64,9 @@ export const ConsentGrantDialog = ({
           />
           Я ознакомился с текстом и даю согласие по версии {policyVersion}.
         </Label>
+        <p role="alert" className="min-h-5 text-sm text-destructive">
+          {attempted && error}
+        </p>
         <DialogFooter>
           <Button variant="outline" disabled={busy} onClick={onClose}>
             Отмена
@@ -68,6 +74,7 @@ export const ConsentGrantDialog = ({
           <Button
             disabled={!checked || busy || !policyVersion}
             onClick={async () => {
+              setAttempted(true);
               if (await onConfirm()) onClose();
             }}
           >

@@ -6,12 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ApiError } from '@/shared/api/errors';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
-import type { CandidateProfile } from '@/entities/candidate-profile';
 import {
+  type CandidateProfile,
   deleteCandidateAvatar,
   getCandidateAvatar,
   uploadCandidateAvatar,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 
 import { getAvatarError } from '../lib';
 import { avatarSchema, avatarSourceSchema } from '../model';
@@ -60,12 +60,12 @@ export const CandidateAvatar = ({
 
   const reportError = (message: string, field: 'file' | 'root' = 'root') => {
     form.setError(field, { message });
-    toast.error(message);
+    toast.error(message, { id: 'candidate-avatar' });
   };
 
   const reportSuccess = (message: string) => {
     setMessage(message);
-    toast.success(message);
+    toast.success(message, { id: 'candidate-avatar' });
   };
 
   const chooseFile = async (file: File) => {
@@ -169,6 +169,12 @@ export const CandidateAvatar = ({
       className="flex flex-col gap-4 border-b border-border pb-6"
       aria-busy={disabled}
     >
+      <div className="space-y-1">
+        <h3 className="text-base font-medium">Фото профиля</h3>
+        <p className="text-sm text-muted-foreground">
+          Необязательно. Фото видите только вы.
+        </p>
+      </div>
       {selectedFile ? (
         <SelectedAvatarPreview
           file={selectedFile}
@@ -185,8 +191,7 @@ export const CandidateAvatar = ({
         />
       )}
       <p id="avatar-help" className="text-sm text-muted-foreground">
-        JPEG или PNG. После обрезки — до 2 МиБ и 4 мегапикселей. Аватар виден
-        только вам.
+        JPEG или PNG. Перед сохранением можно обрезать и повернуть фото.
       </p>
       <form
         onSubmit={(event) => {
@@ -228,6 +233,17 @@ export const CandidateAvatar = ({
           )}
         />
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="min-h-11"
+            disabled={disabled}
+            onClick={() => void editPhoto()}
+          >
+            {selectedFile || profile?.avatarFileId
+              ? 'Редактировать фото'
+              : 'Добавить фото'}
+          </Button>
           {(selectedFile || profile?.avatarFileId) && (
             <Button
               type="button"
@@ -240,14 +256,6 @@ export const CandidateAvatar = ({
           )}
           {selectedFile && (
             <>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => setEditorFile(originalFile ?? selectedFile)}
-              >
-                Редактировать фото
-              </Button>
               <Button
                 type="submit"
                 disabled={disabled || !!errors.file || !profile}

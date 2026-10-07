@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react';
 import { ArrowRightIcon, PencilIcon } from 'lucide-react';
 
+import { TIMEZONE_LABELS } from '@/shared/contants';
 import { Button, Input, Textarea } from '@/shared/ui';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { Catalogs, Skill } from '@/entities/catalog';
@@ -65,10 +66,10 @@ export const NeedEditor = ({
       aria-label={isNew ? 'Новая потребность' : 'Бриф потребности'}
     >
       <div className="mb-5 flex items-center gap-3">
-        <MetaLabel className="text-[11px] text-brand-text">
+        <MetaLabel className="font-sans text-sm normal-case tracking-normal text-muted-foreground">
           {isNew ? 'Новая потребность' : 'Бриф потребности'}
         </MetaLabel>
-        <MetaLabel className="ml-auto text-[11px] text-muted-foreground">
+        <MetaLabel className="ml-auto font-sans text-sm normal-case tracking-normal text-muted-foreground">
           {getNeedStatusLabel(value.status, readonly)}
         </MetaLabel>
       </div>
@@ -117,17 +118,24 @@ export const NeedEditor = ({
           </div>
           {(value.city || value.timezone) && (
             <p className="text-sm text-muted-foreground">
-              {[value.city, value.timezone].filter(Boolean).join(' · ')}
+              {[
+                value.city,
+                value.timezone
+                  ? `Часовой пояс: ${TIMEZONE_LABELS[value.timezone] ?? value.timezone}`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')}
             </p>
           )}
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             {readonly
               ? 'Условия потребности доступны для просмотра.'
-              : 'Нажмите на выделенное слово, чтобы изменить условия. Затем сохраните изменения.'}
+              : 'Выберите параметр, чтобы изменить условия. Сохраните изменения перед поиском.'}
           </p>
           <div className="grid gap-3 border-t border-border pt-4">
             <div className="flex items-center justify-between gap-3">
-              <MetaLabel className="text-[11px]">
+              <MetaLabel className="font-sans text-sm font-medium normal-case tracking-normal">
                 Чем будет заниматься *
               </MetaLabel>
               {!readonly && !editing && (
@@ -135,7 +143,7 @@ export const NeedEditor = ({
                   type="button"
                   variant="link"
                   size="sm"
-                  className="text-brand-text"
+                  className="min-h-11 text-brand-text"
                   onClick={() => setEditing(true)}
                 >
                   <PencilIcon />

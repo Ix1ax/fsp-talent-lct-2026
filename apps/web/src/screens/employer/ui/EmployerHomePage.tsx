@@ -87,6 +87,7 @@ export const EmployerHomePage = ({
       companies={resources?.companies ?? []}
       company={board.company}
       pending={board.pending || !resources}
+      onShowNeeds={() => select('')}
       onCompany={(id) =>
         guard(() => {
           setComposer(false);
@@ -172,6 +173,7 @@ export const EmployerHomePage = ({
             showMatches={showMatches}
             loadRecommendations={gateway?.recommendations}
             onDirtyChange={dirtyChanged}
+            onStartCreate={create}
             onCreated={(active) => {
               setDirty(false);
               setComposer(false);
