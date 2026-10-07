@@ -9,10 +9,10 @@ import {
 } from '@/entities/candidate-profile';
 import type { SessionUser } from '@/entities/session';
 
-interface AccountAvatar {
+type AccountAvatar = {
   userId: string;
   url: string;
-}
+};
 
 export const useAccountAvatar = (user: SessionUser) => {
   const [avatar, setAvatar] = useState<AccountAvatar>();

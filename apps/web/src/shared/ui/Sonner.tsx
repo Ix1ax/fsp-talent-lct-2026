@@ -11,10 +11,8 @@ export const Toaster = (props: ComponentProps<typeof SonnerToaster>) => {
       theme={resolvedTheme === 'light' ? 'light' : 'dark'}
       position="top-right"
       richColors
-      closeButton
       containerAriaLabel="Уведомления"
       toastOptions={{
-        closeButtonAriaLabel: 'Закрыть уведомление',
         style: {
           background: 'var(--card)',
           color: 'var(--foreground)',

@@ -1,6 +1,6 @@
 import { clientApi } from '@/shared/api/client';
 
-import type { Catalogs, Skill, SkillsPage } from '../model/types';
+import type { Catalogs, Skill, SkillsPage } from '../model';
 export const getClientCatalogs = async (signal?: AbortSignal) =>
   (await clientApi.get<Catalogs>('/v1/catalogs', { signal })).data;
 export const getClientSkills = async (
@@ -20,3 +20,5 @@ export const getClientSkills = async (
   }
   throw new Error('Слишком много навыков. Уточните поиск.');
 };
+
+export { searchCatalogSkills } from './searchCatalogSkills';

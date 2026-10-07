@@ -1,0 +1,1 @@
+export { useCandidateConsents } from './useCandidateConsents';

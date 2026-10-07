@@ -8,18 +8,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
+import type { SearchStatus } from '@/entities/candidate-profile';
 import type { CatalogItem } from '@/entities/catalog';
 
+import { getSearchStatusHint } from '../lib';
 import type { ProfileFormValues } from '../model';
 import { ProfileField } from './ProfileField';
 
 interface ProfileEmploymentFieldsProps {
   workFormats?: CatalogItem[];
   control: Control<ProfileFormValues>;
+  canPublish: boolean;
+  busy: boolean;
+  savedSearchStatus?: SearchStatus;
 }
+
 export const ProfileEmploymentFields = ({
   workFormats,
   control,
+  canPublish,
+  busy,
+  savedSearchStatus,
 }: ProfileEmploymentFieldsProps) => {
   return (
     <>
@@ -79,7 +88,11 @@ export const ProfileEmploymentFields = ({
             label="Статус поиска"
             error={fieldState.error?.message}
           >
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={busy}
+            >
               <SelectTrigger
                 ref={field.ref}
                 id="profile-search-status"
@@ -93,15 +106,16 @@ export const ProfileEmploymentFields = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="hidden">Скрыт</SelectItem>
-                <SelectItem value="open">Активно ищу</SelectItem>
-                <SelectItem value="passive">
+                <SelectItem value="open" disabled={!canPublish}>
+                  Активно ищу
+                </SelectItem>
+                <SelectItem value="passive" disabled={!canPublish}>
                   Рассматриваю предложения
                 </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-sm text-muted-foreground">
-              Профиль скрыт, пока вы не выберете «Активно ищу» или «Рассматриваю
-              предложения» и не сохраните изменения.
+              {getSearchStatusHint(savedSearchStatus)}
             </p>
           </ProfileField>
         )}

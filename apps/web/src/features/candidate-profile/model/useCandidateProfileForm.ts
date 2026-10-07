@@ -1,11 +1,10 @@
-'use client';
-
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
 import { toast } from '@/shared/ui/Sonner';
+import type { CandidateConsents } from '@/entities/candidate-consent';
 import type { CandidateProfile } from '@/entities/candidate-profile';
 import {
   createCandidateProfile,
@@ -14,23 +13,28 @@ import {
 } from '@/entities/candidate-profile/api';
 
 import { profileSchema } from '../constants';
-import { getProfileErrorMessage } from '../lib/getProfileErrorMessage';
 import {
   buildProfilePatch,
+  getProfileConsentError,
+  getProfileErrorMessage,
   mergeProfileDraft,
   toProfileFormValues,
   toProfileInput,
-} from '../lib/profileForm';
+} from '../lib';
 import type { ProfileFormValues } from './types';
 
-interface UseCandidateProfileFormOptions {
+type UseCandidateProfileFormOptions = {
   profile?: CandidateProfile;
+  consents: CandidateConsents;
+  onConsentRequired: () => Promise<void>;
   onProfileChange: (profile: CandidateProfile | undefined) => void;
   onBusyChange: (busy: boolean) => void;
-}
+};
 
 export const useCandidateProfileForm = ({
   profile,
+  consents,
+  onConsentRequired,
   onProfileChange,
   onBusyChange,
 }: UseCandidateProfileFormOptions) => {
@@ -42,6 +46,22 @@ export const useCandidateProfileForm = ({
   });
   const values = useWatch({ control: form.control }) as ProfileFormValues;
   const { dirtyFields } = form.formState;
+  const previousStatus = useRef(profile?.searchStatus);
+  const previousProfile = useRef(profile);
+  const { reset, setValue } = form;
+  useEffect(() => {
+    if (previousProfile.current !== profile) {
+      reset(toProfileFormValues(profile), { keepDirtyValues: true });
+      previousProfile.current = profile;
+    }
+    if (
+      previousStatus.current !== undefined &&
+      previousStatus.current !== profile?.searchStatus &&
+      profile?.searchStatus === 'hidden'
+    )
+      setValue('searchStatus', 'hidden', { shouldDirty: true });
+    previousStatus.current = profile?.searchStatus;
+  }, [profile, reset, setValue]);
   const [message, setMessage] = useState('');
   const [success, setSuccess] = useState('');
   const saving = useRef(false);
@@ -55,12 +75,26 @@ export const useCandidateProfileForm = ({
   };
   const dirty =
     !profile || Object.keys(buildProfilePatch(profile, values)).length > 0;
+  const consentError = getProfileConsentError(
+    consents,
+    !!profile,
+    values.searchStatus,
+  );
 
   const save = async (values: ProfileFormValues) => {
     if (saving.current) return;
     setMessage('');
     setSuccess('');
     if (!dirty) return;
+    const permissionError = getProfileConsentError(
+      consents,
+      !!profile,
+      values.searchStatus,
+    );
+    if (permissionError) {
+      reportError(permissionError);
+      return;
+    }
     const changedFields = (
       Object.keys(values) as (keyof ProfileFormValues)[]
     ).filter((key) => dirtyFields[key]);
@@ -89,6 +123,18 @@ export const useCandidateProfileForm = ({
         }
       } else if (
         error instanceof ApiError &&
+        error.code === 'consent_required'
+      ) {
+        reportError(getProfileErrorMessage(error));
+        try {
+          await onConsentRequired();
+        } catch {
+          reportError(
+            'Не удалось обновить согласия. Ваш ввод сохранён. Повторите загрузку согласий.',
+          );
+        }
+      } else if (
+        error instanceof ApiError &&
         error.code === 'profile_not_found'
       ) {
         onProfileChange(undefined);
@@ -102,5 +148,5 @@ export const useCandidateProfileForm = ({
     }
   };
 
-  return { form, message, success, dirty, save };
+  return { form, message, success, dirty, consentError, save };
 };

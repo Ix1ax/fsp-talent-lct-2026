@@ -6,9 +6,17 @@ export {
   createCandidateProfile,
   deleteCandidateAvatar,
   getCandidateAvatar,
+  getCandidateFullProfileClient,
   getCandidateProfileClient,
   updateCandidateProfile,
   uploadCandidateAvatar,
 } from './api';
-export type { CandidateProfile, SearchStatus } from './model';
+export type {
+  CandidateCategory,
+  CandidateFullProfile,
+  CandidateProfile,
+  CandidateReadiness,
+  CandidateReadinessItem,
+  SearchStatus,
+} from './model';
 export { CANDIDATE_AVATAR_UPDATED_EVENT } from './model';

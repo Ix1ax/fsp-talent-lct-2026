@@ -1,28 +1,28 @@
-export interface CatalogItem {
+export type CatalogItem = {
   id: number;
   code: string;
   name: string;
-}
+};
 
-export interface Grade extends CatalogItem {
+export type Grade = CatalogItem & {
   rank: number;
-}
+};
 
-export interface Catalogs {
+export type Catalogs = {
   specializations: CatalogItem[];
   grades: Grade[];
   workFormats: CatalogItem[];
-}
+};
 
-export interface Skill {
+export type Skill = {
   id: string;
   code: string;
   name: string;
   aliases: string[];
-}
+};
 
-export interface SkillsPage {
+export type SkillsPage = {
   items: Skill[];
   limit: number;
   offset: number;
-}
+};
