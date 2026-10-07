@@ -5,10 +5,12 @@ package integration
 import (
 	"context"
 	"encoding/json"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
 	"strings"
 	"testing"
+
+	assessmentrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
 )
 
 func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
@@ -17,92 +19,93 @@ func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
 	repo := repository.New(f.db)
 	spec, grade := pairIDs(t, f.db, "backend", "junior")
 	var need string
-	if err := f.db.QueryRow(ctx, `INSERT INTO employer_needs(company_id,created_by,specialization_id,grade_id,title,description,status) VALUES($1,$2,$3,$4,'Go','Команда','active') RETURNING id::text`, f.company, f.ids["owner"], spec, grade).Scan(&need); err != nil {
+	if err := f.db.QueryRow(ctx, `INSERT INTO employer_needs(company_id,created_by,specialization_id,grade_id,title,description,status,salary_to_rub) VALUES($1,$2,$3,$4,'Go','Команда','active',200000) RETURNING id::text`, f.company, f.ids["owner"], spec, grade).Scan(&need); err != nil {
 		t.Fatal(err)
 	}
 	f.exec(t, `INSERT INTO need_skills(need_id,skill_id,required,weight) VALUES($1,$2,true,1)`, need, goSkill)
-	read := func(want int64) entity.RecommendationPage {
+	read := func(filter entity.Filter, want int64) entity.RecommendationPage {
 		t.Helper()
-		p, err := repo.Recommend(ctx, f.ids["owner"], f.company, need, entity.Filter{Limit: 20})
-		if err != nil || p.Total != want || int64(len(p.Items)) != want {
+		if filter.Limit == 0 {
+			filter.Limit = 20
+		}
+		p, err := repo.Recommend(ctx, f.ids["owner"], f.company, need, filter)
+		if err != nil || p.Total != want {
 			t.Fatalf("Подборка: %+v, %v", p, err)
 		}
 		return p
 	}
-	// Публичный профиль и самооценка не заменяют успешный тест.
-	read(0)
+	read(entity.Filter{}, 0)
+	// Достаточно публичного профиля и согласий: категория может быть ещё не подтверждена.
+	grantConsentRows(t, f.db, f.ids["other_candidate"], "processing", "publication")
+	f.exec(t, `INSERT INTO candidate_skills(candidate_id,skill_id,claimed_level) VALUES($1,$2,3)`, f.profiles["other_candidate"], goSkill)
+	attempts := assessmentrepo.New(f.db)
+	active, err := attempts.StartAttempt(ctx, f.ids["other_candidate"], spec, grade, retakeDays)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_ = active
 	confirmBankCandidate(t, f, "candidate")
-	p := read(1)
-	if p.Items[0].SkillMatchScore == nil || *p.Items[0].SkillMatchScore != 100 || p.Items[0].Skills[0].Source != "test" {
-		t.Fatalf("Подтверждённый стек: %+v", p)
+	p := read(entity.Filter{}, 2)
+	if p.Items[0].ID != f.profiles["candidate"] || p.Items[1].Category != nil || p.Items[1].DeclaredCategory == nil || p.Items[1].GradeStatus != "unconfirmed" || p.Items[1].TestScorePercent != nil {
+		t.Fatalf("Подтверждение и самооценка смешаны: %+v", p)
 	}
-	confirmBankCandidate(t, f, "other_candidate")
-	// Синтетический успешный результат для проверки второго ключа сортировки.
-	var lowerResult string
-	if err := f.db.QueryRow(ctx, `INSERT INTO assessment_attempts(candidate_id,template_id,specialization_id,grade_id,status,started_at,deadline_at,finished_at,time_limit_sec,pass_score,score_percent)
- SELECT candidate_id,template_id,specialization_id,grade_id,'passed',started_at,deadline_at,finished_at,time_limit_sec,pass_score,90
- FROM assessment_attempts WHERE id=(SELECT attempt_id FROM candidate_categories WHERE candidate_id=$1) RETURNING id::text`, f.profiles["other_candidate"]).Scan(&lowerResult); err != nil {
-		t.Fatal(err)
+	read(entity.Filter{GradeStatus: "confirmed"}, 1)
+	read(entity.Filter{GradeStatus: "unconfirmed"}, 1)
+	// При одинаковом сходстве подтверждение поднимает приоритет.
+	f.exec(t, `DELETE FROM skill_evidence WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["candidate"], goSkill)
+	f.exec(t, `UPDATE candidate_skills SET claimed_level=3 WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["candidate"], goSkill)
+	p = read(entity.Filter{}, 2)
+	if p.Items[0].MatchScore != p.Items[1].MatchScore || p.Items[0].GradeStatus != "confirmed" {
+		t.Fatal("При равном сходстве не учтено подтверждение")
 	}
-	f.exec(t, `UPDATE candidate_categories SET attempt_id=$2 WHERE candidate_id=$1`, f.profiles["other_candidate"], lowerResult)
-	p = read(2)
-	if p.Items[0].ID != f.profiles["candidate"] || p.Items[1].TestScorePercent != 90 {
-		t.Fatalf("Ранжирование по тесту: %+v", p)
+	// Подтверждённая категория имеет основной приоритет даже при меньшем сходстве.
+	f.exec(t, `UPDATE candidate_profiles SET salary_min_rub=300000 WHERE id=$1`, f.profiles["candidate"])
+	f.exec(t, `UPDATE candidate_profiles SET salary_min_rub=150000 WHERE id=$1`, f.profiles["other_candidate"])
+	p = read(entity.Filter{}, 2)
+	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchScore >= p.Items[1].MatchScore {
+		t.Fatal("Не сохранён основной приоритет подтверждённой категории")
 	}
-
-	// Категория сохраняется, но конкретный навык у второго кандидата теперь только заявленный.
-	f.exec(t, `DELETE FROM skill_evidence WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["other_candidate"], goSkill)
-	f.exec(t, `UPDATE candidate_skills SET claimed_level=3 WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["other_candidate"], goSkill)
-	p = read(2)
-	if p.Items[0].ID != f.profiles["candidate"] || *p.Items[1].SkillMatchScore != 50 || p.Items[1].Skills[0].Source != "claimed" || p.Items[1].Skills[0].VerifiedLevel != nil {
-		t.Fatalf("Самооценка приравнена к тесту: %+v", p)
+	if len(p.Items[0].MismatchedConditions) == 0 {
+		t.Fatal("Не объяснено несовпадение бюджета")
 	}
-	// Пагинация идёт после ранжирования; total сохраняется.
-	page, err := repo.Recommend(ctx, f.ids["owner"], f.company, need, entity.Filter{Limit: 1, Offset: 1})
-	if err != nil || page.Total != 2 || len(page.Items) != 1 || page.Items[0].ID != f.profiles["other_candidate"] {
-		t.Fatalf("Пагинация: %+v, %v", page, err)
+	read(entity.Filter{SalaryMaxRUB: int64Pointer(200000)}, 1)
+	// Недостающий обязательный навык снижает оценку, но не удаляет профиль.
+	f.exec(t, `DELETE FROM candidate_skills WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["candidate"], goSkill)
+	p = read(entity.Filter{}, 2)
+	if len(p.Items[0].MissingRequiredSkills) != 1 {
+		t.Fatal("Не отмечен недостающий обязательный навык")
 	}
-	var optional string
-	if err := f.db.QueryRow(ctx, `INSERT INTO skills(code,name,moderation_status) VALUES('matching_optional','Дополнительный навык','approved') RETURNING id::text`).Scan(&optional); err != nil {
-		t.Fatal(err)
+	strict := goSkill
+	read(entity.Filter{SkillID: &strict}, 1)
+	// Категория и отсутствие теста доступны также в обычном банке и карточке.
+	bank, err := repo.List(ctx, f.ids["owner"], f.company, entity.Filter{Limit: 20})
+	if err != nil || bank.Total != 2 || bank.Items[0].GradeStatus != "confirmed" {
+		t.Fatalf("Банк: %+v, %v", bank, err)
 	}
-	f.exec(t, `INSERT INTO need_skills(need_id,skill_id,required,weight) VALUES($1,$2,false,3)`, need, optional)
-	p = read(2)
-	if *p.Items[0].SkillMatchScore != 25 || *p.Items[1].SkillMatchScore != 12.5 || len(p.Items[0].UnknownConditions) != 5 {
-		t.Fatalf("Веса или неизвестные навыки: %+v", p)
+	card, err := repo.Get(ctx, f.ids["owner"], f.company, f.profiles["other_candidate"])
+	if err != nil || card.Category != nil || card.GradeStatus != "unconfirmed" {
+		t.Fatalf("Карточка: %+v, %v", card, err)
 	}
-	f.exec(t, `DELETE FROM candidate_skills WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["other_candidate"], goSkill)
-	read(1)
-	f.exec(t, `UPDATE candidate_consents SET revoked_at=clock_timestamp() WHERE user_id=$1 AND kind='publication'`, f.ids["candidate"])
-	read(0)
-	bankPage, err := repo.List(ctx, f.ids["owner"], f.company, entity.Filter{Limit: 20})
-	if err != nil || bankPage.Total != 1 {
-		t.Fatalf("Банк после отзыва согласия: %+v, %v", bankPage, err)
+	page := read(entity.Filter{Limit: 1, Offset: 1}, 2)
+	if len(page.Items) != 1 || page.Items[0].ID != f.profiles["other_candidate"] {
+		t.Fatal("Неверная пагинация рейтинга")
 	}
-	if _, err := repo.Get(ctx, f.ids["owner"], f.company, f.profiles["candidate"]); err == nil {
+	f.exec(t, `UPDATE candidate_consents SET revoked_at=clock_timestamp() WHERE user_id=$1 AND kind='publication'`, f.ids["other_candidate"])
+	read(entity.Filter{}, 1)
+	if _, err := repo.Get(ctx, f.ids["owner"], f.company, f.profiles["other_candidate"]); err == nil {
 		t.Fatal("Карточка доступна после отзыва согласия")
 	}
-	grantConsentRows(t, f.db, f.ids["candidate"], "publication")
-	f.exec(t, `UPDATE employer_needs SET specialization_id=(SELECT id FROM specializations WHERE code='frontend') WHERE id=$1`, need)
-	read(0)
-	f.exec(t, `UPDATE employer_needs SET specialization_id=$2,grade_id=(SELECT id FROM grades WHERE code='middle') WHERE id=$1`, need, spec)
-	read(0)
-	f.exec(t, `UPDATE employer_needs SET grade_id=$2 WHERE id=$1`, need, grade)
-	p = read(1)
-	// Грейд в потребности необязателен: NULL не должен превращаться в 500.
 	f.exec(t, `UPDATE employer_needs SET grade_id=NULL WHERE id=$1`, need)
-	p = read(1)
-	explanation := strings.Join(p.Items[0].Reasons, " ")
-	if !strings.Contains(explanation, "грейд потребностью не ограничен") {
+	p = read(entity.Filter{}, 1)
+	if !strings.Contains(strings.Join(p.Items[0].Reasons, " "), "Грейд потребностью не ограничен") {
 		t.Fatal("Не объяснено отсутствие ограничения грейда")
-	}
-	if strings.Contains(explanation, "Совпадают специализация и подтверждённый грейд") {
-		t.Fatal("Заявлено совпадение неуказанного грейда")
 	}
 	body, _ := json.Marshal(p)
 	for _, secret := range []string{"user_id", "grading_snapshot", "prompt_snapshot", "email", "phone", "answer"} {
 		if strings.Contains(string(body), secret) {
-			t.Fatalf("Лишние данные в подборке: %s", body)
+			t.Fatalf("Лишние данные: %s", body)
 		}
 	}
 }
+
+func int64Pointer(n int64) *int64 { return &n }

@@ -48,13 +48,13 @@ func TestCandidateRecommendations(t *testing.T) {
 		return page
 	}
 	p := read("")
-	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "qualification_and_conditions" || len(p.UnassessedCriteria) != 1 {
+	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "similarity" || len(p.UnassessedCriteria) != 1 {
 		t.Fatalf("Неверная подборка: %+v", p)
 	}
 	if p.Items[0].SkillMatchScore != nil || len(p.Items[0].Skills) != 0 {
 		t.Fatal("Без требований стека оценка должна отсутствовать")
 	}
-	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchedConditions != 4 || len(p.Items[0].Reasons) != 5 {
+	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchedConditions != 4 || len(p.Items[0].Reasons) != 6 {
 		t.Fatalf("Объяснение и порядок не соответствуют условиям: %+v", p.Items)
 	}
 	if p.Items[1].MatchedConditions != 1 || len(p.Items[1].UnknownConditions) != 3 {
@@ -72,12 +72,12 @@ func TestCandidateRecommendations(t *testing.T) {
 		t.Fatal("Дополнительный формат не должен отменять условия потребности")
 	}
 	f.exec(t, `UPDATE candidate_profiles SET salary_min_rub=200001 WHERE id=$1`, f.profiles["candidate"])
-	if p = read(""); p.Total != 1 || p.Items[0].ID != f.profiles["other_candidate"] {
-		t.Fatal("Кандидат выше бюджета попал в подборку")
+	if p = read(""); p.Total != 2 || len(p.Items[0].MismatchedConditions) == 0 {
+		t.Fatal("Несовпадение бюджета должно быть объяснено, а не скрывать кандидата")
 	}
 	f.exec(t, `DELETE FROM candidate_work_formats WHERE candidate_id=$1`, f.profiles["other_candidate"])
-	if p = read(""); p.Total != 0 || len(p.Items) != 0 {
-		t.Fatal("Без совпадения форматов кандидат не должен попадать в подборку")
+	if p = read(""); p.Total != 2 {
+		t.Fatal("Неизвестный формат не должен скрывать кандидата")
 	}
 	f.request(t, "GET", path, "outsider", "", 404)
 	f.request(t, "GET", path, "candidate", "", 403)

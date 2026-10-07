@@ -33,6 +33,9 @@ type matchingEvaluation struct {
 		SQLRequired bool `json:"sql_required"`
 		Expected    []string
 		Scores      []float64
+		MatchScores []float64 `json:"match_scores"`
+		GradeStatus string    `json:"grade_status"`
+		FilterGrade bool      `json:"filter_grade"`
 	}
 }
 
@@ -136,6 +139,16 @@ func TestCandidateMatchingEvaluation(t *testing.T) {
 			f.exec(t, `INSERT INTO need_skills(need_id,skill_id,required,weight) SELECT $1,id,$2,3 FROM skills WHERE code='go'`, need, scenario.GoRequired)
 			f.exec(t, `INSERT INTO need_skills(need_id,skill_id,required,weight) SELECT $1,id,$2,1 FROM skills WHERE code='sql'`, need, scenario.SQLRequired)
 			path := fmt.Sprintf("/api/v1/companies/%s/needs/%s/candidates", f.company, need)
+			if scenario.GradeStatus != "" {
+				path += "?grade_status=" + scenario.GradeStatus
+			}
+			if scenario.FilterGrade && grade != nil {
+				separator := "?"
+				if strings.Contains(path, "?") {
+					separator = "&"
+				}
+				path += fmt.Sprintf("%sgrade_id=%d", separator, *grade)
+			}
 			response := f.request(t, "GET", path, "owner", "", 200)
 			if response.Header().Get("Cache-Control") != "private, no-store" {
 				t.Fatal("Подборку нельзя кэшировать")
@@ -146,21 +159,23 @@ func TestCandidateMatchingEvaluation(t *testing.T) {
 			}
 			actual := []string{}
 			scores := []float64{}
+			matchScores := []float64{}
 			for _, item := range page.Items {
 				actual = append(actual, names[item.ID])
 				if item.SkillMatchScore == nil {
 					t.Fatal("Оценка стека отсутствует")
 				}
 				scores = append(scores, *item.SkillMatchScore)
-				if item.Category.SpecializationID != spec || grade != nil && item.Category.GradeID != *grade {
-					t.Fatal("В выдаче чужая категория")
+				matchScores = append(matchScores, item.MatchScore)
+				if item.GradeStatus == "confirmed" && item.Category == nil || item.GradeStatus == "unconfirmed" && item.Category != nil {
+					t.Fatal("Неверно обозначено подтверждение категории")
 				}
 				for _, skill := range item.Skills {
 					if skill.Source == "claimed" && skill.VerifiedLevel != nil {
 						t.Fatal("Самооценка выдана за тест")
 					}
-					if skill.Required && skill.Source == "missing" {
-						t.Fatal("Отсутствует обязательный навык")
+					if skill.Required && skill.Source == "missing" && !containsString(item.MissingRequiredSkills, skill.ID) {
+						t.Fatal("Не объяснён недостающий обязательный навык")
 					}
 				}
 				if len(item.Reasons) == 0 {
@@ -170,15 +185,15 @@ func TestCandidateMatchingEvaluation(t *testing.T) {
 					t.Fatal("Заявлено совпадение неуказанного грейда")
 				}
 			}
-			if !reflect.DeepEqual(actual, scenario.Expected) || !reflect.DeepEqual(scores, scenario.Scores) || page.Total != int64(len(scenario.Expected)) {
+			if !reflect.DeepEqual(actual, scenario.Expected) || !reflect.DeepEqual(scores, scenario.Scores) || !reflect.DeepEqual(matchScores, scenario.MatchScores) || page.Total != int64(len(scenario.Expected)) {
 				t.Fatalf("Ожидали %v (%v), получили %v (%v), total=%d", scenario.Expected, scenario.Scores, actual, scores, page.Total)
 			}
-			if page.MatchingMode != "qualification_and_conditions" || !reflect.DeepEqual(page.UnassessedCriteria, []string{"fsp_achievements"}) {
+			if page.MatchingMode != "similarity" || !reflect.DeepEqual(page.UnassessedCriteria, []string{"fsp_achievements"}) {
 				t.Fatal("Неверно описаны критерии")
 			}
 			f.request(t, "GET", path, "outsider", "", 404)
 			for offset, want := range scenario.Expected {
-				w := f.request(t, "GET", fmt.Sprintf("%s?limit=1&offset=%d", path, offset), "viewer", "", 200)
+				w := f.request(t, "GET", fmt.Sprintf("%s%slimit=1&offset=%d", path, querySeparator(path), offset), "viewer", "", 200)
 				var part entity.RecommendationPage
 				if err := json.Unmarshal(w.Body.Bytes(), &part); err != nil {
 					t.Fatal(err)
@@ -187,7 +202,22 @@ func TestCandidateMatchingEvaluation(t *testing.T) {
 					t.Fatal("Пагинация изменила порядок или total")
 				}
 			}
-			t.Logf("Ожидание совпало с выдачей: %v; покрытие стека: %v; total=%d", actual, scores, page.Total)
+			t.Logf("Ожидание совпало с выдачей: %v; покрытие стека: %v; сходство=%v; total=%d", actual, scores, matchScores, page.Total)
 		})
 	}
+}
+
+func querySeparator(path string) string {
+	if strings.Contains(path, "?") {
+		return "&"
+	}
+	return "?"
+}
+func containsString(values []string, value string) bool {
+	for _, v := range values {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }

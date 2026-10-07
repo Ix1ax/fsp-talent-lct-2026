@@ -32,7 +32,7 @@ func TestCandidateBankQualificationFilters(t *testing.T) {
 	}
 	category := fmt.Sprintf("specialization_id=%d&grade_id=%d", spec, grade)
 	check(category, 0)
-	check("skill_id="+goSkill, 0)
+	check("skill_id="+goSkill, 1)
 	check("skill_id="+goSkill+"&verified_skill_only=true", 0)
 	repo := assessmentrepo.New(f.db)
 	attempt, err := repo.StartAttempt(ctx, f.ids["candidate"], spec, grade, retakeDays)
