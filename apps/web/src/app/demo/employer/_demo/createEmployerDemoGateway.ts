@@ -3,7 +3,6 @@ import type { Company } from '@/entities/company';
 import type { EmployerNeed } from '@/entities/employer-need';
 import type { EmployerGateway } from '@/screens/employer';
 
-// Вымышленные данные для демонстрации: записи живут только в памяти этой вкладки.
 export const createEmployerDemoGateway = (
   scenario = 'filled',
 ): EmployerGateway => {
@@ -25,6 +24,7 @@ export const createEmployerDemoGateway = (
       { id: 3, code: 'office', name: 'Офис' },
     ],
   };
+
   const skills: Skill[] = [
     'React',
     'TypeScript',
@@ -40,35 +40,38 @@ export const createEmployerDemoGateway = (
     code: name.toLowerCase(),
     aliases: [],
   }));
-  let companies: Company[] =
-    scenario === 'no-company'
-      ? []
-      : [
-          {
-            id: '00000000-0000-4000-8000-000000000001',
-            name: 'Технологии Севера',
-            contactEmail: 'team@example.org',
-            description: 'Разрабатываем сервисы для бизнеса.',
-            inn: null,
-            contactUrl: null,
-            logoFileId: null,
-            verificationStatus: 'pending',
-            createdAt: '2026-10-06T10:00:00Z',
-            memberRole: scenario === 'viewer' ? 'viewer' : 'owner',
-          },
-          {
-            id: '00000000-0000-4000-8000-000000000002',
-            name: 'Скаут Лаб',
-            contactEmail: 'lab@example.org',
-            description: null,
-            inn: null,
-            contactUrl: null,
-            logoFileId: null,
-            verificationStatus: 'pending',
-            createdAt: '2026-10-06T10:00:00Z',
-            memberRole: 'recruiter',
-          },
-        ];
+
+  let companies: Company[] = [];
+
+  if (scenario !== 'no-company') {
+    companies = [
+      {
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Технологии Севера',
+        contactEmail: 'team@example.org',
+        description: 'Разрабатываем сервисы для бизнеса.',
+        inn: null,
+        contactUrl: null,
+        logoFileId: null,
+        verificationStatus: 'pending',
+        createdAt: '2026-10-06T10:00:00Z',
+        memberRole: scenario === 'viewer' ? 'viewer' : 'owner',
+      },
+      {
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Скаут Лаб',
+        contactEmail: 'lab@example.org',
+        description: null,
+        inn: null,
+        contactUrl: null,
+        logoFileId: null,
+        verificationStatus: 'pending',
+        createdAt: '2026-10-06T10:00:00Z',
+        memberRole: 'recruiter',
+      },
+    ];
+  }
+
   const base = {
     companyId: companies[0]?.id ?? '',
     createdBy: 'demo',
@@ -88,59 +91,61 @@ export const createEmployerDemoGateway = (
     description:
       'Развитие личного кабинета клиентов на React и TypeScript, поддержка дизайн-системы. Первые три месяца — перенос модуля отчётов.',
   };
-  let needs: EmployerNeed[] =
-    scenario === 'empty'
-      ? []
-      : [
-          {
-            ...base,
-            id: '00000000-0000-4000-8000-000000000014',
-            title: 'Frontend-разработчик в команду платформы',
-          },
-          {
-            ...base,
-            id: '00000000-0000-4000-8000-000000000012',
-            title: 'Backend-разработчик на Go',
-            specializationId: 2,
-            gradeId: 3,
-            salaryFromRub: null,
-            salaryToRub: null,
-            workFormatIds: [2],
-            city: 'Мурманск',
-            skills: [{ skillId: skills[3].id, required: true, weight: 1 }],
-            description:
-              'Сервис расчёта маршрутов и интеграции с перевозчиками.',
-          },
-          {
-            ...base,
-            id: '00000000-0000-4000-8000-000000000009',
-            title: 'QA-инженер по автотестам',
-            specializationId: 3,
-            gradeId: 1,
-            salaryFromRub: 90000,
-            salaryToRub: null,
-            workFormatIds: [3],
-            city: 'Петрозаводск',
-          },
-          {
-            ...base,
-            id: '00000000-0000-4000-8000-000000000015',
-            title: 'Аналитик данных',
-            specializationId: 4,
-            gradeId: null,
-            status: 'draft',
-            salaryFromRub: null,
-            salaryToRub: null,
-            workFormatIds: [],
-            skills: [{ skillId: skills[6].id, required: true, weight: 1 }],
-          },
-          {
-            ...base,
-            id: '00000000-0000-4000-8000-000000000004',
-            title: 'DevOps-инженер',
-            status: 'archived',
-          },
-        ];
+
+  let needs: EmployerNeed[] = [];
+
+  if (scenario !== 'empty') {
+    needs = [
+      {
+        ...base,
+        id: '00000000-0000-4000-8000-000000000014',
+        title: 'Frontend-разработчик в команду платформы',
+      },
+      {
+        ...base,
+        id: '00000000-0000-4000-8000-000000000012',
+        title: 'Backend-разработчик на Go',
+        specializationId: 2,
+        gradeId: 3,
+        salaryFromRub: null,
+        salaryToRub: null,
+        workFormatIds: [2],
+        city: 'Мурманск',
+        skills: [{ skillId: skills[3].id, required: true, weight: 1 }],
+        description: 'Сервис расчёта маршрутов и интеграции с перевозчиками.',
+      },
+      {
+        ...base,
+        id: '00000000-0000-4000-8000-000000000009',
+        title: 'QA-инженер по автотестам',
+        specializationId: 3,
+        gradeId: 1,
+        salaryFromRub: 90000,
+        salaryToRub: null,
+        workFormatIds: [3],
+        city: 'Петрозаводск',
+      },
+      {
+        ...base,
+        id: '00000000-0000-4000-8000-000000000015',
+        title: 'Аналитик данных',
+        specializationId: 4,
+        gradeId: null,
+        status: 'draft',
+        salaryFromRub: null,
+        salaryToRub: null,
+        workFormatIds: [],
+        skills: [{ skillId: skills[6].id, required: true, weight: 1 }],
+      },
+      {
+        ...base,
+        id: '00000000-0000-4000-8000-000000000004',
+        title: 'DevOps-инженер',
+        status: 'archived',
+      },
+    ];
+  }
+
   return {
     authorize: async () => null,
     catalogs: async () => catalogs,

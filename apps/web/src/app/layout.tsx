@@ -4,18 +4,22 @@ import { Onest } from 'next/font/google';
 import localFont from 'next/font/local';
 
 import { cn } from '@/shared/lib/utils';
-import { Toaster } from '@/shared/ui/Sonner';
-import { TooltipProvider } from '@/shared/ui/Tooltip';
+import { Toaster, TooltipProvider } from '@/shared/ui';
 
 import { AuthBootstrap } from './AuthBootstrap';
 import { ThemeProvider } from './ThemeProvider';
 
 import './globals.css';
 
+interface RootLayoutProps {
+  children: ReactNode;
+}
+
 const onest = Onest({
   subsets: ['latin', 'cyrillic'],
   variable: '--font-onest',
 });
+
 const jetbrains = localFont({
   src: [
     { path: './fonts/JetBrainsMono-Regular.ttf', weight: '400' },
@@ -32,11 +36,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+const RootLayout = ({ children }: Readonly<RootLayoutProps>) => {
   return (
     <html
       lang="ru"
@@ -53,4 +53,6 @@ export default function RootLayout({
       </body>
     </html>
   );
-}
+};
+
+export default RootLayout;

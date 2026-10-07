@@ -1,7 +1,13 @@
 'use client';
+
 import type { ReactNode } from 'react';
 import { ThemeProvider as Provider } from 'next-themes';
-export const ThemeProvider = ({ children }: { children: ReactNode }) => (
+
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+export const ThemeProvider = ({ children }: ThemeProviderProps) => (
   <Provider
     attribute="class"
     defaultTheme="dark"

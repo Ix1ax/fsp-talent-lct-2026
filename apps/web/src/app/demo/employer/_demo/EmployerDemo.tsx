@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from 'react';
 
 import {
@@ -12,11 +13,14 @@ import { AccountAvatar } from '@/shared/ui/AccountAvatar';
 import { EmployerHomePage } from '@/screens/employer';
 
 import { createEmployerDemoGateway } from './createEmployerDemoGateway';
+
 interface EmployerDemoProps {
   scenario: string;
 }
+
 export const EmployerDemo = ({ scenario }: EmployerDemoProps) => {
   const [gateway] = useState(() => createEmployerDemoGateway(scenario));
+
   return (
     <EmployerHomePage
       homeHref="/demo/employer"
