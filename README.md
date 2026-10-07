@@ -678,6 +678,78 @@ cd apps/api
 go test -race -tags=integration ./tests/integration -run 'TestCareer|TestFullProfileCareer'
 ```
 
+### Импорт резюме из PDF
+
+`POST /api/v1/me/profile/import/resume` принимает PDF резюме с hh.ru и возвращает **черновик** профиля. Метод ничего не сохраняет:
+ни файл, ни разобранные данные. Фронт показывает черновик в формах, кандидат правит его и сохраняет обычными методами
+(`POST /me/profile`, `PUT /me/skills/{id}`, `PUT /me/contacts`, `POST /me/experience`, `POST /me/education`). Роль `candidate`, нужно
+активное согласие `processing` (в файле персональные данные), профиль не обязателен: импорт можно запускать при онбординге до
+создания профиля. Ответ не кешируется (`Cache-Control: private, no-store`).
+
+Запрос `multipart/form-data` с одним файлом в поле `file` и без других полей: PDF до 5 МиБ, до 10 страниц, с текстовым слоем
+(скан не читается).
+
+```json
+{
+  "draft": {
+    "headline": "Backend разработчик (Go)",
+    "city": "Тверь",
+    "summary": "Текст из блока «Обо мне»",
+    "salary_min_rub": null,
+    "work_format_ids": [3, 2],
+    "contacts": {"full_name": "Иванов Иван", "email": "ivan@example.test", "phone": "+7 (900) 000-00-00", "telegram": "@ivanov"},
+    "skills": [{"name": "PostgreSQL", "skill_id": "<uuid>"}, {"name": "ASP.NET Core", "skill_id": null}],
+    "experience": [{"company": "ООО Пример", "position": "Go-разработчик", "started_on": "2022-11", "ended_on": null, "description": "…"}],
+    "education": [{"level": "higher", "institution": "Университет «Дубна»", "specialty": "Программная инженерия", "graduation_year": 2027}],
+    "languages": [{"name": "Английский", "level": "B1"}]
+  },
+  "warnings": ["Не удалось разобрать период места работы «…»: запись пропущена"]
+}
+```
+
+- Поля, которые не удалось определить, равны `null` (строки и числа) или `[]` (списки); `warnings` всегда массив. Показывайте
+  предупреждения кандидату рядом с формами.
+- `experience` и `education` в том же формате, что тела `POST /me/experience` и `POST /me/education`: можно отправлять без преобразования
+  (месяцы `ГГГГ-ММ`, уровни образования как в схеме).
+- Навыки сопоставляются со справочником по названию, коду и алиасам без учёта регистра (только одобренные и активные).
+  `skill_id: null` значит, что такого навыка нет: предложите добавить его через `POST /me/skills` (он уйдёт на модерацию).
+  Навыки из черновика с `skill_id` добавляются через `PUT /me/skills/{skill_id}` с уровнем `claimed_level`, которого в резюме нет:
+  его выбирает кандидат.
+- `work_format_ids` соответствуют справочнику форматов работы (`GET /api/v1/catalogs`).
+- **Точность.** Должность, город, формат работы, контакты, навыки и языки распознаются надёжно. Места работы и образование
+  разбираются приблизительно, потому что макет PDF может отличаться: кандидат всегда проверяет их перед сохранением. Если
+  hh.ru изменит шаблон, часть данных не распознается и появятся предупреждения.
+- Из файла берётся только текст. Файл и черновик нигде не хранятся.
+
+**Ограничения.** Не больше двух разборов одновременно: при занятости `503 import_busy` с заголовком `Retry-After: 5`, повторите
+запрос через несколько секунд. Разбор ограничен по времени (10 секунд), повреждённый файл не роняет сервер.
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `validation_error` | 400 | Нет поля `file`, не multipart, лишние поля |
+| `unauthorized` | 401 | Нет действительного токена |
+| `forbidden` | 403 | Роль не candidate |
+| `user_inactive` | 403 | Пользователь заблокирован |
+| `consent_required` | 409 | Нет активного согласия `processing` |
+| `resume_too_large` | 413 | Файл больше 5 МиБ |
+| `resume_unrecognized` | 422 | Не PDF, повреждён, без текста (скан) или не похож на резюме hh.ru |
+| `import_busy` | 503 | Идут другие разборы |
+| `candidate_unavailable` | 503 | Сервис не настроен |
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/me/profile/import/resume" \
+  -H "Authorization: Bearer $TOKEN" -F "file=@./resume.pdf;type=application/pdf"
+```
+
+Тестовый PDF в `apps/api/internal/candidate/resume/testdata/` синтетический (выдуманный человек), его генерирует
+`gen_fixture.py` в том же каталоге. Тесты:
+
+```sh
+cd apps/api
+go test -race ./internal/candidate/resume ./internal/candidate/service
+go test -race -tags=integration ./tests/integration -run 'TestResume'
+```
+
 ### Тестирование кандидата
 
 Кандидат выбирает специализацию и грейд, проходит автопроверяемый тест из опубликованного шаблона, и результат подтверждает

@@ -4603,6 +4603,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/v1/me/profile/import/resume:
+    post:
+      operationId: importMyResume
+      summary: "Импорт резюме из PDF: черновик профиля"
+      tags: [Кандидаты — опыт и образование]
+      security:
+        - bearerAuth: []
+        - keycloakOAuth:
+            - openid
+            - email
+      description: "Принимает PDF резюме с hh.ru и возвращает черновик профиля. Ничего не сохраняет: ни файл, ни разобранные данные. Фронт показывает черновик в формах, кандидат правит его и сохраняет обычными методами профиля, навыков, контактов, опыта и образования. Нужны активный кандидат и активное согласие processing (профиль не обязателен). Разбор по лучшей попытке: что не удалось распознать, остаётся пустым и сопровождается предупреждением в warnings; опыт работы и образование разбираются приблизительно, их нужно проверять. Одновременно разбираются не больше двух файлов, при занятости 503 import_busy с Retry-After. Ответ содержит персональные данные и не кешируется."
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              additionalProperties: false
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "PDF резюме, скачанный с hh.ru (с текстовым слоем, не скан): до 5 МиБ, до 10 страниц."
+      responses:
+        '200':
+          description: "Черновик профиля."
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: private, no-store
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeImportResult'
+        '400':
+          description: "Нет поля file, не multipart или лишние поля (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужен действительный access token и подтверждённый email."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Нет активного согласия processing (consent_required)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Файл больше 5 МиБ (resume_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: "Файл не PDF, повреждён, без текстового слоя или не похож на резюме hh.ru (resume_unrecognized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Сервис не настроен (candidate_unavailable) или идут другие разборы (import_busy, заголовок Retry-After: 5)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /api/v1/me/profile/full:
     get:
       operationId: getMyFullProfile
@@ -7179,6 +7263,67 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateSkill'
+    ResumeDraftSkill:
+      type: object
+      required: [name, skill_id]
+      properties:
+        name: {type: string, example: PostgreSQL}
+        skill_id: {type: string, format: uuid, nullable: true, description: "Навык из справочника; null, если такого нет: фронт может предложить его через POST /me/skills."}
+    ResumeDraftLanguage:
+      type: object
+      required: [name, level]
+      properties:
+        name: {type: string, example: Английский}
+        level: {type: string, example: B1, description: "Код CEFR (B1) или текст из резюме (Родной)."}
+    ResumeDraftContacts:
+      type: object
+      required: [full_name, email, phone, telegram]
+      properties:
+        full_name: {type: string, nullable: true}
+        email: {type: string, nullable: true}
+        phone: {type: string, nullable: true}
+        telegram: {type: string, nullable: true, example: "@ivanov"}
+    ResumeDraft:
+      type: object
+      required: [headline, city, summary, salary_min_rub, work_format_ids, contacts, skills, experience, education, languages]
+      properties:
+        headline: {type: string, nullable: true, maxLength: 200, description: "Желаемая должность."}
+        city: {type: string, nullable: true, maxLength: 200}
+        summary: {type: string, nullable: true, maxLength: 10000, description: "Текст из блока «Обо мне»."}
+        salary_min_rub: {type: integer, nullable: true}
+        work_format_ids:
+          type: array
+          items: {type: integer}
+        contacts:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/ResumeDraftContacts'
+        skills:
+          type: array
+          maxItems: 50
+          items: {$ref: '#/components/schemas/ResumeDraftSkill'}
+        experience:
+          type: array
+          maxItems: 30
+          description: "В формате тела POST /me/experience: можно отправлять без преобразования."
+          items: {$ref: '#/components/schemas/CandidateExperienceInput'}
+        education:
+          type: array
+          maxItems: 10
+          description: "В формате тела POST /me/education: можно отправлять без преобразования."
+          items: {$ref: '#/components/schemas/CandidateEducationInput'}
+        languages:
+          type: array
+          items: {$ref: '#/components/schemas/ResumeDraftLanguage'}
+    ResumeImportResult:
+      type: object
+      required: [draft, warnings]
+      properties:
+        draft: {$ref: '#/components/schemas/ResumeDraft'}
+        warnings:
+          type: array
+          description: "Что не удалось распознать или пришлось пропустить; показывайте кандидату."
+          items: {type: string}
     CandidateExperienceInput:
       type: object
       additionalProperties: false
