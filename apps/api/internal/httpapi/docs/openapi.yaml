@@ -2140,6 +2140,22 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: specialization_id
+          in: query
+          description: ID специализации текущей категории, подтверждённой успешным тестом. Самооценка не учитывается.
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: grade_id
+          in: query
+          description: ID подтверждённого грейда; точное совпадение текущей категории.
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: skill_id
+          in: query
+          description: UUID активного одобренного навыка. По умолчанию подходят заявленные и подтверждённые навыки.
+          schema: {type: string, format: uuid}
+        - name: verified_skill_only
+          in: query
+          description: При true навык должен иметь подтверждение тестом. Требует skill_id.
+          schema: {type: boolean, default: false}
       responses:
         '200':
           description: Успешно
@@ -2210,7 +2226,7 @@ paths:
       operationId: recommendCandidatesForNeed
       summary: Предварительная подборка по условиям потребности
       tags: [Банк кандидатов]
-      description: "Только активная потребность этой компании. Несовместимые форматы и известные ожидания выше salary_to_rub исключаются. Неизвестная зарплата допускается, если не задан явный salary_max_rub. Дополнительные фильтры сужают подборку. Сортировка по числу совпадений формата, бюджета, города и часового пояса по убыванию, затем по UUID по возрастанию; пагинация после сортировки. Это подбор условий работы, а не квалификации: специализация, подтверждённый грейд, навыки, результаты тестов и достижения ФСП пока не оцениваются."
+      description: "Только активная потребность этой компании. Несовместимые форматы и известные ожидания выше salary_to_rub исключаются. Неизвестная зарплата допускается, если не задан явный salary_max_rub. Дополнительные фильтры сужают подборку. Сортировка по числу совпадений формата, бюджета, города и часового пояса по убыванию, затем по UUID по возрастанию; пагинация после сортировки. Фильтры специализации, подтверждённого грейда и навыка применяются явно через query-параметры. Автоматическое сравнение квалификации с потребностью и ранжирование по тестам и достижениям ФСП пока не выполняются."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2244,6 +2260,22 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: specialization_id
+          in: query
+          description: ID специализации текущей категории, подтверждённой успешным тестом. Самооценка не учитывается.
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: grade_id
+          in: query
+          description: ID подтверждённого грейда; точное совпадение текущей категории.
+          schema: {type: integer, minimum: 1, maximum: 32767}
+        - name: skill_id
+          in: query
+          description: UUID активного одобренного навыка. По умолчанию подходят заявленные и подтверждённые навыки.
+          schema: {type: string, format: uuid}
+        - name: verified_skill_only
+          in: query
+          description: При true навык должен иметь подтверждение тестом. Требует skill_id.
+          schema: {type: boolean, default: false}
       responses:
         '200':
           description: Успешно

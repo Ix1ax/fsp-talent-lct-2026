@@ -17,3 +17,15 @@ func TestParseFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestQualificationFilter(t *testing.T) {
+	f, err := ParseFilter("specialization_id=1&grade_id=2&skill_id=3fa85f64-5717-4562-b3fc-2c963f66afa6&verified_skill_only=true")
+	if err != nil || *f.SpecializationID != 1 || *f.GradeID != 2 || !f.VerifiedSkillOnly || f.SkillID == nil {
+		t.Fatalf("Неверный фильтр: %+v, %v", f, err)
+	}
+	for _, q := range []string{"specialization_id=0", "grade_id=32768", "grade_id=1&grade_id=2", "skill_id=wrong", "verified_skill_only=true", "skill_id=3fa85f64-5717-4562-b3fc-2c963f66afa6&verified_skill_only=1"} {
+		if _, err := ParseFilter(q); err == nil {
+			t.Errorf("Принят некорректный фильтр: %s", q)
+		}
+	}
+}

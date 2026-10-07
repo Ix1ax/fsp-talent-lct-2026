@@ -2,6 +2,7 @@ package entity
 
 import (
 	"fmt"
+	"github.com/jackc/pgx/v5/pgtype"
 	"net/url"
 	"strconv"
 	"strings"
@@ -13,6 +14,9 @@ type Filter struct {
 	WorkFormatIDs                            []int16
 	ExperienceMinMonths, ExperienceMaxMonths *int
 	SalaryMaxRUB                             *int64
+	SpecializationID, GradeID                *int16
+	SkillID                                  *string
+	VerifiedSkillOnly                        bool
 }
 
 func ParseFilter(raw string) (Filter, error) {
@@ -21,7 +25,7 @@ func ParseFilter(raw string) (Filter, error) {
 	if err != nil {
 		return f, fmt.Errorf("Некорректная строка параметров")
 	}
-	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true}
+	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true}
 	for key, values := range q {
 		if !allowed[key] {
 			return f, fmt.Errorf("Неизвестный параметр: %s", key)
@@ -70,6 +74,38 @@ func ParseFilter(raw string) (Filter, error) {
 			}
 			seen[int16(n)] = true
 			f.WorkFormatIDs = append(f.WorkFormatIDs, int16(n))
+		}
+	}
+
+	for _, name := range []string{"specialization_id", "grade_id"} {
+		if v := q.Get(name); v != "" {
+			n, e := strconv.ParseInt(v, 10, 16)
+			if e != nil || n <= 0 {
+				return f, fmt.Errorf("Параметр %s должен быть положительным ID", name)
+			}
+			id := int16(n)
+			if name == "specialization_id" {
+				f.SpecializationID = &id
+			} else {
+				f.GradeID = &id
+			}
+		}
+	}
+	if v := q.Get("skill_id"); v != "" {
+		var id pgtype.UUID
+		if id.Scan(v) != nil || !id.Valid {
+			return f, fmt.Errorf("Навык должен иметь корректный UUID")
+		}
+		normalized := id.String()
+		f.SkillID = &normalized
+	}
+	if v := q.Get("verified_skill_only"); v != "" {
+		if v != "true" && v != "false" {
+			return f, fmt.Errorf("verified_skill_only должен быть true или false")
+		}
+		f.VerifiedSkillOnly = v == "true"
+		if f.SkillID == nil {
+			return f, fmt.Errorf("Для verified_skill_only укажите skill_id")
 		}
 	}
 	return f, nil

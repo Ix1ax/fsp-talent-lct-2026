@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -52,7 +53,7 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	if err = authorize(ctx, tx, userID, companyID); err != nil {
 		return page, err
 	}
-	if err = validateFormats(ctx, tx, filter.WorkFormatIDs); err != nil {
+	if err = validateFilter(ctx, tx, filter); err != nil {
 		return page, err
 	}
 	conditions := visible + filterConditions
@@ -62,10 +63,13 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 		formats = []int16{}
 	}
 	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, formats}
+	extra, extraArgs := qualificationConditions(filter, len(args))
+	conditions += extra
+	args = append(args, extraArgs...)
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+` ORDER BY p.id LIMIT $5 OFFSET $6`, append(args, filter.Limit, filter.Offset)...)
+	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+fmt.Sprintf(` ORDER BY p.id LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
 
 	if err != nil {
 		return page, err

@@ -35,7 +35,7 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 	if err != nil {
 		return page, err
 	}
-	if err = validateFormats(ctx, tx, filter.WorkFormatIDs); err != nil {
+	if err = validateFilter(ctx, tx, filter); err != nil {
 		return page, err
 	}
 	selected := filter.WorkFormatIDs
@@ -47,18 +47,21 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
  AND (cardinality($5::smallint[])=0 OR EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($5::smallint[])))
  AND ($6::bigint IS NULL OR p.salary_min_rub IS NULL OR p.salary_min_rub <= $6)`
 	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, selected, formats, salary}
-	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
+	extra, extraArgs := qualificationConditions(filter, len(args))
+	conditions += extra
+	countArgs := append(args, extraArgs...)
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, countArgs...).Scan(&page.Total); err != nil {
 		return page, err
 	}
 	// Неизвестные значения дают NULL и не прибавляют совпадений. Город сравниваем без учёта регистра.
 	signals := `CASE WHEN cardinality($5::smallint[])>0 THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($5::smallint[])) END AS format_match,
  CASE WHEN $6::bigint IS NOT NULL THEN p.salary_min_rub <= $6 END AS salary_match,
- CASE WHEN $7::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($7)) END AS city_match,
- CASE WHEN $8::text IS NOT NULL THEN p.timezone=$8 END AS timezone_match`
+ CASE WHEN $11::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($11)) END AS city_match,
+ CASE WHEN $12::text IS NOT NULL THEN p.timezone=$12 END AS timezone_match`
 	query := `SELECT * FROM (SELECT ` + columns + `,` + signals + conditions + `) matched
  ORDER BY (CASE WHEN format_match THEN 1 ELSE 0 END + CASE WHEN salary_match THEN 1 ELSE 0 END + CASE WHEN city_match THEN 1 ELSE 0 END + CASE WHEN timezone_match THEN 1 ELSE 0 END) DESC,id
- LIMIT $9 OFFSET $10`
-	rows, err := tx.Query(ctx, query, append(args, city, timezone, filter.Limit, filter.Offset)...)
+ LIMIT $13 OFFSET $14`
+	rows, err := tx.Query(ctx, query, append(countArgs, city, timezone, filter.Limit, filter.Offset)...)
 	if err != nil {
 		return page, err
 	}
