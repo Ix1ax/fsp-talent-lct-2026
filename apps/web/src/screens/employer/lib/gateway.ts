@@ -1,10 +1,6 @@
 import { ensureClientAccessToken } from '@/shared/api/client';
 import { getClientCatalogs, getClientSkills } from '@/entities/catalog';
-import {
-  createCompany,
-  listCompanies,
-  updateCompany,
-} from '@/entities/company';
+import { createCompany, getCompanies, updateCompany } from '@/entities/company';
 import {
   archiveNeed,
   createNeed,
@@ -17,7 +13,7 @@ export const employerGateway = {
   authorize: ensureClientAccessToken,
   catalogs: getClientCatalogs,
   skills: getClientSkills,
-  companies: listCompanies,
+  companies: getCompanies,
   createCompany,
   updateCompany,
   needs: listNeeds,

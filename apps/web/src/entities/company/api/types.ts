@@ -1,5 +1,6 @@
 import type { createCompany, updateCompany } from './company';
-export interface CompanyMutationApi {
+
+export type CompanyMutationApi = {
   createCompany: typeof createCompany;
   updateCompany: typeof updateCompany;
-}
+};

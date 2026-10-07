@@ -1,3 +1,3 @@
-export { createCompany, listCompanies, updateCompany } from './api/company';
-export type { CompanyMutationApi } from './api/types';
-export type { Company, CompanyInput, MemberRole } from './model/types';
+export type { CompanyMutationApi } from './api';
+export { createCompany, getCompanies, updateCompany } from './api';
+export type { Company, CompanyInput, MemberRole } from './model';

@@ -1,5 +1,6 @@
 export type MemberRole = 'owner' | 'recruiter' | 'viewer';
-export interface Company {
+
+export type Company = {
   id: string;
   name: string;
   description: string | null;
@@ -10,11 +11,12 @@ export interface Company {
   verificationStatus: string;
   createdAt: string;
   memberRole: MemberRole;
-}
-export interface CompanyInput {
+};
+
+export type CompanyInput = {
   name: string;
   contactEmail: string;
   description?: string | null;
   inn?: string | null;
   contactUrl?: string | null;
-}
+};
