@@ -740,3 +740,100 @@ curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/candidates/$CANDIDA
 cd apps/api
 go test -race -tags=integration ./internal/httpapi -run '^TestCandidate(Bank|Recommendations)'
 ```
+
+### Банк заданий и шаблоны тестов (админка)
+
+Администратор создаёт задания и шаблоны тестов и публикует их. Кандидаты и работодатели эти данные пока не видят: прохождение
+тестов строится позже поверх опубликованных шаблонов. Все методы под `/api/v1/admin/assessments`, нужна действующая админская
+сессия (`Authorization: Bearer <admin access token>`, как у `/api/v1/admin/catalogs`), ответы не кешируются.
+
+| Метод | Путь | Что делает |
+| --- | --- | --- |
+| POST | `/questions` | Создать задание и версию 1 (черновик) |
+| GET | `/questions` | Список: фильтры `skill_id`, `difficulty`, `kind`, `active`, `status`, `limit`, `offset` |
+| GET | `/questions/{id}` | Задание со всеми версиями, текстами и правилами проверки |
+| POST | `/questions/{id}/versions` | Новая версия (черновик) |
+| POST | `/questions/{id}/versions/{version}/publish` | Опубликовать версию |
+| POST | `/questions/{id}/archive` | Выключить задание |
+| POST | `/templates` | Создать шаблон теста (черновик) вместе с составом |
+| GET | `/templates` | Список: фильтры `specialization_id`, `grade_id`, `status` |
+| GET | `/templates/{id}` | Шаблон с составом и числом доступных заданий по каждой строке |
+| POST | `/templates/{id}/publish` | Опубликовать шаблон |
+| POST | `/templates/{id}/archive` | Архивировать шаблон |
+
+**Порядок работы:** создать задание, при необходимости добавить версию, опубликовать версию, затем создать шаблон с составом
+и опубликовать его. Опубликованное **не меняется**: исправление это новая версия (черновик), которую нужно опубликовать.
+Публикация новой версии архивирует предыдущую опубликованную версию этого задания. Публикация шаблона архивирует ранее
+опубликованный шаблон той же пары «специализация и грейд». Редактировать черновики на месте нельзя. Неизменяемость
+гарантирует и база данных: опубликованное содержимое не изменить даже прямым запросом.
+
+**Виды заданий.** Все задания проверяются автоматически, чужой код нигде не запускается. Сложность `difficulty` от 1 до 5.
+
+```json
+{"skill_id":"<uuid навыка>","difficulty":1,"kind":"choice",
+ "prompt":{"text":"Какое слово запускает горутину?","options":[{"id":"a","text":"go"},{"id":"b","text":"async"}]},
+ "grading_spec":{"type":"choice","correct":["a"],"multiple":false}}
+```
+
+```json
+{"skill_id":"<uuid навыка>","difficulty":1,"kind":"short_answer",
+ "prompt":{"text":"Какая команда показывает состояние рабочего каталога?"},
+ "grading_spec":{"type":"text","accepted":["git status"],"case_sensitive":false}}
+```
+
+```json
+{"skill_id":"<uuid навыка>","difficulty":2,"kind":"code_reading",
+ "prompt":{"text":"Что выведет код?","code":"x := 5\ny := &x\n*y = 7\nfmt.Println(x)","language":"go"},
+ "grading_spec":{"type":"text","accepted":["7"]}}
+```
+
+- `choice`: нужны `options` (от 2 до 10, у каждого `id` из латиницы, цифр, дефиса или подчёркивания и `text`), правила `type: choice`;
+  при `multiple: false` правильный вариант ровно один.
+- `short_answer`: без `options`, правила `type: text`, от 1 до 20 допустимых ответов (сравнение после обрезки пробелов).
+- `code_reading`: обязателен `code`; правила либо `choice` (тогда нужны `options`), либо `text` (без `options`).
+- Правила проверки (`grading_spec`) видит только администратор: кандидату они не передаются. Лишние поля отвергаются (400).
+
+**Шаблон теста.** `POST /templates`:
+
+```json
+{"specialization_id":1,"grade_id":2,"time_limit_sec":1800,"pass_score":60,
+ "blueprint":[{"skill_id":"<uuid>","difficulty":1,"question_count":4,"weight":1},
+              {"skill_id":"<uuid>","difficulty":2,"question_count":2,"weight":2}]}
+```
+
+`time_limit_sec` от 300 до 14400, `pass_score` в процентах (1-100) от взвешенной суммы, в составе от 1 до 30 строк, пары навык
+и сложность не повторяются, `weight` от 0.01 до 100. Версия пары назначается автоматически. При публикации для каждой строки
+состава нужно не меньше `question_count` активных заданий с опубликованной версией (черновики, архивные версии и выключенные
+задания не считаются), иначе приходит 409 с перечнем нехватки:
+
+```json
+{"error":{"code":"insufficient_questions","message":"В банке не хватает опубликованных заданий для состава шаблона"},
+ "shortages":[{"skill_id":"<uuid>","difficulty":1,"required":4,"available":2}]}
+```
+
+| Код | Статус | Когда |
+| --- | --- | --- |
+| `unauthorized` | 401 | Нет админской сессии |
+| `validation_error` | 400 | Неверное тело, UUID, номер версии, фильтр, неизвестный навык, специализация или грейд |
+| `assessment_not_found` | 404 | Задание, версия или шаблон не найдены |
+| `assessment_conflict` | 409 | Версия не черновик, задание выключено, шаблон не черновик, повторная архивация |
+| `insufficient_questions` | 409 | Не хватает опубликованных заданий для состава шаблона |
+| `request_too_large` | 413 | Тело больше 2 МиБ |
+| `assessments_unavailable` | 503 | Банк заданий не настроен |
+
+**Демо-банк.** Миграция создаёт два опубликованных шаблона уровня Junior и 32 задания на русском: backend (Go, SQL, Git, 30 минут,
+проходной балл 60) и frontend (JavaScript, TypeScript, React, 25 минут, проходной балл 60). Остальное создаётся через API.
+Действия администраторов пишутся в журнал `assessment_events` (без текстов заданий и правил).
+
+```sh
+curl --fail-with-body -X POST "$API_URL/api/v1/admin/assessments/questions" \
+  -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"skill_id":"'"$SKILL_ID"'","difficulty":1,"kind":"short_answer","prompt":{"text":"Какая команда создаёт коммит?"},"grading_spec":{"type":"text","accepted":["git commit"]}}'
+```
+
+Интеграционные тесты используют `TEST_DATABASE_URL`:
+
+```sh
+cd apps/api
+go test -race -tags=integration ./tests/integration -run 'TestAssessment'
+```

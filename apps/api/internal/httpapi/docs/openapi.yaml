@@ -4091,6 +4091,603 @@ paths:
                       code: admin_unavailable
                       message: Сервис админки не настроен
 
+  /api/v1/admin/assessments/questions:
+    get:
+      operationId: listAssessmentQuestions
+      summary: "Список заданий банка"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Фильтры по навыку, сложности, виду, активности и статусу версии. В списке версии не возвращаются."
+      parameters:
+        - {name: skill_id, in: query, schema: {type: string, format: uuid}}
+        - {name: difficulty, in: query, schema: {type: integer, minimum: 1, maximum: 5}}
+        - {name: kind, in: query, schema: {type: string, enum: [choice, code_reading, short_answer]}}
+        - {name: active, in: query, schema: {type: boolean}}
+        - {name: status, in: query, description: "Есть версия с таким статусом.", schema: {type: string, enum: [draft, published, archived]}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, maximum: 10000, default: 0}}
+      responses:
+        '200':
+          description: "Страница заданий."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestionPage'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createAssessmentQuestion
+      summary: "Создать задание и версию 1 (черновик)"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Навык должен быть активным и одобренным. Содержимое проверяется по виду задания. Задания проверяются автоматически, чужой код не запускается."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentQuestionInput'
+      responses:
+        '201':
+          description: "Задание создано."
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestion'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Тело запроса больше 2 МиБ (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/questions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getAssessmentQuestion
+      summary: "Задание со всеми версиями"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Администратор видит тексты и правила проверки."
+      responses:
+        '200':
+          description: "Задание."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestion'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/questions/{id}/versions:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: createAssessmentQuestionVersion
+      summary: "Новая версия задания (черновик)"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Опубликованную версию менять нельзя: исправление это новая версия. Для выключенного задания версии не создаются."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentVersionInput'
+      responses:
+        '201':
+          description: "Версия создана."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestionVersion'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Задание выключено (assessment_conflict)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Тело запроса больше 2 МиБ (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/questions/{id}/versions/{version}/publish:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: version
+        in: path
+        required: true
+        schema: {type: integer, minimum: 1}
+    post:
+      operationId: publishAssessmentQuestionVersion
+      summary: "Опубликовать версию задания"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Версия должна быть черновиком. Ранее опубликованная версия этого задания архивируется. Опубликованное содержимое не меняется."
+      responses:
+        '200':
+          description: "Версия опубликована."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestionVersion'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Версия не черновик или задание выключено (assessment_conflict)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/questions/{id}/archive:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: archiveAssessmentQuestion
+      summary: "Выключить задание"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Выключенное задание не засчитывается при публикации шаблонов. Статусы версий не меняются."
+      responses:
+        '200':
+          description: "Задание выключено."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentQuestion'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Задание уже выключено (assessment_conflict)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/templates:
+    get:
+      operationId: listAssessmentTemplates
+      summary: "Список шаблонов тестов"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Без состава. Состав возвращает GET шаблона."
+      parameters:
+        - {name: specialization_id, in: query, schema: {type: integer, minimum: 1}}
+        - {name: grade_id, in: query, schema: {type: integer, minimum: 1}}
+        - {name: status, in: query, schema: {type: string, enum: [draft, published, archived]}}
+        - {name: limit, in: query, schema: {type: integer, minimum: 1, maximum: 100, default: 20}}
+        - {name: offset, in: query, schema: {type: integer, minimum: 0, maximum: 10000, default: 0}}
+      responses:
+        '200':
+          description: "Страница шаблонов."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentTemplatePage'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    post:
+      operationId: createAssessmentTemplate
+      summary: "Создать шаблон теста (черновик)"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Версия пары специализация и грейд назначается автоматически. Специализация, грейд и навыки должны быть активными."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessmentTemplateInput'
+      responses:
+        '201':
+          description: "Шаблон создан."
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentTemplate'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '413':
+          description: "Тело запроса больше 2 МиБ (request_too_large)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/templates/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getAssessmentTemplate
+      summary: "Шаблон с составом"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "В каждой строке состава available показывает число активных заданий с опубликованной версией."
+      responses:
+        '200':
+          description: "Шаблон."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentTemplate'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/templates/{id}/publish:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: publishAssessmentTemplate
+      summary: "Опубликовать шаблон"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      description: "Для каждой строки состава нужно не меньше question_count активных заданий с опубликованной версией, иначе 409 insufficient_questions с перечнем нехватки. Ранее опубликованный шаблон пары архивируется."
+      responses:
+        '200':
+          description: "Шаблон опубликован."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentTemplate'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Шаблон не черновик (assessment_conflict) или не хватает заданий (insufficient_questions, в shortages перечень строк состава)."
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/AssessmentInsufficientQuestions'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /api/v1/admin/assessments/templates/{id}/archive:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: archiveAssessmentTemplate
+      summary: "Архивировать шаблон"
+      tags: [Админка — банк заданий]
+      security:
+        - adminSession: []
+      responses:
+        '200':
+          description: "Шаблон архивирован."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssessmentTemplate'
+        '400':
+          description: "Некорректные данные запроса (validation_error)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: "Нужна действующая админская сессия (unauthorized)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: "Задание или шаблон не найдены (assessment_not_found)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Шаблон уже архивирован (assessment_conflict)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: "Внутренняя ошибка сервера."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '503':
+          description: "Банк заданий не настроен (assessments_unavailable)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   parameters:
     AdminCatalogKind:
@@ -5545,6 +6142,194 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CandidateSkill'
+    AssessmentOption:
+      type: object
+      additionalProperties: false
+      required: [id, text]
+      properties:
+        id:
+          type: string
+          pattern: '^[A-Za-z0-9_-]{1,16}$'
+        text:
+          type: string
+          minLength: 1
+          maxLength: 500
+    AssessmentPrompt:
+      type: object
+      additionalProperties: false
+      required: [text]
+      description: "Для code_reading обязателен code. Варианты options (от 2 до 10) нужны для choice и для code_reading с проверкой выбором, для short_answer их быть не должно."
+      properties:
+        text:
+          type: string
+          minLength: 1
+          maxLength: 5000
+        code:
+          type: string
+          maxLength: 10000
+        language:
+          type: string
+          maxLength: 32
+        options:
+          type: array
+          minItems: 2
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/AssessmentOption'
+    AssessmentGradingSpec:
+      type: object
+      additionalProperties: false
+      required: [type]
+      description: "type choice: correct (id правильных вариантов), multiple. type text: accepted (от 1 до 20 допустимых ответов), case_sensitive. Кандидату правила не показываются."
+      properties:
+        type:
+          type: string
+          enum: [choice, text]
+        correct:
+          type: array
+          items: {type: string}
+        multiple:
+          type: boolean
+        accepted:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: {type: string, minLength: 1, maxLength: 200}
+        case_sensitive:
+          type: boolean
+    AssessmentQuestionInput:
+      type: object
+      additionalProperties: false
+      required: [skill_id, difficulty, kind, prompt, grading_spec]
+      properties:
+        skill_id: {type: string, format: uuid}
+        difficulty: {type: integer, minimum: 1, maximum: 5}
+        kind: {type: string, enum: [choice, code_reading, short_answer]}
+        prompt: {$ref: '#/components/schemas/AssessmentPrompt'}
+        grading_spec: {$ref: '#/components/schemas/AssessmentGradingSpec'}
+    AssessmentVersionInput:
+      type: object
+      additionalProperties: false
+      required: [prompt, grading_spec]
+      properties:
+        prompt: {$ref: '#/components/schemas/AssessmentPrompt'}
+        grading_spec: {$ref: '#/components/schemas/AssessmentGradingSpec'}
+    AssessmentQuestionVersion:
+      type: object
+      required: [version, status, prompt, grading_spec, created_at, published_at]
+      properties:
+        version: {type: integer, minimum: 1}
+        status: {type: string, enum: [draft, published, archived]}
+        prompt: {$ref: '#/components/schemas/AssessmentPrompt'}
+        grading_spec: {$ref: '#/components/schemas/AssessmentGradingSpec'}
+        created_at: {type: string, format: date-time}
+        published_at: {type: string, format: date-time, nullable: true}
+    AssessmentQuestion:
+      type: object
+      required: [id, skill_id, skill_name, difficulty, kind, active, created_at, latest_version, published_version]
+      properties:
+        id: {type: string, format: uuid}
+        skill_id: {type: string, format: uuid}
+        skill_name: {type: string}
+        difficulty: {type: integer, minimum: 1, maximum: 5}
+        kind: {type: string, enum: [choice, code_reading, short_answer]}
+        active: {type: boolean}
+        created_at: {type: string, format: date-time}
+        latest_version: {type: integer}
+        published_version: {type: integer, nullable: true}
+        versions:
+          type: array
+          description: "Только в ответах про одно задание, от новой версии к старой."
+          items: {$ref: '#/components/schemas/AssessmentQuestionVersion'}
+    AssessmentQuestionPage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentQuestion'}
+        total: {type: integer, format: int64}
+        limit: {type: integer}
+        offset: {type: integer}
+    AssessmentBlueprintRow:
+      type: object
+      additionalProperties: false
+      required: [skill_id, difficulty, question_count, weight]
+      properties:
+        skill_id: {type: string, format: uuid}
+        difficulty: {type: integer, minimum: 1, maximum: 5}
+        question_count: {type: integer, minimum: 1, maximum: 50}
+        weight: {type: number, minimum: 0.01, maximum: 100, description: "Не более двух знаков после запятой."}
+    AssessmentTemplateInput:
+      type: object
+      additionalProperties: false
+      required: [specialization_id, grade_id, time_limit_sec, pass_score, blueprint]
+      properties:
+        specialization_id: {type: integer, minimum: 1}
+        grade_id: {type: integer, minimum: 1}
+        time_limit_sec: {type: integer, minimum: 300, maximum: 14400}
+        pass_score: {type: number, minimum: 1, maximum: 100, description: "Проходной балл в процентах от взвешенной суммы."}
+        blueprint:
+          type: array
+          minItems: 1
+          maxItems: 30
+          description: "Пары навык и сложность не повторяются."
+          items: {$ref: '#/components/schemas/AssessmentBlueprintRow'}
+    AssessmentTemplate:
+      type: object
+      required: [id, specialization_id, grade_id, version, time_limit_sec, pass_score, status, created_at, published_at]
+      properties:
+        id: {type: string, format: uuid}
+        specialization_id: {type: integer}
+        grade_id: {type: integer}
+        version: {type: integer, minimum: 1}
+        time_limit_sec: {type: integer}
+        pass_score: {type: number}
+        status: {type: string, enum: [draft, published, archived]}
+        created_at: {type: string, format: date-time}
+        published_at: {type: string, format: date-time, nullable: true}
+        blueprint:
+          type: array
+          description: "Только в ответах про один шаблон."
+          items:
+            allOf:
+              - $ref: '#/components/schemas/AssessmentBlueprintRow'
+              - type: object
+                required: [skill_name, available]
+                properties:
+                  skill_name: {type: string}
+                  available: {type: integer, description: "Активных заданий с опубликованной версией для пары навык и сложность."}
+    AssessmentTemplatePage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentTemplate'}
+        total: {type: integer, format: int64}
+        limit: {type: integer}
+        offset: {type: integer}
+    AssessmentShortage:
+      type: object
+      required: [skill_id, difficulty, required, available]
+      properties:
+        skill_id: {type: string, format: uuid}
+        difficulty: {type: integer}
+        required: {type: integer}
+        available: {type: integer}
+    AssessmentInsufficientQuestions:
+      type: object
+      required: [error, shortages]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string, enum: [insufficient_questions]}
+            message: {type: string}
+        shortages:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentShortage'}
     Health:
       type: object
       required:
