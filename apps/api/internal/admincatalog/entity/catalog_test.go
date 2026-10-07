@@ -27,10 +27,13 @@ func TestCatalogValidation(t *testing.T) {
 	if err != nil || in.Name != "Навык" || len(in.Aliases) != 1 {
 		t.Fatalf("Нормализация: %+v %v", in, err)
 	}
-	if _, err := NormalizeUpdate("grades", UpdateInput{Name: "Senior", Active: &active}); err == nil {
-		t.Fatal("Отключение грейда должно быть запрещено")
-	}
-	if _, err := NormalizeUpdate("skills", UpdateInput{Name: "Go", Aliases: []string{}}); err != nil {
+	if _, err := NormalizeUpdate("grades", UpdateInput{Active: &active}); err != nil {
 		t.Fatal(err)
+	}
+	if _, err := NormalizeUpdate("skills", UpdateInput{Aliases: []string{}}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NormalizeUpdate("skills", UpdateInput{}); err == nil {
+		t.Fatal("Принято пустое изменение")
 	}
 }

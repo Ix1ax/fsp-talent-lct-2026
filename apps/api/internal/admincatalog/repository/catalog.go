@@ -19,24 +19,27 @@ func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 func columns(kind string) (string, error) {
 	switch kind {
 	case "skills":
-		return "id::text, code, name, active, NULL::smallint, aliases", nil
+		return "id::text, code, name, active, NULL::smallint, aliases, moderation_status", nil
 	case "specializations":
-		return "id::text, code, name, active, NULL::smallint, '{}'::text[]", nil
+		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text", nil
 	case "grades":
-		return "id::text, code, name, NULL::boolean, rank, '{}'::text[]", nil
+		return "id::text, code, name, active, rank, '{}'::text[], NULL::text", nil
 	case "work_formats":
-		return "id::text, code, name, NULL::boolean, NULL::smallint, '{}'::text[]", nil
+		return "id::text, code, name, active, NULL::smallint, '{}'::text[], NULL::text", nil
 	default:
 		return "", entity.ErrNotFound
 	}
 }
 func scan(row pgx.Row) (entity.Item, error) {
 	var item entity.Item
-	err := row.Scan(&item.ID, &item.Code, &item.Name, &item.Active, &item.Rank, &item.Aliases)
+	err := row.Scan(&item.ID, &item.Code, &item.Name, &item.Active, &item.Rank, &item.Aliases, &item.ModerationStatus)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return item, entity.ErrNotFound
 	}
 	var dbErr *pgconn.PgError
+	if errors.As(err, &dbErr) && dbErr.Code == "23503" {
+		return item, entity.ErrInUse
+	}
 	if errors.As(err, &dbErr) && dbErr.Code == "23505" {
 		return item, entity.ErrConflict
 	}
@@ -122,6 +125,9 @@ func (r *Repository) Create(ctx context.Context, actor, kind string, in entity.C
 	if err != nil {
 		return item, err
 	}
+	if err = record(ctx, tx, actor, "created", kind, item.ID); err != nil {
+		return item, err
+	}
 	return item, tx.Commit(ctx)
 }
 func (r *Repository) Update(ctx context.Context, actor, kind, id string, in entity.UpdateInput) (entity.Item, error) {
@@ -134,15 +140,14 @@ func (r *Repository) Update(ctx context.Context, actor, kind, id string, in enti
 		return entity.Item{}, err
 	}
 	defer tx.Rollback(ctx)
-	set := "name=$2"
-	args := []any{id, in.Name}
-	switch kind {
-	case "specializations":
-		set += ",active=COALESCE($3,active)"
-		args = append(args, in.Active)
-	case "skills":
-		set += ",active=COALESCE($3,active),aliases=COALESCE($4::text[],aliases)"
-		args = append(args, in.Active, in.Aliases)
+	set := "name=COALESCE($2,name),active=COALESCE($3,active)"
+	args := []any{id, in.Name, in.Active}
+	if kind == "skills" {
+		set += ",aliases=COALESCE($4::text[],aliases)"
+		args = append(args, in.Aliases)
+		if err = editableSkill(ctx, tx, id); err != nil {
+			return entity.Item{}, err
+		}
 	}
 	cast := "smallint"
 	if kind == "skills" {
@@ -152,5 +157,76 @@ func (r *Repository) Update(ctx context.Context, actor, kind, id string, in enti
 	if err != nil {
 		return item, err
 	}
+	if err = record(ctx, tx, actor, "updated", kind, item.ID); err != nil {
+		return item, err
+	}
 	return item, tx.Commit(ctx)
+}
+
+// Отдельная модерация не обходится обычным PATCH или удалением истории отклонения.
+func editableSkill(ctx context.Context, tx pgx.Tx, id string) error {
+	var status string
+	err := tx.QueryRow(ctx, `SELECT moderation_status FROM skills WHERE id=$1 FOR UPDATE`, id).Scan(&status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return entity.ErrNotFound
+	}
+	if err != nil {
+		return err
+	}
+	if status != "approved" {
+		return entity.ErrModerationRequired
+	}
+	return nil
+}
+func record(ctx context.Context, tx pgx.Tx, actor, action, kind, id string) error {
+	// Тексты навыков и персональные данные в журнал не копируем.
+	_, err := tx.Exec(ctx, `INSERT INTO admin_catalog_events(actor_id,action,catalog,item_id) VALUES($1,$2,$3,$4)`, actor, action, kind, id)
+	return err
+}
+func (r *Repository) Get(ctx context.Context, actor, kind, id string) (entity.Item, error) {
+	cols, err := columns(kind)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	tx, err := r.begin(ctx, actor)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	defer tx.Rollback(ctx)
+	cast := "smallint"
+	if kind == "skills" {
+		cast = "uuid"
+	}
+	item, err := scan(tx.QueryRow(ctx, `SELECT `+cols+` FROM `+kind+` WHERE id=$1::`+cast, id))
+	if err != nil {
+		return item, err
+	}
+	return item, tx.Commit(ctx)
+}
+func (r *Repository) Delete(ctx context.Context, actor, kind, id string) error {
+	cols, err := columns(kind)
+	if err != nil {
+		return err
+	}
+	tx, err := r.begin(ctx, actor)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	cast := "smallint"
+	if kind == "skills" {
+		cast = "uuid"
+		if err = editableSkill(ctx, tx, id); err != nil {
+			return err
+		}
+	}
+	// Внешние ключи проверяют использование атомарно, включая конкурентное добавление связи.
+	_, err = scan(tx.QueryRow(ctx, `DELETE FROM `+kind+` WHERE id=$1::`+cast+` RETURNING `+cols, id))
+	if err != nil {
+		return err
+	}
+	if err = record(ctx, tx, actor, "deleted", kind, id); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }

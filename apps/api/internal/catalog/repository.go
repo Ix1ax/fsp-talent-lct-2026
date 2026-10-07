@@ -13,9 +13,7 @@ func (r *Repository) Catalogs(ctx context.Context) (Catalogs, error) {
 	result := Catalogs{Specializations: []CatalogItem{}, Grades: []CatalogGrade{}, WorkFormats: []CatalogItem{}}
 	for _, table := range []string{"specializations", "work_formats"} {
 		query := `SELECT id,code,name FROM ` + table
-		if table == "specializations" {
-			query += ` WHERE active`
-		}
+		query += ` WHERE active`
 		query += ` ORDER BY id`
 		rows, err := r.db.Query(ctx, query)
 		if err != nil {
@@ -41,7 +39,7 @@ func (r *Repository) Catalogs(ctx context.Context) (Catalogs, error) {
 			result.WorkFormats = items
 		}
 	}
-	rows, err := r.db.Query(ctx, `SELECT id,code,name,rank FROM grades ORDER BY rank`)
+	rows, err := r.db.Query(ctx, `SELECT id,code,name,rank FROM grades WHERE active ORDER BY rank`)
 	if err != nil {
 		return result, err
 	}

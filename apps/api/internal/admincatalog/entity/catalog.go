@@ -5,14 +5,17 @@ import (
 	"errors"
 	"regexp"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 )
 
 var (
-	ErrNotFound  = errors.New("Запись справочника не найдена")
-	ErrConflict  = errors.New("Код или порядок грейда уже занят")
-	ErrForbidden = errors.New("Недостаточно прав для управления справочниками")
-	codePattern  = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
+	ErrNotFound           = errors.New("Запись справочника не найдена")
+	ErrConflict           = errors.New("Код, название навыка или порядок грейда уже занят")
+	ErrInUse              = errors.New("Запись используется в профилях или потребностях: архивируйте её")
+	ErrModerationRequired = errors.New("Для этого навыка нужны отдельные действия модерации")
+	ErrForbidden          = errors.New("Недостаточно прав для управления справочниками")
+	codePattern           = regexp.MustCompile(`^[a-z][a-z0-9_-]*$`)
 )
 
 type ValidationError struct{ Message string }
@@ -21,12 +24,13 @@ func (e *ValidationError) Error() string { return e.Message }
 
 // Строковый ID позволяет одинаково возвращать UUID навыков и числовые ID остальных справочников.
 type Item struct {
-	ID      string   `json:"id"`
-	Code    string   `json:"code"`
-	Name    string   `json:"name"`
-	Active  *bool    `json:"active,omitempty"`
-	Rank    *int16   `json:"rank,omitempty"`
-	Aliases []string `json:"aliases,omitempty"`
+	ModerationStatus *string  `json:"moderation_status,omitempty"`
+	ID               string   `json:"id"`
+	Code             string   `json:"code"`
+	Name             string   `json:"name"`
+	Active           *bool    `json:"active,omitempty"`
+	Rank             *int16   `json:"rank,omitempty"`
+	Aliases          []string `json:"aliases,omitempty"`
 }
 type CreateInput struct {
 	Code    string   `json:"code"`
@@ -37,7 +41,7 @@ type CreateInput struct {
 
 // Код и порядок грейда не меняются: на них опираются интеграции и сравнение уровней.
 type UpdateInput struct {
-	Name    string   `json:"name"`
+	Name    *string  `json:"name,omitempty"`
 	Active  *bool    `json:"active,omitempty"`
 	Aliases []string `json:"aliases,omitempty"`
 }
@@ -50,9 +54,14 @@ func Kind(kind string) bool {
 	return false
 }
 func name(value string) (string, error) {
-	value = strings.TrimSpace(value)
+	value = strings.Join(strings.Fields(value), " ")
 	if n := utf8.RuneCountInString(value); n < 1 || n > 200 || strings.ContainsRune(value, 0) {
 		return "", &ValidationError{"Название должно содержать от 1 до 200 символов"}
+	}
+	for _, r := range value {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			return "", &ValidationError{"Название содержит недопустимые символы"}
+		}
 	}
 	return value, nil
 }
@@ -112,16 +121,20 @@ func NormalizeUpdate(kind string, in UpdateInput) (UpdateInput, error) {
 		return in, ErrNotFound
 	}
 	var err error
-	in.Name, err = name(in.Name)
-	if err != nil {
-		return in, err
+	if in.Name == nil && in.Active == nil && in.Aliases == nil {
+		return in, &ValidationError{"Укажите хотя бы одно поле для изменения"}
+	}
+	if in.Name != nil {
+		value, e := name(*in.Name)
+		if e != nil {
+			return in, e
+		}
+		in.Name = &value
 	}
 	if kind != "skills" && in.Aliases != nil {
 		return in, &ValidationError{"Альтернативные названия доступны только для навыков"}
 	}
-	if kind != "skills" && kind != "specializations" && in.Active != nil {
-		return in, &ValidationError{"Отключение доступно только для навыков и специализаций"}
-	}
+
 	if in.Aliases != nil {
 		in.Aliases, err = aliases(in.Aliases)
 	}

@@ -48,13 +48,31 @@ func scanProfile(ctx context.Context, q querier, row pgx.Row) (entity.Profile, e
 }
 
 func setWorkFormats(ctx context.Context, tx pgx.Tx, profileID string, ids []int16) error {
+	rows, err := tx.Query(ctx, `SELECT f.id FROM work_formats f WHERE f.id=ANY($2::smallint[])
+ AND (f.active OR EXISTS(SELECT 1 FROM candidate_work_formats c WHERE c.candidate_id=$1 AND c.work_format_id=f.id)) FOR SHARE OF f`, profileID, ids)
+	if err != nil {
+		return err
+	}
+	count := 0
+	for rows.Next() {
+		count++
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return err
+	}
+	if count != len(ids) {
+		return &entity.ValidationError{Message: "Формат работы не существует или архивирован"}
+	}
+
 	if _, err := tx.Exec(ctx, `DELETE FROM candidate_work_formats WHERE candidate_id=$1`, profileID); err != nil {
 		return err
 	}
 	if len(ids) == 0 {
 		return nil
 	}
-	_, err := tx.Exec(ctx, `INSERT INTO candidate_work_formats(candidate_id,work_format_id) SELECT $1, unnest($2::smallint[])`, profileID, ids)
+	_, err = tx.Exec(ctx, `INSERT INTO candidate_work_formats(candidate_id,work_format_id) SELECT $1, unnest($2::smallint[])`, profileID, ids)
 	return dbError(err)
 }
 

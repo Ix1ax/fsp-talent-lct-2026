@@ -5,6 +5,7 @@ import (
 	"context"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/entity"
@@ -13,6 +14,8 @@ import (
 type Store interface {
 	List(context.Context, string, string, string, int, int) ([]entity.Item, error)
 	Create(context.Context, string, string, entity.CreateInput) (entity.Item, error)
+	Get(context.Context, string, string, string) (entity.Item, error)
+	Delete(context.Context, string, string, string) error
 	Update(context.Context, string, string, string, entity.UpdateInput) (entity.Item, error)
 }
 type Service struct{ store Store }
@@ -22,7 +25,7 @@ func (s *Service) List(ctx context.Context, actor, kind, q string, limit, offset
 	if !entity.Kind(kind) {
 		return nil, entity.ErrNotFound
 	}
-	if len(q) > 400 || strings.ContainsRune(q, 0) || limit < 1 || limit > 100 || offset < 0 {
+	if utf8.RuneCountInString(q) > 100 || strings.ContainsRune(q, 0) || limit < 1 || limit > 100 || offset < 0 {
 		return nil, &entity.ValidationError{Message: "Некорректные параметры списка"}
 	}
 	return s.store.List(ctx, actor, kind, strings.TrimSpace(q), limit, offset)
@@ -39,18 +42,43 @@ func (s *Service) Update(ctx context.Context, actor, kind, id string, in entity.
 	if err != nil {
 		return entity.Item{}, err
 	}
+	id, err = normalizeID(kind, id)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	return s.store.Update(ctx, actor, kind, id, in)
+}
+
+func normalizeID(kind, id string) (string, error) {
+	if !entity.Kind(kind) {
+		return "", entity.ErrNotFound
+	}
 	if kind == "skills" {
 		u, e := uuid.Parse(id)
 		if e != nil {
-			return entity.Item{}, &entity.ValidationError{Message: "Некорректный ID навыка"}
+			return "", &entity.ValidationError{Message: "Некорректный ID навыка"}
 		}
 		id = u.String()
 	} else {
 		n, e := strconv.ParseInt(id, 10, 16)
 		if e != nil || n < 1 {
-			return entity.Item{}, &entity.ValidationError{Message: "Некорректный ID записи"}
+			return "", &entity.ValidationError{Message: "Некорректный ID записи"}
 		}
 		id = strconv.FormatInt(n, 10)
 	}
-	return s.store.Update(ctx, actor, kind, id, in)
+	return id, nil
+}
+func (s *Service) Get(ctx context.Context, actor, kind, id string) (entity.Item, error) {
+	id, err := normalizeID(kind, id)
+	if err != nil {
+		return entity.Item{}, err
+	}
+	return s.store.Get(ctx, actor, kind, id)
+}
+func (s *Service) Delete(ctx context.Context, actor, kind, id string) error {
+	id, err := normalizeID(kind, id)
+	if err != nil {
+		return err
+	}
+	return s.store.Delete(ctx, actor, kind, id)
 }

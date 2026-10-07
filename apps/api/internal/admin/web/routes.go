@@ -9,7 +9,6 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/request"
 	"log/slog"
 	"net/http"
-	"strings"
 )
 
 func Register(api *gin.RouterGroup, log *slog.Logger, admins *service.Service) {
@@ -61,21 +60,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *service.Service) {
 		}
 		c.JSON(200, result)
 	})
-	protected := g.Group("", func(c *gin.Context) {
-		auth := strings.Fields(c.GetHeader("Authorization"))
-		if len(auth) != 2 || !strings.EqualFold(auth[0], "Bearer") {
-			fail(c, entity.ErrUnauthorized)
-			return
-		}
-		a, err := admins.Resolve(c.Request.Context(), auth[1])
-		if err != nil {
-			fail(c, err)
-			return
-		}
-		c.Set("admin_account", a)
-		c.Set("admin_token", auth[1])
-		c.Next()
-	})
+	protected := g.Group("", Authenticate(log, admins))
 	protected.GET("/auth/me", func(c *gin.Context) { a, _ := c.Get("admin_account"); c.JSON(200, a) })
 	protected.POST("/auth/logout", func(c *gin.Context) {
 		token := c.GetString("admin_token")

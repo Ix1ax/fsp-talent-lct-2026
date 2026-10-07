@@ -47,7 +47,8 @@ func TestAdminCatalogStore(t *testing.T) {
 		if err != nil || len(items) != 1 {
 			t.Fatalf("Список %s: %+v %v", kind, items, err)
 		}
-		update := entity.UpdateInput{Name: "Новое название"}
+		newName := "Новое название"
+		update := entity.UpdateInput{Name: &newName}
 		if kind == "skills" || kind == "specializations" {
 			active := false
 			update.Active = &active
@@ -59,7 +60,7 @@ func TestAdminCatalogStore(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if changed.Code != in.Code || changed.Name != update.Name {
+		if changed.Code != in.Code || changed.Name != *update.Name {
 			t.Fatalf("Изменился стабильный код: %+v", changed)
 		}
 		if kind == "grades" && (changed.Rank == nil || *changed.Rank != rank) {
@@ -92,7 +93,7 @@ func TestAdminCatalogStore(t *testing.T) {
 	if _, err := svc.Create(ctx, staff, "skills", entity.CreateInput{Code: "blocked", Name: "Не создавать"}); !errors.Is(err, entity.ErrForbidden) {
 		t.Fatal("Заблокированный админ изменил справочник", err)
 	}
-	if _, err := svc.Update(ctx, actor, "skills", "00000000-0000-4000-8000-999999999999", entity.UpdateInput{Name: "Нет записи"}); !errors.Is(err, entity.ErrNotFound) {
+	if _, err := svc.Update(ctx, actor, "skills", "00000000-0000-4000-8000-999999999999", entity.UpdateInput{Active: new(bool)}); !errors.Is(err, entity.ErrNotFound) {
 		t.Fatal(err)
 	}
 }
