@@ -89,6 +89,16 @@ func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
 	read(0)
 	f.exec(t, `UPDATE employer_needs SET grade_id=$2 WHERE id=$1`, need, grade)
 	p = read(1)
+	// Грейд в потребности необязателен: NULL не должен превращаться в 500.
+	f.exec(t, `UPDATE employer_needs SET grade_id=NULL WHERE id=$1`, need)
+	p = read(1)
+	explanation := strings.Join(p.Items[0].Reasons, " ")
+	if !strings.Contains(explanation, "грейд потребностью не ограничен") {
+		t.Fatal("Не объяснено отсутствие ограничения грейда")
+	}
+	if strings.Contains(explanation, "Совпадают специализация и подтверждённый грейд") {
+		t.Fatal("Заявлено совпадение неуказанного грейда")
+	}
 	body, _ := json.Marshal(p)
 	for _, secret := range []string{"user_id", "grading_snapshot", "prompt_snapshot", "email", "phone", "answer"} {
 		if strings.Contains(string(body), secret) {

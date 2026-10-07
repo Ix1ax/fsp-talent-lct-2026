@@ -23,7 +23,8 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 	var salary *int64
 	var city, timezone *string
 	var formats []int16
-	var specialization, grade int16
+	var specialization int16
+	var grade *int16
 	err = tx.QueryRow(ctx, `SELECT n.salary_to_rub,n.city,n.timezone,n.specialization_id,n.grade_id,
  ARRAY(SELECT work_format_id FROM need_work_formats WHERE need_id=n.id ORDER BY work_format_id)
  FROM employer_needs n WHERE n.id=$1 AND n.company_id=$2 AND n.status='active' FOR SHARE OF n`, needID, companyID).Scan(&salary, &city, &timezone, &specialization, &grade, &formats)
@@ -83,7 +84,7 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 		}
 		item := entity.Explain(card, fm, sm, cm, tm)
 		item.Skills, item.SkillMatchScore, item.TestScorePercent = skills, score, testScore
-		item.ExplainQualification()
+		item.ExplainQualification(grade != nil)
 		page.Items = append(page.Items, item)
 	}
 	err = rows.Err()

@@ -55,8 +55,12 @@ type SkillMatch struct {
 	VerifiedLevel *int16  `json:"verified_level"`
 }
 
-func (r *Recommendation) ExplainQualification() {
-	r.Reasons = append(r.Reasons, "Совпадают специализация и подтверждённый грейд")
+func (r *Recommendation) ExplainQualification(gradeSpecified bool) {
+	if gradeSpecified {
+		r.Reasons = append(r.Reasons, "Совпадают специализация и подтверждённый грейд")
+	} else {
+		r.Reasons = append(r.Reasons, "Совпадает специализация; грейд потребностью не ограничен")
+	}
 	for _, skill := range r.Skills {
 		switch skill.Source {
 		case "test":

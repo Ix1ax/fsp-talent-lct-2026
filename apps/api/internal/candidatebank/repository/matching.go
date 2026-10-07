@@ -2,7 +2,7 @@ package repository
 
 // Дополнительные фильтры не обходят категорию, обязательные навыки и согласия.
 const qualificationEligibility = `
- AND category.specialization_id=$12::smallint AND category.grade_id=$13::smallint
+ AND category.specialization_id=$12::smallint AND ($13::smallint IS NULL OR category.grade_id=$13::smallint)
  AND NOT EXISTS (
  SELECT 1 FROM need_skills n JOIN skills s ON s.id=n.skill_id
  WHERE n.need_id=$11::uuid AND n.required AND s.active AND s.moderation_status='approved'
