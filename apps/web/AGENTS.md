@@ -17,7 +17,17 @@ The root workspace also exposes equivalent npm scripts. Install web dependencies
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript and TSX, two-space indentation, single quotes, and Prettier formatting (`.prettierrc`). ESLint enforces Next.js rules and sorted imports and exports. Name React components and files in PascalCase (`SkillsSection.tsx`), utilities in camelCase (`getEmptySkillsMessage.ts`), and tests `*.test.ts`. Prefer interfaces for object-shaped domain data and component props. Keep request-only parameter interfaces beside their API function; place reusable domain models in `entities/*/model/`. Avoid deeply nested conditional JSX; extract components or small helpers.
+Use TypeScript and TSX, two-space indentation, single quotes, and Prettier formatting (`.prettierrc`). ESLint enforces Next.js rules and sorted imports and exports. Name React components and files in PascalCase (`SkillsSection.tsx`), utilities in camelCase (`getEmptySkillsMessage.ts`), hooks `useSomething.ts`, and tests `*.test.ts`.
+
+- Use `interface` only for React component props, named `ComponentNameProps`. Use `type` for domain models, API payloads, hook options, form values, and other data. Library module augmentation in `.d.ts` files may require an interface for declaration merging.
+- Keep request-only types beside their API function. Put domain types in `entities/*/model/` and Zod validation schemas in the feature's `constants/`.
+- Export modules through `index.ts` barrels. Import across segments through barrels, for example `import type { ProfileFormValues } from '../model'`. Inside a segment, direct imports are allowed to avoid circular dependencies.
+- Keep server-only API exports in a separate `api/server.ts` barrel; never re-export them from a barrel consumed by client components.
+- Put `'use client'` at the server/client entry boundary. Its props must be serializable. Nested components inherit the client context and may receive ordinary callbacks without their own directive; do not rename client callbacks to `*Action` to suppress diagnostics.
+- Use arrow functions and named React imports, including `import type { ComponentProps } from 'react'`; avoid `React.ComponentProps` and namespace imports.
+- Split large UI components by responsibility. Avoid nested ternaries; extract message selection and other branching logic into helpers.
+- Keep reusable hooks in `shared/hooks/` and shared dictionaries in the existing `shared/contants/` directory. Use shadcn components through `shared/ui/`.
+- Use React Hook Form with Zod for forms. Display experience in years rounded to tenths and send months to the API; preserve existing months when experience is unchanged.
 
 ## Testing Guidelines
 

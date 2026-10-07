@@ -1,7 +1,10 @@
-'use client';
-
+import { useUnsavedChanges } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
+import {
+  type CandidateConsents,
+  getConsentPermissions,
+} from '@/entities/candidate-consent';
 import type { CandidateProfile } from '@/entities/candidate-profile';
 import type { CatalogItem } from '@/entities/catalog';
 
@@ -11,6 +14,8 @@ import { ProfileTextFields } from './ProfileTextFields';
 
 interface CandidateProfileFormProps {
   profile?: CandidateProfile;
+  consents: CandidateConsents;
+  onConsentRequired: () => Promise<void>;
   workFormats?: CatalogItem[];
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
@@ -19,16 +24,22 @@ interface CandidateProfileFormProps {
 
 export const CandidateProfileForm = ({
   profile,
+  consents,
+  onConsentRequired,
   workFormats,
   busy,
   onBusyChange,
   onProfileChange,
 }: CandidateProfileFormProps) => {
-  const { form, message, success, dirty, save } = useCandidateProfileForm({
-    profile,
-    onBusyChange,
-    onProfileChange,
-  });
+  const { form, message, success, dirty, consentError, save } =
+    useCandidateProfileForm({
+      profile,
+      consents,
+      onConsentRequired,
+      onBusyChange,
+      onProfileChange,
+    });
+  useUnsavedChanges(form.formState.isDirty);
   return (
     <form
       noValidate
@@ -48,6 +59,9 @@ export const CandidateProfileForm = ({
         />
         <ProfileEmploymentFields
           workFormats={workFormats}
+          canPublish={getConsentPermissions(consents).canPublish}
+          busy={busy}
+          savedSearchStatus={profile?.searchStatus}
           control={form.control}
         />
         {message && (
@@ -60,7 +74,14 @@ export const CandidateProfileForm = ({
             {success}
           </p>
         )}
-        <Button type="submit" disabled={busy || !dirty} className="self-start">
+        {consentError && (
+          <p className="text-sm text-muted-foreground">{consentError}</p>
+        )}
+        <Button
+          type="submit"
+          disabled={busy || !dirty || !!consentError}
+          className="self-start"
+        >
           {profile ? 'Сохранить изменения' : 'Создать профиль'}
         </Button>
       </fieldset>
