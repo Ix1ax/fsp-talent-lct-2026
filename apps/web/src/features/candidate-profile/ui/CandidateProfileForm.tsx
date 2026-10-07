@@ -1,5 +1,3 @@
-'use client';
-
 import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 import type { CandidateProfile } from '@/entities/candidate-profile';

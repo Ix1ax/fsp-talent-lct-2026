@@ -1,5 +1,3 @@
-'use client';
-
 import { useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,11 +21,11 @@ import {
 } from '../lib/profileForm';
 import type { ProfileFormValues } from './types';
 
-interface UseCandidateProfileFormOptions {
+type UseCandidateProfileFormOptions = {
   profile?: CandidateProfile;
   onProfileChange: (profile: CandidateProfile | undefined) => void;
   onBusyChange: (busy: boolean) => void;
-}
+};
 
 export const useCandidateProfileForm = ({
   profile,

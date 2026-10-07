@@ -1,5 +1,3 @@
-'use client';
-
 import { useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import dynamic from 'next/dynamic';

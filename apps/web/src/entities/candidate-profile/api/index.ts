@@ -1,3 +1,4 @@
+export { getCandidateFullProfileClient } from './fullProfile';
 export type {
   CreateCandidateProfileInput,
   UpdateCandidateProfileInput,

@@ -4,7 +4,10 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
-import type { CandidateProfile } from '@/entities/candidate-profile';
+import type {
+  CandidateFullProfile,
+  CandidateProfile,
+} from '@/entities/candidate-profile';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import { CandidateAvatar } from '@/features/candidate-avatar';
@@ -12,20 +15,28 @@ import { CandidateProfileForm } from '@/features/candidate-profile';
 
 interface CandidateHomePageProps {
   user: SessionUser;
-  initialProfile?: CandidateProfile;
+  initialFullProfile?: CandidateFullProfile;
   workFormats?: CatalogItem[];
   loadError?: string;
 }
 export const CandidateHomePage = ({
   user,
-  initialProfile,
+  initialFullProfile,
   workFormats,
   loadError,
 }: CandidateHomePageProps) => {
   const router = useRouter();
-  const [profile, setProfile] = useState(initialProfile);
+  const [fullProfile, setFullProfile] = useState(initialFullProfile);
   const [busy, setBusy] = useState(false);
   const [refreshing, startTransition] = useTransition();
+
+  const profile = fullProfile?.profile ?? undefined;
+
+  const setProfile = (next: CandidateProfile | undefined) => {
+    setFullProfile(
+      (current) => current && { ...current, profile: next ?? null },
+    );
+  };
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-6 px-6 py-10">

@@ -1,6 +1,6 @@
 import type { SearchStatus } from '@/entities/candidate-profile';
 
-export interface ProfileFormValues {
+export type ProfileFormValues = {
   headline: string;
   summary: string;
   city: string;
@@ -9,4 +9,4 @@ export interface ProfileFormValues {
   salaryMinRub: string;
   searchStatus: SearchStatus;
   workFormatIds: number[];
-}
+};

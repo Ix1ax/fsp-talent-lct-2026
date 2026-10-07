@@ -3,14 +3,14 @@ import 'server-only';
 import { publicServerApi } from '@/shared/api/server';
 import type { SkillsPage } from '@/entities/catalog/model';
 
-export interface SkillsSearchQuery {
+export type SkillsSearchQuery = {
   q?: string;
-}
+};
 
-export interface SkillsQuery extends SkillsSearchQuery {
+export type SkillsQuery = SkillsSearchQuery & {
   limit: number;
   offset: number;
-}
+};
 
 export const getSkills = async (
   query: SkillsQuery,

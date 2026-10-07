@@ -1,8 +1,8 @@
 import type { SkillsSearchQuery } from '@/entities/catalog/api';
 
-interface SearchParams {
+type SearchParams = {
   [key: string]: string | string[] | undefined;
-}
+};
 
 const firstValue = (
   value: string | string[] | undefined,

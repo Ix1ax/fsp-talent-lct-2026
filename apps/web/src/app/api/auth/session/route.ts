@@ -3,11 +3,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { setAuthTokens } from '@/shared/auth/server';
 import { isObject } from '@/shared/utils';
 
-interface SessionBody {
+type SessionBody = {
   accessToken: string;
   refreshToken: string;
   expiresIn?: number;
-}
+};
 
 const isSessionBody = (body: unknown): body is SessionBody => {
   if (!isObject(body)) return false;
