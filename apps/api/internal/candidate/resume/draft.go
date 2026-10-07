@@ -25,14 +25,14 @@ type Language struct {
 
 // Draft — разобранное резюме. Навыки и форматы работы заданы названиями и кодами: сопоставление со справочниками делает сервис.
 type Draft struct {
-	Headline        *string
-	City            *string
-	Summary         *string
-	SalaryMinRUB    *int64
-	WorkFormatCodes []string
-	Contacts        *Contacts
-	Skills          []string
-	Experience      []entity.ExperienceInput
-	Education       []entity.EducationInput
-	Languages       []Language
+	Headline        *string                  `json:"headline"`
+	City            *string                  `json:"city"`
+	Summary         *string                  `json:"summary"`
+	SalaryMinRUB    *int64                   `json:"salary_min_rub"`
+	WorkFormatCodes []string                 `json:"work_format_codes"`
+	Contacts        *Contacts                `json:"contacts"`
+	Skills          []string                 `json:"skills"`
+	Experience      []entity.ExperienceInput `json:"experience"`
+	Education       []entity.EducationInput  `json:"education"`
+	Languages       []Language               `json:"languages"`
 }
