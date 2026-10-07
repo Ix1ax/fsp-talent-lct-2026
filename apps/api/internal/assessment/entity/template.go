@@ -37,7 +37,7 @@ type Template struct {
 	Status           string             `json:"status"`
 	CreatedAt        time.Time          `json:"created_at"`
 	PublishedAt      *time.Time         `json:"published_at"`
-	Blueprint        []BlueprintRowView `json:"blueprint"`
+	Blueprint        []BlueprintRowView `json:"blueprint,omitempty"`
 }
 
 type TemplateFilter struct {
