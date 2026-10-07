@@ -1,5 +1,5 @@
 import { Button, toast } from '@/shared/ui';
-import type { CandidateContacts } from '@/entities/candidate-contacts';
+import type { CandidateContacts } from '@/entities/candidate';
 
 import { useCandidateContactsForm } from '../model';
 import { ContactsTextFields } from './ContactsTextFields';

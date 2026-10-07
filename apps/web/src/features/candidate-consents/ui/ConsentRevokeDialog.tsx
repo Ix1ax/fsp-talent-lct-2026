@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui';
-import type { RevokeConsentInput } from '@/entities/candidate-consent';
+import type { RevokeConsentInput } from '@/entities/candidate';
 
 import { CONSENT_LABELS, CONSENT_REVOCATION_TEXT } from '../constants';
 

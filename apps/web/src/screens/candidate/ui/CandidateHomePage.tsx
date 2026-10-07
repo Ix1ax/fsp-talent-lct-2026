@@ -16,7 +16,7 @@ import {
 import type {
   CandidateFullProfile,
   CandidateProfile,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import { CandidateAvatar } from '@/features/candidate-avatar';

@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
-import type { SearchStatus } from '@/entities/candidate-profile';
+import type { SearchStatus } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
 import { getSearchStatusHint } from '../lib';

@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@/shared/api/errors';
-import type {
-  CandidateConsent,
-  CandidateConsents,
-} from '@/entities/candidate-consent';
+import type { CandidateConsent, CandidateConsents } from '@/entities/candidate';
 
 import { createConsentsController } from '../createConsentsController';
 import { type CandidateConsentsState, INITIAL_CONSENTS_STATE } from '../types';
@@ -21,7 +18,8 @@ vi.mock('@/shared/api', () => ({ ensureClientAccessToken: mocks.ensureToken }));
 vi.mock('@/shared/ui', () => ({
   toast: { error: mocks.toastError, success: mocks.toastSuccess },
 }));
-vi.mock('@/entities/candidate-consent', () => ({
+vi.mock('@/entities/candidate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/entities/candidate')>()),
   getCandidateConsents: mocks.getConsents,
   grantCandidateConsent: mocks.grant,
   revokeCandidateConsent: mocks.revoke,

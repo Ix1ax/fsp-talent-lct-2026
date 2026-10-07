@@ -1,5 +1,5 @@
 import { ApiError } from '@/shared/api/errors';
-import type { CandidateSkill } from '@/entities/candidate-skill';
+import type { CandidateSkill } from '@/entities/candidate';
 
 export const upsertCandidateSkill = (
   skills: CandidateSkill[],

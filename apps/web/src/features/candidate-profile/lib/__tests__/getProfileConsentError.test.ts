@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type {
-  CandidateConsent,
-  CandidateConsents,
-} from '@/entities/candidate-consent';
+import type { CandidateConsent, CandidateConsents } from '@/entities/candidate';
 
 import { getProfileConsentError } from '../getProfileConsentError';
 

@@ -2,20 +2,16 @@ import { AxiosError, type InternalAxiosRequestConfig } from 'axios';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  getCandidateConsents,
-  grantCandidateConsent,
-  revokeCandidateConsent,
-} from '@/entities/candidate-consent';
-import {
-  getCandidateContacts,
-  saveCandidateContacts,
-} from '@/entities/candidate-contacts';
-import {
   addCandidateSkill,
   deleteCandidateSkill,
+  getCandidateConsents,
+  getCandidateContacts,
   getCandidateSkills,
+  grantCandidateConsent,
+  revokeCandidateConsent,
+  saveCandidateContacts,
   saveCandidateSkill,
-} from '@/entities/candidate-skill';
+} from '@/entities/candidate';
 
 import { getCandidateFullProfileClient } from '../fullProfile';
 import { getCandidateFullProfile } from '../server';

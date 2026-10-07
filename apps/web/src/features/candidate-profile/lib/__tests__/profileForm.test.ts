@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CandidateProfile } from '@/entities/candidate-profile';
+import type { CandidateProfile } from '@/entities/candidate';
 
 import { profileSchema } from '../../constants';
 import {

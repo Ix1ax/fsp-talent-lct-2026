@@ -8,7 +8,7 @@ import { toast } from '@/shared/ui';
 import {
   type CandidateContacts,
   saveCandidateContacts,
-} from '@/entities/candidate-contacts';
+} from '@/entities/candidate';
 
 import { contactsSchema } from '../constants';
 import {

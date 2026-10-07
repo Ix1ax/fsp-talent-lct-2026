@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
-import type { CandidateConsents } from '@/entities/candidate-consent';
+import type { CandidateConsents } from '@/entities/candidate';
 
 import { CandidateContactsCard } from '../CandidateContactsCard';
 

@@ -1,7 +1,6 @@
-import type { CandidateConsents } from '@/entities/candidate-consent';
-import type { CandidateContacts } from '@/entities/candidate-contacts';
-import type { CandidateSkill } from '@/entities/candidate-skill';
-
+import type { CandidateConsents } from '../../consent';
+import type { CandidateContacts } from '../../contacts';
+import type { CandidateSkill } from '../../skill';
 import type { CandidateProfile } from './types';
 
 export type CandidateCategory = {

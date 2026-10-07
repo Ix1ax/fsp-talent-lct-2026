@@ -13,7 +13,7 @@ import {
   type CandidateConsents,
   hasActiveConsent,
   type RevokeConsentInput,
-} from '@/entities/candidate-consent';
+} from '@/entities/candidate';
 
 import { CONSENT_LABELS } from '../constants';
 import { useCandidateConsents } from '../model';

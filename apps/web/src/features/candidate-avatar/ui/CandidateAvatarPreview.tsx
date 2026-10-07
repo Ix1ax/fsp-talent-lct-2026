@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { isCancel } from 'axios';
 
 import { Avatar, AvatarFallback, AvatarImage, Button } from '@/shared/ui';
-import { getCandidateAvatar } from '@/entities/candidate-profile';
+import { getCandidateAvatar } from '@/entities/candidate';
 
 import { getAvatarError } from '../lib/getAvatarError';
 import { AvatarAction } from './AvatarAction';

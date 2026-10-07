@@ -1,7 +1,7 @@
 import type {
   CandidateConsents,
   RevokeConsentInput,
-} from '@/entities/candidate-consent';
+} from '@/entities/candidate';
 
 export type UseCandidateConsentsOptions = {
   consents: CandidateConsents;

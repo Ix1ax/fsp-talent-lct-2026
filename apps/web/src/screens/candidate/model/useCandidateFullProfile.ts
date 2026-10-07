@@ -5,7 +5,7 @@ import { CANDIDATE_DATA_UPDATED_EVENT } from '@/shared/contants';
 import {
   type CandidateFullProfile,
   getCandidateFullProfileClient,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 
 import { createProfileRefresh } from './createProfileRefresh';
 

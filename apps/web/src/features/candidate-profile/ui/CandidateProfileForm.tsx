@@ -3,9 +3,9 @@ import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 import {
   type CandidateConsents,
+  type CandidateProfile,
   getConsentPermissions,
-} from '@/entities/candidate-consent';
-import type { CandidateProfile } from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
 import { useCandidateProfileForm } from '../model';

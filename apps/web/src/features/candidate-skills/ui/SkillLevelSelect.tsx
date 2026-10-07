@@ -5,7 +5,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui';
-import type { ClaimedLevel } from '@/entities/candidate-skill';
+import type { ClaimedLevel } from '@/entities/candidate';
 
 import { SKILL_LEVELS } from '../constants';
 

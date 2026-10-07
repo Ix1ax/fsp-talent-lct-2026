@@ -8,9 +8,9 @@ import {
 } from '@/shared/ui';
 import {
   type CandidateConsents,
+  type CandidateContacts,
   getConsentPermissions,
-} from '@/entities/candidate-consent';
-import type { CandidateContacts } from '@/entities/candidate-contacts';
+} from '@/entities/candidate';
 
 import { CandidateContactsForm } from './CandidateContactsForm';
 

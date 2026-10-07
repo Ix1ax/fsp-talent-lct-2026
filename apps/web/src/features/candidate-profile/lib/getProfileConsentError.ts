@@ -1,8 +1,8 @@
 import {
   type CandidateConsents,
   getConsentPermissions,
-} from '@/entities/candidate-consent';
-import type { SearchStatus } from '@/entities/candidate-profile';
+  type SearchStatus,
+} from '@/entities/candidate';
 
 export const getProfileConsentError = (
   consents: CandidateConsents,

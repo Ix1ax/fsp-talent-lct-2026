@@ -6,12 +6,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { ApiError } from '@/shared/api/errors';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
-import type { CandidateProfile } from '@/entities/candidate-profile';
 import {
+  type CandidateProfile,
   deleteCandidateAvatar,
   getCandidateAvatar,
   uploadCandidateAvatar,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 
 import { getAvatarError } from '../lib';
 import { avatarSchema, avatarSourceSchema } from '../model';

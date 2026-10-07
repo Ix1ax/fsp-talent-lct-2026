@@ -10,7 +10,7 @@ import {
   CardTitle,
   ConfirmDeleteDialog,
 } from '@/shared/ui';
-import type { CandidateSkill, ClaimedLevel } from '@/entities/candidate-skill';
+import type { CandidateSkill, ClaimedLevel } from '@/entities/candidate';
 
 import { SKILL_LIMIT } from '../constants';
 import { useCandidateSkills } from '../model';

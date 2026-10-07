@@ -6,7 +6,7 @@ import {
   grantCandidateConsent,
   revokeCandidateConsent,
   type RevokeConsentInput,
-} from '@/entities/candidate-consent';
+} from '@/entities/candidate';
 
 import {
   type CandidateConsentsState,

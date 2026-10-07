@@ -5,7 +5,7 @@ import {
   type AssessmentResult,
   getAvailableAssessments,
 } from '@/entities/assessment';
-import { getCandidateFullProfileClient } from '@/entities/candidate-profile';
+import { getCandidateFullProfileClient } from '@/entities/candidate';
 
 export const useAssessmentResultSync = (result: AssessmentResult | null) => {
   const [revision, setRevision] = useState(0);

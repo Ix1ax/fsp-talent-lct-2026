@@ -1,5 +1,7 @@
-import { getConsentPermissions } from '@/entities/candidate-consent';
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import {
+  type CandidateFullProfile,
+  getConsentPermissions,
+} from '@/entities/candidate';
 
 import type { ProfileStep } from '../constants';
 

@@ -8,7 +8,7 @@ import {
   type ClaimedLevel,
   deleteCandidateSkill,
   saveCandidateSkill,
-} from '@/entities/candidate-skill';
+} from '@/entities/candidate';
 
 import { getSkillErrorMessage, upsertCandidateSkill } from '../lib';
 

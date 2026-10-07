@@ -1,5 +1,7 @@
-import type { RevokeConsentInput } from '@/entities/candidate-consent';
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import type {
+  CandidateFullProfile,
+  RevokeConsentInput,
+} from '@/entities/candidate';
 
 export const applyConsentRevocation = (
   fullProfile: CandidateFullProfile,

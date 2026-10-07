@@ -1,4 +1,4 @@
-import type { CandidateCategory } from '@/entities/candidate-profile';
+import type { CandidateCategory } from '../../candidate/profile';
 
 export type AssessmentReason =
   | 'ok'

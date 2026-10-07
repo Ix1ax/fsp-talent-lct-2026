@@ -6,7 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
-import type { CandidateReadiness } from '@/entities/candidate-profile';
+import type { CandidateReadiness } from '@/entities/candidate';
 
 interface ProfileReadinessCardProps {
   readiness: CandidateReadiness;

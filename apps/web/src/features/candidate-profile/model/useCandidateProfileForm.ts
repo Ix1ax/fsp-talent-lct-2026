@@ -4,13 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
 import { toast } from '@/shared/ui/Sonner';
-import type { CandidateConsents } from '@/entities/candidate-consent';
-import type { CandidateProfile } from '@/entities/candidate-profile';
 import {
+  type CandidateConsents,
+  type CandidateProfile,
   createCandidateProfile,
   getCandidateProfileClient,
   updateCandidateProfile,
-} from '@/entities/candidate-profile/api';
+} from '@/entities/candidate';
 
 import { profileSchema } from '../constants';
 import {

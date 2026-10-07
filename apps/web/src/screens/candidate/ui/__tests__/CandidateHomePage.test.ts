@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CandidateFullProfile } from '@/entities/candidate-profile';
+import type { CandidateFullProfile } from '@/entities/candidate';
 import type { SessionUser } from '@/entities/session';
 
 import { CandidateHomePage } from '../CandidateHomePage';

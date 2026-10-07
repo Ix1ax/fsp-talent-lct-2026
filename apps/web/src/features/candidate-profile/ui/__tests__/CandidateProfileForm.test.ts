@@ -4,7 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CandidateProfileForm } from '../CandidateProfileForm';
 
-vi.mock('@/entities/candidate-profile/api', () => ({
+vi.mock('@/entities/candidate', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/entities/candidate')>()),
   createCandidateProfile: vi.fn(),
   getCandidateProfileClient: vi.fn(),
   updateCandidateProfile: vi.fn(),

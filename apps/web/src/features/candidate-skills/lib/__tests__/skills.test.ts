@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { CandidateSkill } from '@/entities/candidate-skill';
+import type { CandidateSkill } from '@/entities/candidate';
 
 import { skillSchema } from '../../constants';
 import { upsertCandidateSkill } from '../skills';

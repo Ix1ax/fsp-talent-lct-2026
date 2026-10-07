@@ -5,7 +5,7 @@ import type { z } from 'zod';
 
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
-import type { ClaimedLevel } from '@/entities/candidate-skill';
+import type { ClaimedLevel } from '@/entities/candidate';
 
 import { skillSchema } from '../constants';
 import { useSkillSearch } from '../model';

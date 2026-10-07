@@ -1,8 +1,8 @@
-import type { CandidateProfile } from '@/entities/candidate-profile';
 import type {
+  CandidateProfile,
   CreateCandidateProfileInput,
   UpdateCandidateProfileInput,
-} from '@/entities/candidate-profile';
+} from '@/entities/candidate';
 
 import type { ProfileFormValues } from '../model';
 
