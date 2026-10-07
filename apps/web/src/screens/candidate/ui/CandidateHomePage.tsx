@@ -8,9 +8,15 @@ import type {
   CandidateFullProfile,
   CandidateProfile,
 } from '@/entities/candidate-profile';
+import { getCandidateFullProfileClient } from '@/entities/candidate-profile';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import { CandidateAvatar } from '@/features/candidate-avatar';
+import {
+  applyConsentRevocation,
+  CandidateConsentsCard,
+  reconcileConsents,
+} from '@/features/candidate-consents';
 import { CandidateProfileForm } from '@/features/candidate-profile';
 
 interface CandidateHomePageProps {
@@ -36,6 +42,10 @@ export const CandidateHomePage = ({
     setFullProfile(
       (current) => current && { ...current, profile: next ?? null },
     );
+  };
+  const refreshFullProfile = async (signal?: AbortSignal) => {
+    const latest = await getCandidateFullProfileClient(signal);
+    if (!signal?.aborted) setFullProfile(latest);
   };
 
   return (
@@ -69,6 +79,25 @@ export const CandidateHomePage = ({
               Сохранение изменений…
             </p>
           )}
+          {fullProfile && (
+            <CandidateConsentsCard
+              consents={fullProfile.consents}
+              busy={busy}
+              onBusyChange={setBusy}
+              onConsentsChange={(consents) =>
+                setFullProfile(
+                  (current) => current && reconcileConsents(current, consents),
+                )
+              }
+              onRevoked={(input) =>
+                setFullProfile(
+                  (current) =>
+                    current && applyConsentRevocation(current, input),
+                )
+              }
+              onRefreshProfile={refreshFullProfile}
+            />
+          )}
           <Card>
             <CardHeader>
               <CardTitle>
@@ -82,13 +111,17 @@ export const CandidateHomePage = ({
                 onBusyChange={setBusy}
                 onProfileChange={setProfile}
               />
-              <CandidateProfileForm
-                profile={profile}
-                workFormats={workFormats}
-                busy={busy}
-                onBusyChange={setBusy}
-                onProfileChange={setProfile}
-              />
+              {fullProfile && (
+                <CandidateProfileForm
+                  profile={profile}
+                  workFormats={workFormats}
+                  consents={fullProfile.consents}
+                  onConsentRequired={refreshFullProfile}
+                  busy={busy}
+                  onBusyChange={setBusy}
+                  onProfileChange={setProfile}
+                />
+              )}
             </CardContent>
           </Card>
         </>

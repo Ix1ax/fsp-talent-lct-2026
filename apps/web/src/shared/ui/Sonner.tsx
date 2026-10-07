@@ -8,9 +8,7 @@ export const Toaster = (props: ComponentProps<typeof SonnerToaster>) => (
     theme="dark"
     position="top-right"
     richColors
-    closeButton
     containerAriaLabel="Уведомления"
-    toastOptions={{ closeButtonAriaLabel: 'Закрыть уведомление' }}
     {...props}
   />
 );

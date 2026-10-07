@@ -29,9 +29,12 @@ type CompanyRevokeConsentInput = {
 export type RevokeConsentInput =
   GeneralRevokeConsentInput | CompanyRevokeConsentInput;
 
-export const getCandidateConsents = async (): Promise<CandidateConsents> => {
+export const getCandidateConsents = async (
+  signal?: AbortSignal,
+): Promise<CandidateConsents> => {
   const { data } = await clientApi.get<CandidateConsents>('/v1/me/consents', {
     headers: { 'Cache-Control': 'no-store' },
+    signal,
   });
   return data;
 };

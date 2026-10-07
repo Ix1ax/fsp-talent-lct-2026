@@ -5,3 +5,4 @@ export {
   revokeCandidateConsent,
 } from './api';
 export type { CandidateConsent, CandidateConsents, ConsentKind } from './model';
+export { getConsentPermissions, hasActiveConsent } from './model';

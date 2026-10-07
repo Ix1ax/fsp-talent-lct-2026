@@ -15,6 +15,8 @@ describe('CandidateProfileForm', () => {
     const html = renderToString(
       createElement(CandidateProfileForm, {
         busy: false,
+        consents: { currentPolicyVersion: 'v1', items: [] },
+        onConsentRequired: vi.fn(),
         onBusyChange: vi.fn(),
         onProfileChange: vi.fn(),
         workFormats: [{ id: 1, code: 'remote', name: 'Удалённо' }],

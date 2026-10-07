@@ -16,10 +16,15 @@ import { ProfileField } from './ProfileField';
 interface ProfileEmploymentFieldsProps {
   workFormats?: CatalogItem[];
   control: Control<ProfileFormValues>;
+  canPublish: boolean;
+  busy: boolean;
 }
+
 export const ProfileEmploymentFields = ({
   workFormats,
   control,
+  canPublish,
+  busy,
 }: ProfileEmploymentFieldsProps) => {
   return (
     <>
@@ -79,7 +84,11 @@ export const ProfileEmploymentFields = ({
             label="Статус поиска"
             error={fieldState.error?.message}
           >
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={busy}
+            >
               <SelectTrigger
                 ref={field.ref}
                 id="profile-search-status"
@@ -93,8 +102,10 @@ export const ProfileEmploymentFields = ({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="hidden">Скрыт</SelectItem>
-                <SelectItem value="open">Активно ищу</SelectItem>
-                <SelectItem value="passive">
+                <SelectItem value="open" disabled={!canPublish}>
+                  Активно ищу
+                </SelectItem>
+                <SelectItem value="passive" disabled={!canPublish}>
                   Рассматриваю предложения
                 </SelectItem>
               </SelectContent>
