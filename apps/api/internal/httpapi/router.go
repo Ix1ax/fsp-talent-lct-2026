@@ -53,6 +53,7 @@ type Options struct {
 	CandidateSkills         *candidateservice.SkillsService
 	CandidateFull           *candidateservice.FullProfileService
 	CandidateCareer         *candidateservice.CareerService
+	CandidateResume         *candidateservice.ResumeImportService
 	Documents               *service.DocumentService
 	Needs                   *service.NeedsService
 	Members                 *service.MemberService
@@ -79,6 +80,9 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		limit := int64(2 << 20)
 		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/companies/:company_id/files" {
 			limit = files.MaxSize + (64 << 10)
+		}
+		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/me/profile/import/resume" {
+			limit = candidateservice.MaxResumeBytes + (64 << 10)
 		}
 		if c.Request.Method == http.MethodPut && c.FullPath() == "/api/v1/me/profile/avatar" {
 			limit = files.MaxLogoSize + (64 << 10)
@@ -142,7 +146,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
 	consentweb.Register(api, log, verifier, opts.Users, opts.Consents)
-	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars, Contacts: opts.CandidateContacts, Skills: opts.CandidateSkills, Full: opts.CandidateFull, Career: opts.CandidateCareer})
+	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars, Contacts: opts.CandidateContacts, Skills: opts.CandidateSkills, Full: opts.CandidateFull, Career: opts.CandidateCareer, Resume: opts.CandidateResume})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
 	})

@@ -20,6 +20,7 @@ type Options struct {
 	Skills   *service.SkillsService
 	Full     *service.FullProfileService
 	Career   *service.CareerService
+	Resume   *service.ResumeImportService
 }
 
 type profileHandler struct {
@@ -29,12 +30,14 @@ type profileHandler struct {
 	skills   *service.SkillsService
 	full     *service.FullProfileService
 	career   *service.CareerService
+	resume   *service.ResumeImportService
 	log      *slog.Logger
 	uploads  chan struct{}
+	imports  chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, full: opts.Full, career: opts.Career, log: log, uploads: make(chan struct{}, 2)}
+	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, full: opts.Full, career: opts.Career, resume: opts.Resume, log: log, uploads: make(chan struct{}, 2), imports: make(chan struct{}, 2)}
 	g := api.Group("/me/profile", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
 	g.Use(func(c *gin.Context) {
 		if h.profiles == nil {
@@ -60,6 +63,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	registerContacts(api, log, verifier, opts, h)
 	registerSkills(api, log, verifier, opts, h)
 	registerCareer(api, log, verifier, opts, h)
+	registerResume(api, log, verifier, opts, h)
 }
 
 func registerContacts(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options, h profileHandler) {

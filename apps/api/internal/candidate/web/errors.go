@@ -42,6 +42,10 @@ func (h profileHandler) fail(c *gin.Context, err error) {
 		abortError(c, 404, "avatar_not_found", "Аватар не загружен")
 	case errors.Is(err, entity.ErrSkillNotFound):
 		abortError(c, 404, "skill_not_found", "Навык не найден в вашем списке")
+	case errors.Is(err, service.ErrResumeTooLarge):
+		abortError(c, 413, "resume_too_large", "Файл резюме — не более 5 МиБ")
+	case errors.Is(err, service.ErrResumeUnrecognized):
+		abortError(c, 422, "resume_unrecognized", "Не удалось распознать резюме: загрузите PDF, скачанный с hh.ru, с текстовым слоем (не скан)")
 	case errors.Is(err, entity.ErrExperienceNotFound):
 		abortError(c, 404, "experience_not_found", "Место работы не найдено")
 	case errors.Is(err, entity.ErrEducationNotFound):
