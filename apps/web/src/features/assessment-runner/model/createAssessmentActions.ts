@@ -23,11 +23,11 @@ export const createAssessmentActions = (
       );
       if (signal?.aborted) return 'error';
       store.apply(next);
-      if (!next.result)
+      if (!store.getSnapshot().attempt.result)
         store.update({
           error: 'Сервер ещё не завершил попытку. Повторите получение итога.',
         });
-      return next.result ? 'completed' : 'pending';
+      return store.getSnapshot().attempt.result ? 'completed' : 'pending';
     } catch (error) {
       if (!signal?.aborted)
         store.handleError(

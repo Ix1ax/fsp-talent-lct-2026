@@ -18,7 +18,11 @@ export const AssessmentQuestionCard = ({
           {question.prompt.text}
         </p>
         {question.prompt.code && (
-          <pre className="mt-3 overflow-x-auto rounded bg-muted p-3">
+          <pre
+            tabIndex={0}
+            aria-label="Код задания"
+            className="mt-3 overflow-x-auto rounded bg-muted p-3"
+          >
             <code>{question.prompt.code}</code>
           </pre>
         )}

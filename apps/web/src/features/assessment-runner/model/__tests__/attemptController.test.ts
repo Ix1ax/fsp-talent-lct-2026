@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { ApiError } from '@/shared/api/errors';
 import type { AssessmentAttempt } from '@/entities/assessment';
 
 import { createAnswerQueue } from '../createAnswerQueue';
@@ -114,5 +115,66 @@ describe('attempt controller', () => {
     expect(await actions.forceFinish()).toBe(true);
     expect(api.submit).toHaveBeenCalledTimes(1);
     expect(store.getSnapshot().attempt.result).toBe(completed.result);
+  });
+  it('repeated completion reads the saved result without submitting twice', async () => {
+    const store = createAttemptStore(initial);
+    const queue = createAnswerQueue({
+      save: vi.fn(),
+      onChange: store.answersChanged,
+    });
+    const actions = createAssessmentActions(store, queue);
+    expect(await actions.finish()).toBe(true);
+    expect(await actions.finish()).toBe(true);
+    expect(api.submit).toHaveBeenCalledTimes(1);
+  });
+  it('blocks further completion after consent is revoked', async () => {
+    api.submit.mockRejectedValueOnce(new ApiError(409, '', 'consent_required'));
+    const store = createAttemptStore(initial);
+    const queue = createAnswerQueue({
+      save: vi.fn(),
+      onChange: store.answersChanged,
+    });
+    const actions = createAssessmentActions(store, queue);
+    expect(await actions.finish()).toBe(false);
+    expect(store.getSnapshot().consentBlocked).toBe(true);
+    expect(await actions.forceFinish()).toBe(false);
+    expect(api.submit).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot().busy).toBe(false);
+  });
+  it('ignores a late active response during completion', async () => {
+    let resolve!: (value: AssessmentAttempt) => void;
+    api.load.mockReturnValueOnce(
+      new Promise<AssessmentAttempt>((done) => {
+        resolve = done;
+      }),
+    );
+    const store = createAttemptStore(initial);
+    const queue = createAnswerQueue({
+      save: vi.fn(),
+      onChange: store.answersChanged,
+    });
+    const actions = createAssessmentActions(store, queue);
+    const loading = actions.refreshResult();
+    expect(await actions.finish()).toBe(true);
+    resolve(initial);
+    expect(await loading).toBe('completed');
+    expect(store.getSnapshot().error).toBe('');
+    expect(store.getSnapshot().attempt.result).toBe(completed.result);
+  });
+  it('does not apply a response after its request is cancelled', async () => {
+    const abort = new AbortController();
+    api.load.mockImplementationOnce(async () => {
+      abort.abort();
+      return completed;
+    });
+    const store = createAttemptStore(initial);
+    const queue = createAnswerQueue({
+      save: vi.fn(),
+      onChange: store.answersChanged,
+    });
+    const actions = createAssessmentActions(store, queue);
+    expect(await actions.refreshResult(abort.signal)).toBe('error');
+    expect(store.getSnapshot().attempt).toBe(initial);
+    expect(store.getSnapshot().resultLoading).toBe(false);
   });
 });

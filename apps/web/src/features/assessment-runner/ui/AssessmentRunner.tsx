@@ -133,6 +133,8 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
         {questions.map((item, position) => (
           <Button
             key={item.id}
+            className="min-h-11 min-w-11"
+            aria-label={`Задание ${item.position}`}
             variant={position === index ? 'default' : 'outline'}
             aria-current={position === index ? 'step' : undefined}
             disabled={busy}
@@ -152,7 +154,11 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
               {question.prompt.text}
             </p>
             {question.prompt.code && (
-              <pre className="overflow-x-auto rounded bg-muted p-3">
+              <pre
+                tabIndex={0}
+                aria-label="Код задания"
+                className="max-w-full overflow-x-auto rounded bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
+              >
                 <code>{question.prompt.code}</code>
               </pre>
             )}

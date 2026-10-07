@@ -9,7 +9,7 @@ import type {
 } from '@/entities/assessment';
 
 import { type AnswerFormValues, createAnswerSchema } from '../constants';
-import { getAnswerStatus } from '../lib';
+import { getAnswerLegend, getAnswerStatus } from '../lib';
 import type { AnswerState } from '../model';
 
 interface QuestionAnswerFormProps {
@@ -61,11 +61,7 @@ export const QuestionAnswerForm = ({
     >
       <fieldset disabled={disabled} className="flex flex-col gap-3">
         <legend className="mb-3 text-sm font-medium">
-          {options.length
-            ? question.multiple
-              ? 'Выберите несколько вариантов'
-              : 'Выберите один вариант'
-            : 'Ваш ответ'}
+          {getAnswerLegend(question)}
         </legend>
         {options.map((option) => (
           <label
@@ -85,7 +81,7 @@ export const QuestionAnswerForm = ({
                 name={`answer-${question.id}`}
                 checked={selected.includes(option.id)}
                 onChange={() => choose(option.id, true)}
-                className="mt-1"
+                className="mt-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
               />
             )}
             <span className="min-w-0 whitespace-pre-wrap">{option.text}</span>
