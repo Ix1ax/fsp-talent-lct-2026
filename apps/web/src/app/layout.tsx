@@ -1,21 +1,34 @@
 import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
-import { Geist } from 'next/font/google';
+import { Onest } from 'next/font/google';
+import localFont from 'next/font/local';
 
 import { cn } from '@/shared/lib/utils';
 import { Toaster } from '@/shared/ui/Sonner';
 import { TooltipProvider } from '@/shared/ui/Tooltip';
 
 import { AuthBootstrap } from './AuthBootstrap';
+import { ThemeProvider } from './ThemeProvider';
 
 import './globals.css';
 
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const onest = Onest({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-onest',
+});
+const jetbrains = localFont({
+  src: [
+    { path: './fonts/JetBrainsMono-Regular.ttf', weight: '400' },
+    { path: './fonts/JetBrainsMono-Medium.ttf', weight: '500' },
+  ],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'ФСП · Основа платформы',
+  title: 'ФСП Скаут',
   other: {
-    'color-scheme': 'dark',
+    'color-scheme': 'dark light',
   },
 };
 
@@ -25,12 +38,18 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html lang="ru" className={cn('dark font-sans', geist.variable)}>
+    <html
+      lang="ru"
+      suppressHydrationWarning
+      className={cn('font-sans', onest.variable, jetbrains.variable)}
+    >
       <body>
-        <TooltipProvider>
-          <AuthBootstrap>{children}</AuthBootstrap>
-          <Toaster />
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <AuthBootstrap>{children}</AuthBootstrap>
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

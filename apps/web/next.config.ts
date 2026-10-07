@@ -11,6 +11,11 @@ const monorepoRoot = path.join(
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // .local.tsx — только локальные страницы, исключённые из Git и Docker.
+  pageExtensions:
+    process.env.NODE_ENV === 'development'
+      ? ['local.tsx', 'tsx', 'ts', 'jsx', 'js']
+      : ['tsx', 'ts', 'jsx', 'js'],
   outputFileTracingRoot: monorepoRoot,
   async rewrites() {
     return [
