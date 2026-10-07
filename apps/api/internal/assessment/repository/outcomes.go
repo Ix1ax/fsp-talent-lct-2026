@@ -77,14 +77,39 @@ func finalizeLocked(ctx context.Context, tx pgx.Tx, profileID, attemptID string,
 	case expired:
 		status = entity.AttemptExpired
 	}
-	if _, err = tx.Exec(ctx, `UPDATE assessment_attempts SET status=$2,finished_at=clock_timestamp(),score_percent=$3 WHERE id=$1`, attemptID, status, percent); err != nil {
+	// Просроченная попытка закрывается моментом дедлайна, а не обращения: срок пересдачи не должен
+	// растягиваться на всё время, пока кандидат отсутствовал.
+	if _, err = tx.Exec(ctx, `UPDATE assessment_attempts SET status=$2,finished_at=CASE WHEN $4 THEN LEAST(clock_timestamp(),deadline_at) ELSE clock_timestamp() END,score_percent=$3 WHERE id=$1`, attemptID, status, percent, expired); err != nil {
 		return err
 	}
 	if status != entity.AttemptPassed {
 		return nil
 	}
+	// После отзыва согласия processing итоги не записываются: данные кандидата больше не обрабатываются.
+	var consent bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM candidate_consents c JOIN candidate_profiles p ON p.user_id=c.user_id
+ WHERE p.id=$1 AND c.kind='processing' AND c.company_id IS NULL AND c.revoked_at IS NULL)`, profileID).Scan(&consent); err != nil || !consent {
+		return err
+	}
+	approved := map[string]bool{}
+	skillRows, err := tx.Query(ctx, `SELECT id::text FROM skills WHERE id=ANY($1::uuid[]) AND active AND moderation_status='approved'`, skillIDs(skills))
+	if err != nil {
+		return err
+	}
+	for skillRows.Next() {
+		var id string
+		if err = skillRows.Scan(&id); err != nil {
+			skillRows.Close()
+			return err
+		}
+		approved[id] = true
+	}
+	skillRows.Close()
+	if err = skillRows.Err(); err != nil {
+		return err
+	}
 	for _, sk := range skills {
-		if sk.Percent() < passScore {
+		if sk.Percent() < passScore || !approved[sk.SkillID] {
 			continue
 		}
 		if _, err = tx.Exec(ctx, `INSERT INTO candidate_skills(candidate_id,skill_id) VALUES($1,$2) ON CONFLICT (candidate_id,skill_id) DO NOTHING`, profileID, sk.SkillID); err != nil {
@@ -102,6 +127,14 @@ func finalizeLocked(ctx context.Context, tx pgx.Tx, profileID, attemptID string,
 	_, err = tx.Exec(ctx, `INSERT INTO candidate_categories(candidate_id,specialization_id,grade_id,attempt_id) VALUES($1,$2,$3,$4)
  ON CONFLICT (candidate_id) DO UPDATE SET specialization_id=EXCLUDED.specialization_id,grade_id=EXCLUDED.grade_id,attempt_id=EXCLUDED.attempt_id,confirmed_at=clock_timestamp()`, profileID, specID, gradeID, attemptID)
 	return err
+}
+
+func skillIDs(skills []entity.SkillScore) []string {
+	ids := make([]string, len(skills))
+	for i, sk := range skills {
+		ids[i] = sk.SkillID
+	}
+	return ids
 }
 
 // lockAttempt блокирует попытку кандидата FOR UPDATE и сообщает, истёк ли её дедлайн.
@@ -140,6 +173,9 @@ func (r *Repository) SaveAnswer(ctx context.Context, userID, attemptID, question
 			return err
 		}
 		return entity.ErrAttemptClosed
+	}
+	if err = requireProcessingConsent(ctx, tx, userID); err != nil {
+		return err
 	}
 	var promptJSON, specJSON []byte
 	err = tx.QueryRow(ctx, `SELECT prompt_snapshot,grading_snapshot FROM attempt_questions WHERE id=$1 AND attempt_id=$2`, questionID, attemptID).Scan(&promptJSON, &specJSON)
@@ -187,6 +223,11 @@ func (r *Repository) SubmitAttempt(ctx context.Context, userID, attemptID string
 		return entity.Attempt{}, err
 	}
 	if status == entity.AttemptActive {
+		if !expired {
+			if err = requireProcessingConsent(ctx, tx, userID); err != nil {
+				return entity.Attempt{}, err
+			}
+		}
 		if err = finalizeLocked(ctx, tx, profileID, attemptID, expired); err != nil {
 			return entity.Attempt{}, err
 		}

@@ -62,7 +62,7 @@ func TestStartAttemptSnapshotsWithoutGradingSpec(t *testing.T) {
 		t.Fatalf("дедлайн: %v..%v, лимит %d", attempt.StartedAt, attempt.DeadlineAt, attempt.TimeLimitSec)
 	}
 	raw, _ := json.Marshal(attempt)
-	for _, leak := range []string{"grading", "correct", "accepted", "case_sensitive", "multiple"} {
+	for _, leak := range []string{"grading", "correct", "accepted", "case_sensitive"} {
 		if strings.Contains(string(raw), leak) {
 			t.Fatalf("в ответе кандидату есть %q: %s", leak, raw)
 		}

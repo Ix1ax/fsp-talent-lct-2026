@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -339,7 +340,7 @@ func TestSaveAnswerValidation(t *testing.T) {
 	if choice == nil || text == nil {
 		t.Skip("в демо-шаблоне нет обоих видов заданий")
 	}
-	long := string(make([]rune, 501))
+	long := strings.Repeat("я", 501)
 	var validation *entity.ValidationError
 	for name, tc := range map[string]struct {
 		attempt, question string

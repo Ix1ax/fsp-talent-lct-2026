@@ -17,12 +17,14 @@ func (in *StartInput) Normalize() error {
 
 // AttemptQuestion — задание попытки. Правил проверки здесь нет и быть не должно.
 type AttemptQuestion struct {
-	ID         string  `json:"id"`
-	Position   int     `json:"position"`
-	SkillID    string  `json:"skill_id"`
-	Difficulty int16   `json:"difficulty"`
-	Prompt     Prompt  `json:"prompt"`
-	Answer     *Answer `json:"answer"`
+	ID         string `json:"id"`
+	Position   int    `json:"position"`
+	SkillID    string `json:"skill_id"`
+	Difficulty int16  `json:"difficulty"`
+	// Multiple — можно выбрать несколько вариантов; без этого признака клиент не знает, как отвечать.
+	Multiple bool    `json:"multiple"`
+	Prompt   Prompt  `json:"prompt"`
+	Answer   *Answer `json:"answer"`
 }
 
 // SkillResult — итог по навыку: процент, подтверждён ли навык и уровень.
@@ -73,6 +75,7 @@ const (
 	ReasonActive    = "attempt_active"
 	ReasonCooldown  = "retake_cooldown"
 	ReasonConfirmed = "already_confirmed"
+	ReasonConsent   = "consent_required"
 )
 
 // AvailableTemplate — опубликованный тест и его состояние для кандидата.

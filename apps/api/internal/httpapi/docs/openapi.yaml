@@ -4752,7 +4752,7 @@ paths:
         - keycloakOAuth:
             - openid
             - email
-      description: "Опубликованные шаблоны тестов по парам специализация и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, already_confirmed), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
+      description: "Опубликованные шаблоны тестов по парам специализация и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, already_confirmed, consent_required), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
       responses:
         '200':
           description: "Список тестов."
@@ -4853,7 +4853,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/AssessmentConflictError'
+              examples:
+                retake_cooldown:
+                  value: {error: {code: retake_cooldown, message: "Пересдать этот тест можно позже", retry_at: "2026-10-14T12:00:00Z"}}
+                attempt_active:
+                  value: {error: {code: attempt_active, message: "У вас уже есть активная попытка тестирования", attempt_id: "11111111-1111-4111-8111-111111111111"}}
         '413':
           description: "Слишком большое тело (request_too_large)."
           content:
@@ -4882,7 +4887,7 @@ paths:
         - keycloakOAuth:
             - openid
             - email
-      description: "Активная попытка с заданиями и сохранёнными ответами. Если дедлайн прошёл, попытка закрывается и метод отвечает 404 attempt_not_found (итог смотрите по id)."
+      description: "Активная попытка с заданиями и сохранёнными ответами. Если дедлайн прошёл, попытка закрывается (итоги сохраняются) и метод отвечает 404 attempt_not_found; итог просроченной попытки читается по её id."
       responses:
         '200':
           description: "Активная попытка."
@@ -5039,7 +5044,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: "Попытка уже завершена или время вышло (attempt_closed)."
+          description: "Попытка уже завершена или время вышло (attempt_closed), либо отозвано согласие processing (consent_required)."
           content:
             application/json:
               schema:
@@ -5072,7 +5077,7 @@ paths:
         - keycloakOAuth:
             - openid
             - email
-      description: "Оценивает сохранённые ответы. При успехе в той же транзакции подтверждаются навыки (источник test, вес 0.8), пишется история грейдов и обновляется категория кандидата. Повторный вызов возвращает тот же итог."
+      description: "Оценивает сохранённые ответы. Нужно активное согласие processing (иначе 409 consent_required). При успехе в той же транзакции подтверждаются навыки (источник test, вес 0.8), пишется история грейдов и обновляется категория кандидата. Повторный вызов возвращает тот же итог."
       parameters:
         - {name: id, in: path, required: true, description: "ID попытки", schema: {type: string, format: uuid}}
       responses:
@@ -5101,6 +5106,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '403':
           description: "Пользователь заблокирован (user_inactive) или его роль не candidate (forbidden)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: "Отозвано согласие processing (consent_required)."
           content:
             application/json:
               schema:
@@ -6872,6 +6883,19 @@ components:
         shortages:
           type: array
           items: {$ref: '#/components/schemas/AssessmentShortage'}
+    AssessmentConflictError:
+      description: "Ошибка 409 со справочными полями: attempt_id при attempt_active, retry_at при retake_cooldown."
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string, example: retake_cooldown}
+            message: {type: string}
+            attempt_id: {type: string, format: uuid, description: "Только при attempt_active."}
+            retry_at: {type: string, format: date-time, description: "Только при retake_cooldown: когда можно пересдать."}
     AssessmentStartRequest:
       type: object
       additionalProperties: false
@@ -6901,7 +6925,7 @@ components:
         pass_score: {type: number, description: "Проходной балл в процентах."}
         question_count: {type: integer}
         can_start: {type: boolean}
-        reason: {type: string, enum: [ok, attempt_active, retake_cooldown, already_confirmed]}
+        reason: {type: string, enum: [ok, attempt_active, retake_cooldown, already_confirmed, consent_required]}
         retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (при retake_cooldown)."}
         confirmed: {type: boolean, description: "Этот грейд уже подтверждён."}
     AssessmentAvailableList:
@@ -6920,10 +6944,11 @@ components:
         text: {type: string}
     AssessmentAttemptQuestion:
       type: object
-      required: [id, position, skill_id, difficulty, prompt, answer]
+      required: [id, position, skill_id, difficulty, multiple, prompt, answer]
       properties:
         id: {type: string, format: uuid}
         position: {type: integer, minimum: 1}
+        multiple: {type: boolean, description: "Можно выбрать несколько вариантов (передайте несколько id в selected); для заданий с одним вариантом и текстовых false."}
         skill_id: {type: string, format: uuid}
         difficulty: {type: integer, minimum: 1, maximum: 5}
         prompt: {$ref: '#/components/schemas/AssessmentPrompt'}

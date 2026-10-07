@@ -10,12 +10,18 @@ import (
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/entity"
 	candidateentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 )
 
 // lockCandidate берёт блокировки в общем порядке: пользователь (FOR SHARE), профиль (FOR SHARE), затем
 // advisory-блокировка кандидата, которая сериализует старт, ответы и завершение его попыток.
 // Не активный кандидат получает ErrForbidden, кандидат без профиля — ErrNotFound кандидатского модуля.
 func lockCandidate(ctx context.Context, tx pgx.Tx, userID string) (string, error) {
+	// Общая блокировка изменений навыков берётся первой, как в PutSkill: итоги теста пишут навыки кандидата,
+	// и модерация (слияние, отклонение) не должна пересекаться с этим.
+	if err := catalog.LockSkillChanges(ctx, tx); err != nil {
+		return "", err
+	}
 	var ok bool
 	err := tx.QueryRow(ctx, `SELECT true FROM users WHERE id=$1 AND role='candidate' AND status='active' FOR SHARE`, userID).Scan(&ok)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -36,9 +42,14 @@ func lockCandidate(ctx context.Context, tx pgx.Tx, userID string) (string, error
 	return profileID, err
 }
 
-func requireProcessingConsent(ctx context.Context, tx pgx.Tx, userID string) error {
+func hasProcessingConsent(ctx context.Context, q querier, userID string) (bool, error) {
 	var active bool
-	err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM candidate_consents WHERE user_id=$1 AND kind='processing' AND company_id IS NULL AND revoked_at IS NULL)`, userID).Scan(&active)
+	err := q.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM candidate_consents WHERE user_id=$1 AND kind='processing' AND company_id IS NULL AND revoked_at IS NULL)`, userID).Scan(&active)
+	return active, err
+}
+
+func requireProcessingConsent(ctx context.Context, tx pgx.Tx, userID string) error {
+	active, err := hasProcessingConsent(ctx, tx, userID)
 	if err == nil && !active {
 		return candidateentity.ErrConsentRequired
 	}
@@ -74,10 +85,18 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 	if err = closeExpired(ctx, tx, profileID); err != nil {
 		return entity.Attempt{}, err
 	}
+	// Отказ в старте не должен откатывать ленивое закрытие просроченной попытки: иначе брошенный тест
+	// продолжит блокировать пару, а его итоги не сохранятся.
+	reject := func(reason error) (entity.Attempt, error) {
+		if err := tx.Commit(ctx); err != nil {
+			return entity.Attempt{}, err
+		}
+		return entity.Attempt{}, reason
+	}
 	var activeID string
 	err = tx.QueryRow(ctx, `SELECT id::text FROM assessment_attempts WHERE candidate_id=$1 AND status='active'`, profileID).Scan(&activeID)
 	if err == nil {
-		return entity.Attempt{}, &entity.ActiveError{AttemptID: activeID}
+		return reject(&entity.ActiveError{AttemptID: activeID})
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return entity.Attempt{}, err
@@ -88,9 +107,9 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 	}
 	switch st := state(specializationID, gradeID); st.Reason {
 	case entity.ReasonConfirmed:
-		return entity.Attempt{}, entity.ErrAlreadyConfirmed
+		return reject(entity.ErrAlreadyConfirmed)
 	case entity.ReasonCooldown:
-		return entity.Attempt{}, &entity.RetakeError{RetryAt: *st.RetryAt}
+		return reject(&entity.RetakeError{RetryAt: *st.RetryAt})
 	}
 
 	var templateID string
@@ -98,12 +117,15 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 	var passScore float64
 	err = tx.QueryRow(ctx, `SELECT id::text,time_limit_sec,pass_score FROM assessment_templates WHERE specialization_id=$1 AND grade_id=$2 AND status='published' FOR SHARE`, specializationID, gradeID).Scan(&templateID, &limit, &passScore)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return entity.Attempt{}, entity.ErrUnavailable
+		return reject(entity.ErrUnavailable)
 	}
 	if err != nil {
 		return entity.Attempt{}, err
 	}
 	picked, err := pickQuestions(ctx, tx, templateID)
+	if errors.Is(err, entity.ErrUnavailable) {
+		return reject(err)
+	}
 	if err != nil {
 		return entity.Attempt{}, err
 	}
@@ -250,7 +272,7 @@ func pairState(ctx context.Context, q querier, profileID string, retakeDays int)
 	}
 	return func(spec, grade int16) entity.AvailableTemplate {
 		out := entity.AvailableTemplate{SpecializationID: spec, GradeID: grade, CanStart: true, Reason: entity.ReasonOK}
-		if rank, ok := ranks[spec]; ok && entity.Confirmed(rank, gradeRank[grade]) {
+		if target, known := gradeRank[grade]; known && entity.Confirmed(ranks[spec], target) && ranks[spec] > 0 {
 			out.CanStart, out.Reason, out.Confirmed = false, entity.ReasonConfirmed, true
 			return out
 		}
@@ -280,6 +302,10 @@ func (r *Repository) Available(ctx context.Context, userID string, retakeDays in
 	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM assessment_attempts WHERE candidate_id=$1 AND status='active')`, profileID).Scan(&active); err != nil {
 		return nil, err
 	}
+	consent, err := hasProcessingConsent(ctx, tx, userID)
+	if err != nil {
+		return nil, err
+	}
 	state, err := pairState(ctx, tx, profileID, retakeDays)
 	if err != nil {
 		return nil, err
@@ -290,23 +316,31 @@ func (r *Repository) Available(ctx context.Context, userID string, retakeDays in
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 	items := []entity.AvailableTemplate{}
 	for rows.Next() {
 		var spec, grade int16
 		var limit, count int
 		var pass float64
 		if err = rows.Scan(&spec, &grade, &limit, &pass, &count); err != nil {
+			rows.Close()
 			return nil, err
 		}
 		item := state(spec, grade)
 		item.TimeLimitSec, item.PassScore, item.QuestionCount = limit, pass, count
-		if active {
+		switch {
+		case active:
 			item.CanStart, item.Reason, item.RetryAt = false, entity.ReasonActive, nil
+		case !consent && item.CanStart:
+			item.CanStart, item.Reason = false, entity.ReasonConsent
 		}
 		items = append(items, item)
 	}
-	return items, rows.Err()
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	// Фиксируем ленивое закрытие просроченной попытки.
+	return items, tx.Commit(ctx)
 }
 
 // GetAttempt возвращает попытку кандидата. Просроченная активная попытка сначала закрывается.
@@ -334,7 +368,14 @@ func (r *Repository) readAttempt(ctx context.Context, userID string, retakeDays 
 	}
 	var id string
 	err = tx.QueryRow(ctx, `SELECT id::text FROM assessment_attempts WHERE candidate_id=$1 AND `+where, profileID, arg).Scan(&id)
-	if errors.Is(err, pgx.ErrNoRows) || isInvalidUUID(err) {
+	if errors.Is(err, pgx.ErrNoRows) {
+		// Просроченная попытка могла быть закрыта только что: сохраняем это даже при ответе «не найдено».
+		if err = tx.Commit(ctx); err != nil {
+			return entity.Attempt{}, err
+		}
+		return entity.Attempt{}, entity.ErrAttemptNotFound
+	}
+	if isInvalidUUID(err) {
 		return entity.Attempt{}, entity.ErrAttemptNotFound
 	}
 	if err != nil {
@@ -359,7 +400,7 @@ func loadAttempt(ctx context.Context, q querier, id string, retakeDays int) (ent
 		return a, dbError(err)
 	}
 	if a.Status == entity.AttemptActive {
-		rows, err := q.Query(ctx, `SELECT q.id::text,q.position,q.skill_id::text,q.difficulty,q.prompt_snapshot,a.answer
+		rows, err := q.Query(ctx, `SELECT q.id::text,q.position,q.skill_id::text,q.difficulty,coalesce((q.grading_snapshot->>'multiple')::boolean,false),q.prompt_snapshot,a.answer
  FROM attempt_questions q LEFT JOIN attempt_answers a ON a.attempt_question_id=q.id WHERE q.attempt_id=$1 ORDER BY q.position`, id)
 		if err != nil {
 			return a, err
@@ -368,7 +409,7 @@ func loadAttempt(ctx context.Context, q querier, id string, retakeDays int) (ent
 		for rows.Next() {
 			var item entity.AttemptQuestion
 			var prompt, answer []byte
-			if err = rows.Scan(&item.ID, &item.Position, &item.SkillID, &item.Difficulty, &prompt, &answer); err != nil {
+			if err = rows.Scan(&item.ID, &item.Position, &item.SkillID, &item.Difficulty, &item.Multiple, &prompt, &answer); err != nil {
 				return a, err
 			}
 			if err = json.Unmarshal(prompt, &item.Prompt); err != nil {
@@ -391,9 +432,11 @@ func loadAttempt(ctx context.Context, q querier, id string, retakeDays int) (ent
 
 func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passScore float64, retakeDays int) (entity.AttemptResult, error) {
 	res := entity.AttemptResult{Passed: a.Status == entity.AttemptPassed, ScorePercent: score, PassScore: passScore, Skills: []entity.SkillResult{}}
-	rows, err := q.Query(ctx, `SELECT q.skill_id::text,s.name,sum(q.points)::float8,sum(coalesce(an.awarded,0))::float8
+	// Подтверждение засчитывается, только если итоги записаны (есть запись истории) и навык по-прежнему одобрен.
+	rows, err := q.Query(ctx, `SELECT q.skill_id::text,s.name,sum(q.points)::float8,sum(coalesce(an.awarded,0))::float8,
+ (s.active AND s.moderation_status='approved' AND EXISTS(SELECT 1 FROM grade_history h WHERE h.attempt_id=$1))
  FROM attempt_questions q JOIN skills s ON s.id=q.skill_id LEFT JOIN attempt_answers an ON an.attempt_question_id=q.id
- WHERE q.attempt_id=$1 GROUP BY q.skill_id,s.name ORDER BY min(q.position)`, a.ID)
+ WHERE q.attempt_id=$1 GROUP BY q.skill_id,s.name,s.active,s.moderation_status ORDER BY min(q.position)`, a.ID)
 	if err != nil {
 		return res, err
 	}
@@ -401,11 +444,12 @@ func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passSco
 	for rows.Next() {
 		var sk entity.SkillResult
 		var possible, earned float64
-		if err = rows.Scan(&sk.SkillID, &sk.Name, &possible, &earned); err != nil {
+		var recorded bool
+		if err = rows.Scan(&sk.SkillID, &sk.Name, &possible, &earned, &recorded); err != nil {
 			return res, err
 		}
 		sk.Percent = entity.SkillScore{Earned: earned, Possible: possible}.Percent()
-		if res.Passed && sk.Percent >= passScore {
+		if res.Passed && recorded && sk.Percent >= passScore {
 			level := entity.SkillLevel(sk.Percent)
 			sk.Confirmed, sk.Level = true, &level
 		}
@@ -419,10 +463,12 @@ func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passSco
 		var c entity.CategoryRef
 		err = q.QueryRow(ctx, `SELECT h.specialization_id,sp.name,h.grade_id,g.name,h.achieved_at FROM grade_history h
  JOIN specializations sp ON sp.id=h.specialization_id JOIN grades g ON g.id=h.grade_id WHERE h.attempt_id=$1`, a.ID).Scan(&c.SpecializationID, &c.Specialization, &c.GradeID, &c.Grade, &c.ConfirmedAt)
-		if err != nil {
+		switch {
+		case err == nil:
+			res.Category = &c
+		case !errors.Is(err, pgx.ErrNoRows): // нет записи, если итоги не писались (согласие отозвано)
 			return res, err
 		}
-		res.Category = &c
 	} else if a.FinishedAt != nil {
 		retryAt := a.FinishedAt.Add(time.Duration(retakeDays) * 24 * time.Hour)
 		res.RetryAt = &retryAt
