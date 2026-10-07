@@ -172,9 +172,9 @@ func TestStartAttemptRequiresActiveCandidate(t *testing.T) {
 		user string
 		want error
 	}{
-		"нет профиля":      {newUser("candidate", "active", false, true), candidateentity.ErrNotFound},
-		"нет согласия":     {newUser("candidate", "active", true, false), candidateentity.ErrConsentRequired},
-		"работодатель":     {newUser("employer", "active", false, false), candidateentity.ErrForbidden},
+		"нет профиля":     {newUser("candidate", "active", false, true), candidateentity.ErrNotFound},
+		"нет согласия":    {newUser("candidate", "active", true, false), candidateentity.ErrConsentRequired},
+		"работодатель":    {newUser("employer", "active", false, false), candidateentity.ErrForbidden},
 		"заблокированный": {newUser("candidate", "blocked", true, true), candidateentity.ErrForbidden},
 	} {
 		if _, err := repo.StartAttempt(ctx, tc.user, spec, grade, retakeDays); !errors.Is(err, tc.want) {
