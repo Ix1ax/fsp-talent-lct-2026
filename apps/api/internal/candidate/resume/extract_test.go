@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func readFixture(t *testing.T, name string) []byte {
@@ -106,5 +107,37 @@ func TestExtractLinesRecoversPanic(t *testing.T) {
 	var broken *BrokenError
 	if _, err := extract(t, fixture, 10); !errors.As(err, &broken) {
 		t.Fatalf("паника библиотеки должна стать BrokenError: %v", err)
+	}
+}
+
+// Склейка фрагментов линейная: одна длинная строка из сотен тысяч символов не должна занимать секунды.
+func TestPageLinesLinearOnLongLine(t *testing.T) {
+	frags := make([]fragment, 400000)
+	for i := range frags {
+		frags[i] = fragment{x: 10 + float64(i)*0.001, y: 700, w: 0, size: 10, text: "a"}
+	}
+	started := time.Now()
+	lines := pageLines(1, frags)
+	if elapsed := time.Since(started); elapsed > time.Second {
+		t.Fatalf("склейка %d символов заняла %v", len(frags), elapsed)
+	}
+	if len(lines) != 1 || len(lines[0].Text) != 400000 {
+		t.Fatalf("строк %d", len(lines))
+	}
+}
+
+func TestPageLinesStripsControlCharacters(t *testing.T) {
+	lines := pageLines(1, []fragment{{x: 10, y: 700, size: 10, text: "a\x00b\x01c\td"}, {x: 10, y: 600, size: 10, text: "\x00\x02"}})
+	if len(lines) != 1 || lines[0].Text != "abc d" {
+		t.Fatalf("управляющие символы: %+v", lines)
+	}
+}
+
+// Документ с чрезмерным числом глифов отвергается, а не раздувает память.
+func TestExtractLinesRejectsTooManyGlyphs(t *testing.T) {
+	data := bombPDF(t, 3<<20)
+	var broken *BrokenError
+	if _, err := ExtractLines(bytes.NewReader(data), int64(len(data)), 10); !errors.As(err, &broken) {
+		t.Fatalf("ожидали BrokenError: %v", err)
 	}
 }

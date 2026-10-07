@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/resume"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
@@ -21,21 +22,9 @@ import (
 
 const resumePath = "/api/v1/me/profile/import/resume"
 
-type resumeStore struct {
-	access  error
-	entered chan struct{} // получает сигнал, когда запрос дошёл до проверки доступа
-	gate    chan struct{} // если задан, проверка доступа ждёт закрытия
-}
+type resumeStore struct{ access error }
 
-func (r *resumeStore) ImportAccess(context.Context, string) error {
-	if r.entered != nil {
-		r.entered <- struct{}{}
-	}
-	if r.gate != nil {
-		<-r.gate
-	}
-	return r.access
-}
+func (r *resumeStore) ImportAccess(context.Context, string) error { return r.access }
 func (r *resumeStore) MatchSkills(_ context.Context, names []string) (map[string]string, error) {
 	return map[string]string{"go": "id-go"}, nil
 }
@@ -45,7 +34,16 @@ func (r *resumeStore) WorkFormatIDs(context.Context, []string) ([]int16, error) 
 
 func resumeEnv(t *testing.T, store *resumeStore) *testutil.AuthEnv {
 	t.Helper()
-	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateResume: candidateservice.NewResumeImportService(store, nil)})
+	return resumeEnvWithParser(t, store, nil)
+}
+
+func resumeEnvWithParser(t *testing.T, store *resumeStore, parser candidateservice.ResumeParser) *testutil.AuthEnv {
+	t.Helper()
+	service := candidateservice.NewResumeImportService(store, nil)
+	if parser != nil {
+		service.WithParser(parser)
+	}
+	e := testutil.NewAuthEnvWithOptions(t, httpapi.Options{CandidateResume: service})
 	for sub, u := range map[string]user.User{
 		"cand":  {ID: "u-cand", Role: "candidate", Status: "active"},
 		"cand2": {ID: "u-cand2", Role: "candidate", Status: "active"},
@@ -173,10 +171,19 @@ func TestResumeImportUnavailable(t *testing.T) {
 	}
 }
 
-// Два разбора идут одновременно; третий запрос сразу получает 503, а не ждёт.
+// Два разбора идут одновременно; третий запрос сразу получает 503, а не ждёт. Слот занят только на время разбора.
 func TestResumeImportBusy(t *testing.T) {
-	store := &resumeStore{entered: make(chan struct{}, 3), gate: make(chan struct{})}
-	e := resumeEnv(t, store)
+	entered := make(chan struct{}, 3)
+	gate := make(chan struct{})
+	var once sync.Once
+	release := func() { once.Do(func() { close(gate) }) }
+	defer release()
+	blocking := func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
+		entered <- struct{}{}
+		<-gate
+		return resume.Draft{}, nil, nil
+	}
+	e := resumeEnvWithParser(t, &resumeStore{}, blocking)
 	pdf := resumeFixture(t)
 	var wg sync.WaitGroup
 	for _, sub := range []string{"cand", "cand2"} {
@@ -190,7 +197,7 @@ func TestResumeImportBusy(t *testing.T) {
 	}
 	for i := 0; i < 2; i++ {
 		select {
-		case <-store.entered:
+		case <-entered:
 		case <-time.After(5 * time.Second):
 			t.Fatal("два запроса не заняли слоты")
 		}
@@ -198,8 +205,6 @@ func TestResumeImportBusy(t *testing.T) {
 	// Третий запрос не должен ждать слот: при поломке ограничения он завис бы на общем барьере, поэтому у ожидания есть предел.
 	third := make(chan *httptest.ResponseRecorder, 1)
 	go func() { third <- uploadResume(t, e, "cand3", "file", "r.pdf", pdf) }()
-	var once sync.Once
-	release := func() { once.Do(func() { close(store.gate) }) }
 	select {
 	case w := <-third:
 		if w.Code != 503 || testutil.ErrorCode(t, w) != "import_busy" || w.Header().Get("Retry-After") != "5" {
@@ -212,9 +217,63 @@ func TestResumeImportBusy(t *testing.T) {
 	}
 	release()
 	wg.Wait()
-	// После освобождения слотов импорт снова доступен.
-	store.gate, store.entered = nil, nil
-	if w := uploadResume(t, e, "cand3", "file", "r.pdf", pdf); w.Code != 200 {
-		t.Errorf("после освобождения: %d %s", w.Code, w.Body)
+}
+
+// Паника разборщика не роняет сервер: клиент получает 422, следующий запрос обрабатывается.
+func TestResumeImportParserPanic(t *testing.T) {
+	calls := 0
+	e := resumeEnvWithParser(t, &resumeStore{}, func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
+		calls++
+		if calls == 1 {
+			panic("boom")
+		}
+		return resume.Draft{}, nil, nil
+	})
+	if w := uploadResume(t, e, "cand", "file", "r.pdf", resumeFixture(t)); w.Code != 422 || testutil.ErrorCode(t, w) != "resume_unrecognized" {
+		t.Fatalf("паника: %d %s", w.Code, w.Body)
+	}
+	if w := uploadResume(t, e, "cand", "file", "r.pdf", resumeFixture(t)); w.Code != 200 {
+		t.Fatalf("следующий запрос: %d %s", w.Code, w.Body)
+	}
+}
+
+// Файл не пишется во временные файлы: часть multipart читается в память с пределом.
+func TestResumeImportRejectsExtraParts(t *testing.T) {
+	e := resumeEnv(t, &resumeStore{})
+	var body bytes.Buffer
+	w := multipart.NewWriter(&body)
+	part, _ := w.CreateFormFile("file", "a.pdf")
+	part.Write(resumeFixture(t))
+	other, _ := w.CreateFormFile("file", "b.pdf")
+	other.Write(resumeFixture(t))
+	w.Close()
+	req := httptest.NewRequest("POST", resumePath, &body)
+	req.Header.Set("Authorization", "Bearer "+e.Token(t, "cand"))
+	req.Header.Set("Content-Type", w.FormDataContentType())
+	rec := httptest.NewRecorder()
+	e.Router.ServeHTTP(rec, req)
+	if rec.Code != 400 || testutil.ErrorCode(t, rec) != "validation_error" {
+		t.Fatalf("два файла: %d %s", rec.Code, rec.Body)
+	}
+}
+
+// Резюме с персональными данными не должно попадать во временные файлы, даже если файл больше порога multipart в памяти.
+func TestResumeImportDoesNotWriteToDisk(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("TMPDIR", dir)
+	var files []string
+	e := resumeEnvWithParser(t, &resumeStore{}, func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
+		entries, _ := os.ReadDir(dir)
+		for _, entry := range entries {
+			files = append(files, entry.Name())
+		}
+		return resume.Draft{}, nil, nil
+	})
+	big := append([]byte("%PDF-1.4\n"), bytes.Repeat([]byte("x"), 2<<20)...)
+	if w := uploadResume(t, e, "cand", "file", "big.pdf", big); w.Code != 200 {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	if len(files) != 0 {
+		t.Fatalf("во время разбора во временном каталоге файлы: %v", files)
 	}
 }

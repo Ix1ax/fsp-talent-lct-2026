@@ -23,7 +23,15 @@ const (
 var (
 	ErrResumeTooLarge     = errors.New("файл резюме слишком большой")
 	ErrResumeUnrecognized = errors.New("не удалось распознать резюме")
+	ErrResumeBusy         = errors.New("сейчас разбираются другие резюме")
 )
+
+// maxResumeParses — сколько разборов PDF идёт одновременно.
+const maxResumeParses = 2
+
+// ResumeParser разбирает PDF в черновик. Реализация обязана уважать ctx: по его отмене разбор прекращается и ресурсы
+// освобождаются (изолированный разбор убивает дочерний процесс).
+type ResumeParser func(ctx context.Context, data []byte, now time.Time) (resume.Draft, []string, error)
 
 // ResumeStore — справочники и проверка доступа для импорта резюме.
 type ResumeStore interface {
@@ -61,22 +69,73 @@ type ResumeImportService struct {
 	store   ResumeStore
 	now     func() time.Time
 	timeout time.Duration
-	parse   func(data []byte, now time.Time) (resume.Draft, []string, error)
+	parse   ResumeParser
+	slots   chan struct{}
 }
 
+// NewResumeImportService по умолчанию разбирает PDF в этом же процессе (для тестов). В рабочем режиме нужен
+// UseIsolatedParser: библиотека чтения PDF может зациклиться или съесть память на специально собранном файле.
 func NewResumeImportService(store ResumeStore, now func() time.Time) *ResumeImportService {
 	if now == nil {
 		now = time.Now
 	}
-	return &ResumeImportService{store: store, now: now, timeout: ResumeTimeout, parse: parsePDF}
+	return &ResumeImportService{store: store, now: now, timeout: ResumeTimeout, parse: parseInProcess, slots: make(chan struct{}, maxResumeParses)}
 }
 
-func parsePDF(data []byte, now time.Time) (resume.Draft, []string, error) {
-	lines, err := resume.ExtractLines(bytes.NewReader(data), int64(len(data)), MaxResumePages)
-	if err != nil {
-		return resume.Draft{}, nil, err
+// WithParser подменяет разборщик (в тестах).
+func (s *ResumeImportService) WithParser(p ResumeParser) *ResumeImportService {
+	s.parse = p
+	return s
+}
+
+// UseIsolatedParser включает разбор в дочернем процессе с убийством по таймауту: main должен вызвать resume.RunChild
+// в служебном режиме (см. resume.IsChild).
+func (s *ResumeImportService) UseIsolatedParser() *ResumeImportService {
+	s.parse = func(ctx context.Context, data []byte, now time.Time) (resume.Draft, []string, error) {
+		return resume.ParseIsolated(ctx, data, MaxResumePages, now)
 	}
-	return resume.ParseHH(lines, now)
+	return s
+}
+
+// parseInProcess разбирает в горутине этого процесса. Остановить зависший разбор нельзя, поэтому для рабочего режима он
+// не подходит: он нужен тестам и разработке.
+func parseInProcess(ctx context.Context, data []byte, now time.Time) (resume.Draft, []string, error) {
+	type parsed struct {
+		draft    resume.Draft
+		warnings []string
+		err      error
+	}
+	done := make(chan parsed, 1)
+	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				done <- parsed{err: &resume.BrokenError{Err: fmt.Errorf("внутренняя ошибка разбора: %v", rec)}}
+			}
+		}()
+		lines, err := resume.ExtractLines(bytes.NewReader(data), int64(len(data)), MaxResumePages)
+		if err != nil {
+			done <- parsed{err: err}
+			return
+		}
+		d, w, err := resume.ParseHH(lines, now)
+		done <- parsed{d, w, err}
+	}()
+	select {
+	case p := <-done:
+		return p.draft, p.warnings, p.err
+	case <-ctx.Done():
+		return resume.Draft{}, nil, resume.ErrParseTimeout
+	}
+}
+
+// safeParse не даёт панике подставленного разборщика уронить запрос.
+func (s *ResumeImportService) safeParse(ctx context.Context, data []byte, now time.Time) (d resume.Draft, w []string, err error) {
+	defer func() {
+		if rec := recover(); rec != nil {
+			d, w, err = resume.Draft{}, nil, &resume.BrokenError{Err: fmt.Errorf("внутренняя ошибка разбора: %v", rec)}
+		}
+	}()
+	return s.parse(ctx, data, now)
 }
 
 // Import разбирает PDF и возвращает черновик. Ничего не сохраняет: файл живёт только в памяти этого вызова.
@@ -92,30 +151,28 @@ func (s *ResumeImportService) Import(ctx context.Context, userID string, file io
 		return ImportResult{}, ErrResumeTooLarge
 	}
 
-	type parsed struct {
-		draft    resume.Draft
-		warnings []string
-		err      error
-	}
-	done := make(chan parsed, 1)
-	now := s.now()
-	go func() {
-		d, w, err := s.parse(data, now)
-		done <- parsed{d, w, err}
-	}()
-	timer := time.NewTimer(s.timeout)
-	defer timer.Stop()
-	var p parsed
+	// Слот нужен только на время разбора: чтение файла и проверка доступа уже позади, а слот освобождается после гибели
+	// разбора (изолированный процесс убит и дождались его завершения).
 	select {
-	case p = <-done:
-	case <-timer.C:
-		return ImportResult{}, fmt.Errorf("%w: разбор занял больше %v", ErrResumeUnrecognized, s.timeout)
-	case <-ctx.Done():
+	case s.slots <- struct{}{}:
+		defer func() { <-s.slots }()
+	default:
+		return ImportResult{}, ErrResumeBusy
+	}
+	parseCtx, cancel := context.WithTimeout(ctx, s.timeout)
+	defer cancel()
+	now := s.now()
+	draftParsed, parsedWarnings, parseErr := s.safeParse(parseCtx, data, now)
+	if ctx.Err() != nil {
 		return ImportResult{}, ctx.Err()
 	}
-	if p.err != nil {
-		return ImportResult{}, fmt.Errorf("%w: %v", ErrResumeUnrecognized, p.err)
+	if parseErr != nil {
+		return ImportResult{}, fmt.Errorf("%w: %v", ErrResumeUnrecognized, parseErr)
 	}
+	p := struct {
+		draft    resume.Draft
+		warnings []string
+	}{draftParsed, parsedWarnings}
 
 	warnings := append([]string{}, p.warnings...)
 	draft := ImportedDraft{

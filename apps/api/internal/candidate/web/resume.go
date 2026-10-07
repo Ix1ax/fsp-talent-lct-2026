@@ -1,8 +1,10 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"time"
@@ -28,47 +30,64 @@ func registerResume(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifi
 	g.POST("/resume", h.importResume)
 }
 
-func (h profileHandler) importResume(c *gin.Context) {
-	// Разбор PDF нагружает процессор и память: больше двух одновременно не берём.
-	select {
-	case h.imports <- struct{}{}:
-		defer func() { <-h.imports }()
-	default:
-		c.Header("Retry-After", "5")
-		abortError(c, 503, "import_busy", "Сейчас разбираются другие резюме. Повторите запрос через несколько секунд")
-		return
+// readResumePart читает единственную часть multipart с полем file в память с пределом. Временные файлы не создаются:
+// резюме содержит персональные данные и не должно попадать на диск.
+func readResumePart(r *http.Request) ([]byte, error) {
+	reader, err := r.MultipartReader()
+	if err != nil {
+		return nil, errResumeForm
 	}
+	part, err := reader.NextPart()
+	if err != nil {
+		var max *http.MaxBytesError
+		if errors.As(err, &max) {
+			return nil, service.ErrResumeTooLarge
+		}
+		return nil, errResumeForm
+	}
+	defer part.Close()
+	if part.FormName() != "file" || part.FileName() == "" {
+		return nil, errResumeForm
+	}
+	data, err := io.ReadAll(io.LimitReader(part, service.MaxResumeBytes+1))
+	if err != nil {
+		var max *http.MaxBytesError
+		if errors.As(err, &max) {
+			return nil, service.ErrResumeTooLarge
+		}
+		return nil, errResumeForm
+	}
+	if len(data) > service.MaxResumeBytes {
+		return nil, service.ErrResumeTooLarge
+	}
+	// Больше частей быть не должно: ровно один файл и никаких других полей.
+	if _, err := reader.NextPart(); !errors.Is(err, io.EOF) {
+		var max *http.MaxBytesError
+		if errors.As(err, &max) {
+			return nil, service.ErrResumeTooLarge
+		}
+		return nil, errResumeForm
+	}
+	return data, nil
+}
+
+var errResumeForm = errors.New("Передайте ровно один файл в поле file и никаких других полей (multipart/form-data)")
+
+func (h profileHandler) importResume(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(c.Request.Context(), 45*time.Second)
 	defer cancel()
 	c.Request = c.Request.WithContext(ctx)
-	if err := c.Request.ParseMultipartForm(1 << 20); err != nil {
-		var max *http.MaxBytesError
-		if errors.As(err, &max) {
-			h.fail(c, service.ErrResumeTooLarge)
-		} else {
-			abortError(c, 400, "validation_error", "Ожидается multipart/form-data с одним файлом file")
-		}
+	data, err := readResumePart(c.Request)
+	if errors.Is(err, errResumeForm) {
+		abortError(c, 400, "validation_error", err.Error())
 		return
 	}
-	defer c.Request.MultipartForm.RemoveAll()
-	form := c.Request.MultipartForm
-	if len(form.File) != 1 || len(form.File["file"]) != 1 || len(form.Value) != 0 {
-		abortError(c, 400, "validation_error", "Передайте ровно один файл в поле file и никаких других полей")
-		return
-	}
-	header := form.File["file"][0]
-	if header.Size > service.MaxResumeBytes {
-		h.fail(c, service.ErrResumeTooLarge)
-		return
-	}
-	src, err := header.Open()
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	defer src.Close()
 	u, _ := middleware.UserFrom(c)
-	result, err := h.resume.Import(ctx, u.ID, src)
+	result, err := h.resume.Import(ctx, u.ID, bytes.NewReader(data))
 	if err != nil {
 		h.fail(c, err)
 		return

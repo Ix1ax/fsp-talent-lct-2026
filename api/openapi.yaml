@@ -7289,12 +7289,13 @@ components:
       properties:
         headline: {type: string, nullable: true, maxLength: 200, description: "Желаемая должность."}
         city: {type: string, nullable: true, maxLength: 200}
-        summary: {type: string, nullable: true, maxLength: 10000, description: "Текст из блока «Обо мне»."}
+        summary: {type: string, nullable: true, maxLength: 10000, description: "Весь текст блока «Обо мне», включая его внутренние заголовки (абзацы разделены пустой строкой)."}
         salary_min_rub: {type: integer, nullable: true}
         work_format_ids:
           type: array
           items: {type: integer}
         contacts:
+          type: object
           nullable: true
           allOf:
             - $ref: '#/components/schemas/ResumeDraftContacts'

@@ -11,11 +11,16 @@ import (
 )
 
 const (
-	maxHeadline = 200
-	maxCity     = 200
-	maxSummary  = 10000
-	maxSkills   = 50
-	maxSkillLen = 100
+	maxHeadline  = 200
+	maxCity      = 200
+	maxSummary   = 10000
+	maxSkills    = 50
+	maxSkillLen  = 100
+	maxLanguages = 20
+	maxName      = 200
+	maxEmail     = 254
+	maxPhone     = 32
+	maxTelegram  = 64
 
 	// Левая колонка шаблона hh.ru: заголовки и подписи; правая колонка — содержимое. Граница по X от левого края.
 	leftTolerance = 5.0
@@ -35,11 +40,6 @@ var (
 	levelCEFR       = regexp.MustCompile(`\b([ABC][12])\b`)
 	langPattern     = regexp.MustCompile(`^(.+?)\s+[—–-]\s+(.+)$`)
 )
-
-// Заголовки внутри текста «Обо мне»: набраны обычным шрифтом в правой колонке, это не разделы.
-var summaryStops = map[string]bool{
-	"Ключевые навыки": true, "Опыт работы": true, "Образование": true, "Достижения": true, "Ключевые проекты": true,
-}
 
 type sectionKind int
 
@@ -75,9 +75,16 @@ func ParseHH(lines []Line, now time.Time) (Draft, []string, error) {
 	if len(lines) == 0 {
 		return draft, nil, ErrUnrecognized
 	}
-	left := lines[0].X
+	// Левая колонка определяется по заголовкам разделов, а не по самому левому тексту: лишний фрагмент
+	// (номер страницы, водяной знак) левее колонки не должен ломать разбор.
+	left, found := 0.0, false
 	for _, l := range lines {
-		left = math.Min(left, l.X)
+		if l.Size >= headingSize && headingKind(strings.TrimSpace(l.Text)) != secNone && (!found || l.X < left) {
+			left, found = l.X, true
+		}
+	}
+	if !found {
+		return draft, nil, ErrUnrecognized
 	}
 
 	sections := map[sectionKind][]Line{}
@@ -131,6 +138,14 @@ func capText(v *string, limit int, name string, warnings []string) (*string, []s
 	return &cut, append(warnings, name+" обрезан(о) до "+strconv.Itoa(limit)+" символов")
 }
 
+// dropLong отбрасывает значение, которое длиннее предела: обрезанный email или телефон хуже, чем пустое поле.
+func dropLong(v *string, limit int) *string {
+	if v != nil && utf8.RuneCountInString(*v) > limit {
+		return nil
+	}
+	return v
+}
+
 func strPtr(s string) *string {
 	s = strings.TrimSpace(s)
 	if s == "" {
@@ -170,6 +185,13 @@ func parseHeader(header []Line) (*Contacts, *string) {
 		}
 	}
 	c.FullName = strPtr(biggest.Text)
+	if c.FullName != nil && utf8.RuneCountInString(*c.FullName) > maxName {
+		cut := string([]rune(*c.FullName)[:maxName])
+		c.FullName = &cut
+	}
+	c.Email = dropLong(c.Email, maxEmail)
+	c.Phone = dropLong(c.Phone, maxPhone)
+	c.Telegram = dropLong(c.Telegram, maxTelegram)
 	return c, city
 }
 
@@ -284,6 +306,10 @@ func parseSkillsAndLanguages(lines []Line, left float64, warnings []string) ([]s
 		if c := levelCEFR.FindString(level); c != "" {
 			level = c
 		}
+		if len(languages) >= maxLanguages {
+			warnings = append(warnings, "Языков больше 20: лишние пропущены")
+			break
+		}
 		languages = append(languages, Language{Name: strings.TrimSpace(m[1]), Level: level})
 	}
 
@@ -330,10 +356,6 @@ func parseSummary(lines []Line, left float64) *string {
 			continue
 		}
 		if !active || !isRight(l, left) {
-			continue
-		}
-		if summaryStops[text] {
-			active = false
 			continue
 		}
 		sep := " "

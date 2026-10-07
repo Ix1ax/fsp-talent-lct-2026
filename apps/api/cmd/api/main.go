@@ -20,6 +20,7 @@ import (
 	assessmentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/resume"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
 	bankrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
 	bankservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/service"
@@ -38,6 +39,12 @@ import (
 )
 
 func main() {
+	// Тот же бинарник служит изолированным разборщиком PDF-резюме: родитель запускает его с RESUME_PARSE_CHILD=1.
+	// Конфигурацию, базу и сеть дочерний процесс не трогает.
+	if resume.IsChild() {
+		resume.RunChild()
+		return
+	}
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(log); err != nil {
 		log.Error("API остановлен из-за ошибки", "error", err)
@@ -85,7 +92,7 @@ func run(log *slog.Logger) error {
 			CandidateSkills:    candidateservice.NewSkillsService(candidateRepo),
 			CandidateFull:      candidateservice.NewFullProfileService(candidateRepo, c.PrivacyPolicyVersion),
 			CandidateCareer:    candidateservice.NewCareerService(candidateRepo, time.Now),
-			CandidateResume:    candidateservice.NewResumeImportService(candidateRepo, time.Now),
+			CandidateResume:    candidateservice.NewResumeImportService(candidateRepo, time.Now).UseIsolatedParser(),
 			Avatars:            candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Documents:          service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
 			Needs:              service.NewNeedsService(companyRepo),

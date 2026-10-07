@@ -191,8 +191,10 @@ func TestParseSummary(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if s(draft.Summary) != "Backend-разработчик с опытом на Go. Специализируюсь на REST API." {
-		t.Fatalf("о себе: %q", s(draft.Summary))
+	// Всё, что кандидат написал в «Обо мне», остаётся: внутренние заголовки это его собственное оформление, а не разделы.
+	want := "Backend-разработчик с опытом на Go. Специализируюсь на REST API.\n\nКлючевые навыки • Backend: Go\n\nОпыт работы Go-разработчик"
+	if s(draft.Summary) != want {
+		t.Fatalf("о себе: %q\nожидали %q", s(draft.Summary), want)
 	}
 	// Одноимённая строка из «Обо мне» не создаёт раздел опыта и не меняет остальной разбор.
 	if len(draft.Experience) != 0 {
@@ -256,5 +258,41 @@ func TestParsePhoneWithNonBreakingSpaces(t *testing.T) {
 	draft, _, err := ParseHH(d.lines, testNow)
 	if err != nil || draft.Contacts == nil || s(draft.Contacts.Phone) != "+7 (952) 0928466" {
 		t.Fatalf("телефон: %v (%v)", draft.Contacts, err)
+	}
+}
+
+// Лишний фрагмент левее колонки (номер страницы, водяной знак) не должен ломать распознавание.
+func TestParseIgnoresStrayLeftFragment(t *testing.T) {
+	d := skillsDoc(headerDoc())
+	d.lines = append(d.lines, Line{Page: 1, X: 20, Y: 10, Size: 8, Text: "1"})
+	draft, _, err := ParseHH(d.lines, testNow)
+	if err != nil {
+		t.Fatalf("лишний фрагмент слева сломал разбор: %v", err)
+	}
+	if len(draft.Skills) != 6 || s(draft.Headline) != "Backend разработчик (Go)" {
+		t.Fatalf("навыки %d, должность %s", len(draft.Skills), s(draft.Headline))
+	}
+}
+
+func TestParseContactAndLanguageLimits(t *testing.T) {
+	d := newDoc().at(left, 25, strings.Repeat("Я", 300))
+	d.next(20, left, 9, "+7 "+strings.Repeat("9", 40))
+	d.next(13, left, 9, strings.Repeat("a", 250)+"@example.test")
+	d.next(40, left, 11, "Навыки")
+	d.next(18, left, 8, "Знание языков")
+	for i := 0; i < 30; i++ {
+		d.next(13, right, 9, "Язык"+strings.Repeat("я", i%7)+" — B1")
+		d.same(200, 9, "")
+	}
+	draft, warnings, err := ParseHH(d.lines, testNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := draft.Contacts
+	if c == nil || len([]rune(s(c.FullName))) != 200 || c.Phone != nil || c.Email != nil {
+		t.Fatalf("контакты: %+v", c)
+	}
+	if len(draft.Languages) != 20 || len(warnings) == 0 {
+		t.Fatalf("языков %d, предупреждений %d", len(draft.Languages), len(warnings))
 	}
 }

@@ -140,19 +140,23 @@ func parseExperience(lines []Line, left float64, now time.Time) ([]entity.Experi
 
 // buildDescription склеивает перенесённые строки в абзацы, пункты списка остаются каждый на своей строке.
 func buildDescription(lines []Line) string {
-	var items []string
+	var items [][]string
 	for _, l := range lines {
 		text := collapse(l.Text)
 		if text == "" {
 			continue
 		}
 		if len(items) == 0 || bullet.MatchString(text) {
-			items = append(items, text)
+			items = append(items, []string{text})
 		} else {
-			items[len(items)-1] += " " + text
+			items[len(items)-1] = append(items[len(items)-1], text)
 		}
 	}
-	return strings.Join(items, "\n")
+	paragraphs := make([]string, len(items))
+	for i, parts := range items {
+		paragraphs[i] = strings.Join(parts, " ")
+	}
+	return strings.Join(paragraphs, "\n")
 }
 
 type educationEntry struct {

@@ -33,11 +33,10 @@ type profileHandler struct {
 	resume   *service.ResumeImportService
 	log      *slog.Logger
 	uploads  chan struct{}
-	imports  chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, full: opts.Full, career: opts.Career, resume: opts.Resume, log: log, uploads: make(chan struct{}, 2), imports: make(chan struct{}, 2)}
+	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, full: opts.Full, career: opts.Career, resume: opts.Resume, log: log, uploads: make(chan struct{}, 2)}
 	g := api.Group("/me/profile", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
 	g.Use(func(c *gin.Context) {
 		if h.profiles == nil {

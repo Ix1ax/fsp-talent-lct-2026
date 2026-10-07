@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 )
 
 type resumeStub struct {
+	mu      sync.Mutex
 	access  error
 	skills  map[string]string
 	formats []int16
@@ -23,7 +25,9 @@ type resumeStub struct {
 
 func (r *resumeStub) ImportAccess(context.Context, string) error { return r.access }
 func (r *resumeStub) MatchSkills(_ context.Context, names []string) (map[string]string, error) {
+	r.mu.Lock()
 	r.asked = names
+	r.mu.Unlock()
 	return r.skills, nil
 }
 func (r *resumeStub) WorkFormatIDs(context.Context, []string) ([]int16, error) { return r.formats, nil }
@@ -130,7 +134,7 @@ func TestImportDropsInvalidCareerEntries(t *testing.T) {
 	s := newResumeService(&resumeStub{})
 	good := entity.ExperienceInput{Company: "К", Position: "Р", StartedOn: monthOf(t, "2022-01")}
 	future := entity.ExperienceInput{Company: "Будущая", Position: "Р", StartedOn: monthOf(t, "2030-01")}
-	s.parse = func([]byte, time.Time) (resume.Draft, []string, error) {
+	s.parse = func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
 		return resume.Draft{
 			Experience: []entity.ExperienceInput{future, good},
 			Education:  []entity.EducationInput{{Level: "bogus", Institution: "У", GraduationYear: 2020}, {Level: "higher", Institution: "У", GraduationYear: 2020}},
@@ -148,11 +152,9 @@ func TestImportDropsInvalidCareerEntries(t *testing.T) {
 func TestImportTimeout(t *testing.T) {
 	s := newResumeService(&resumeStub{})
 	s.timeout = 50 * time.Millisecond
-	release := make(chan struct{})
-	defer close(release)
-	s.parse = func([]byte, time.Time) (resume.Draft, []string, error) {
-		<-release
-		return resume.Draft{}, nil, nil
+	s.parse = func(ctx context.Context, _ []byte, _ time.Time) (resume.Draft, []string, error) {
+		<-ctx.Done() // разбор, который слушает контекст, как дочерний процесс: убивается по таймауту
+		return resume.Draft{}, nil, resume.ErrParseTimeout
 	}
 	started := time.Now()
 	if _, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub")); !errors.Is(err, ErrResumeUnrecognized) {
@@ -163,9 +165,69 @@ func TestImportTimeout(t *testing.T) {
 	}
 }
 
+// Паника разбора не роняет процесс и даёт обычную ошибку распознавания.
+func TestImportRecoversFromParsePanic(t *testing.T) {
+	s := newResumeService(&resumeStub{})
+	s.parse = func(context.Context, []byte, time.Time) (resume.Draft, []string, error) { panic("boom") }
+	if _, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub")); !errors.Is(err, ErrResumeUnrecognized) {
+		t.Fatalf("паника разбора: %v", err)
+	}
+}
+
+// Слот разбора занят, пока разбор идёт, и освобождается только после его завершения; лишний запрос получает отказ сразу.
+func TestImportBusy(t *testing.T) {
+	s := newResumeService(&resumeStub{})
+	entered := make(chan struct{}, 3)
+	gate := make(chan struct{})
+	s.parse = func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
+		entered <- struct{}{}
+		<-gate
+		return resume.Draft{}, nil, nil
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < 2; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if _, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub")); err != nil {
+				t.Errorf("разбор: %v", err)
+			}
+		}()
+	}
+	for i := 0; i < 2; i++ {
+		select {
+		case <-entered:
+		case <-time.After(5 * time.Second):
+			t.Fatal("два разбора не заняли слоты")
+		}
+	}
+	third := make(chan error, 1)
+	go func() {
+		_, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub"))
+		third <- err
+	}()
+	select {
+	case err := <-third:
+		if !errors.Is(err, ErrResumeBusy) {
+			t.Errorf("третий разбор: %v", err)
+		}
+	case <-time.After(3 * time.Second):
+		close(gate)
+		wg.Wait()
+		t.Fatal("третий запрос ждёт слот вместо отказа")
+	}
+	close(gate)
+	wg.Wait()
+	if _, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub")); err != nil {
+		t.Errorf("после освобождения слотов: %v", err)
+	}
+}
+
 func TestImportArraysNotNull(t *testing.T) {
 	s := newResumeService(&resumeStub{})
-	s.parse = func([]byte, time.Time) (resume.Draft, []string, error) { return resume.Draft{}, nil, nil }
+	s.parse = func(context.Context, []byte, time.Time) (resume.Draft, []string, error) {
+		return resume.Draft{}, nil, nil
+	}
 	result, err := s.Import(context.Background(), "u", strings.NewReader("%PDF-1.4 stub"))
 	if err != nil {
 		t.Fatal(err)

@@ -304,7 +304,7 @@ func TestParseFixture(t *testing.T) {
 	if len(draft.Languages) != 2 || draft.Languages[1] != (Language{"Английский", "B1"}) {
 		t.Fatalf("языки: %+v", draft.Languages)
 	}
-	if !strings.HasPrefix(s(draft.Summary), "Backend-разработчик с опытом разработки на Go и PHP.") || strings.Contains(s(draft.Summary), "Опыт работы") {
+	if !strings.HasPrefix(s(draft.Summary), "Backend-разработчик с опытом разработки на Go и PHP.") || !strings.Contains(s(draft.Summary), "Ключевые навыки") {
 		t.Fatalf("о себе: %q", s(draft.Summary))
 	}
 }

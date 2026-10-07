@@ -40,7 +40,11 @@ func bombPDF(t *testing.T, decompressed int) []byte {
 	t.Helper()
 	var packed bytes.Buffer
 	zw := zlib.NewWriter(&packed)
-	chunk := []byte(strings.Repeat("BT /F1 12 Tf 10 10 Td (a) Tj ET\n", 1000))
+	if _, err := zw.Write([]byte("BT /F1 12 Tf 10 10 Td\n")); err != nil {
+		t.Fatal(err)
+	}
+	// Один оператор вывода на 6 байт: десятки мегабайт дают миллионы глифов.
+	chunk := []byte(strings.Repeat("(a)Tj\n", 10000))
 	for written := 0; written < decompressed; written += len(chunk) {
 		if _, err := zw.Write(chunk); err != nil {
 			t.Fatal(err)
@@ -114,11 +118,13 @@ func TestParseIsolatedKillsHungParser(t *testing.T) {
 // «Бомба»: маленький файл, который после распаковки превращается в гигабайты данных. Дочерний процесс завершается
 // сторожем памяти, а сам сервер память не набирает.
 func TestParseIsolatedSurvivesMemoryBomb(t *testing.T) {
-	bomb := bombPDF(t, 96<<20)
+	bomb := bombPDF(t, 24<<20)
 	if len(bomb) > 5<<20 {
 		t.Fatalf("бомба больше лимита файла: %d", len(bomb))
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	// Под детектором гонок дочерний процесс заметно медленнее: сторож памяти может не успеть, и тогда разбор убьёт таймаут.
+	// В обоих случаях возврат ограничен таймаутом, а память сервера не растёт.
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 	defer cancel()
 	started := time.Now()
 	var before, after runtime.MemStats
@@ -129,8 +135,8 @@ func TestParseIsolatedSurvivesMemoryBomb(t *testing.T) {
 	if !errors.As(err, &broken) && !errors.Is(err, ErrParseTimeout) {
 		t.Fatalf("бомба должна давать ошибку разбора: %v", err)
 	}
-	if elapsed := time.Since(started); elapsed > 15*time.Second {
-		t.Fatalf("возврат занял %v", elapsed)
+	if elapsed := time.Since(started); elapsed > 9*time.Second {
+		t.Fatalf("возврат занял %v при таймауте 6с", elapsed)
 	}
 	if after.HeapAlloc > before.HeapAlloc+256<<20 {
 		t.Fatalf("процесс сервера набрал память: %d МиБ", (after.HeapAlloc-before.HeapAlloc)>>20)

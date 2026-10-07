@@ -13,6 +13,9 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
+// maxFragments — предел числа символов (глифов) во всём документе: у настоящего резюме их тысячи, сотни тысяч уже не резюме.
+const maxFragments = 200000
+
 var (
 	ErrNotPDF       = errors.New("файл не является PDF")
 	ErrTooManyPages = errors.New("в файле слишком много страниц")
@@ -53,6 +56,7 @@ func defaultReadFragments(data []byte, maxPages int) ([][]fragment, error) {
 		return nil, ErrTooManyPages
 	}
 	pages := make([][]fragment, 0, rd.NumPage())
+	total := 0
 	for i := 1; i <= rd.NumPage(); i++ {
 		page := rd.Page(i)
 		var frags []fragment
@@ -65,6 +69,10 @@ func defaultReadFragments(data []byte, maxPages int) ([][]fragment, error) {
 					continue
 				}
 				frags = append(frags, fragment{x: t.X, y: t.Y, w: math.Max(t.W, 0), size: t.FontSize, text: text})
+			}
+			total += len(frags)
+			if total > maxFragments {
+				return nil, &BrokenError{Err: errors.New("в документе слишком много текста")}
 			}
 		}
 		pages = append(pages, frags)
@@ -163,27 +171,58 @@ type segment struct {
 	text       string
 }
 
+// cleanText убирает управляющие символы (кроме перевода строки): табуляция превращается в пробел.
+func cleanText(s string) string {
+	if !strings.ContainsFunc(s, func(r rune) bool { return r < 0x20 || r == 0x7f }) {
+		return s
+	}
+	return strings.Map(func(r rune) rune {
+		switch {
+		case r == '\n':
+			return r
+		case r == '\t':
+			return ' '
+		case r < 0x20 || r == 0x7f:
+			return -1
+		}
+		return r
+	}, s)
+}
+
 // segments делит строку на сегменты по зазорам шире размера шрифта; внутри сегмента фрагменты склеиваются,
-// с пробелом при заметном зазоре.
+// с пробелом при заметном зазоре. Склейка линейная: текст копится в strings.Builder.
 func segments(group []fragment) []segment {
-	var out []segment
-	var cur *segment
+	type open struct {
+		segment
+		b    strings.Builder
+		last byte
+	}
+	var opened []*open
+	var cur *open
 	var end float64
 	for _, f := range group {
+		text := cleanText(f.text)
+		if text == "" {
+			continue
+		}
 		gap := f.x - end
 		if cur == nil || gap > 1.0*maxFloat(f.size, 1) {
-			out = append(out, segment{x: f.x, y: f.y, size: f.size})
-			cur = &out[len(out)-1]
-			cur.text = f.text
+			cur = &open{segment: segment{x: f.x, y: f.y, size: f.size}}
+			opened = append(opened, cur)
 		} else {
-			if gap > 0.15*maxFloat(f.size, 1) && !strings.HasSuffix(cur.text, " ") && !strings.HasPrefix(f.text, " ") {
-				cur.text += " "
+			if gap > 0.15*maxFloat(f.size, 1) && cur.last != ' ' && text[0] != ' ' {
+				cur.b.WriteByte(' ')
 			}
-			cur.text += f.text
 			cur.size = maxFloat(cur.size, f.size)
 		}
+		cur.b.WriteString(text)
+		cur.last = text[len(text)-1]
 		end = f.x + f.w
-		cur = &out[len(out)-1]
+	}
+	out := make([]segment, len(opened))
+	for i, o := range opened {
+		out[i] = o.segment
+		out[i].text = o.b.String()
 	}
 	return out
 }
