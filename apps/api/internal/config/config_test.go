@@ -71,3 +71,24 @@ func TestPrivacyPolicyVersion(t *testing.T) {
 		}
 	}
 }
+
+func TestAssessmentRetakeDays(t *testing.T) {
+	validEnv(t)
+	c, err := Load()
+	if err != nil || c.AssessmentRetakeDays != 7 {
+		t.Fatalf("по умолчанию: %d (%v)", c.AssessmentRetakeDays, err)
+	}
+	t.Setenv("ASSESSMENT_RETAKE_DAYS", "30")
+	if c, err = Load(); err != nil || c.AssessmentRetakeDays != 30 {
+		t.Fatalf("заданное значение: %d (%v)", c.AssessmentRetakeDays, err)
+	}
+	for _, bad := range []string{"0", "366", "-1", "abc", "1.5", ""} {
+		t.Setenv("ASSESSMENT_RETAKE_DAYS", bad)
+		if bad == "" {
+			continue
+		}
+		if _, err := Load(); err == nil || !strings.Contains(err.Error(), "ASSESSMENT_RETAKE_DAYS") {
+			t.Fatalf("значение %q принято или ошибка без имени переменной: %v", bad, err)
+		}
+	}
+}

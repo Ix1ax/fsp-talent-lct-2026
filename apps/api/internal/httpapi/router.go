@@ -43,6 +43,7 @@ type Options struct {
 	Admins                  *adminservice.Service
 	AdminCatalogs           *admincatalogservice.Service
 	Assessments             *assessmentservice.Service
+	AssessmentAttempts      *assessmentservice.AttemptService
 	CORSOrigins, OIDCIssuer string
 	Users                   *user.Service
 	Companies               *service.CompanyService
@@ -124,6 +125,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	adminweb.Register(api, log, opts.Admins)
 	admincatalogweb.Register(api, log, opts.Admins, opts.AdminCatalogs)
 	assessmentweb.Register(api, log, opts.Admins, opts.Assessments)
+	assessmentweb.RegisterAttempts(api, log, verifier, opts.Users, opts.AssessmentAttempts)
 	api.GET("/auth/config", func(c *gin.Context) {
 		if opts.OIDCIssuer == "" {
 			c.JSON(503, gin.H{"error": gin.H{"code": "auth_unavailable", "message": "Сервис авторизации не настроен"}})

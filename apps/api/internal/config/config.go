@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"regexp"
+	"strconv"
 )
 
 var policyVersion = regexp.MustCompile(`^[A-Za-z0-9._-]{1,32}$`)
@@ -16,6 +17,8 @@ type Config struct {
 	OIDCIssuer, OIDCClientID, OIDCInternalURL, CORSOrigins   string
 	// Версия политики обработки данных; кандидат подтверждает согласие именно с ней.
 	PrivacyPolicyVersion string
+	// Через сколько дней можно пересдать тест после неудачной или просроченной попытки.
+	AssessmentRetakeDays int
 }
 
 func Load() (Config, error) {
@@ -38,6 +41,11 @@ func Load() (Config, error) {
 
 		PrivacyPolicyVersion: value("PRIVACY_POLICY_VERSION", "2026-10-07"),
 	}
+	days, err := strconv.Atoi(value("ASSESSMENT_RETAKE_DAYS", "7"))
+	if err != nil || days < 1 || days > 365 {
+		return c, fmt.Errorf("Недопустимое значение ASSESSMENT_RETAKE_DAYS: целое число дней от 1 до 365")
+	}
+	c.AssessmentRetakeDays = days
 	for name, v := range map[string]string{"DATABASE_URL": c.DatabaseURL, "REDIS_PASSWORD": c.RedisPassword, "S3_ENDPOINT": c.S3Endpoint, "S3_ACCESS_KEY": c.S3AccessKey, "S3_SECRET_KEY": c.S3SecretKey, "S3_BUCKET": c.S3Bucket} {
 		if v == "" {
 			return c, fmt.Errorf("Необходимо указать %s", name)
