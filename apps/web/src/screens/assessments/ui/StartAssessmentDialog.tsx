@@ -35,7 +35,8 @@ export const StartAssessmentDialog = ({
           <DialogDescription>
             Таймер запустится сразу. На выполнение —{' '}
             {Math.ceil((test?.timeLimitSec ?? 0) / 60)} мин. Одновременно можно
-            проходить только один тест.
+            проходить только один тест. Первый уход из вкладки — предупреждение,
+            второй — автоматическое завершение теста.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

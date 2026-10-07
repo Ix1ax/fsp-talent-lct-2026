@@ -1,6 +1,6 @@
 import { useState, useSyncExternalStore } from 'react';
 
-import { useCountdown, useUnsavedChanges } from '@/shared/hooks';
+import { useCountdown, useFocusGuard, useUnsavedChanges } from '@/shared/hooks';
 import type {
   AssessmentAnswer,
   AssessmentAttempt,
@@ -25,7 +25,13 @@ export const useAssessmentRunner = (initial: AssessmentAttempt) => {
     initial.deadlineAt,
   );
 
-  const locked = remaining === 0 || state.closed || state.consentBlocked;
+  const { violations, limitReached, storageError } = useFocusGuard({
+    enabled: !state.attempt.result && !state.closed && remaining > 0,
+    storageKey: `assessment-focus:${initial.id}`,
+    onLimitReached: actions.forceFinish,
+  });
+  const locked =
+    limitReached || remaining === 0 || state.closed || state.consentBlocked;
 
   useUnsavedChanges(!state.attempt.result && queue.dirty());
   useAssessmentResultPolling({
@@ -35,8 +41,19 @@ export const useAssessmentRunner = (initial: AssessmentAttempt) => {
   });
 
   const update = (id: string, answer: AssessmentAnswer) => {
-    if (!store.getSnapshot().busy && store.canSave()) queue.update(id, answer);
+    if (!limitReached && !store.getSnapshot().busy && store.canSave())
+      queue.update(id, answer);
   };
 
-  return { ...state, remaining, locked, queue, update, ...actions };
+  return {
+    ...state,
+    remaining,
+    locked,
+    violations,
+    storageError,
+    limitReached,
+    queue,
+    update,
+    ...actions,
+  };
 };

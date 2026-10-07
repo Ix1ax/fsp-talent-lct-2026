@@ -18,6 +18,7 @@ import { formatDuration } from '@/shared/utils';
 import type { AssessmentAttempt } from '@/entities/assessment';
 
 import { useAssessmentRunner } from '../model';
+import { AssessmentFocusWarning } from './AssessmentFocusWarning';
 import { AssessmentResultCard } from './AssessmentResultCard';
 import { QuestionAnswerForm } from './QuestionAnswerForm';
 
@@ -38,6 +39,10 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     consentBlocked,
     refreshResult,
     resultLoading,
+    violations,
+    storageError,
+    limitReached,
+    forceFinish,
   } = useAssessmentRunner(initialAttempt);
 
   const [index, setIndex] = useState(0);
@@ -66,6 +71,29 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
 
   return (
     <>
+      <AssessmentFocusWarning violations={violations} />
+      {storageError && (
+        <p role="alert" className="text-sm text-muted-foreground">
+          {storageError}
+        </p>
+      )}
+      <p className="text-sm text-muted-foreground">
+        Не переключайте вкладку и не сворачивайте окно: первый уход —
+        предупреждение, второй — автоматическое завершение теста.
+      </p>
+      {limitReached && (
+        <div role="alert" className="flex flex-col gap-3">
+          <p>Повторный уход со страницы. Тест завершается автоматически.</p>
+          {error && !busy && (
+            <Button
+              onClick={() => void forceFinish()}
+              disabled={consentBlocked}
+            >
+              Повторить завершение
+            </Button>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap justify-between gap-3">
         <p role="timer" aria-label="Оставшееся время">
           Осталось {formatDuration(remaining)}
@@ -86,7 +114,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           <Link href="/candidate">Настроить согласия</Link>
         </Button>
       )}
-      {locked && !consentBlocked && (
+      {locked && !consentBlocked && !limitReached && (
         <div className="flex flex-col gap-3">
           <p role="status">
             Ответы больше не принимаются. Итог рассчитывается по сохранённым

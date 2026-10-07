@@ -40,13 +40,18 @@ export const createAssessmentActions = (
     }
   };
 
-  const finish = async (): Promise<boolean> => {
+  const finish = async (force = false): Promise<boolean> => {
     if (store.getSnapshot().busy || store.getSnapshot().consentBlocked)
       return false;
     if (!store.canSave()) return (await refreshResult()) === 'completed';
+
     store.update({ busy: true, error: '' });
+
     try {
-      if (!(await queue.flushAll())) {
+      if (
+        !(await queue.flushAll()) &&
+        (!force || store.getSnapshot().consentBlocked)
+      ) {
         if (!store.getSnapshot().closed && !store.getSnapshot().consentBlocked)
           store.update({
             error:
@@ -68,5 +73,9 @@ export const createAssessmentActions = (
     }
   };
 
-  return { refreshResult, finish };
+  return {
+    refreshResult,
+    finish: () => finish(),
+    forceFinish: () => finish(true),
+  };
 };

@@ -1,4 +1,5 @@
 export { useCountdown } from './useCountdown';
 export { useDebounce } from './useDebounce';
+export { useFocusGuard } from './useFocusGuard';
 export { useSearch } from './useSearch';
 export { useUnsavedChanges } from './useUnsavedChanges';

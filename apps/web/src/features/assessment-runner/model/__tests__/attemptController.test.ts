@@ -74,8 +74,10 @@ describe('attempt controller', () => {
     });
     queue.initialize('question', { text: '' });
     queue.update('question', { text: 'answer' });
+
     const actions = createAssessmentActions(store, queue);
     const finishing = actions.finish();
+
     expect(await actions.finish()).toBe(false);
     expect(api.submit).not.toHaveBeenCalled();
     resolve();
@@ -91,9 +93,26 @@ describe('attempt controller', () => {
     const save = vi.fn();
     const queue = createAnswerQueue({ save, onChange: store.answersChanged });
     const actions = createAssessmentActions(store, queue);
+
     expect(await actions.finish()).toBe(true);
     expect(api.load).toHaveBeenCalledTimes(1);
     expect(api.submit).not.toHaveBeenCalled();
     expect(save).not.toHaveBeenCalled();
+  });
+  it('forces submission using saved answers when sending a draft fails', async () => {
+    const store = createAttemptStore(initial);
+    const queue = createAnswerQueue({
+      save: async () => false,
+      onChange: store.answersChanged,
+    });
+
+    queue.initialize('question', { text: '' });
+    queue.update('question', { text: 'unsaved draft' });
+
+    const actions = createAssessmentActions(store, queue);
+
+    expect(await actions.forceFinish()).toBe(true);
+    expect(api.submit).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot().attempt.result).toBe(completed.result);
   });
 });
