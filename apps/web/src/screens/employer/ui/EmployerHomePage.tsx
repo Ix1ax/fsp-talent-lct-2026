@@ -23,12 +23,14 @@ interface EmployerHomePageProps {
   gateway?: EmployerGateway;
   banner?: ReactNode;
   accountMenu?: ReactNode;
+  homeHref?: string;
 }
 export const EmployerHomePage = ({
   user,
   gateway,
   banner,
   accountMenu,
+  homeHref,
 }: EmployerHomePageProps) => {
   const board = useEmployerBoard(gateway);
   const [composer, setComposer] = useState(false);
@@ -65,6 +67,7 @@ export const EmployerHomePage = ({
   return (
     <EmployerShell
       accountMenu={accountMenu}
+      homeHref={homeHref}
       search={
         <EmployerSearch
           api={gateway ?? employerGateway}

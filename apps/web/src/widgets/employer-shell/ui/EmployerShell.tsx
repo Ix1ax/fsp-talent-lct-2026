@@ -14,6 +14,7 @@ import { CompanySwitcher } from './CompanySwitcher';
 import { EmployerBottomNav } from './EmployerBottomNav';
 interface EmployerShellProps {
   accountMenu?: ReactNode;
+  homeHref?: string;
   search?: ReactNode;
   user: SessionUser;
   companies: Company[];
@@ -28,6 +29,7 @@ interface EmployerShellProps {
 export const EmployerShell = ({
   user,
   accountMenu,
+  homeHref = '/employer',
   search,
   companies,
   company,
@@ -40,7 +42,7 @@ export const EmployerShell = ({
   <div className="min-h-screen pb-16 md:pb-0">
     <header className="flex h-14 items-stretch border-b border-border bg-card">
       <Link
-        href="/employer"
+        href={homeHref}
         className="flex shrink-0 items-center border-r border-border px-3 md:px-4"
         aria-label="ФСП Скаут — потребности"
       >
@@ -65,7 +67,7 @@ export const EmployerShell = ({
         className="hidden min-w-0 items-stretch md:flex"
       >
         <a
-          href="/employer"
+          href={homeHref}
           aria-current="page"
           className="flex items-center border-b-2 border-primary px-3 text-sm font-semibold"
         >
