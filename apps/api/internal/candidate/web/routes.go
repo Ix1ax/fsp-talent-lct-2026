@@ -18,6 +18,7 @@ type Options struct {
 	Avatars  *service.AvatarService
 	Contacts *service.ContactsService
 	Skills   *service.SkillsService
+	Full     *service.FullProfileService
 }
 
 type profileHandler struct {
@@ -25,12 +26,13 @@ type profileHandler struct {
 	avatars  *service.AvatarService
 	contacts *service.ContactsService
 	skills   *service.SkillsService
+	full     *service.FullProfileService
 	log      *slog.Logger
 	uploads  chan struct{}
 }
 
 func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, opts Options) {
-	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, log: log, uploads: make(chan struct{}, 2)}
+	h := profileHandler{profiles: opts.Profiles, avatars: opts.Avatars, contacts: opts.Contacts, skills: opts.Skills, full: opts.Full, log: log, uploads: make(chan struct{}, 2)}
 	g := api.Group("/me/profile", auth.Middleware(verifier), middleware.CurrentUser(log, opts.Users), middleware.RequireRole(user.RoleCandidate))
 	g.Use(func(c *gin.Context) {
 		if h.profiles == nil {
@@ -41,6 +43,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	})
 	g.POST("", h.create)
 	g.GET("", h.get)
+	g.GET("/full", h.getFull)
 	g.PATCH("", h.update)
 	avatar := g.Group("/avatar", func(c *gin.Context) {
 		if h.avatars == nil {
