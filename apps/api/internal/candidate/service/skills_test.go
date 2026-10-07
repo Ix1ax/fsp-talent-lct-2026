@@ -48,3 +48,7 @@ func TestSkillsServiceValidatesBeforeStore(t *testing.T) {
 		t.Fatalf("удаление: %q %v", store.lastID, err)
 	}
 }
+
+func (s *skillsStub) SubmitSkill(ctx context.Context, user string, in entity.SkillSubmissionInput) (entity.Skill, error) {
+	return s.PutSkill(ctx, user, "00000000-0000-4000-8000-000000000001", entity.SkillInput{ClaimedLevel: in.ClaimedLevel})
+}

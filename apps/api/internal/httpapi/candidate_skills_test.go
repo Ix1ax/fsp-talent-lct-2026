@@ -131,3 +131,7 @@ func TestCandidateSkillsUnavailable(t *testing.T) {
 		t.Fatalf("без сервиса ожидали 503 candidate_unavailable: %d %s", w.Code, w.Body)
 	}
 }
+
+func (s *memSkills) SubmitSkill(ctx context.Context, user string, in entity.SkillSubmissionInput) (entity.Skill, error) {
+	return s.PutSkill(ctx, user, "00000000-0000-4000-8000-000000000001", entity.SkillInput{ClaimedLevel: in.ClaimedLevel})
+}

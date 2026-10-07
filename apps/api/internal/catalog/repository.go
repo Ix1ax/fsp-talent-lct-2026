@@ -57,7 +57,7 @@ func (r *Repository) Catalogs(ctx context.Context) (Catalogs, error) {
 }
 func (r *Repository) SearchSkills(ctx context.Context, q string, limit, offset int) ([]CatalogSkill, error) {
 	// strpos ищет буквальный текст: % и _ из пользовательского запроса не превращаются в шаблоны.
-	rows, err := r.db.Query(ctx, `SELECT id::text,code,name,aliases FROM skills WHERE active AND ($1='' OR strpos(lower(code),lower($1))>0 OR strpos(lower(name),lower($1))>0 OR EXISTS(SELECT 1 FROM unnest(aliases) a WHERE strpos(lower(a),lower($1))>0)) ORDER BY name,id LIMIT $2 OFFSET $3`, q, limit, offset)
+	rows, err := r.db.Query(ctx, `SELECT id::text,code,name,aliases FROM skills WHERE active AND moderation_status='approved' AND ($1='' OR strpos(lower(code),lower($1))>0 OR strpos(lower(name),lower($1))>0 OR EXISTS(SELECT 1 FROM unnest(aliases) a WHERE strpos(lower(a),lower($1))>0)) ORDER BY name,id LIMIT $2 OFFSET $3`, q, limit, offset)
 	if err != nil {
 		return nil, err
 	}

@@ -58,7 +58,7 @@ func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput) error {
 		skillIDs = append(skillIDs, s.SkillID)
 	}
 	var count int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM skills WHERE id=ANY($1::uuid[]) AND active`, skillIDs).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM skills WHERE id=ANY($1::uuid[]) AND active AND moderation_status='approved'`, skillIDs).Scan(&count); err != nil {
 		return err
 	}
 	if count != len(skillIDs) {

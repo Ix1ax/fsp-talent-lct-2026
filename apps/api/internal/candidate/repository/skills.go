@@ -9,12 +9,12 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
 )
 
-const skillColumns = `s.id::text,s.code,s.name,cs.claimed_level,cs.updated_at`
+const skillColumns = `s.id::text,s.code,s.name,s.moderation_status,cs.claimed_level,cs.updated_at`
 const skillJoin = ` FROM candidate_skills cs JOIN skills s ON s.id=cs.skill_id`
 
 func scanSkill(row pgx.Row) (entity.Skill, error) {
 	var sk entity.Skill
-	if err := row.Scan(&sk.SkillID, &sk.Code, &sk.Name, &sk.ClaimedLevel, &sk.UpdatedAt); err != nil {
+	if err := row.Scan(&sk.SkillID, &sk.Code, &sk.Name, &sk.ModerationStatus, &sk.ClaimedLevel, &sk.UpdatedAt); err != nil {
 		return sk, err
 	}
 	// Сейчас единственный источник — самооценка. Подтверждения тестов и ФСП добавят свои источники.
@@ -86,9 +86,18 @@ func (r *Repository) PutSkill(ctx context.Context, userID, skillID string, in en
 	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM candidate_skills WHERE candidate_id=$1 AND skill_id=$2)`, profileID, skillID).Scan(&exists); err != nil {
 		return entity.Skill{}, err
 	}
+	var status string
+	if err = tx.QueryRow(ctx, `SELECT moderation_status FROM skills WHERE id=$1 FOR SHARE`, skillID).Scan(&status); errors.Is(err, pgx.ErrNoRows) {
+		return entity.Skill{}, &entity.ValidationError{Message: "Неизвестный навык: выберите ID из справочника"}
+	} else if err != nil {
+		return entity.Skill{}, err
+	}
+	if status == "rejected" || status == "merged" {
+		return entity.Skill{}, &entity.ValidationError{Message: "Навык отклонён или объединён с другим"}
+	}
 	if !exists {
 		var active bool
-		err = tx.QueryRow(ctx, `SELECT active FROM skills WHERE id=$1`, skillID).Scan(&active)
+		err = tx.QueryRow(ctx, `SELECT active AND moderation_status='approved' FROM skills WHERE id=$1 FOR SHARE`, skillID).Scan(&active)
 		if errors.Is(err, pgx.ErrNoRows) || err == nil && !active {
 			return entity.Skill{}, &entity.ValidationError{Message: "Неизвестный навык: выберите ID из справочника"}
 		}
