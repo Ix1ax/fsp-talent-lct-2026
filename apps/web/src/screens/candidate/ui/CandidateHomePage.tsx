@@ -20,17 +20,17 @@ import {
 } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
-import { CandidateAvatar } from '@/features/candidate-avatar';
 import {
   applyConsentRevocation,
+  CandidateAvatar,
   CandidateConsentsCard,
+  CandidateContactsCard,
+  CandidateEducationCard,
+  CandidateExperienceCard,
+  CandidateProfileForm,
+  CandidateSkillsCard,
   reconcileConsents,
-} from '@/features/candidate-consents';
-import { CandidateContactsCard } from '@/features/candidate-contacts';
-import { CandidateEducationCard } from '@/features/candidate-education';
-import { CandidateExperienceCard } from '@/features/candidate-experience';
-import { CandidateProfileForm } from '@/features/candidate-profile';
-import { CandidateSkillsCard } from '@/features/candidate-skills';
+} from '@/features/candidate';
 
 import { PROFILE_STEPS, type ProfileStep } from '../constants';
 import { getSavedProfileSteps, useCandidateFullProfile } from '../model';

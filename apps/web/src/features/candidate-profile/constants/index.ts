@@ -1,1 +1,0 @@
-export { profileSchema } from './profileSchema';
