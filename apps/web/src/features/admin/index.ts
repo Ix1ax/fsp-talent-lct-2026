@@ -10,3 +10,4 @@ export * from './ui/Common';
 export * from './ui/ModerationEditor';
 export * from './ui/QuestionEditor';
 export * from './ui/TemplateEditor';
+export * from './ui/TemplatePreview';
