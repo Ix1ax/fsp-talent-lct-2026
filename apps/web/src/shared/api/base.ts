@@ -47,7 +47,12 @@ export const attachErrorInterceptor = (instance: AxiosInstance): void => {
       }
 
       return Promise.reject(
-        toApiError(error.response.status, error.response.data, error.message),
+        toApiError(
+          error.response.status,
+          error.response.data,
+          error.message,
+          error.response.headers,
+        ),
       );
     },
   );

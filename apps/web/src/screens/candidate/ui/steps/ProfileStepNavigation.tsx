@@ -63,7 +63,7 @@ export const ProfileStepNavigation = ({
       <TabsList
         aria-label="Шаги настройки профиля"
         variant="line"
-        className="hidden h-auto! w-full grid-cols-5 gap-2 p-0 sm:grid"
+        className="hidden h-auto! w-full grid-cols-3 gap-2 p-0 sm:grid lg:grid-cols-4"
       >
         {PROFILE_STEPS.map((item, position) => (
           <TabsTrigger

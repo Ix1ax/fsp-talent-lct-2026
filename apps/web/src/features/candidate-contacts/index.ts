@@ -1,1 +1,0 @@
-export { CandidateContactsCard } from './ui';

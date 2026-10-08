@@ -8,6 +8,7 @@ interface ProfileStepActionsProps {
   step: ProfileStep;
   busy: boolean;
   processing: boolean;
+  profileExists: boolean;
   onStepChange: (step: ProfileStep) => void;
 }
 
@@ -15,11 +16,18 @@ export const ProfileStepActions = ({
   step,
   busy,
   processing,
+  profileExists,
   onStepChange,
 }: ProfileStepActionsProps) => {
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   const previous = PROFILE_STEPS[index - 1];
   const next = PROFILE_STEPS[index + 1];
+  const isFormStep = [
+    'profile',
+    'contacts',
+    'experience',
+    'education',
+  ].includes(step);
 
   let label = 'Продолжить без сохранения';
   if (step === 'consents') label = 'Перейти к профилю';
@@ -43,11 +51,11 @@ export const ProfileStepActions = ({
         {next && (
           <Button
             type="button"
-            variant={
-              step === 'profile' || step === 'contacts' ? 'outline' : 'default'
-            }
+            variant={isFormStep ? 'outline' : 'default'}
             size="lg"
-            disabled={busy || (step === 'consents' && !processing)}
+            disabled={
+              busy || (step === 'consents' && !processing && !profileExists)
+            }
             className="ml-auto w-full sm:w-auto"
             onClick={() => onStepChange(next.id)}
           >
@@ -58,11 +66,12 @@ export const ProfileStepActions = ({
       </div>
       {step === 'consents' && (
         <p className="text-sm text-muted-foreground">
-          Для создания профиля нужно согласие на обработку данных. Публикацию
-          можно разрешить позже.
+          {profileExists
+            ? 'Опыт и образование доступны в следующих шагах. Согласия на обработку и публикацию можно изменить здесь.'
+            : 'Для создания профиля нужно согласие на обработку данных. Публикацию можно разрешить позже.'}
         </p>
       )}
-      {(step === 'profile' || step === 'contacts') && (
+      {isFormStep && (
         <p className="text-sm text-muted-foreground">
           «Продолжить без сохранения» оставит изменения в черновике этой
           страницы.
