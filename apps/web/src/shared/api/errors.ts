@@ -16,12 +16,15 @@ export class ApiError extends Error {
   readonly data?: unknown;
   readonly attemptId?: string;
   readonly retryAt?: string;
+  readonly headers: Readonly<Record<string, string>>;
+  readonly retryAfter?: string;
 
   constructor(
     status: number,
     message: string,
     code = 'unknown',
     data?: unknown,
+    headers: Record<string, unknown> = {},
   ) {
     super(message);
 
@@ -29,6 +32,12 @@ export class ApiError extends Error {
     this.status = status;
     this.code = code;
     this.data = data;
+    this.headers = Object.fromEntries(
+      Object.entries(headers)
+        .filter(([, value]) => value != null)
+        .map(([name, value]) => [name.toLowerCase(), String(value)]),
+    );
+    this.retryAfter = this.headers['retry-after'];
     const details = (data as BackendErrorBody | undefined)?.error;
     this.attemptId = details?.attemptId;
     this.retryAt = details?.retryAt;
@@ -39,11 +48,12 @@ export const toApiError = (
   status: number,
   data: unknown,
   fallback: string,
+  headers?: Record<string, unknown>,
 ): ApiError => {
   const normalized = data !== undefined ? convertSnakeToCamel(data) : undefined;
   const body = normalized as BackendErrorBody | undefined;
   const message = body?.error?.message ?? body?.message ?? fallback;
   const code = body?.error?.code ?? 'unknown';
 
-  return new ApiError(status, message, code, normalized);
+  return new ApiError(status, message, code, normalized, headers);
 };

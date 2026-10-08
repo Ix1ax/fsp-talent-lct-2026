@@ -14,6 +14,7 @@ interface ConfirmDeleteDialogProps {
   children?: ReactNode;
   title: string;
   description: string;
+  error?: string;
   busy: boolean;
   onConfirm: () => Promise<boolean>;
   onClose: () => void;
@@ -22,6 +23,7 @@ export const ConfirmDeleteDialog = ({
   children,
   title,
   description,
+  error,
   busy,
   onConfirm,
   onClose,
@@ -43,6 +45,11 @@ export const ConfirmDeleteDialog = ({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {children}
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
         <DialogFooter>
           <Button
             type="button"
