@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Button } from './Button';
 import {
   Dialog,
@@ -9,6 +11,7 @@ import {
 } from './Dialog';
 
 interface ConfirmDeleteDialogProps {
+  children?: ReactNode;
   title: string;
   description: string;
   busy: boolean;
@@ -16,6 +19,7 @@ interface ConfirmDeleteDialogProps {
   onClose: () => void;
 }
 export const ConfirmDeleteDialog = ({
+  children,
   title,
   description,
   busy,
@@ -38,6 +42,7 @@ export const ConfirmDeleteDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {children}
         <DialogFooter>
           <Button
             type="button"
