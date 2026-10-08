@@ -23,7 +23,7 @@ export const CandidateProfileLoadError = ({
         <Button
           disabled={refreshing}
           onClick={() => startTransition(() => router.refresh())}
-          className="self-start"
+          className="min-h-11 w-full whitespace-normal sm:w-auto sm:self-start"
         >
           Повторить загрузку
         </Button>

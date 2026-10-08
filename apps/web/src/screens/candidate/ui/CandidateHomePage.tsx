@@ -50,11 +50,11 @@ export const CandidateHomePage = ({
     <main
       ref={profileContainerRef}
       hidden={pathname === STATIC_ROUTES.CANDIDATE}
-      className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 [overflow-anchor:none] sm:px-6 sm:py-10"
+      className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 [overflow-anchor:none] sm:px-6 sm:py-10"
     >
       <div className="flex flex-col gap-6">
         <header className="flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold">Мой профиль</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Мой профиль</h1>
           <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
             {user.email}
           </p>

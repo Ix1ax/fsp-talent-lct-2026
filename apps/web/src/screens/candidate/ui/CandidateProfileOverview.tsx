@@ -15,9 +15,9 @@ const MotionLink = motion.create(Link);
 export const CandidateProfileOverview = () => {
   const { reducedMotion, transition } = useMotionSettings();
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-5 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
       <header className="flex max-w-2xl flex-col gap-3">
-        <h1 className="text-3xl font-semibold">Мой кабинет</h1>
+        <h1 className="text-2xl font-semibold sm:text-3xl">Мой кабинет</h1>
         <p className="text-base text-muted-foreground">
           Заполните профиль по разделам. Вы можете начать с любого шага и
           вернуться к остальным позже. Публикацией профиля управляете вы.

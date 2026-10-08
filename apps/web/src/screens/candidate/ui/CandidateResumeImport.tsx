@@ -25,9 +25,9 @@ export const CandidateResumeImport = ({
 
   return (
     <details className="rounded-lg border border-border bg-card p-4 sm:p-5">
-      <summary className="cursor-pointer text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
+      <summary className="min-h-11 cursor-pointer text-sm font-medium focus-visible:outline-2 focus-visible:outline-ring">
         Заполнить профиль из резюме
-        <span className="mt-1 block text-sm font-normal text-muted-foreground">
+        <span className="mt-1 hidden text-sm font-normal text-muted-foreground sm:block">
           Загрузите файл, чтобы перенести опыт, образование и навыки.
         </span>
       </summary>

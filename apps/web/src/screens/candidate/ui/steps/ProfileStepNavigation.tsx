@@ -34,7 +34,7 @@ export const ProfileStepNavigation = ({
     <div className="flex min-w-0 flex-col gap-3">
       <Link
         href={STATIC_ROUTES.CANDIDATE}
-        className="text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        className="flex min-h-11 items-center self-start text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
         Обзор кабинета
       </Link>
@@ -50,10 +50,10 @@ export const ProfileStepNavigation = ({
         }}
       >
         <SelectTrigger
-          className="h-11! w-full sm:hidden"
+          className="h-11! w-full text-base sm:hidden"
           aria-label="Перейти к шагу настройки профиля"
         >
-          <SelectValue />
+          <SelectValue>{PROFILE_STEPS[index].title}</SelectValue>
         </SelectTrigger>
         <SelectContent>
           {PROFILE_STEPS.map((item, position) => (
@@ -113,9 +113,11 @@ export const ProfileStepNavigation = ({
           </Link>
         ))}
       </nav>
-      <p className="text-sm text-muted-foreground">
-        Изменения отправляются после нажатия «Сохранить».
-      </p>
+      {step !== 'readiness' && (
+        <p className="text-sm text-muted-foreground">
+          Изменения отправляются после нажатия «Сохранить».
+        </p>
+      )}
     </div>
   );
 };
