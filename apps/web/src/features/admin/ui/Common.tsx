@@ -69,7 +69,11 @@ export const AdminSelect = ({
         >
           <SelectValue placeholder={label} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent
+          position="popper"
+          align="start"
+          className="w-(--radix-select-trigger-width)"
+        >
           {options.map((option) => (
             <SelectItem key={option.value} value={option.value || 'all'}>
               {option.label}

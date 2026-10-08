@@ -69,7 +69,7 @@ const Content = ({ children }: AdminShellProps) => {
       />
       <main className="relative isolate min-w-0">
         <header className="sticky top-0 z-20 border-b bg-card lg:relative">
-          <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
+          <div className="flex h-16 w-full items-center justify-between gap-4 px-5 lg:px-8">
             <div className="flex items-center gap-3">
               <Link
                 href="/admin"
@@ -102,7 +102,7 @@ const Content = ({ children }: AdminShellProps) => {
         </header>
         <div
           key={session.admin.id}
-          className="relative z-10 mx-auto w-full max-w-7xl p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8"
+          className="relative z-10 w-full p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8"
         >
           {children}
         </div>
