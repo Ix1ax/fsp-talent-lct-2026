@@ -7,6 +7,7 @@ import type {
 } from '../model';
 
 export type StartAssessmentInput = {
+  stackSkillId: string;
   specializationId: number;
   gradeId: number;
 };

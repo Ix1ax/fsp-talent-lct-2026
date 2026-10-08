@@ -21,7 +21,7 @@ export const PreviewResultSummary = ({
           .map((o) => o.text)
           .join('; ');
   return (
-    <div className="grid gap-3 border bg-muted p-4">
+    <div className="grid min-w-0 gap-3 rounded-lg border bg-muted p-4 wrap-anywhere">
       <h2 className="text-lg font-semibold">
         Результат: {result.score_percent}% ·{' '}
         {result.passed ? 'Тест пройден' : 'Тест не пройден'}

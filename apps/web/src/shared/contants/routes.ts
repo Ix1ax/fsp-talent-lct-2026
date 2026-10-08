@@ -6,3 +6,7 @@ export const STATIC_ROUTES = {
   EMPLOYER: '/employer',
   GUIDES: '/guides',
 } as const;
+
+export const DYNAMIC_ROUTES = {
+  CANDIDATE: (path: string) => `/candidate/${path}`,
+};

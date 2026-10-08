@@ -2,13 +2,14 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
-import { Button, Card, Input } from '@/shared/ui';
+import { Button, Input } from '@/shared/ui';
 import { adminRequest, adminSchemas, type Template } from '@/entities/admin';
 
 import { templateFormSchema, type TemplateFormValues } from '../constants';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { useAdminOptions } from '../model/useAdminOptions';
+import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
 interface TemplateEditorProps {
@@ -57,7 +58,7 @@ export const TemplateEditor = ({
     });
   });
   return (
-    <Card className="min-w-0 gap-5 p-4 sm:p-6 lg:p-8">
+    <AdminPanel>
       <h1 className="text-2xl font-semibold">
         {template ? 'Новая версия шаблона' : 'Новый шаблон теста'}
       </h1>
@@ -142,7 +143,7 @@ export const TemplateEditor = ({
             </Field>
           </div>
           <section className="grid gap-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium">Состав теста</h3>
               <p className="text-sm text-muted-foreground">
                 Вопросов:{' '}
@@ -153,7 +154,10 @@ export const TemplateEditor = ({
               </p>
             </div>
             {rows.fields.map((row, index) => (
-              <div key={row.id} className="grid gap-3 border p-4">
+              <div
+                key={row.id}
+                className="grid min-w-0 gap-3 rounded-lg border p-4"
+              >
                 <Controller
                   control={form.control}
                   name={`blueprint.${index}.skill_id`}
@@ -259,6 +263,6 @@ export const TemplateEditor = ({
           </div>
         </fieldset>
       </form>
-    </Card>
+    </AdminPanel>
   );
 };

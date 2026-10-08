@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export type { Preview, PreviewAnswer, PreviewQuestion } from './preview';
+export { previewAnswerSchema, previewSchema } from './preview';
+
 export const accountSchema = z.object({
   id: z.string(),
   email: z.string(),

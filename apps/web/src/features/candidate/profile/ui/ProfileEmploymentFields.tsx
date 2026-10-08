@@ -1,7 +1,9 @@
 import { type Control, Controller } from 'react-hook-form';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import {
   Checkbox,
+  FieldMessage,
   Select,
   SelectContent,
   SelectItem,
@@ -36,46 +38,55 @@ export const ProfileEmploymentFields = ({
         name="workFormatIds"
         control={control}
         render={({ field, fieldState }) => (
-          <fieldset className="flex flex-col gap-3" disabled={!workFormats}>
-            <legend className="mb-3 text-sm font-medium">Форматы работы</legend>
+          <fieldset disabled={!workFormats || busy}>
+            <legend className="text-sm font-medium">Форматы работы</legend>
+            <p
+              id={CANDIDATE_ELEMENT_IDS.profile.workFormats.hint}
+              className="mt-1 mb-3 text-sm text-muted-foreground"
+            >
+              Можно выбрать несколько вариантов.
+            </p>
             {!workFormats && (
               <p role="alert" className="text-sm text-muted-foreground">
                 Не удалось загрузить форматы работы. Текущий выбор сохранён.
                 Обновите страницу, чтобы изменить его.
               </p>
             )}
-            {workFormats?.map((format, index) => (
-              <label
-                key={format.id}
-                className="flex min-h-11 items-center gap-2 text-base sm:text-sm"
-              >
-                <Checkbox
-                  ref={index === 0 ? field.ref : undefined}
-                  checked={field.value.includes(format.id)}
-                  onBlur={field.onBlur}
-                  aria-invalid={!!fieldState.error}
-                  aria-describedby={
-                    fieldState.error ? 'profile-work-formats-error' : undefined
-                  }
-                  onCheckedChange={(checked) => {
-                    const ids = field.value.filter((id) => id !== format.id);
-                    field.onChange(
-                      checked === true ? [...ids, format.id] : ids,
-                    );
-                  }}
-                />
-                {format.name}
-              </label>
-            ))}
-            {fieldState.error && (
-              <p
-                id="profile-work-formats-error"
-                role="alert"
-                className="text-sm text-destructive"
-              >
-                {fieldState.error.message}
-              </p>
-            )}
+            <div className="flex flex-wrap gap-2">
+              {workFormats?.map((format, index) => (
+                <label
+                  key={format.id}
+                  className="flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border border-input bg-card px-4 py-3 text-sm font-medium transition-colors hover:bg-muted has-[[aria-checked=true]]:border-primary has-[[aria-checked=true]]:bg-accent has-[[aria-checked=true]]:text-brand-text has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-ring has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60"
+                >
+                  <Checkbox
+                    ref={index === 0 ? field.ref : undefined}
+                    checked={field.value.includes(format.id)}
+                    onBlur={field.onBlur}
+                    aria-invalid={!!fieldState.error}
+                    aria-describedby={
+                      fieldState.error
+                        ? [
+                            CANDIDATE_ELEMENT_IDS.profile.workFormats.hint,
+                            CANDIDATE_ELEMENT_IDS.profile.workFormats.error,
+                          ].join(' ')
+                        : CANDIDATE_ELEMENT_IDS.profile.workFormats.hint
+                    }
+                    onCheckedChange={(checked) => {
+                      const ids = field.value.filter((id) => id !== format.id);
+                      field.onChange(
+                        checked === true ? [...ids, format.id] : ids,
+                      );
+                    }}
+                  />
+                  {format.name}
+                </label>
+              ))}
+            </div>
+            <FieldMessage
+              id={CANDIDATE_ELEMENT_IDS.profile.workFormats.error}
+              message={fieldState.error?.message}
+              className="mt-2"
+            />
           </fieldset>
         )}
       />
@@ -84,7 +95,8 @@ export const ProfileEmploymentFields = ({
         control={control}
         render={({ field, fieldState }) => (
           <ProfileField
-            id="profile-search-status"
+            id={CANDIDATE_ELEMENT_IDS.profile.searchStatus.input}
+            errorId={CANDIDATE_ELEMENT_IDS.profile.searchStatus.error}
             label="Статус поиска"
             error={fieldState.error?.message}
           >
@@ -96,11 +108,13 @@ export const ProfileEmploymentFields = ({
               <SelectTrigger
                 className="h-11! w-full text-base sm:text-sm"
                 ref={field.ref}
-                id="profile-search-status"
+                id={CANDIDATE_ELEMENT_IDS.profile.searchStatus.input}
                 onBlur={field.onBlur}
                 aria-invalid={!!fieldState.error}
                 aria-describedby={
-                  fieldState.error ? 'profile-search-status-error' : undefined
+                  fieldState.error
+                    ? CANDIDATE_ELEMENT_IDS.profile.searchStatus.error
+                    : undefined
                 }
               >
                 <SelectValue />

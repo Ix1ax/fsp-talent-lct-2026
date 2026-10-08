@@ -3,12 +3,12 @@ import { Skeleton } from '@/shared/ui';
 export default function Loading() {
   return (
     <main
-      className="mx-auto flex w-full max-w-285 flex-1 flex-col gap-10 px-5 py-8 md:px-8 md:py-10"
+      className="mx-auto flex w-full max-w-285 flex-1 flex-col gap-8 px-4 py-6 md:px-8 md:py-10"
       aria-label="Загрузка справочника"
       aria-busy="true"
     >
       <div className="flex flex-col gap-3">
-        <Skeleton className="h-10 w-64 max-w-full" />
+        <Skeleton className="h-8 w-64 sm:h-9 max-w-full" />
         <Skeleton className="h-16 w-full max-w-2xl sm:h-12" />
       </div>
       <div className="flex flex-col gap-4">

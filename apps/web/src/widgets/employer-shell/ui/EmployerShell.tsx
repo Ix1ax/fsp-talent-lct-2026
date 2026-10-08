@@ -41,7 +41,7 @@ export const EmployerShell = ({
   onCreateCompany,
   children,
 }: EmployerShellProps) => (
-  <div className="min-h-screen pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+  <div className="min-h-dvh w-full min-w-0 self-stretch text-left pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
     <header className="flex min-h-14 flex-wrap items-stretch border-b border-border bg-card md:flex-nowrap">
       <Link
         href={homeHref}

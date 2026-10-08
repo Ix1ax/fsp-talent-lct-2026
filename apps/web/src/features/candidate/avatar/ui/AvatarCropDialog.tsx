@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import {
   Button,
   Dialog,
@@ -48,7 +49,7 @@ export const AvatarCropDialog = ({
 
   const reportError = (message: string) => {
     setError(message);
-    toast.error(message, { id: 'candidate-avatar' });
+    toast.error(message, { id: CANDIDATE_ELEMENT_IDS.avatar.input });
   };
 
   const apply = async () => {
@@ -133,10 +134,12 @@ export const AvatarCropDialog = ({
         </div>
         <fieldset disabled={processing} className="flex min-w-0 flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <Label id="avatar-zoom-label">Масштаб: {zoom.toFixed(1)}×</Label>
+            <Label id={CANDIDATE_ELEMENT_IDS.avatar.zoomLabel}>
+              Масштаб: {zoom.toFixed(1)}×
+            </Label>
             <Slider
-              id="avatar-zoom"
-              aria-labelledby="avatar-zoom-label"
+              id={CANDIDATE_ELEMENT_IDS.avatar.zoom}
+              aria-labelledby={CANDIDATE_ELEMENT_IDS.avatar.zoomLabel}
               disabled={processing}
               min={1}
               max={3}
@@ -146,12 +149,12 @@ export const AvatarCropDialog = ({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <Label id="avatar-rotation-label">
+            <Label id={CANDIDATE_ELEMENT_IDS.avatar.rotationLabel}>
               Поворот: {Math.round(rotation)}°
             </Label>
             <Slider
-              id="avatar-rotation"
-              aria-labelledby="avatar-rotation-label"
+              id={CANDIDATE_ELEMENT_IDS.avatar.rotation}
+              aria-labelledby={CANDIDATE_ELEMENT_IDS.avatar.rotationLabel}
               disabled={processing}
               min={0}
               max={360}

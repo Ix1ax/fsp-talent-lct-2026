@@ -13,10 +13,10 @@ import {
   Textarea,
 } from '@/shared/ui';
 import {
-  adminRequest,
-  adminSchemas,
   type CatalogItem,
   type CatalogKind,
+  createAdminCatalogItem,
+  updateAdminCatalogItem,
 } from '@/entities/admin';
 
 import { catalogFormSchema } from '../constants';
@@ -75,19 +75,20 @@ export const CatalogEditor = ({
       });
       return;
     }
-    const body: Record<string, unknown> = { name: values.name };
-    if (kind === 'skills') body.aliases = aliases;
-    if (!item) {
-      body.code = values.code.trim();
-      if (kind === 'grades') body.rank = values.rank;
-    }
+    const body = {
+      name: values.name,
+      ...(kind === 'skills' ? { aliases } : {}),
+    };
     await mutation.run(async () => {
-      await adminRequest(
-        session.access_token,
-        `/catalogs/${kind}${item ? `/${item.id}` : ''}`,
-        adminSchemas.catalog,
-        { method: item ? 'PATCH' : 'POST', body },
-      );
+      if (item) {
+        await updateAdminCatalogItem(session.access_token, kind, item.id, body);
+      } else {
+        await createAdminCatalogItem(session.access_token, kind, {
+          ...body,
+          code: values.code.trim(),
+          ...(kind === 'grades' ? { rank: values.rank } : {}),
+        });
+      }
       toast.success('Запись сохранена');
       onSaved();
       onClose();
@@ -101,10 +102,12 @@ export const CatalogEditor = ({
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+        className="max-h-[90dvh] overflow-y-auto wrap-anywhere [&_button]:min-h-11 [&_[data-slot=dialog-close]]:size-11 sm:max-w-lg"
         showCloseButton={!mutation.busy}
       >
-        <DialogTitle>{item ? 'Изменить запись' : 'Новая запись'}</DialogTitle>
+        <DialogTitle className="pr-10">
+          {item ? 'Изменить запись' : 'Новая запись'}
+        </DialogTitle>
         <DialogDescription>
           {item
             ? 'Код и порядок грейда изменить нельзя.'

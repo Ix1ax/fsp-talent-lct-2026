@@ -57,16 +57,16 @@ export const QuestionAnswerForm = ({
         cancel();
         void onSave();
       })}
-      className="flex flex-col gap-3"
+      className="flex min-w-0 flex-col gap-3"
     >
-      <fieldset disabled={disabled} className="flex flex-col gap-3">
+      <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-3">
         <legend className="mb-3 text-sm font-medium">
           {getAnswerLegend(question)}
         </legend>
         {options.map((option) => (
           <label
             key={option.id}
-            className="flex items-start gap-3 rounded-lg border p-3 wrap-anywhere"
+            className="flex min-h-12 min-w-0 cursor-pointer items-start gap-3 rounded-lg border p-3 wrap-anywhere transition-colors has-checked:border-primary has-checked:bg-primary/5 has-focus-visible:ring-2 has-focus-visible:ring-ring"
           >
             {question.multiple ? (
               <Checkbox
@@ -107,7 +107,7 @@ export const QuestionAnswerForm = ({
           <p role="alert">{form.formState.errors.text.message}</p>
         )}
       </fieldset>
-      <p role="status" className="text-sm text-muted-foreground">
+      <p role="status" className="min-h-5 text-sm text-muted-foreground">
         {getAnswerStatus(state)}
       </p>
       {state.error && (

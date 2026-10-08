@@ -2,10 +2,12 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, PageTransition } from '@/shared/ui';
 import { AdminApiError, type Template } from '@/entities/admin';
 
 import { useServerPreview } from '../model/useServerPreview';
+import { AdminConfirmDialog } from './AdminConfirmDialog';
+import { AdminPanel } from './AdminPanel';
 import { ErrorNotice } from './Common';
 import { PreviewQuestionBody } from './PreviewQuestionBody';
 import { PreviewResultSummary } from './PreviewResultSummary';
@@ -28,7 +30,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
   const missing =
     error instanceof AdminApiError && error.code === 'preview_not_found';
   return (
-    <Card className="min-w-0 gap-5 p-4 sm:p-6 lg:p-8">
+    <AdminPanel>
       <h1 className="text-2xl font-semibold wrap-anywhere">
         Предпросмотр теста · {template.stack_name ?? 'Без стека'} · v
         {data?.template_version ?? template.version}
@@ -92,7 +94,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
           </div>
           <nav
             aria-label="Вопросы предпросмотра"
-            className="flex flex-wrap gap-2"
+            className="grid gap-2 sm:flex sm:flex-wrap"
           >
             {data.questions.map((q, i) => (
               <Button
@@ -112,12 +114,18 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
           </nav>
           {question && (
             <>
-              <PreviewQuestionBody
-                question={question}
-                answer={state.drafts[question.id] ?? question.answer ?? {}}
-                finished={closed || busy}
-                onChange={(answer) => state.update(question.id, answer)}
-              />
+              <PageTransition
+                transitionKey={question.id}
+                distance={0}
+                className="min-w-0"
+              >
+                <PreviewQuestionBody
+                  question={question}
+                  answer={state.drafts[question.id] ?? question.answer ?? {}}
+                  finished={closed || busy}
+                  onChange={(answer) => state.update(question.id, answer)}
+                />
+              </PageTransition>
               {!closed && (
                 <div className="flex flex-wrap items-center gap-2">
                   <Button
@@ -148,9 +156,10 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
           )}
           <PreviewResultSummary preview={data} questionId={question?.id} />
           <div className="flex flex-wrap justify-between gap-2 border-t pt-4">
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex">
               <Button
                 variant="outline"
+                className="h-11"
                 disabled={busy || index === 0}
                 onClick={() => setIndex((i) => i - 1)}
               >
@@ -159,6 +168,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
               </Button>
               <Button
                 variant="outline"
+                className="h-11"
                 disabled={busy || index >= data.questions.length - 1}
                 onClick={() => setIndex((i) => i + 1)}
               >
@@ -166,7 +176,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
                 <ChevronRight />
               </Button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid gap-2 sm:flex sm:flex-wrap">
               <Button
                 variant="outline"
                 disabled={busy}
@@ -199,37 +209,35 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
             </p>
           )}
           {confirmation && (
-            <div className="grid gap-3 border bg-muted p-4">
-              <p>
-                {confirmation === 'delete'
-                  ? 'Удалить это пробное прохождение и его ответы? После удаления можно начать новое.'
-                  : `Завершить тест? Без сохранённого ответа: ${data.questions.length - answered}.`}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  disabled={busy}
-                  onClick={async () => {
-                    if (confirmation === 'delete') {
-                      await state.remove();
-                      setIndex(0);
-                    } else await state.submit();
-                    setConfirmation(null);
-                  }}
-                >
-                  Подтвердить
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => setConfirmation(null)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </div>
+            <AdminConfirmDialog
+              title={
+                confirmation === 'delete'
+                  ? 'Удалить предпросмотр?'
+                  : 'Завершить тест?'
+              }
+              description={
+                confirmation === 'delete'
+                  ? 'Это пробное прохождение и его ответы будут удалены. После удаления можно начать новое.'
+                  : `Без сохранённого ответа: ${data.questions.length - answered}. После завершения изменить ответы нельзя.`
+              }
+              busy={busy}
+              error={error}
+              destructive={confirmation === 'delete'}
+              onClose={() => setConfirmation(null)}
+              onConfirm={async () => {
+                const done =
+                  confirmation === 'delete'
+                    ? await state.remove()
+                    : await state.submit();
+                if (done) {
+                  if (confirmation === 'delete') setIndex(0);
+                  setConfirmation(null);
+                }
+              }}
+            />
           )}
         </>
       )}
-    </Card>
+    </AdminPanel>
   );
 };

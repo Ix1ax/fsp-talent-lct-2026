@@ -80,7 +80,7 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
           value={value}
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Например, golang"
-          className="h-12"
+          className="h-12 text-base"
         />
       </div>
       <Button

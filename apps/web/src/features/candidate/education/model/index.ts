@@ -1,3 +1,4 @@
+export { EDUCATION_FIELDS } from './educationFields';
 export { EDUCATION_LEVEL_LABELS } from './educationLevels';
 export {
   EDUCATION_LIMIT,

@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas } from '@/entities/admin';
 import {
   AccountEditor,
   AccountStatusAction,
+  AdminAnimatedList,
   AdminListLoading,
   ErrorNotice,
   Pagination,
@@ -34,7 +35,7 @@ export const AccountsPage = () => {
       </p>
     );
   return (
-    <div className="grid content-start gap-6">
+    <div className="grid min-w-0 content-start gap-6">
       <AdminPageHeader
         title="Администраторы"
         description="Аккаунты для управления платформой."
@@ -45,8 +46,8 @@ export const AccountsPage = () => {
           </Button>
         }
       />
-      <Card className="relative gap-4 p-4 sm:p-6">
-        <ErrorNotice error={list.error} />
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
+        <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем аккаунты…' : ''}
         </p>
@@ -57,26 +58,31 @@ export const AccountsPage = () => {
               Администраторов не найдено
             </p>
           )}
-          {list.data?.items.map((account) => (
-            <div
-              key={account.id}
-              className="flex flex-wrap items-center justify-between gap-3 border-b py-4 last:border-b-0"
-            >
-              <div>
-                <p className="font-medium wrap-anywhere">{account.email}</p>
-                <p className="mt-1 text-xs text-caption">
-                  {account.role === 'superadmin'
-                    ? 'Главный администратор'
-                    : 'Администратор'}{' '}
-                  · {new Date(account.created_at).toLocaleDateString('ru-RU')}
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Status value={account.status} />
-                <AccountStatusAction account={account} onSaved={list.reload} />
-              </div>
-            </div>
-          ))}
+          <AdminAnimatedList>
+            {list.data?.items.map((account) => (
+              <StaggerItem
+                key={account.id}
+                className="grid min-w-0 gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+              >
+                <div className="min-w-0 wrap-anywhere">
+                  <p className="font-medium wrap-anywhere">{account.email}</p>
+                  <p className="mt-1 text-xs text-caption">
+                    {account.role === 'superadmin'
+                      ? 'Главный администратор'
+                      : 'Администратор'}{' '}
+                    · {new Date(account.created_at).toLocaleDateString('ru-RU')}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <Status value={account.status} />
+                  <AccountStatusAction
+                    account={account}
+                    onSaved={list.reload}
+                  />
+                </div>
+              </StaggerItem>
+            ))}
+          </AdminAnimatedList>
         </div>
         <Pagination
           offset={offset}

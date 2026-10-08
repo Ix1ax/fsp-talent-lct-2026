@@ -1,4 +1,55 @@
-export * from './api';
-export * from './api/previews';
-export * from './model';
-export * from './model/preview';
+export type { AdminRequestOptions } from './api';
+export {
+  AdminApiError,
+  adminLogin,
+  adminLogout,
+  adminMe,
+  adminRequest,
+  adminSchemas,
+  createAdminCatalogItem,
+  deleteAdminCatalogItem,
+  deleteAdminPreview,
+  getAdminCatalogs,
+  getAdminPreview,
+  moderationSchema,
+  queryString,
+  saveAdminPreviewAnswer,
+  startAdminPreview,
+  submitAdminPreview,
+  updateAdminCatalogItem,
+} from './api';
+export type {
+  AdminAccount,
+  AdminSession,
+  CatalogItem,
+  CatalogKind,
+  Page,
+  Preview,
+  PreviewAnswer,
+  PreviewQuestion,
+  Question,
+  QuestionVersion,
+  Shortage,
+  Template,
+} from './model';
+export {
+  accountSchema,
+  blueprintSchema,
+  catalogKinds,
+  catalogLabels,
+  catalogSchema,
+  gradingSchema,
+  kindLabels,
+  kindSchema,
+  loginSchema,
+  pageSchema,
+  previewAnswerSchema,
+  previewSchema,
+  promptSchema,
+  questionSchema,
+  shortageSchema,
+  statusLabels,
+  statusSchema,
+  templateSchema,
+  versionSchema,
+} from './model';

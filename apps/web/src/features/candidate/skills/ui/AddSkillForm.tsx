@@ -2,6 +2,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel } from '@/entities/candidate';
@@ -55,10 +56,12 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
       })}
     >
       <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-3">
-        <Label htmlFor="candidate-skill-name">Найти или предложить навык</Label>
+        <Label htmlFor={CANDIDATE_ELEMENT_IDS.skills.name}>
+          Найти или предложить навык
+        </Label>
         <div className="relative">
           <Input
-            id="candidate-skill-name"
+            id={CANDIDATE_ELEMENT_IDS.skills.name}
             placeholder="Например, Go или Svelte"
             autoComplete="off"
             role="combobox"
@@ -69,7 +72,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
               activeSkill ? `${listId}-${activeSkill.id}` : undefined
             }
             aria-invalid={!!error}
-            aria-describedby="candidate-skill-hint"
+            aria-describedby={CANDIDATE_ELEMENT_IDS.skills.hint}
             {...form.register('name', { onChange: autocomplete.onQueryChange })}
             onFocus={autocomplete.onFocus}
             onBlur={(event) => {
@@ -106,7 +109,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
           )}
         </div>
         <p
-          id="candidate-skill-hint"
+          id={CANDIDATE_ELEMENT_IDS.skills.hint}
           aria-live="polite"
           className={`min-h-10 text-sm ${error ? 'text-destructive' : 'text-muted-foreground'}`}
         >
@@ -114,13 +117,15 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
         </p>
         <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex flex-col gap-2">
-            <Label htmlFor="candidate-skill-level">Самооценка</Label>
+            <Label htmlFor={CANDIDATE_ELEMENT_IDS.skills.level}>
+              Самооценка
+            </Label>
             <Controller
               name="claimedLevel"
               control={form.control}
               render={({ field }) => (
                 <SkillLevelSelect
-                  id="candidate-skill-level"
+                  id={CANDIDATE_ELEMENT_IDS.skills.level}
                   value={field.value}
                   disabled={disabled}
                   label="Самооценка нового навыка"

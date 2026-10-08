@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
 import {
@@ -58,15 +59,18 @@ export const CandidateAvatar = ({
 
   const disabled = formDisabled || checking || !!editorFile;
 
-  const reportError = (message: string, field: 'file' | 'root' = 'root') => {
-    form.setError(field, { message });
-    toast.error(message, { id: 'candidate-avatar' });
-  };
+  const reportError = useCallback(
+    (message: string, field: 'file' | 'root' = 'root') => {
+      form.setError(field, { message });
+      toast.error(message, { id: CANDIDATE_ELEMENT_IDS.avatar.input });
+    },
+    [form],
+  );
 
-  const reportSuccess = (message: string) => {
+  const reportSuccess = useCallback((message: string) => {
     setMessage(message);
-    toast.success(message, { id: 'candidate-avatar' });
-  };
+    toast.success(message, { id: CANDIDATE_ELEMENT_IDS.avatar.input });
+  }, []);
 
   const chooseFile = async (file: File) => {
     setMessage('');
@@ -115,27 +119,38 @@ export const CandidateAvatar = ({
     }
   };
 
-  const upload = async (file: File) => {
-    if (!profile || busy || mutating.current) return;
-    mutating.current = true;
-    onBusyChange(true);
-    form.clearErrors();
-    setMessage('');
+  const upload = useCallback(
+    async (file: File) => {
+      if (!profile || busy || mutating.current) return;
+      mutating.current = true;
+      onBusyChange(true);
+      form.clearErrors();
+      setMessage('');
 
-    try {
-      onProfileChange(await uploadCandidateAvatar(file));
-      setRevision((previous) => previous + 1);
-      form.reset();
-      setOriginalFile(undefined);
-      reportSuccess('Аватар сохранён.');
-    } catch (error) {
-      reportError(getAvatarError(error));
-    } finally {
-      mutating.current = false;
-      onBusyChange(false);
-      if (inputRef.current) inputRef.current.value = '';
-    }
-  };
+      try {
+        onProfileChange(await uploadCandidateAvatar(file));
+        setRevision((previous) => previous + 1);
+        form.reset();
+        setOriginalFile(undefined);
+        reportSuccess('Аватар сохранён.');
+      } catch (error) {
+        reportError(getAvatarError(error));
+      } finally {
+        mutating.current = false;
+        onBusyChange(false);
+        if (inputRef.current) inputRef.current.value = '';
+      }
+    },
+    [
+      busy,
+      form,
+      onBusyChange,
+      onProfileChange,
+      profile,
+      reportError,
+      reportSuccess,
+    ],
+  );
 
   const remove = async () => {
     if (!profile || busy || mutating.current) return false;
@@ -163,23 +178,39 @@ export const CandidateAvatar = ({
     }
   };
 
+  useEffect(() => {
+    if (
+      !profile?.id ||
+      !selectedFile ||
+      errors.file ||
+      errors.root ||
+      busy ||
+      mutating.current
+    )
+      return;
+    void avatarSchema.safeParseAsync({ file: selectedFile }).then((result) => {
+      if (result.success) void upload(selectedFile);
+    });
+  }, [busy, errors.file, errors.root, profile?.id, selectedFile, upload]);
+
   return (
     <section
+      id={CANDIDATE_ELEMENT_IDS.avatar.section}
       aria-label="Фото профиля"
-      className="flex flex-col gap-4 border-b border-border pb-6"
+      className="flex flex-col gap-4"
       aria-busy={disabled}
     >
-      <div className="space-y-1">
-        <h3 className="text-base font-medium">Фото профиля</h3>
-        <p className="text-sm text-muted-foreground">
-          Необязательно. Фото видите только вы.
-        </p>
-      </div>
       {selectedFile ? (
         <SelectedAvatarPreview
           file={selectedFile}
           disabled={disabled}
           onAction={() => void editPhoto()}
+          onReplace={() => inputRef.current?.click()}
+          onRemove={() => {
+            form.reset();
+            setOriginalFile(undefined);
+            setMessage('');
+          }}
         />
       ) : (
         <CandidateAvatarPreview
@@ -188,10 +219,15 @@ export const CandidateAvatar = ({
           busy={disabled}
           onAction={() => void editPhoto()}
           onRetry={() => setRevision((previous) => previous + 1)}
+          onReplace={() => inputRef.current?.click()}
+          onRemove={profile?.avatarFileId ? () => setDeleting(true) : undefined}
         />
       )}
-      <p id="avatar-help" className="text-sm text-muted-foreground">
-        JPEG или PNG. Перед сохранением можно обрезать и повернуть фото.
+      <p
+        id={CANDIDATE_ELEMENT_IDS.avatar.hint}
+        className="text-sm text-muted-foreground"
+      >
+        Фото необязательно, его видите только вы. JPEG или PNG.
       </p>
       <form
         onSubmit={(event) => {
@@ -211,7 +247,7 @@ export const CandidateAvatar = ({
                 inputRef.current = element;
                 field.ref(element);
               }}
-              id="candidate-avatar"
+              id={CANDIDATE_ELEMENT_IDS.avatar.input}
               name={field.name}
               type="file"
               className="hidden"
@@ -220,7 +256,12 @@ export const CandidateAvatar = ({
               disabled={disabled}
               aria-label="Выбрать фото"
               aria-describedby={
-                errors.file ? 'avatar-help avatar-file-error' : 'avatar-help'
+                errors.file
+                  ? [
+                      CANDIDATE_ELEMENT_IDS.avatar.hint,
+                      CANDIDATE_ELEMENT_IDS.avatar.error,
+                    ].join(' ')
+                  : CANDIDATE_ELEMENT_IDS.avatar.hint
               }
               onBlur={field.onBlur}
               onChange={(event) => {
@@ -232,51 +273,16 @@ export const CandidateAvatar = ({
             />
           )}
         />
-        <div className="flex flex-wrap gap-2">
+        {selectedFile && profile && errors.root && (
           <Button
-            type="button"
-            variant="outline"
-            className="min-h-11"
+            type="submit"
             disabled={disabled}
-            onClick={() => void editPhoto()}
+            className="self-start"
+            variant="outline"
           >
-            {selectedFile || profile?.avatarFileId
-              ? 'Редактировать фото'
-              : 'Добавить фото'}
+            Повторить сохранение фото
           </Button>
-          {(selectedFile || profile?.avatarFileId) && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={disabled}
-              onClick={() => inputRef.current?.click()}
-            >
-              {selectedFile ? 'Выбрать другое фото' : 'Заменить фото'}
-            </Button>
-          )}
-          {selectedFile && (
-            <>
-              <Button
-                type="submit"
-                disabled={disabled || !!errors.file || !profile}
-              >
-                Сохранить фото
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={disabled}
-                onClick={() => {
-                  form.reset();
-                  setOriginalFile(undefined);
-                  setMessage('');
-                }}
-              >
-                Отменить выбор
-              </Button>
-            </>
-          )}
-        </div>
+        )}
         {selectedFile && !profile && (
           <p className="text-sm text-muted-foreground">
             Фото выбрано. Создайте профиль, чтобы сохранить его.
@@ -289,7 +295,7 @@ export const CandidateAvatar = ({
         )}
         {errors.file && (
           <p
-            id="avatar-file-error"
+            id={CANDIDATE_ELEMENT_IDS.avatar.error}
             role="alert"
             className="text-sm text-destructive"
           >
@@ -302,17 +308,6 @@ export const CandidateAvatar = ({
           </p>
         )}
       </form>
-      {profile?.avatarFileId && (
-        <Button
-          type="button"
-          variant="outline"
-          disabled={disabled}
-          className="self-start"
-          onClick={() => setDeleting(true)}
-        >
-          Удалить аватар
-        </Button>
-      )}
       {message && (
         <p role="status" className="text-sm text-muted-foreground">
           {message}
@@ -331,13 +326,18 @@ export const CandidateAvatar = ({
         <AvatarCropDialog
           file={editorFile}
           onCancel={() => setEditorFile(undefined)}
-          onApply={(file) => {
+          onApply={async (file) => {
             setOriginalFile(editorFile);
             form.setValue('file', file, {
               shouldValidate: true,
               shouldDirty: true,
             });
             setEditorFile(undefined);
+            const validation = await avatarSchema.safeParseAsync({ file });
+            if (!validation.success) {
+              reportError(validation.error.issues[0].message, 'file');
+              return;
+            }
           }}
         />
       )}

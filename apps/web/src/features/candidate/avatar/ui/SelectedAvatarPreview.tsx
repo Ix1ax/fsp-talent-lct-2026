@@ -8,11 +8,15 @@ interface SelectedAvatarPreviewProps {
   file: File;
   disabled: boolean;
   onAction: () => void;
+  onReplace: () => void;
+  onRemove: () => void;
 }
 export const SelectedAvatarPreview = ({
   file,
   disabled,
   onAction,
+  onReplace,
+  onRemove,
 }: SelectedAvatarPreviewProps) => {
   const [url, setUrl] = useState<string>();
   useEffect(() => {
@@ -29,15 +33,14 @@ export const SelectedAvatarPreview = ({
         label="Редактировать выбранное фото"
         disabled={disabled}
         onClick={onAction}
+        onReplace={onReplace}
+        onRemove={onRemove}
       >
-        <Avatar className="size-24">
+        <Avatar className="size-36">
           <AvatarImage src={url} alt="Выбранное фото" />
           <AvatarFallback>Фото</AvatarFallback>
         </Avatar>
       </AvatarAction>
-      <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-        {file.name}
-      </p>
     </div>
   );
 };

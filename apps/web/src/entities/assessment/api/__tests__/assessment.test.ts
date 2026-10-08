@@ -37,10 +37,17 @@ describe('assessment API', () => {
       expect(config.headers['Cache-Control']).toBe('no-cache');
   });
   it('sends only start parameters and returns the created attempt', async () => {
-    expect(await startAssessment({ specializationId: 1, gradeId: 2 })).toEqual({
+    expect(
+      await startAssessment({
+        stackSkillId: 'typescript',
+        specializationId: 1,
+        gradeId: 2,
+      }),
+    ).toEqual({
       id: 'attempt',
     });
     expect(api.post).toHaveBeenCalledWith('/v1/me/assessments/attempts', {
+      stackSkillId: 'typescript',
       specializationId: 1,
       gradeId: 2,
     });

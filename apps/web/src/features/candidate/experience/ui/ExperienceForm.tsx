@@ -2,14 +2,18 @@ import { useId } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { Button, Input, Switch, Textarea } from '@/shared/ui';
+import { Button, FieldMessage, Input, Switch, Textarea } from '@/shared/ui';
 import type {
   CandidateExperience,
   SaveCandidateExperienceInput,
 } from '@/entities/candidate';
 
 import { toExperienceFormValues, toExperienceInput } from '../lib';
-import { type ExperienceFormValues, experienceSchema } from '../model';
+import {
+  EXPERIENCE_FIELDS,
+  type ExperienceFormValues,
+  experienceSchema,
+} from '../model';
 
 interface ExperienceFormProps {
   initialValues?: ExperienceFormValues;
@@ -23,33 +27,6 @@ interface ExperienceFormProps {
   ) => Promise<boolean>;
   onClose: () => void;
 }
-
-const fields = [
-  {
-    key: 'company',
-    label: 'Компания',
-    type: 'text',
-    placeholder: 'Название компании',
-  },
-  {
-    key: 'position',
-    label: 'Должность',
-    type: 'text',
-    placeholder: 'Например, PHP-программист',
-  },
-  {
-    key: 'startedOn',
-    label: 'Месяц начала',
-    type: 'month',
-    placeholder: 'ГГГГ-ММ',
-  },
-  {
-    key: 'endedOn',
-    label: 'Месяц окончания',
-    type: 'month',
-    placeholder: 'ГГГГ-ММ',
-  },
-] as const;
 
 export const ExperienceForm = ({
   record,
@@ -73,7 +50,7 @@ export const ExperienceForm = ({
   return (
     <form
       noValidate
-      className="flex flex-col gap-5 rounded-lg border border-border p-4 sm:p-5"
+      className="flex w-full min-w-0 flex-col gap-5 overflow-hidden rounded-lg border border-border p-4 sm:p-5"
       onSubmit={form.handleSubmit(async (values) => {
         if (!disabled && (await onSave(toExperienceInput(values), record?.id)))
           onClose();
@@ -85,7 +62,7 @@ export const ExperienceForm = ({
       <fieldset disabled={disabled} className="flex min-w-0 flex-col gap-4">
         <legend className="sr-only">Сведения о месте работы</legend>
         <div className="grid gap-4 sm:grid-cols-2">
-          {fields.map((field) => {
+          {EXPERIENCE_FIELDS.map((field) => {
             const id = `${prefix}-${field.key}`;
             const inactive = field.key === 'endedOn' && current;
             return (
@@ -106,11 +83,11 @@ export const ExperienceForm = ({
                   }
                   className="min-h-11 min-w-0"
                 />
-                {!inactive && errors[field.key] && (
-                  <p id={`${id}-error`} className="text-sm text-destructive">
-                    {errors[field.key]?.message}
-                  </p>
-                )}
+                <FieldMessage
+                  id={`${id}-error`}
+                  message={inactive ? undefined : errors[field.key]?.message}
+                  lines={2}
+                />
               </div>
             );
           })}
@@ -154,14 +131,10 @@ export const ExperienceForm = ({
               errors.description ? `${prefix}-description-error` : undefined
             }
           />
-          {errors.description && (
-            <p
-              id={`${prefix}-description-error`}
-              className="text-sm text-destructive"
-            >
-              {errors.description.message}
-            </p>
-          )}
+          <FieldMessage
+            id={`${prefix}-description-error`}
+            message={errors.description?.message}
+          />
         </div>
       </fieldset>
       {error && (
@@ -169,7 +142,7 @@ export const ExperienceForm = ({
           {error}
         </p>
       )}
-      <div className="flex flex-wrap gap-3">
+      <div className="grid gap-3 sm:flex sm:flex-wrap">
         <Button type="submit" size="lg" disabled={disabled}>
           {busy ? 'Сохранение…' : 'Сохранить место работы'}
         </Button>

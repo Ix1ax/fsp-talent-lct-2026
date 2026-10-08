@@ -131,22 +131,35 @@ export const EmployerNeedPane = ({
         )}
       </>
     ) : !detail ? (
-      <section className="max-w-xl space-y-4 py-6">
-        <h2 className="text-2xl font-semibold">Потребности команды</h2>
+      <section className="mx-auto my-8 max-w-xl space-y-5 rounded-lg border border-border bg-card p-6 sm:my-16 sm:p-8">
+        <h2 className="text-2xl font-semibold">Кого ищем в команду?</h2>
         <p className="text-base leading-relaxed text-muted-foreground">
           Выберите потребность в списке, чтобы посмотреть условия и подборку
           кандидатов.
         </p>
-        <p className="text-sm text-muted-foreground">
-          Потребностей на этой странице: {board.items.length}.
-        </p>
+        <ol className="grid gap-4 border-y border-border py-5 text-sm text-muted-foreground">
+          <li>
+            <span className="font-medium text-foreground">1. Опишите роль</span>
+            <br />
+            Задачи, навыки и условия работы.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              2. Активируйте потребность
+            </span>
+            <br />
+            Черновик можно сохранить и закончить позже.
+          </li>
+          <li>
+            <span className="font-medium text-foreground">
+              3. Откройте подборку
+            </span>
+            <br />
+            Сравните кандидатов по требованиям команды.
+          </li>
+        </ol>
         {canWrite && (
-          <Button
-            type="button"
-            size="lg"
-            variant="outline"
-            onClick={onStartCreate}
-          >
+          <Button type="button" size="lg" onClick={onStartCreate}>
             Создать потребность
           </Button>
         )}

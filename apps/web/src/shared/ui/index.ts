@@ -12,8 +12,21 @@ export * from './ConfirmDeleteDialog';
 export * from './ConfirmDiscardDialog';
 export * from './Dialog';
 export * from './DropdownMenu';
+export { FieldMessage } from './FieldMessage';
 export * from './Input';
 export * from './Label';
+export {
+  AnimatedCounter,
+  AnimatedIndicator,
+  Collapse,
+  FadeIn,
+  LoadingText,
+  PageTransition,
+  Reveal,
+  ScrollProgress,
+  Stagger,
+  StaggerItem,
+} from './motion';
 export * from './Popover';
 export * from './SalaryRangeInput';
 export * from './Select';

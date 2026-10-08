@@ -8,7 +8,7 @@ import {
 } from '@/entities/admin';
 
 import { useAdminSession } from '../model';
-import { ErrorNotice } from './Common';
+import { AdminConfirmDialog } from './AdminConfirmDialog';
 
 interface AccountStatusActionProps {
   account: AdminAccount;
@@ -50,34 +50,30 @@ export const AccountStatusAction = ({
     }
   };
   return (
-    <div className="grid gap-2">
-      <ErrorNotice error={error} />
-      {confirming ? (
-        <>
-          <p className="max-w-sm text-sm">
-            {blocking
-              ? 'Заблокировать аккаунт? Все его сессии завершатся, вход будет запрещён.'
-              : 'Включить аккаунт? Администратору потребуется войти заново.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button size="sm" disabled={busy} onClick={() => void save()}>
-              {busy ? 'Сохраняем…' : 'Подтвердить'}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={busy}
-              onClick={() => setConfirming(false)}
-            >
-              Отмена
-            </Button>
-          </div>
-        </>
-      ) : (
-        <Button size="sm" variant="outline" onClick={() => setConfirming(true)}>
-          {blocking ? 'Заблокировать' : 'Включить'}
-        </Button>
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        className="min-h-11"
+        onClick={() => setConfirming(true)}
+      >
+        {blocking ? 'Заблокировать' : 'Включить'}
+      </Button>
+      {confirming && (
+        <AdminConfirmDialog
+          title={blocking ? 'Заблокировать аккаунт?' : 'Включить аккаунт?'}
+          description={
+            blocking
+              ? 'Все его сессии завершатся, вход будет запрещён.'
+              : 'Администратору потребуется войти заново.'
+          }
+          busy={busy}
+          error={error}
+          destructive={blocking}
+          onConfirm={save}
+          onClose={() => setConfirming(false)}
+        />
       )}
-    </div>
+    </>
   );
 };

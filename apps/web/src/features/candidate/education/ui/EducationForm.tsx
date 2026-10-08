@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   Button,
+  FieldMessage,
   Input,
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import {
 
 import { toEducationFormValues, toEducationInput } from '../lib';
 import {
+  EDUCATION_FIELDS,
   EDUCATION_LEVEL_LABELS,
   type EducationFormValues,
   educationSchema,
@@ -35,27 +37,6 @@ interface EducationFormProps {
   onSave: (input: SaveCandidateEducationInput, id?: string) => Promise<boolean>;
   onClose: () => void;
 }
-
-const fields = [
-  {
-    key: 'institution',
-    label: 'Учебное заведение',
-    placeholder: 'Название школы, колледжа или университета',
-    type: 'text',
-  },
-  {
-    key: 'specialty',
-    label: 'Специальность (необязательно)',
-    placeholder: 'Например, прикладная информатика',
-    type: 'text',
-  },
-  {
-    key: 'graduationYear',
-    label: 'Год окончания',
-    placeholder: 'Например, 2024',
-    type: 'number',
-  },
-] as const;
 
 export const EducationForm = ({
   record,
@@ -78,7 +59,7 @@ export const EducationForm = ({
   return (
     <form
       noValidate
-      className="flex flex-col gap-5 rounded-lg border border-border p-4 sm:p-5"
+      className="flex w-full min-w-0 flex-col gap-5 overflow-hidden rounded-lg border border-border p-4 sm:p-5"
       onSubmit={form.handleSubmit(async (values) => {
         if (!disabled && (await onSave(toEducationInput(values), record?.id)))
           onClose();
@@ -124,16 +105,12 @@ export const EducationForm = ({
               </Select>
             )}
           />
-          {errors.level && (
-            <p
-              id={`${prefix}-level-error`}
-              className="text-sm text-destructive"
-            >
-              {errors.level.message}
-            </p>
-          )}
+          <FieldMessage
+            id={`${prefix}-level-error`}
+            message={errors.level?.message}
+          />
         </div>
-        {fields.map((field) => {
+        {EDUCATION_FIELDS.map((field) => {
           const id = `${prefix}-${field.key}`;
           const isYear = field.key === 'graduationYear';
           return (
@@ -173,11 +150,10 @@ export const EducationForm = ({
                   Если ещё учитесь, укажите планируемый год окончания.
                 </p>
               )}
-              {errors[field.key] && (
-                <p id={`${id}-error`} className="text-sm text-destructive">
-                  {errors[field.key]?.message}
-                </p>
-              )}
+              <FieldMessage
+                id={`${id}-error`}
+                message={errors[field.key]?.message}
+              />
             </div>
           );
         })}
@@ -187,7 +163,7 @@ export const EducationForm = ({
           {error}
         </p>
       )}
-      <div className="flex flex-wrap gap-3">
+      <div className="grid gap-3 sm:flex sm:flex-wrap">
         <Button type="submit" size="lg" disabled={disabled}>
           {busy ? 'Сохранение…' : 'Сохранить образование'}
         </Button>

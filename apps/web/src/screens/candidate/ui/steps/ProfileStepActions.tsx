@@ -56,7 +56,7 @@ export const ProfileStepActions = ({
             disabled={
               busy || (step === 'consents' && !processing && !profileExists)
             }
-            className="ml-auto w-full sm:w-auto"
+            className="ml-auto h-auto min-h-12 w-full min-w-0 py-3 whitespace-normal sm:w-auto"
             onClick={() => onStepChange(next.id)}
           >
             {label}
@@ -72,7 +72,7 @@ export const ProfileStepActions = ({
         </p>
       )}
       {isFormStep && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           «Продолжить без сохранения» оставит изменения в черновике этой
           страницы.
         </p>

@@ -19,7 +19,7 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
   const { syncError, retrySync } = useAssessmentResultSync(result);
   return (
     <section
-      className="flex flex-col gap-5"
+      className="flex min-w-0 flex-col gap-5 wrap-anywhere"
       aria-labelledby="assessment-result-title"
     >
       <Card>
@@ -65,7 +65,9 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
                   </p>
                 </div>
                 {skill.confirmed ? (
-                  <Badge>Подтверждённый уровень: {skill.level}/5</Badge>
+                  <Badge className="h-auto max-w-full whitespace-normal">
+                    Подтверждённый уровень: {skill.level}/5
+                  </Badge>
                 ) : (
                   <Badge variant="outline">Не подтверждён</Badge>
                 )}
@@ -83,11 +85,15 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
           </Button>
         </div>
       )}
-      <div className="flex flex-wrap gap-3">
-        <Button asChild>
+      <div className="grid gap-3 sm:flex sm:flex-wrap">
+        <Button className="h-auto min-h-11 whitespace-normal" asChild>
           <Link href="/candidate">Посмотреть профиль</Link>
         </Button>
-        <Button asChild variant="outline">
+        <Button
+          className="h-auto min-h-11 whitespace-normal"
+          asChild
+          variant="outline"
+        >
           <Link href="/candidate/assessments">К списку тестов</Link>
         </Button>
       </div>

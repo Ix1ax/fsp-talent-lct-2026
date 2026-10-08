@@ -17,10 +17,10 @@ export const CatalogCard = ({ title, items }: CatalogCardProps) => {
       <CardContent>
         <ul className="flex flex-wrap gap-2">
           {items.map((item) => (
-            <li key={item.id}>
+            <li key={item.id} className="min-w-0 max-w-full">
               <Badge
                 variant="outline"
-                className="h-auto min-h-8 max-w-full px-2 py-1 text-sm whitespace-normal"
+                className="h-auto min-h-8 max-w-full px-2 py-1 text-sm whitespace-normal wrap-anywhere"
               >
                 {item.name}
               </Badge>

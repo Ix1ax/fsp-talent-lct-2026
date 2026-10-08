@@ -1,5 +1,6 @@
 import type { Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { Input, Textarea } from '@/shared/ui';
 
 import type { ProfileFormValues } from '../model';
@@ -49,12 +50,13 @@ export const ProfileTextFields = ({
         {fields.map((field) => (
           <ProfileField
             key={field.key}
-            id={`profile-${field.key}`}
+            id={CANDIDATE_ELEMENT_IDS.profile[field.key].input}
+            errorId={CANDIDATE_ELEMENT_IDS.profile[field.key].error}
             label={field.label}
             error={errors[field.key]?.message}
           >
             <Input
-              id={`profile-${field.key}`}
+              id={CANDIDATE_ELEMENT_IDS.profile[field.key].input}
               {...register(field.key)}
               placeholder={field.placeholder}
               {...('maxLength' in field
@@ -67,7 +69,9 @@ export const ProfileTextFields = ({
                   })}
               aria-invalid={!!errors[field.key]}
               aria-describedby={
-                errors[field.key] ? `profile-${field.key}-error` : undefined
+                errors[field.key]
+                  ? CANDIDATE_ELEMENT_IDS.profile[field.key].error
+                  : undefined
               }
             />
           </ProfileField>
@@ -75,19 +79,22 @@ export const ProfileTextFields = ({
         <ProfileTimezoneField control={control} />
       </div>
       <ProfileField
-        id="profile-summary"
+        id={CANDIDATE_ELEMENT_IDS.profile.summary.input}
+        errorId={CANDIDATE_ELEMENT_IDS.profile.summary.error}
         label="О себе"
         error={errors.summary?.message}
       >
         <Textarea
-          id="profile-summary"
-          rows={6}
+          id={CANDIDATE_ELEMENT_IDS.profile.summary.input}
+          rows={8}
           placeholder="Какие задачи вы решали, с какими технологиями работали и чем хотите заниматься дальше"
           maxLength={10000}
           {...register('summary')}
           aria-invalid={!!errors.summary}
           aria-describedby={
-            errors.summary ? 'profile-summary-error' : undefined
+            errors.summary
+              ? CANDIDATE_ELEMENT_IDS.profile.summary.error
+              : undefined
           }
         />
       </ProfileField>

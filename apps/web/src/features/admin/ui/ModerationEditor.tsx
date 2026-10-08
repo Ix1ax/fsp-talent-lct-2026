@@ -94,10 +94,10 @@ export const ModerationEditor = ({
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+        className="max-h-[90dvh] overflow-y-auto wrap-anywhere [&_button]:min-h-11 [&_[data-slot=dialog-close]]:size-11 sm:max-w-lg"
         showCloseButton={!mutation.busy}
       >
-        <DialogTitle>
+        <DialogTitle className="pr-10">
           {titles[action]} «{item.name}»
         </DialogTitle>
         <DialogDescription>{descriptions[action]}</DialogDescription>

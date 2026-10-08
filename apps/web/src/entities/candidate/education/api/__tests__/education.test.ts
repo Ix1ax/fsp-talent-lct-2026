@@ -48,6 +48,26 @@ beforeEach(() => {
 });
 
 describe('candidate education API', () => {
+  it.each([
+    ['create', (signal: AbortSignal) => addCandidateEducation(input, signal)],
+    [
+      'update',
+      (signal: AbortSignal) => saveCandidateEducation('record', input, signal),
+    ],
+    [
+      'delete',
+      (signal: AbortSignal) => deleteCandidateEducation('record', signal),
+    ],
+  ])('does not send an already cancelled %s request', async (_, request) => {
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(request(controller.signal)).rejects.toMatchObject({
+      code: 'ERR_CANCELED',
+    });
+    expect(adapter).not.toHaveBeenCalled();
+  });
+
   it('reads an uncached list and preserves server order while normalizing fields', async () => {
     adapter.mockImplementationOnce(async (config) => ({
       data: {

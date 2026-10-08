@@ -19,6 +19,7 @@ export const useAssessments = () => {
   const [current, setCurrent] = useState<string>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState<'load' | 'start'>('load');
   const [selected, setSelected] = useState<AvailableAssessment>();
   const [busy, setBusy] = useState(false);
   const lock = useRef(false);
@@ -45,6 +46,7 @@ export const useAssessments = () => {
     void load()
       .catch((err: unknown) => {
         if (controller.signal.aborted) return;
+        setErrorType('load');
         setError(getAssessmentLoadError(err));
       })
       .finally(() => {
@@ -70,6 +72,7 @@ export const useAssessments = () => {
 
     try {
       const attempt = await startAssessment({
+        stackSkillId: selected.stackSkillId,
         specializationId: selected.specializationId,
         gradeId: selected.gradeId,
       });
@@ -80,8 +83,25 @@ export const useAssessments = () => {
         err instanceof ApiError &&
         err.code === 'attempt_active' &&
         err.attemptId
-      )
-        setCurrent(err.attemptId);
+      ) {
+        router.replace(`/candidate/assessments/${err.attemptId}`);
+        return;
+      }
+      if (
+        err instanceof ApiError &&
+        (err.code === 'network' || err.code === 'timeout' || err.status >= 500)
+      ) {
+        try {
+          const activeAttempt = await getCurrentAssessment();
+          if (activeAttempt.id) {
+            router.replace(`/candidate/assessments/${activeAttempt.id}`);
+            return;
+          }
+        } catch {
+          // Keep the start error when the recovery check also fails.
+        }
+      }
+      setErrorType('start');
       setError(getAssessmentStartError(err));
       setSelected(undefined);
     } finally {
@@ -111,6 +131,7 @@ export const useAssessments = () => {
     current,
     loading,
     error,
+    errorType,
     selected,
     busy,
     refresh,

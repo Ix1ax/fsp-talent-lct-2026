@@ -1,3 +1,4 @@
+import { Stagger, StaggerItem } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 
 import { CatalogCard } from './CatalogCard';
@@ -14,14 +15,26 @@ export const CatalogsSection = ({ catalogs }: CatalogsSectionProps) => {
       </h2>
 
       {catalogs ? (
-        <div className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <CatalogCard title="Специализации" items={catalogs.specializations} />
-          <CatalogCard
-            title="Грейды"
-            items={[...catalogs.grades].sort((a, b) => a.rank - b.rank)}
-          />
-          <CatalogCard title="Форматы работы" items={catalogs.workFormats} />
-        </div>
+        <Stagger
+          interval={0.04}
+          className="grid items-start gap-4 md:grid-cols-2 xl:grid-cols-3"
+        >
+          <StaggerItem className="min-w-0">
+            <CatalogCard
+              title="Специализации"
+              items={catalogs.specializations}
+            />
+          </StaggerItem>
+          <StaggerItem className="min-w-0">
+            <CatalogCard
+              title="Грейды"
+              items={[...catalogs.grades].sort((a, b) => a.rank - b.rank)}
+            />
+          </StaggerItem>
+          <StaggerItem className="min-w-0">
+            <CatalogCard title="Форматы работы" items={catalogs.workFormats} />
+          </StaggerItem>
+        </Stagger>
       ) : (
         <p
           role="alert"

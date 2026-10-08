@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  adminRequest,
-  adminSchemas,
   type AdminSession,
   type CatalogItem,
   type CatalogKind,
+  getAdminCatalogs,
 } from '@/entities/admin';
 
 import { useAdminSession } from './index';
@@ -27,11 +26,11 @@ export const useAdminOptions = () => {
     const load = async (kind: CatalogKind) => {
       const items: CatalogItem[] = [];
       for (let offset = 0; offset <= 10000; offset += 100) {
-        const page = await adminRequest(
+        const page = await getAdminCatalogs(
           session.access_token,
-          `/catalogs/${kind}?limit=100&offset=${offset}`,
-          adminSchemas.catalogs,
-          { signal: controller.signal },
+          kind,
+          { limit: 100, offset },
+          controller.signal,
         );
         items.push(...page.items);
         if (page.items.length < 100) break;
