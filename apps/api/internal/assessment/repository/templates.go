@@ -19,7 +19,8 @@ func scanTemplate(row pgx.Row) (entity.Template, error) {
 
 // availableExpr считает активные задания с опубликованной версией для пары (навык, сложность) строки состава b.
 const availableExpr = `(SELECT count(*) FROM assessment_questions q WHERE q.skill_id=b.skill_id AND q.difficulty=b.difficulty AND q.active
- AND EXISTS (SELECT 1 FROM assessment_question_versions v WHERE v.question_id=q.id AND v.status='published'))`
+ AND EXISTS (SELECT 1 FROM assessment_question_versions v WHERE v.question_id=q.id AND v.status='published')
+ AND EXISTS (SELECT 1 FROM skills s WHERE s.id=q.skill_id AND s.active AND s.moderation_status='approved'))`
 
 func getTemplate(ctx context.Context, q querier, id string) (entity.Template, error) {
 	t, err := scanTemplate(q.QueryRow(ctx, `SELECT `+templateColumns+` FROM assessment_templates WHERE id=$1`, id))

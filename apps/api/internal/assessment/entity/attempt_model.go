@@ -47,12 +47,13 @@ type CategoryRef struct {
 
 // AttemptResult — итог завершённой попытки. Правильные ответы не раскрываются.
 type AttemptResult struct {
-	Passed       bool          `json:"passed"`
-	ScorePercent float64       `json:"score_percent"`
-	PassScore    float64       `json:"pass_score"`
-	Skills       []SkillResult `json:"skills"`
-	Category     *CategoryRef  `json:"category"`
-	RetryAt      *time.Time    `json:"retry_at"`
+	NextGradeChangeAt *time.Time    `json:"next_grade_change_at"`
+	Passed            bool          `json:"passed"`
+	ScorePercent      float64       `json:"score_percent"`
+	PassScore         float64       `json:"pass_score"`
+	Skills            []SkillResult `json:"skills"`
+	Category          *CategoryRef  `json:"category"`
+	RetryAt           *time.Time    `json:"retry_at"`
 }
 
 // Attempt — попытка. Пока она активна, Questions заполнен, а Result равен nil; после завершения наоборот.
@@ -71,11 +72,13 @@ type Attempt struct {
 
 // Состояния доступности теста для кандидата.
 const (
-	ReasonOK        = "ok"
-	ReasonActive    = "attempt_active"
-	ReasonCooldown  = "retake_cooldown"
-	ReasonConfirmed = "already_confirmed"
-	ReasonConsent   = "consent_required"
+	ReasonOK          = "ok"
+	ReasonUnavailable = "assessment_unavailable"
+	ReasonActive      = "attempt_active"
+	ReasonGradeChange = "grade_change_cooldown"
+	ReasonCooldown    = "retake_cooldown"
+	ReasonConfirmed   = "already_confirmed"
+	ReasonConsent     = "consent_required"
 )
 
 // AvailableTemplate — опубликованный тест и его состояние для кандидата.

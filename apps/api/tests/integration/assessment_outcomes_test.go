@@ -415,7 +415,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Тот же грейд закрыт, более высокий доступен сразу.
+	// Тот же грейд закрыт, повышение ждёт отдельного интервала изменения категории.
 	if _, err = repo.StartAttempt(ctx, user, jspec, jgrade, retakeDays); !errors.Is(err, entity.ErrAlreadyConfirmed) {
 		t.Fatalf("повторный Junior: %v", err)
 	}
@@ -430,12 +430,19 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 				t.Fatalf("Junior: %+v", it)
 			}
 		case it.SpecializationID == mspec && it.GradeID == mgrade:
-			if !it.CanStart || it.Reason != "ok" {
+			if it.CanStart || it.Reason != "grade_change_cooldown" || it.RetryAt == nil {
 				t.Fatalf("Middle: %+v", it)
 			}
 		}
 	}
 
+	if _, err = repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays); !errors.Is(err, entity.ErrGradeChangeCooldown) {
+		t.Fatalf("Не ограничена смена грейда: %v", err)
+	}
+	// Только тестовый сдвиг времени: не ждём неделю в автотесте.
+	if _, err = db.Exec(ctx, `UPDATE grade_history SET achieved_at=clock_timestamp()-interval '8 days' WHERE candidate_id=(SELECT id FROM candidate_profiles WHERE user_id=$1)`, user); err != nil {
+		t.Fatal(err)
+	}
 	// Middle: Go подтверждён на 66.67% (уровень 3), прежний уровень 5 не понижается.
 	middle, err := repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays)
 	if err != nil {

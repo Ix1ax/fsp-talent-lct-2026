@@ -19,8 +19,8 @@ func finalizeLocked(ctx context.Context, tx pgx.Tx, profileID, attemptID string,
 	if err := tx.QueryRow(ctx, `SELECT specialization_id,grade_id,pass_score::float8 FROM assessment_attempts WHERE id=$1`, attemptID).Scan(&specID, &gradeID, &passScore); err != nil {
 		return err
 	}
-	rows, err := tx.Query(ctx, `SELECT q.id::text,q.skill_id::text,q.points::float8,q.grading_snapshot,a.answer
- FROM attempt_questions q LEFT JOIN attempt_answers a ON a.attempt_question_id=q.id WHERE q.attempt_id=$1 ORDER BY q.position`, attemptID)
+	rows, err := tx.Query(ctx, `SELECT q.id::text,coalesce(s.merged_into,s.id)::text,q.points::float8,q.grading_snapshot,a.answer
+ FROM attempt_questions q JOIN skills s ON s.id=q.skill_id LEFT JOIN attempt_answers a ON a.attempt_question_id=q.id WHERE q.attempt_id=$1 ORDER BY q.position`, attemptID)
 	if err != nil {
 		return err
 	}
