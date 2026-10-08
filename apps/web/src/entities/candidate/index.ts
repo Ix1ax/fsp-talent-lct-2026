@@ -59,6 +59,15 @@ export {
   uploadCandidateAvatar,
 } from './profile';
 export type {
+  ResumeDraft,
+  ResumeEducation,
+  ResumeExperience,
+  ResumeImportResult,
+  ResumeLanguage,
+  ResumeSkill,
+} from './resume';
+export { importCandidateResume } from './resume';
+export type {
   AddCandidateSkillInput,
   CandidateSkill,
   CandidateSkills,
