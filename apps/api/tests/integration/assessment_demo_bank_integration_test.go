@@ -38,7 +38,7 @@ func TestAssessmentDemoBank(t *testing.T) {
 		if err := db.QueryRow(ctx, `SELECT count(*) FROM assessment_templates t WHERE t.status='published' AND t.specialization_id=(SELECT id FROM specializations WHERE code=$1) AND t.grade_id=(SELECT id FROM grades WHERE code='junior')`, c.spec).Scan(&published); err != nil || published != 1 {
 			t.Fatalf("%s: опубликованных шаблонов %d (%v)", c.spec, published, err)
 		}
-		if err := db.QueryRow(ctx, `SELECT id::text FROM assessment_templates WHERE status='published' AND specialization_id=(SELECT id FROM specializations WHERE code=$1)`, c.spec).Scan(&id); err != nil {
+		if err := db.QueryRow(ctx, `SELECT id::text FROM assessment_templates WHERE status='published' AND grade_id=(SELECT id FROM grades WHERE code='junior') AND specialization_id=(SELECT id FROM specializations WHERE code=$1)`, c.spec).Scan(&id); err != nil {
 			t.Fatal(err)
 		}
 		tpl, err := repo.GetTemplate(ctx, id)
@@ -98,7 +98,7 @@ func TestAssessmentDemoBank(t *testing.T) {
 	if err = rows.Err(); err != nil {
 		t.Fatal(err)
 	}
-	if total != 32 {
+	if total != 44 {
 		t.Fatalf("демо-заданий %d, ожидали 32", total)
 	}
 }

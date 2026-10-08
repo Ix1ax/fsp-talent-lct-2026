@@ -254,7 +254,7 @@ func TestAvailableStates(t *testing.T) {
 	}
 
 	items, err := repo.Available(ctx, user, retakeDays)
-	if err != nil || len(items) != 2 {
+	if err != nil || len(items) != 4 {
 		t.Fatalf("список: %+v (%v)", items, err)
 	}
 	if b := find(items, spec, grade); !b.CanStart || b.Reason != "ok" || b.QuestionCount != demoTemplateSize(t, db, spec, grade) || b.PassScore != 60 || b.TimeLimitSec != 1800 {
