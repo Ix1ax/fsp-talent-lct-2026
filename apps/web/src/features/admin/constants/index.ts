@@ -224,3 +224,11 @@ export const questionContent = (v: QuestionFormValues) => {
     },
   };
 };
+
+export const previewTextAnswerSchema = z.object({
+  text: z
+    .string()
+    .refine((value) => !!value.trim(), 'Введите ответ')
+    .refine((value) => Array.from(value).length <= 500, 'Максимум 500 символов')
+    .refine((value) => !value.includes('\0'), 'Недопустимый символ'),
+});

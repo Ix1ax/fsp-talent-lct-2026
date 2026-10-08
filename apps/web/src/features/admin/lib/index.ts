@@ -1,2 +1,3 @@
 export * from './adminPassword';
-export * from './previewResult';
+export * from './previewAnswer';
+export * from './previewRecovery';

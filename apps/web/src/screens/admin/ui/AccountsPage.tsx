@@ -7,6 +7,7 @@ import { Button, Card } from '@/shared/ui';
 import { adminSchemas } from '@/entities/admin';
 import {
   AccountEditor,
+  AccountStatusAction,
   AdminListLoading,
   ErrorNotice,
   Pagination,
@@ -70,7 +71,10 @@ export const AccountsPage = () => {
                   · {new Date(account.created_at).toLocaleDateString('ru-RU')}
                 </p>
               </div>
-              <Status value={account.status} />
+              <div className="flex flex-wrap items-center gap-3">
+                <Status value={account.status} />
+                <AccountStatusAction account={account} onSaved={list.reload} />
+              </div>
             </div>
           ))}
         </div>

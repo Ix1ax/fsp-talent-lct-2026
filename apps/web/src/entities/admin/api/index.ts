@@ -30,7 +30,8 @@ const errorSchema = z.object({
   shortages: z.array(shortageSchema).optional(),
 });
 export type AdminRequestOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  headers?: Record<string, string>;
   body?: unknown;
   signal?: AbortSignal;
 };
@@ -40,7 +41,10 @@ export const adminRequest = async <T>(
   schema: z.ZodType<T>,
   options: AdminRequestOptions = {},
 ): Promise<T> => {
-  const headers = new Headers({ Accept: 'application/json' });
+  const headers = new Headers({
+    Accept: 'application/json',
+    ...options.headers,
+  });
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (options.body !== undefined)
     headers.set('Content-Type', 'application/json');

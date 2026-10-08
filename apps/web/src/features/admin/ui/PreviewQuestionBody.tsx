@@ -1,7 +1,7 @@
-import { Checkbox, Textarea } from '@/shared/ui';
-import type { PreviewQuestion } from '@/entities/admin';
+import { Checkbox } from '@/shared/ui';
+import type { PreviewAnswer, PreviewQuestion } from '@/entities/admin';
 
-import type { PreviewAnswer } from '../lib';
+import { PreviewTextAnswer } from './PreviewTextAnswer';
 
 interface PreviewQuestionBodyProps {
   question: PreviewQuestion;
@@ -15,14 +15,14 @@ export const PreviewQuestionBody = ({
   finished,
   onChange,
 }: PreviewQuestionBodyProps) => {
-  const { prompt, grading_spec: grading } = question.version;
+  const { prompt, answer_form: grading } = question;
   return (
     <section className="grid min-w-0 min-h-64 content-start gap-4 border p-4">
       <p className="text-xs text-caption">
-        {question.skillName} · Сложность {question.difficulty} · Версия{' '}
-        {question.version.version}
+        {question.skill_name} · Сложность {question.difficulty} · Версия{' '}
+        {question.version}
       </p>
-      <h3 className="whitespace-pre-wrap text-base font-medium">
+      <h3 className="max-w-prose whitespace-pre-wrap text-base font-medium wrap-anywhere">
         {prompt.text}
       </h3>
       {prompt.code && (
@@ -46,16 +46,16 @@ export const PreviewQuestionBody = ({
             >
               <Checkbox
                 aria-label={option.text}
-                checked={answer.selected.includes(option.id)}
+                checked={(answer.selected ?? []).includes(option.id)}
                 onCheckedChange={(checked) => {
                   const selected = grading.multiple
-                    ? answer.selected
+                    ? (answer.selected ?? [])
                         .filter((id) => id !== option.id)
                         .concat(checked === true ? [option.id] : [])
                     : checked === true
                       ? [option.id]
                       : [];
-                  onChange({ selected, text: '' });
+                  onChange({ selected });
                 }}
               />
               <span className="min-w-0 whitespace-pre-wrap wrap-anywhere">
@@ -64,13 +64,10 @@ export const PreviewQuestionBody = ({
             </label>
           ))
         ) : (
-          <Textarea
-            aria-label="Ответ на вопрос"
-            value={answer.text}
-            maxLength={500}
-            onChange={(event) =>
-              onChange({ selected: [], text: event.target.value })
-            }
+          <PreviewTextAnswer
+            key={question.id}
+            value={answer.text ?? ''}
+            onChange={(text) => onChange({ text })}
           />
         )}
       </fieldset>

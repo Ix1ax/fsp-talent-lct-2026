@@ -4,6 +4,7 @@ export * from './model/useAdminMutation';
 export * from './model/useAdminOptions';
 export * from './model/useAdminQuery';
 export * from './ui/AccountEditor';
+export * from './ui/AccountStatusAction';
 export * from './ui/AdminLoginForm';
 export * from './ui/CatalogEditor';
 export * from './ui/Common';
