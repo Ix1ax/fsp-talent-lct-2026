@@ -144,7 +144,7 @@ export const EmployerHomePage = ({
           </Button>
         </main>
       ) : (
-        <div className="grid min-h-[calc(100vh-56px)] grid-cols-1 md:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[440px_minmax(0,1fr)]">
+        <div className="mx-auto grid min-h-[calc(100dvh-56px)] max-w-[1600px] grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
           <NeedList
             list={board}
             catalogs={resources.catalogs}

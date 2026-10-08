@@ -16,6 +16,7 @@ interface ProfileReadinessCardProps {
   onRefresh: () => void;
   onGoToProfile: () => void;
   onGoToConsents: () => void;
+  onSelectItem: (code: string) => void;
 }
 export const ProfileReadinessCard = ({
   readiness,
@@ -25,6 +26,7 @@ export const ProfileReadinessCard = ({
   onRefresh,
   onGoToProfile,
   onGoToConsents,
+  onSelectItem,
 }: ProfileReadinessCardProps) => (
   <Card>
     <CardHeader>
@@ -38,29 +40,45 @@ export const ProfileReadinessCard = ({
         max={100}
         value={readiness.percent}
       />
-      <p className="text-sm text-muted-foreground">
-        {readiness.readyToPublish
-          ? 'Условия публикации выполнены. Выберите статус поиска на шаге «Профиль».'
-          : 'Проверьте обязательные пункты перед публикацией профиля.'}
-      </p>
+      {readiness.readyToPublish ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-auto min-h-11 justify-start whitespace-normal text-left"
+          disabled={busy || refreshing}
+          onClick={() => onSelectItem('search_status')}
+        >
+          Условия публикации выполнены. Выберите статус поиска на шаге
+          «Профиль».
+        </Button>
+      ) : (
+        <p className="text-sm text-muted-foreground">
+          Проверьте обязательные пункты перед публикацией профиля.
+        </p>
+      )}
       <ul className="flex flex-col gap-3">
         {readiness.items.map((item) => (
-          <li
-            key={item.code}
-            className="flex flex-wrap items-center justify-between gap-2"
-          >
-            <span className="min-w-0 wrap-anywhere">
-              {item.title}
-              {item.required && (
-                <span className="text-xs text-muted-foreground">
-                  {' '}
-                  · обязательный
-                </span>
-              )}
-            </span>
-            <Badge variant={item.done ? 'secondary' : 'outline'}>
-              {item.done ? 'Выполнено' : 'Не выполнено'}
-            </Badge>
+          <li key={item.code}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={busy || refreshing}
+              onClick={() => onSelectItem(item.code)}
+              className="h-auto min-h-11 w-full flex-wrap justify-between rounded-md px-2 py-2 text-left font-normal whitespace-normal"
+            >
+              <span className="min-w-0 wrap-anywhere">
+                {item.title}
+                {item.required && (
+                  <span className="text-xs text-muted-foreground">
+                    {' '}
+                    · обязательный
+                  </span>
+                )}
+              </span>
+              <Badge variant={item.done ? 'secondary' : 'outline'}>
+                {item.done ? 'Выполнено' : 'Не выполнено'}
+              </Badge>
+            </Button>
           </li>
         ))}
       </ul>

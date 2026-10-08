@@ -72,7 +72,7 @@ export const ProfileStepActions = ({
         </p>
       )}
       {isFormStep && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground">
           «Продолжить без сохранения» оставит изменения в черновике этой
           страницы.
         </p>

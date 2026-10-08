@@ -69,7 +69,7 @@
 /* UI Kit v2 — цвета объявляются только здесь. */
 :root {
   color-scheme: light;
-  --background: #ededed;
+  --background: #f5f5f7;
   --foreground: #1b1c21;
   --card: #ffffff;
   --card-foreground: var(--foreground);
@@ -102,7 +102,7 @@
   --warning-soft: rgba(138, 93, 0, 0.08);
   --overlay: rgba(27, 28, 33, 0.35);
   --shadow-popover: 0 16px 48px rgba(27, 28, 33, 0.16);
-  --radius: 0;
+  --radius: 0.625rem;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);
@@ -145,11 +145,15 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
   }
 
   html {
     @apply font-sans antialiased;
-    scrollbar-gutter: stable;
   }
 
   body {
@@ -164,6 +168,11 @@
 
   a {
     @apply text-inherit no-underline;
+  }
+
+  :where(a, button, summary):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
   }
 
   code {

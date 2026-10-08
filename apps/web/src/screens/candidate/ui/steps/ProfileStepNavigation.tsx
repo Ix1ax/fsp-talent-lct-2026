@@ -1,5 +1,7 @@
-import { CheckIcon, LoaderCircleIcon } from 'lucide-react';
+import Link from 'next/link';
+import { CheckIcon } from 'lucide-react';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import { cn } from '@/shared/lib/utils';
 import {
   Select,
@@ -7,8 +9,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  TabsList,
-  TabsTrigger,
 } from '@/shared/ui';
 
 import { PROFILE_STEPS, type ProfileStep } from '../../constants';
@@ -28,16 +28,16 @@ export const ProfileStepNavigation = ({
 }: ProfileStepNavigationProps) => {
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   return (
-    <div className="relative flex min-w-0 flex-col gap-3 rounded-lg border border-border bg-card p-4">
+    <div className="flex min-w-0 flex-col gap-3">
+      <Link
+        href={STATIC_ROUTES.CANDIDATE}
+        className="text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        Обзор кабинета
+      </Link>
       <p className="pr-7 text-sm font-medium" aria-live="polite">
         Шаг {index + 1} из {PROFILE_STEPS.length} · {PROFILE_STEPS[index].title}
       </p>
-      {busy && (
-        <LoaderCircleIcon
-          className="absolute top-4 right-4 size-5 animate-spin text-muted-foreground motion-reduce:animate-none"
-          aria-hidden="true"
-        />
-      )}
       <Select
         value={step}
         disabled={busy}
@@ -60,20 +60,24 @@ export const ProfileStepNavigation = ({
           ))}
         </SelectContent>
       </Select>
-      <TabsList
-        aria-label="Шаги настройки профиля"
-        variant="line"
-        className="hidden h-auto! w-full grid-cols-3 gap-2 p-0 sm:grid lg:grid-cols-4"
+      <nav
+        aria-label="Разделы профиля"
+        className="hidden w-full flex-col gap-1 sm:flex"
       >
         {PROFILE_STEPS.map((item, position) => (
-          <TabsTrigger
+          <Link
             key={item.id}
-            value={item.id}
-            disabled={busy}
-            aria-current={item.id === step ? 'step' : undefined}
+            href={DYNAMIC_ROUTES.CANDIDATE(item.id)}
+            aria-current={item.id === step ? 'page' : undefined}
+            aria-disabled={busy || undefined}
+            tabIndex={busy ? -1 : undefined}
+            onClick={(event) => {
+              if (busy) event.preventDefault();
+            }}
             className={cn(
-              'min-h-11 min-w-0 gap-1 rounded-md px-2 py-3 text-sm whitespace-normal after:hidden',
-              item.id === step && 'bg-accent text-accent-foreground',
+              'flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md px-3 py-3 text-sm whitespace-normal transition-colors hover:bg-accent/70 focus-visible:outline-2 focus-visible:outline-ring',
+              item.id === step && 'bg-accent text-brand-text',
+              busy && 'cursor-not-allowed opacity-60',
             )}
           >
             <span>
@@ -85,12 +89,11 @@ export const ProfileStepNavigation = ({
                 aria-label="Данные сохранены"
               />
             )}
-          </TabsTrigger>
+          </Link>
         ))}
-      </TabsList>
+      </nav>
       <p className="text-sm text-muted-foreground">
-        Черновик сохраняется при переключении шагов. Чтобы записать данные,
-        нажмите «Сохранить».
+        Изменения отправляются после нажатия «Сохранить».
       </p>
     </div>
   );

@@ -43,27 +43,27 @@ export const NeedListItem = ({
         selected && 'bg-muted shadow-[inset_3px_0_0_var(--primary)]',
       )}
     >
-      <span className="flex w-full flex-wrap items-center gap-y-2">
+      <span className="text-base font-semibold leading-snug">{need.title}</span>
+      <span className="flex w-full flex-wrap items-center gap-2">
         <SpecializationBadge
           specialization={spec}
           grade={grade}
           active={need.status === 'active'}
         />
-        <span className="min-w-0 flex-1 truncate pl-2 text-sm text-muted-foreground">
+        <span className="w-full text-sm font-normal text-muted-foreground">
           {[formats, need.city].filter(Boolean).join(' · ')}
         </span>
         <span
           className={cn(
-            'ml-auto shrink-0 pl-2',
+            'shrink-0',
             need.salaryFromRub === null && need.salaryToRub === null
               ? 'text-xs text-caption'
-              : 'font-mono text-[17px] font-medium tracking-tight',
+              : 'text-sm font-medium tabular-nums',
           )}
         >
           {formatSalaryRange(need.salaryFromRub, need.salaryToRub, true)}
         </span>
       </span>
-      <span className="text-base font-semibold leading-snug">{need.title}</span>
       {need.status === 'draft' && (
         <span className="text-xs text-warning">
           {getMissingNeedFields(need).length

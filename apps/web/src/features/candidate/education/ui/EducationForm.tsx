@@ -78,7 +78,7 @@ export const EducationForm = ({
   return (
     <form
       noValidate
-      className="flex flex-col gap-5 rounded-lg border border-border p-4 sm:p-5"
+      className="flex w-full min-w-0 flex-col gap-5 overflow-hidden rounded-lg border border-border p-4 sm:p-5"
       onSubmit={form.handleSubmit(async (values) => {
         if (!disabled && (await onSave(toEducationInput(values), record?.id)))
           onClose();

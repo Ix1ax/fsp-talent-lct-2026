@@ -1,21 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
-import { z } from 'zod';
 
 import { useDebounce } from '@/shared/hooks';
 import { Button, Card, ConfirmDeleteDialog, Input } from '@/shared/ui';
 import {
   AdminApiError,
-  adminRequest,
-  adminSchemas,
   type CatalogItem,
   type CatalogKind,
   catalogKinds,
   catalogLabels,
+  deleteAdminCatalogItem,
+  getAdminCatalogs,
   queryString,
+  updateAdminCatalogItem,
 } from '@/entities/admin';
 import {
   AdminListLoading,
@@ -24,7 +24,6 @@ import {
   Pagination,
   Status,
   useAdminMutation,
-  useAdminQuery,
   useAdminSession,
 } from '@/features/admin';
 
@@ -42,21 +41,48 @@ export const CatalogsPage = () => {
     setQ(value.trim());
     setOffset(0);
   }, 350);
-  const list = useAdminQuery(
-    `/catalogs/${kind}?${queryString({ q, offset, limit: 20 })}`,
-    adminSchemas.catalogs,
-  );
-  const mutation = useAdminMutation(list.reload);
+  const [catalogs, setCatalogs] = useState<Awaited<
+    ReturnType<typeof getAdminCatalogs>
+  > | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<unknown>(null);
+  const [revision, setRevision] = useState(0);
+  const reload = useCallback(() => setRevision((value) => value + 1), []);
+  const mutation = useAdminMutation(reload);
+
+  useEffect(() => {
+    if (!session) return;
+    const controller = new AbortController();
+    const load = async () => {
+      setLoading(true);
+      setLoadError(null);
+      setCatalogs(null);
+      try {
+        const data = await getAdminCatalogs(
+          session.access_token,
+          kind,
+          { q, offset, limit: 20 },
+          controller.signal,
+        );
+        if (!controller.signal.aborted) setCatalogs(data);
+      } catch (error) {
+        if (!controller.signal.aborted) setLoadError(error);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    };
+    void load();
+    return () => controller.abort();
+  }, [session, kind, q, offset, revision]);
+
   const toggle = (item: CatalogItem) =>
     void mutation.run(async () => {
-      await adminRequest(
-        session!.access_token,
-        `/catalogs/${kind}/${item.id}`,
-        adminSchemas.catalog,
-        { method: 'PATCH', body: { active: item.active === false } },
-      );
-      list.reload();
+      await updateAdminCatalogItem(session!.access_token, kind, item.id, {
+        active: item.active === false,
+      });
+      reload();
     });
+
   return (
     <div className="grid content-start gap-6">
       <AdminPageHeader
@@ -69,11 +95,15 @@ export const CatalogsPage = () => {
           </Button>
         }
       />
-      <div className="flex flex-wrap gap-2">
+      <div
+        aria-label="Вид справочника"
+        className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
+      >
         {catalogKinds.map((value) => (
           <Button
             key={value}
-            variant={kind === value ? 'default' : 'outline'}
+            variant={kind === value ? 'secondary' : 'ghost'}
+            aria-pressed={kind === value}
             onClick={() => {
               cancel();
               setKind(value);
@@ -98,19 +128,19 @@ export const CatalogsPage = () => {
             debounce(e.target.value);
           }}
         />
-        <ErrorNotice error={list.error} />
+        <ErrorNotice error={loadError} />
         <ErrorNotice error={mutation.error} />
         <p role="status" aria-live="polite" className="sr-only">
-          {list.loading ? 'Загружаем справочник…' : ''}
+          {loading ? 'Загружаем справочник…' : ''}
         </p>
         <div className="divide-y border-t">
-          <AdminListLoading loading={list.loading} hasData={!!list.data} />
-          {!list.loading && !list.error && !list.data?.items.length && (
+          <AdminListLoading loading={loading} hasData={!!catalogs} />
+          {!loading && !loadError && !catalogs?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
               Записей не найдено
             </p>
           )}
-          {list.data?.items.map((item) => {
+          {catalogs?.items.map((item) => {
             const editable =
               kind !== 'skills' || item.moderation_status === 'approved';
             return (
@@ -164,7 +194,8 @@ export const CatalogsPage = () => {
                     </Button>
                     <Button
                       size="sm"
-                      variant="destructive"
+                      variant="ghost"
+                      className="text-destructive hover:text-destructive"
                       disabled={mutation.busy}
                       onClick={() => setDeleting(item)}
                     >
@@ -185,8 +216,8 @@ export const CatalogsPage = () => {
         </div>
         <Pagination
           offset={offset}
-          count={list.data?.items.length ?? 0}
-          loading={list.loading}
+          count={catalogs?.items.length ?? 0}
+          loading={loading}
           onChange={setOffset}
         />
       </Card>
@@ -195,7 +226,7 @@ export const CatalogsPage = () => {
           kind={kind}
           item={editor === 'new' ? undefined : editor}
           onClose={() => setEditor(null)}
-          onSaved={list.reload}
+          onSaved={reload}
         />
       )}
       {deleting && (
@@ -206,13 +237,12 @@ export const CatalogsPage = () => {
           onClose={() => setDeleting(null)}
           onConfirm={() =>
             mutation.run(async () => {
-              await adminRequest(
+              await deleteAdminCatalogItem(
                 session!.access_token,
-                `/catalogs/${kind}/${deleting.id}`,
-                z.undefined(),
-                { method: 'DELETE' },
+                kind,
+                deleting.id,
               );
-              list.reload();
+              reload();
             })
           }
         >
@@ -224,13 +254,13 @@ export const CatalogsPage = () => {
                 disabled={mutation.busy}
                 onClick={() =>
                   void mutation.run(async () => {
-                    await adminRequest(
+                    await updateAdminCatalogItem(
                       session!.access_token,
-                      `/catalogs/${kind}/${deleting.id}`,
-                      adminSchemas.catalog,
-                      { method: 'PATCH', body: { active: false } },
+                      kind,
+                      deleting.id,
+                      { active: false },
                     );
-                    list.reload();
+                    reload();
                     setDeleting(null);
                   })
                 }

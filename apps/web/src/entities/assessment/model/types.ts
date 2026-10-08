@@ -8,6 +8,7 @@ export type AssessmentReason =
   | 'consent_required';
 
 export type AvailableAssessment = {
+  stackSkillId: string;
   specializationId: number;
   gradeId: number;
   timeLimitSec: number;

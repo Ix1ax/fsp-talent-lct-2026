@@ -53,67 +53,83 @@ export const TemplatesPage = () => {
         }
       />
       <Card className="relative gap-4 p-4 sm:p-6">
-        <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <SkillPicker
-            label="Основной навык"
-            value={filters.stack_skill_id}
-            onChange={(v) => filter('stack_skill_id', v)}
-            items={options.data.skills ?? []}
-          />
-          {(['specializations', 'grades'] as const).map((kind) => (
-            <AdminSelect
-              showLabel
-              key={kind}
-              label={kind === 'grades' ? 'Грейд' : 'Специализация'}
-              value={
-                filters[kind === 'grades' ? 'grade_id' : 'specialization_id']
-              }
-              onChange={(v) =>
-                filter(kind === 'grades' ? 'grade_id' : 'specialization_id', v)
-              }
-              options={[
-                {
-                  value: '',
-                  label: kind === 'grades' ? 'Все грейды' : 'Все специализации',
-                },
-                ...(options.data[kind] ?? []).map((s) => ({
-                  value: s.id,
-                  label: s.name,
-                })),
-              ]}
-            />
-          ))}
-          <AdminSelect
-            showLabel
-            label="Статус"
-            value={filters.status}
-            onChange={(v) => filter('status', v)}
-            options={[
-              { value: '', label: 'Все статусы' },
-              { value: 'draft', label: 'Черновики' },
-              { value: 'published', label: 'Опубликованные' },
-              { value: 'archived', label: 'Архивные' },
-            ]}
-          />
-        </div>
-        <div className="flex h-9 justify-end">
-          <Button
-            disabled={!Object.values(filters).some(Boolean)}
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              setFilters({
-                stack_skill_id: '',
-                specialization_id: '',
-                grade_id: '',
-                status: '',
-              });
-              setOffset(0);
-            }}
-          >
-            Сбросить фильтры
-          </Button>
-        </div>
+        <details className="rounded-md border border-border p-4">
+          <summary className="cursor-pointer text-sm font-medium">
+            Фильтры
+            {Object.values(filters).some(Boolean)
+              ? ` · выбрано ${Object.values(filters).filter(Boolean).length}`
+              : ' · все записи'}
+          </summary>
+          <div className="mt-4 grid gap-3">
+            <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <SkillPicker
+                label="Основной навык"
+                value={filters.stack_skill_id}
+                onChange={(v) => filter('stack_skill_id', v)}
+                items={options.data.skills ?? []}
+              />
+              {(['specializations', 'grades'] as const).map((kind) => (
+                <AdminSelect
+                  showLabel
+                  key={kind}
+                  label={kind === 'grades' ? 'Грейд' : 'Специализация'}
+                  value={
+                    filters[
+                      kind === 'grades' ? 'grade_id' : 'specialization_id'
+                    ]
+                  }
+                  onChange={(v) =>
+                    filter(
+                      kind === 'grades' ? 'grade_id' : 'specialization_id',
+                      v,
+                    )
+                  }
+                  options={[
+                    {
+                      value: '',
+                      label:
+                        kind === 'grades' ? 'Все грейды' : 'Все специализации',
+                    },
+                    ...(options.data[kind] ?? []).map((s) => ({
+                      value: s.id,
+                      label: s.name,
+                    })),
+                  ]}
+                />
+              ))}
+              <AdminSelect
+                showLabel
+                label="Статус"
+                value={filters.status}
+                onChange={(v) => filter('status', v)}
+                options={[
+                  { value: '', label: 'Все статусы' },
+                  { value: 'draft', label: 'Черновики' },
+                  { value: 'published', label: 'Опубликованные' },
+                  { value: 'archived', label: 'Архивные' },
+                ]}
+              />
+            </div>
+            <div className="flex h-9 justify-end">
+              <Button
+                disabled={!Object.values(filters).some(Boolean)}
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setFilters({
+                    stack_skill_id: '',
+                    specialization_id: '',
+                    grade_id: '',
+                    status: '',
+                  });
+                  setOffset(0);
+                }}
+              >
+                Сбросить фильтры
+              </Button>
+            </div>
+          </div>
+        </details>
         <ErrorNotice error={options.error} />
         <ErrorNotice error={list.error} />
         <p role="status" aria-live="polite" className="sr-only">

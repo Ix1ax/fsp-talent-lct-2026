@@ -81,7 +81,7 @@ export const ProfileTextFields = ({
       >
         <Textarea
           id="profile-summary"
-          rows={6}
+          rows={8}
           placeholder="Какие задачи вы решали, с какими технологиями работали и чем хотите заниматься дальше"
           maxLength={10000}
           {...register('summary')}

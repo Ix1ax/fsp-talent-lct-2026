@@ -92,7 +92,7 @@ export const useCandidateExperience = ({
   }, [profileId, onCountChange]);
 
   useEffect(() => {
-    if (!active || !profileId) return;
+    if (!profileId) return;
     let disposed = false;
     // Сначала восстанавливаем сессию, затем загружаем приватные данные.
     void ensureClientAccessToken()
@@ -106,7 +106,7 @@ export const useCandidateExperience = ({
       disposed = true;
       request.current?.abort();
     };
-  }, [active, profileId, refresh, revision]);
+  }, [profileId, refresh, revision]);
 
   const mutate = async (action: () => Promise<unknown>, success: string) => {
     if (

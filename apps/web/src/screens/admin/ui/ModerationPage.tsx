@@ -16,6 +16,8 @@ import {
   useAdminQuery,
 } from '@/features/admin';
 
+import { AdminPageHeader } from './AdminPageHeader';
+
 export const ModerationPage = () => {
   const params = useSearchParams();
   const options = useAdminOptions();
@@ -80,7 +82,8 @@ export const ModerationPage = () => {
             </Button>
             <Button
               size="sm"
-              variant="destructive"
+              variant="ghost"
+              className="text-destructive hover:text-destructive"
               onClick={() => setSelection({ item, action: 'reject' })}
             >
               Отклонить
@@ -97,12 +100,10 @@ export const ModerationPage = () => {
   };
   return (
     <div className="grid gap-6">
-      <div>
-        <h1 className="text-3xl font-semibold">Модерация навыков</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Проверьте названия, одобрите новые навыки или объедините дубли.
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Модерация навыков"
+        description="Проверьте названия, одобрите новые навыки или объедините дубли."
+      />
       <Card className="relative gap-4 p-4 sm:p-6">
         <h2 className="font-medium">Ожидают решения</h2>
         <ErrorNotice error={list.error} />

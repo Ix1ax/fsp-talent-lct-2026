@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { isCancel } from 'axios';
-import { LoaderCircleIcon } from 'lucide-react';
+import { LoaderCircleIcon, UserRoundIcon } from 'lucide-react';
 
 import { Avatar, AvatarFallback, AvatarImage, Button } from '@/shared/ui';
 import { getCandidateAvatar } from '@/entities/candidate';
@@ -13,12 +13,16 @@ interface CandidateAvatarPreviewProps {
   busy: boolean;
   onRetry: () => void;
   onAction: () => void;
+  onReplace: () => void;
+  onRemove?: () => void;
 }
 export const CandidateAvatarPreview = ({
   hasAvatar,
   busy,
   onRetry,
   onAction,
+  onReplace,
+  onRemove,
 }: CandidateAvatarPreviewProps) => {
   const [url, setUrl] = useState<string>();
   const [error, setError] = useState('');
@@ -28,6 +32,7 @@ export const CandidateAvatarPreview = ({
     if (!hasAvatar) return;
     const controller = new AbortController();
     let objectUrl: string | undefined;
+
     void getCandidateAvatar(controller.signal)
       .then((blob) => {
         if (controller.signal.aborted) return;
@@ -41,6 +46,7 @@ export const CandidateAvatarPreview = ({
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
       });
+
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
@@ -55,8 +61,10 @@ export const CandidateAvatarPreview = ({
         }
         disabled={busy || loading}
         onClick={onAction}
+        onReplace={hasAvatar ? onReplace : undefined}
+        onRemove={hasAvatar ? onRemove : undefined}
       >
-        <Avatar className="size-24">
+        <Avatar className="size-36">
           <AvatarImage src={url} alt="Ваш аватар" />
           <AvatarFallback>
             {loading ? (
@@ -65,9 +73,10 @@ export const CandidateAvatarPreview = ({
                 aria-hidden="true"
               />
             ) : (
-              <span className="text-xs">
-                {hasAvatar ? 'Фото' : 'Добавить фото'}
-              </span>
+              <UserRoundIcon
+                className="size-12 text-muted-foreground"
+                aria-hidden="true"
+              />
             )}
           </AvatarFallback>
         </Avatar>

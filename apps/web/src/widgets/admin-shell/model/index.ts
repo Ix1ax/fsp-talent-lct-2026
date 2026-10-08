@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+export { ADMIN_LINKS } from './adminLinks';
+
 const key = 'fsp.admin.sidebar';
 const changed = 'fsp:admin-sidebar';
 const subscribe = (notify: () => void) => {

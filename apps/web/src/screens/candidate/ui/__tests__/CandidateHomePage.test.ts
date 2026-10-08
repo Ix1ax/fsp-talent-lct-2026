@@ -10,7 +10,10 @@ import type { SessionUser } from '@/entities/session';
 
 import { CandidateHomePage } from '../CandidateHomePage';
 
-vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }),
+  usePathname: () => '/candidate/consents',
+}));
 vi.mock('next/dynamic', () => ({ default: () => () => null }));
 
 const user: SessionUser = {
@@ -75,7 +78,7 @@ const existingProfile: CandidateProfile = {
 describe('candidate profile steps', () => {
   it('places navigation before the form and offers continuation after processing consent', () => {
     const html = render();
-    expect(html.indexOf('aria-label="Шаги настройки профиля"')).toBeLessThan(
+    expect(html.indexOf('aria-label="Разделы профиля"')).toBeLessThan(
       html.indexOf('name="headline"'),
     );
     expect(html).toContain('Перейти к профилю');
@@ -84,16 +87,10 @@ describe('candidate profile steps', () => {
   });
   it('keeps inactive forms mounted so switching steps can preserve drafts', () => {
     const html = render();
-    expect(html.match(/role="tabpanel"/g)).toHaveLength(7);
-    expect(
-      html.match(
-        /data-state="inactive" data-orientation="horizontal" role="tabpanel"/g,
-      ),
-    ).toHaveLength(6);
+    expect(html.match(/<section hidden=""/g)).toHaveLength(6);
     expect(html).toContain('name="headline"');
     expect(html).toContain('name="fullName"');
     expect(html).toContain('id="candidate-skill-name"');
-    expect(html).toContain('data-[state=inactive]:hidden');
     expect(html).toContain('Опыт работы');
     expect(html).toContain('Образование');
     expect(html).toContain(
@@ -106,7 +103,7 @@ describe('candidate profile steps', () => {
     expect(html.replace(/<!--.*?-->/g, '')).toContain('25%');
     expect(html).toContain('Согласие на публикацию');
     expect(html).toContain('Не выполнено');
-    expect(html).toContain('aria-label="Шаги настройки профиля"');
+    expect(html).toContain('aria-label="Разделы профиля"');
     expect(html).toContain('aria-label="Готовность профиля по данным сервера"');
   });
   it('shows profile creation links for both career sections before a profile exists', () => {

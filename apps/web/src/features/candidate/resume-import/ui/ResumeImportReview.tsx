@@ -1,3 +1,5 @@
+import { AlertCircleIcon, TriangleAlertIcon } from 'lucide-react';
+
 import {
   Button,
   Dialog,
@@ -73,15 +75,33 @@ export const ResumeImportReview = (props: ResumeImportReviewProps) => {
           </DialogDescription>
         </DialogHeader>
         {props.replacingDraft && (
-          <p role="alert" className="text-destructive">
-            Новый импорт заменит предыдущие импортированные черновики и их
-            несохранённый ввод. Уже сохранённые записи останутся в профиле.
-          </p>
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+          >
+            <AlertCircleIcon
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
+            <p>
+              Новый импорт заменит предыдущие импортированные черновики и их
+              несохранённый ввод. Уже сохранённые записи останутся в профиле.
+            </p>
+          </div>
         )}
         {warnings.length > 0 && (
-          <div>
-            <h3 className="mb-2 font-medium">Предупреждения распознавания</h3>
-            <ul className="list-disc space-y-2 pl-5">
+          <div
+            role="status"
+            className="rounded-lg border border-warning/30 bg-warning-soft p-4"
+          >
+            <h3 className="flex items-center gap-2 font-medium text-warning">
+              <TriangleAlertIcon
+                className="size-5 shrink-0"
+                aria-hidden="true"
+              />
+              Предупреждения распознавания
+            </h3>
+            <ul className="mt-2 list-disc space-y-2 pl-7 text-sm leading-relaxed">
               {warnings.map((warning, index) => (
                 <li key={index}>{warning}</li>
               ))}
@@ -195,10 +215,19 @@ export const ResumeImportReview = (props: ResumeImportReviewProps) => {
           </div>
         )}
         {!props.processing && (
-          <p role="alert">
-            Согласие на обработку больше не активно. Обновите согласия перед
-            применением.
-          </p>
+          <div
+            role="alert"
+            className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+          >
+            <AlertCircleIcon
+              className="mt-0.5 size-5 shrink-0"
+              aria-hidden="true"
+            />
+            <p>
+              Согласие на обработку больше не активно. Обновите согласия перед
+              применением.
+            </p>
+          </div>
         )}
         <DialogFooter>
           <Button type="button" variant="outline" onClick={props.onClose}>

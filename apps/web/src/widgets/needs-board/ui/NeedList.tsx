@@ -43,7 +43,7 @@ export const NeedList = ({
         Потребности
       </h1>
       <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        Кого ищет команда. Выберите строку — откроются бриф и подборка.
+        Вакансии команды и подбор кандидатов.
       </p>
     </div>
     <CountTabs value={list.status} disabled={list.pending} onChange={onStatus}>

@@ -13,6 +13,7 @@ import { useNeedEditor } from '../model';
 import { BriefPhrase } from './BriefPhrase';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedReadiness } from './NeedReadiness';
+import { NeedSummary } from './NeedSummary';
 interface NeedEditorProps {
   initial: NeedInput;
   footer?: ReactNode;
@@ -53,13 +54,19 @@ export const NeedEditor = ({
     submit,
     cancel,
   } = useNeedEditor({ initial, isNew, onSave, onCancel, onDirtyChange });
+
   const displayedError = saveError || error;
-  const fieldError = (key: string) =>
-    errors[key] && (
-      <p id={`${key}-error`} className="text-sm text-destructive">
-        {errors[key]}
-      </p>
+
+  const fieldError = (key: string) => {
+    return (
+      errors[key] && (
+        <p id={`${key}-error`} className="text-sm text-destructive">
+          {errors[key]}
+        </p>
+      )
     );
+  };
+
   return (
     <section
       className="border border-border bg-card p-4 md:p-6 xl:px-8 xl:py-7"
@@ -101,14 +108,18 @@ export const NeedEditor = ({
               {value.title}
             </h2>
           )}
-          <BriefPhrase
-            value={value}
-            onChange={changeValue}
-            catalogs={catalogs}
-            skills={skills}
-            disabled={readonly || pending}
-            errors={errors}
-          />
+          {editing && !readonly ? (
+            <BriefPhrase
+              value={value}
+              onChange={changeValue}
+              catalogs={catalogs}
+              skills={skills}
+              disabled={pending}
+              errors={errors}
+            />
+          ) : (
+            <NeedSummary value={value} catalogs={catalogs} skills={skills} />
+          )}
           <div className="grid gap-2" aria-live="polite">
             {fieldError('specializationId')}
             {fieldError('workFormatIds')}
@@ -128,15 +139,10 @@ export const NeedEditor = ({
                 .join(' · ')}
             </p>
           )}
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            {readonly
-              ? 'Условия потребности доступны для просмотра.'
-              : 'Выберите параметр, чтобы изменить условия. Сохраните изменения перед поиском.'}
-          </p>
           <div className="grid gap-3 border-t border-border pt-4">
             <div className="flex items-center justify-between gap-3">
               <MetaLabel className="font-sans text-sm font-medium normal-case tracking-normal">
-                Чем будет заниматься *
+                Задачи{editing ? ' *' : ''}
               </MetaLabel>
               {!readonly && !editing && (
                 <Button
@@ -147,7 +153,7 @@ export const NeedEditor = ({
                   onClick={() => setEditing(true)}
                 >
                   <PencilIcon />
-                  Изменить
+                  Изменить потребность
                 </Button>
               )}
             </div>
@@ -173,7 +179,7 @@ export const NeedEditor = ({
               </p>
             )}
           </div>
-          {!readonly && (
+          {!readonly && editing && (
             <Button
               type="button"
               variant="ghost"
@@ -184,7 +190,7 @@ export const NeedEditor = ({
               Дополнительные условия {advanced ? '−' : '+'}
             </Button>
           )}
-          {advanced && (
+          {advanced && editing && (
             <NeedAdvancedFields
               value={value}
               skills={skills}

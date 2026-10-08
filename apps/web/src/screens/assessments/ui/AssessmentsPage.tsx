@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowLeftIcon } from 'lucide-react';
 
-import { Button } from '@/shared/ui';
+import { AsyncState, Button, Skeleton } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 
 import { useAssessments } from '../model';
@@ -19,6 +20,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
     current,
     loading,
     error,
+    errorType,
     selected,
     busy,
     refresh,
@@ -28,10 +30,12 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
   } = useAssessments();
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-10">
-      <Link href="/candidate" className="text-sm underline">
-        В кабинет
-      </Link>
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6 sm:py-10">
+      <Button asChild variant="outline" className="self-start">
+        <Link href="/candidate">
+          <ArrowLeftIcon aria-hidden="true" />В кабинет
+        </Link>
+      </Button>
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-semibold">Тестирование</h1>
         <p className="text-muted-foreground">
@@ -45,7 +49,18 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
           </Link>
         </Button>
       )}
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <AsyncState
+          error
+          title={
+            errorType === 'start'
+              ? 'Не удалось начать тест'
+              : 'Не удалось загрузить тесты'
+          }
+          description={error}
+          onRetry={refresh}
+        />
+      )}
       <Button
         className="self-start"
         variant="outline"
@@ -54,14 +69,22 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
       >
         Обновить список
       </Button>
-      {loading && <p role="status">Загружаем тесты…</p>}
+      {loading && (
+        <div role="status" aria-label="Загружаем тесты" className="grid gap-4">
+          <Skeleton className="h-36 w-full" />
+          <Skeleton className="h-36 w-full" />
+        </div>
+      )}
       {!loading && !error && items.length === 0 && (
-        <p>Доступных тестов пока нет.</p>
+        <AsyncState
+          title="Доступных тестов пока нет"
+          description="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
+        />
       )}
       {!loading &&
-        items.map((test) => (
+        items.map((test, index) => (
           <AvailableAssessmentCard
-            key={`${test.specializationId}-${test.gradeId}`}
+            key={`${test.specializationId}-${test.gradeId}-${index}`}
             test={test}
             catalogs={catalogs}
             disabled={busy || !!current}

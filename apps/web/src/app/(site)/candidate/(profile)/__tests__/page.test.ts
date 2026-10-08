@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import Page from '../page';
+import Layout from '../layout';
 
 const mocks = vi.hoisted(() => ({
   getFullProfile: vi.fn(),
@@ -39,7 +39,8 @@ beforeEach(() => {
 
 describe('candidate page loading', () => {
   it('passes the full response to the cabinet and allows creating a missing profile', async () => {
-    const page = await Page();
+    const layout = await Layout({ children: null });
+    const page = layout.props.children[0];
     expect(mocks.getFullProfile).toHaveBeenCalledOnce();
     expect(page.props.initialFullProfile).toMatchObject({
       profile: null,
@@ -52,7 +53,8 @@ describe('candidate page loading', () => {
   it('keeps loading existing profiles when catalogs are unavailable', async () => {
     mocks.getFullProfile.mockResolvedValue({ profile: { id: 'profile' } });
     mocks.getCatalogs.mockRejectedValue(new Error('catalogs unavailable'));
-    const page = await Page();
+    const layout = await Layout({ children: null });
+    const page = layout.props.children[0];
     expect(page.props.initialFullProfile.profile.id).toBe('profile');
     expect(page.props.workFormats).toBeUndefined();
     expect(page.props.loadError).toBeUndefined();
@@ -60,7 +62,8 @@ describe('candidate page loading', () => {
 
   it('shows a retry state instead of creation when the full profile request fails', async () => {
     mocks.getFullProfile.mockRejectedValue(new Error('profile unavailable'));
-    const page = await Page();
+    const layout = await Layout({ children: null });
+    const page = layout.props.children[0];
     expect(page.props.initialFullProfile).toBeUndefined();
     expect(page.props.loadError).toContain('Не удалось загрузить профиль');
   });

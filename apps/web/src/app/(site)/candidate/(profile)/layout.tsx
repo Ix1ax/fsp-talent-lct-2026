@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Metadata } from 'next';
 
 import { STATIC_ROUTES } from '@/shared/contants';
@@ -9,9 +10,10 @@ import { CandidateHomePage } from '@/screens/candidate';
 
 export const metadata: Metadata = { title: 'Профиль кандидата · ФСП' };
 
-export default async function Page() {
+export default async function CandidateProfileLayout({
+  children,
+}: Readonly<{ children: ReactNode }>) {
   const user = await requireRole(USER_ROLES.CANDIDATE, STATIC_ROUTES.CANDIDATE);
-
   const [fullProfileResult, catalogsResult] = await Promise.allSettled([
     getCandidateFullProfile(),
     getCatalogs(),
@@ -28,16 +30,19 @@ export default async function Page() {
       : undefined;
 
   return (
-    <CandidateHomePage
-      key={`${initialFullProfile?.profile?.id ?? 'new'}-${loadError ?? 'ready'}`}
-      user={user}
-      initialFullProfile={initialFullProfile}
-      workFormats={
-        catalogsResult.status === 'fulfilled'
-          ? catalogsResult.value.workFormats
-          : undefined
-      }
-      loadError={loadError}
-    />
+    <>
+      <CandidateHomePage
+        key={`${initialFullProfile?.profile?.id ?? 'new'}-${loadError ?? 'ready'}`}
+        user={user}
+        initialFullProfile={initialFullProfile}
+        workFormats={
+          catalogsResult.status === 'fulfilled'
+            ? catalogsResult.value.workFormats
+            : undefined
+        }
+        loadError={loadError}
+      />
+      {children}
+    </>
   );
 }

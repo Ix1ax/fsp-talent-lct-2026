@@ -1,15 +1,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  BookOpen,
-  FileQuestion,
-  Layers,
-  LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
-  ShieldCheck,
-  Users,
-} from 'lucide-react';
+import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
 import {
@@ -21,6 +12,8 @@ import {
 } from '@/shared/ui';
 import type { AdminAccount } from '@/entities/admin';
 
+import { ADMIN_LINKS } from '../model';
+
 interface AdminSidebarProps {
   admin: AdminAccount;
   collapsed: boolean;
@@ -28,38 +21,7 @@ interface AdminSidebarProps {
   exiting: boolean;
   onLogout: () => void;
 }
-const links = [
-  {
-    path: 'catalogs',
-    mobileLabel: 'Каталоги',
-    label: 'Справочники',
-    icon: BookOpen,
-  },
-  {
-    path: 'moderation',
-    mobileLabel: 'Модерация',
-    label: 'Модерация навыков',
-    icon: ShieldCheck,
-  },
-  {
-    path: 'questions',
-    mobileLabel: 'Задания',
-    label: 'Банк заданий',
-    icon: FileQuestion,
-  },
-  {
-    path: 'templates',
-    mobileLabel: 'Тесты',
-    label: 'Шаблоны тестов',
-    icon: Layers,
-  },
-  {
-    path: 'admins',
-    mobileLabel: 'Админы',
-    label: 'Администраторы',
-    icon: Users,
-  },
-];
+
 export const AdminSidebar = ({
   admin,
   collapsed,
@@ -92,7 +54,7 @@ export const AdminSidebar = ({
       </div>
       <div
         className={cn(
-          'hidden h-16 px-6 pt-6 pb-3 text-xs uppercase tracking-widest text-caption lg:block',
+          'hidden px-6 pt-6 pb-3 text-xs font-medium text-caption lg:block',
           collapsed && 'lg:invisible',
         )}
       >
@@ -105,46 +67,46 @@ export const AdminSidebar = ({
           collapsed && 'lg:px-2',
         )}
       >
-        {links
-          .filter((l) => l.path !== 'admins' || admin.role === 'superadmin')
-          .map(({ path, label, mobileLabel, icon: Icon }) => {
-            const active =
-              pathname === `/admin/${path}` ||
-              pathname.startsWith(`/admin/${path}/`) ||
-              (path === 'catalogs' && pathname === '/admin');
-            return (
-              <Tooltip key={path}>
-                <TooltipTrigger asChild>
-                  <Link
-                    href={`/admin/${path}`}
-                    aria-label={label}
-                    aria-current={active ? 'page' : undefined}
+        {ADMIN_LINKS.filter(
+          (l) => l.path !== 'admins' || admin.role === 'superadmin',
+        ).map(({ path, label, mobileLabel, icon: Icon }) => {
+          const active =
+            pathname === `/admin/${path}` ||
+            pathname.startsWith(`/admin/${path}/`) ||
+            (path === 'catalogs' && pathname === '/admin');
+          return (
+            <Tooltip key={path}>
+              <TooltipTrigger asChild>
+                <Link
+                  href={`/admin/${path}`}
+                  aria-label={label}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(
+                    'flex min-h-11 min-w-11 rounded-md shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 py-2 text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3',
+                    active
+                      ? 'bg-accent text-brand-text'
+                      : 'text-muted-foreground hover:bg-muted',
+                    collapsed && 'lg:justify-center lg:px-0',
+                  )}
+                >
+                  <Icon size={18} className="shrink-0" />
+                  <span className="text-[10px] leading-4 lg:hidden">
+                    {mobileLabel}
+                  </span>
+                  <span
                     className={cn(
-                      'flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 py-2 text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3',
-                      active
-                        ? 'bg-accent text-brand-text'
-                        : 'text-muted-foreground hover:bg-muted',
-                      collapsed && 'lg:justify-center lg:px-0',
+                      'sr-only lg:not-sr-only',
+                      collapsed && 'lg:hidden',
                     )}
                   >
-                    <Icon size={18} className="shrink-0" />
-                    <span className="text-[10px] leading-4 lg:hidden">
-                      {mobileLabel}
-                    </span>
-                    <span
-                      className={cn(
-                        'sr-only lg:not-sr-only',
-                        collapsed && 'lg:hidden',
-                      )}
-                    >
-                      {label}
-                    </span>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
-              </Tooltip>
-            );
-          })}
+                    {label}
+                  </span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">{label}</TooltipContent>
+            </Tooltip>
+          );
+        })}
       </nav>
       <div
         className={cn(

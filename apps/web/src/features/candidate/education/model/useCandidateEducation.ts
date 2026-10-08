@@ -43,38 +43,43 @@ export const useCandidateEducation = ({
   const [profileMissing, setProfileMissing] = useState(false);
   const [previousProfileId, setPreviousProfileId] = useState(profileId);
   const request = useRef<AbortController | null>(null);
-  const mutating = useRef(false);
+  const mutationRequest = useRef<AbortController | null>(null);
 
-  const refresh = useCallback(async () => {
-    if (!profileId) return false;
+  const refresh = useCallback(() => {
+    if (!profileId) return Promise.resolve(false);
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
-    try {
-      await ensureClientAccessToken();
-      if (controller.signal.aborted) return false;
-      setLoading(true);
-      setLoadError('');
-      const next = await getCandidateEducations(controller.signal);
-      if (controller.signal.aborted) return false;
-      setItems(next.items);
-      onCountChange(next.items.length);
-      setStale(false);
-      setLimitReached(false);
-      setProfileMissing(false);
-      setMessage('');
-      return true;
-    } catch (error) {
-      if (!controller.signal.aborted) {
-        setLoadError(getEducationErrorMessage(error));
-        if (error instanceof ApiError && error.code === 'profile_not_found')
-          setProfileMissing(true);
-      }
-      return false;
-    } finally {
-      if (!controller.signal.aborted) setLoading(false);
-    }
-  }, [profileId, onCountChange]);
+
+    return ensureClientAccessToken()
+      .then(async () => {
+        if (controller.signal.aborted) return false;
+        setLoading(true);
+        setLoadError('');
+        const next = await getCandidateEducations(controller.signal);
+        if (controller.signal.aborted) return false;
+        setItems(next.items);
+        setStale(false);
+        setLimitReached(false);
+        setProfileMissing(false);
+        setMessage('');
+        return true;
+      })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) {
+          setLoadError(getEducationErrorMessage(error));
+          if (error instanceof ApiError && error.code === 'profile_not_found')
+            setProfileMissing(true);
+        }
+        return false;
+      })
+      .finally(() => {
+        if (request.current === controller) {
+          request.current = null;
+          if (!controller.signal.aborted) setLoading(false);
+        }
+      });
+  }, [profileId]);
 
   if (previousProfileId !== profileId) {
     setPreviousProfileId(profileId);
@@ -88,65 +93,71 @@ export const useCandidateEducation = ({
   }
 
   useEffect(() => {
-    onCountChange(0);
-  }, [profileId, onCountChange]);
+    onCountChange(items?.length ?? 0);
+  }, [items, onCountChange]);
 
   useEffect(() => {
-    if (!active || !profileId) return;
-    let disposed = false;
-    // Сначала восстанавливаем сессию, затем загружаем приватные данные.
-    void ensureClientAccessToken()
-      .then(() => {
-        if (!disposed) return refresh();
-      })
-      .catch((error) => {
-        if (!disposed) setLoadError(getEducationErrorMessage(error));
-      });
-    return () => {
-      disposed = true;
-      request.current?.abort();
-    };
-  }, [active, profileId, refresh, revision]);
+    if (!profileId) return;
+    void refresh();
+    return () => request.current?.abort();
+  }, [profileId, refresh, revision]);
 
-  const mutate = async (action: () => Promise<unknown>, success: string) => {
+  useEffect(() => () => mutationRequest.current?.abort(), [profileId]);
+
+  const mutate = async (
+    action: (signal: AbortSignal) => Promise<unknown>,
+    success: string,
+  ) => {
     if (
       busy ||
-      mutating.current ||
+      mutationRequest.current ||
       !profileId ||
       profileMissing ||
       stale ||
       !items ||
-      loading
+      loading ||
+      (request.current && !request.current.signal.aborted)
     )
       return false;
-    mutating.current = true;
-    request.current?.abort();
-    onBusyChange(true);
+
+    const controller = new AbortController();
+    mutationRequest.current = controller;
     setMessage('');
     try {
-      await ensureClientAccessToken();
-      await action();
+      onBusyChange(true);
+      try {
+        await ensureClientAccessToken();
+        if (controller.signal.aborted) return false;
+        await action(controller.signal);
+      } catch (error) {
+        if (controller.signal.aborted) return false;
+        const text = getEducationErrorMessage(error);
+        setMessage(text);
+        if (error instanceof ApiError && error.code === 'limit_reached')
+          setLimitReached(true);
+        if (error instanceof ApiError && error.code === 'profile_not_found')
+          setProfileMissing(true);
+        toast.error(text, { id: 'candidate-education' });
+        return false;
+      }
+
+      // The write succeeded: refresh or callback failures must not invite another POST.
+      if (controller.signal.aborted) return true;
       setStale(true);
       toast.success(success, { id: 'candidate-education' });
-      // Ошибка повторной загрузки не отменяет успешное сохранение.
-      // Не предлагаем повторять POST, чтобы не создавать дубликат.
-      if (!(await refresh()))
-        setMessage(
-          `${success} Не удалось обновить список. Повторите загрузку списка.`,
-        );
-      onSaved?.();
+      const refreshWarning = `${success} Не удалось обновить список. Повторите загрузку списка.`;
+      try {
+        const refreshed = await refresh();
+        if (controller.signal.aborted) return true;
+        if (!refreshed) setMessage(refreshWarning);
+        onSaved?.();
+      } catch {
+        if (!controller.signal.aborted) setMessage(refreshWarning);
+      }
       return true;
-    } catch (error) {
-      const text = getEducationErrorMessage(error);
-      setMessage(text);
-      if (error instanceof ApiError && error.code === 'limit_reached')
-        setLimitReached(true);
-      if (error instanceof ApiError && error.code === 'profile_not_found')
-        setProfileMissing(true);
-      toast.error(text, { id: 'candidate-education' });
-      return false;
     } finally {
-      mutating.current = false;
+      if (mutationRequest.current === controller)
+        mutationRequest.current = null;
       onBusyChange(false);
     }
   };
@@ -155,13 +166,24 @@ export const useCandidateEducation = ({
     if (!id && (limitReached || (items?.length ?? 0) >= EDUCATION_LIMIT))
       return Promise.resolve(false);
     return mutate(
-      () =>
-        id ? saveCandidateEducation(id, input) : addCandidateEducation(input),
+      (signal) =>
+        id
+          ? saveCandidateEducation(id, input, signal)
+          : addCandidateEducation(input, signal),
       'Образование сохранено.',
     );
   };
   const remove = (id: string) =>
-    mutate(() => deleteCandidateEducation(id), 'Образование удалено.');
+    mutate(
+      (signal) => deleteCandidateEducation(id, signal),
+      'Образование удалено.',
+    );
+
+  const refreshList = () => {
+    if (!profileId || mutationRequest.current) return Promise.resolve(false);
+    setLoading(true);
+    return refresh();
+  };
 
   return {
     items,
@@ -171,7 +193,7 @@ export const useCandidateEducation = ({
     stale,
     profileMissing,
     atLimit: limitReached || (items?.length ?? 0) >= EDUCATION_LIMIT,
-    refresh,
+    refresh: refreshList,
     save,
     remove,
     clearMessage: () => setMessage(''),
