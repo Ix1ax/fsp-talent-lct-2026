@@ -27,6 +27,7 @@ import {
   reconcileConsents,
 } from '@/features/candidate-consents';
 import { CandidateContactsCard } from '@/features/candidate-contacts';
+import { CandidateEducationCard } from '@/features/candidate-education';
 import { CandidateExperienceCard } from '@/features/candidate-experience';
 import { CandidateProfileForm } from '@/features/candidate-profile';
 import { CandidateSkillsCard } from '@/features/candidate-skills';
@@ -62,6 +63,7 @@ export const CandidateHomePage = ({
   } = useCandidateFullProfile(initialFullProfile);
   const [busy, setBusy] = useState(false);
   const [experienceCount, setExperienceCount] = useState(0);
+  const [educationCount, setEducationCount] = useState(0);
   const [step, setStep] = useState<ProfileStep>('consents');
   const [refreshing, startTransition] = useTransition();
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -125,7 +127,11 @@ export const CandidateHomePage = ({
             <ProfileStepNavigation
               step={step}
               busy={busy}
-              savedSteps={getSavedProfileSteps(fullProfile, experienceCount)}
+              savedSteps={getSavedProfileSteps(
+                fullProfile,
+                experienceCount,
+                educationCount,
+              )}
               onStepChange={changeStep}
             />
           </div>
@@ -227,6 +233,20 @@ export const CandidateHomePage = ({
                   busy={busy}
                   onBusyChange={handleFormBusyChange}
                   onCountChange={setExperienceCount}
+                  onGoToProfile={() => changeStep('profile')}
+                />
+              </TabsContent>
+              <TabsContent
+                value="education"
+                forceMount
+                className="data-[state=inactive]:hidden"
+              >
+                <CandidateEducationCard
+                  profileId={profile?.id}
+                  active={step === 'education'}
+                  busy={busy}
+                  onBusyChange={handleFormBusyChange}
+                  onCountChange={setEducationCount}
                   onGoToProfile={() => changeStep('profile')}
                 />
               </TabsContent>

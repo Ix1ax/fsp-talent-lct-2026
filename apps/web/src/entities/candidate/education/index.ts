@@ -5,4 +5,9 @@ export {
   getCandidateEducations,
   saveCandidateEducation,
 } from './api';
-export type { CandidateEducation, CandidateEducations } from './model';
+export type {
+  CandidateEducation,
+  CandidateEducations,
+  EducationLevel,
+} from './model';
+export { EDUCATION_LEVELS } from './model';

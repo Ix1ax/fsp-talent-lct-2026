@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
 import { PlusIcon } from 'lucide-react';
 
+import { useCollectionEditor } from '@/shared/hooks';
 import {
   Button,
   Card,
@@ -30,28 +30,22 @@ export const CandidateExperienceCard = (
   props: CandidateExperienceCardProps,
 ) => {
   const actions = useCandidateExperience(props);
-  const [editor, setEditor] = useState<{ record?: CandidateExperience }>();
-  const [deleting, setDeleting] = useState<CandidateExperience>();
-  const addButton = useRef<HTMLButtonElement>(null);
-  const list = useRef<HTMLUListElement>(null);
-  const disabled =
-    props.busy ||
-    actions.loading ||
-    actions.stale ||
-    actions.profileMissing ||
-    !actions.items;
-  const restoreFocus = () =>
-    requestAnimationFrame(() => {
-      if (addButton.current?.disabled)
-        list.current
-          ?.querySelector<HTMLButtonElement>('button:not(:disabled)')
-          ?.focus();
-      else addButton.current?.focus();
-    });
-  const closeEditor = () => {
-    setEditor(undefined);
-    restoreFocus();
-  };
+  const {
+    editor,
+    deleting,
+    addButton,
+    list,
+    disabled,
+    openNew,
+    openEdit,
+    requestDelete,
+    closeEditor,
+    closeDelete,
+  } = useCollectionEditor<CandidateExperience>({
+    ...actions,
+    busy: props.busy,
+    unavailable: actions.profileMissing,
+  });
 
   return (
     <Card>
@@ -120,10 +114,7 @@ export const CandidateExperienceCard = (
               size="lg"
               className="self-start"
               disabled={disabled || actions.atLimit || !!editor}
-              onClick={() => {
-                actions.clearMessage();
-                setEditor({});
-              }}
+              onClick={openNew}
             >
               <PlusIcon aria-hidden="true" />
               Добавить место работы
@@ -165,14 +156,8 @@ export const CandidateExperienceCard = (
                     key={record.id}
                     record={record}
                     disabled={disabled || !!editor}
-                    onEdit={() => {
-                      actions.clearMessage();
-                      setEditor({ record });
-                    }}
-                    onDelete={() => {
-                      actions.clearMessage();
-                      setDeleting(record);
-                    }}
+                    onEdit={() => openEdit(record)}
+                    onDelete={() => requestDelete(record)}
                   />
                 ))}
               </ul>
@@ -196,10 +181,7 @@ export const CandidateExperienceCard = (
           error={actions.message}
           busy={props.busy}
           onConfirm={() => actions.remove(deleting.id)}
-          onClose={() => {
-            setDeleting(undefined);
-            restoreFocus();
-          }}
+          onClose={closeDelete}
         />
       )}
     </Card>

@@ -67,17 +67,18 @@ describe('candidate profile steps', () => {
   });
   it('keeps inactive forms mounted so switching steps can preserve drafts', () => {
     const html = render();
-    expect(html.match(/role="tabpanel"/g)).toHaveLength(6);
+    expect(html.match(/role="tabpanel"/g)).toHaveLength(7);
     expect(
       html.match(
         /data-state="inactive" data-orientation="horizontal" role="tabpanel"/g,
       ),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(html).toContain('name="headline"');
     expect(html).toContain('name="fullName"');
     expect(html).toContain('id="candidate-skill-name"');
     expect(html).toContain('data-[state=inactive]:hidden');
     expect(html).toContain('Опыт работы');
+    expect(html).toContain('Образование');
     expect(html).toContain(
       'Сначала создайте профиль, чтобы добавлять опыт работы.',
     );

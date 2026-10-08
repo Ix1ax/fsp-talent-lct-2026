@@ -1,9 +1,13 @@
 import { clientApi } from '@/shared/api/client';
 
-import type { CandidateEducation, CandidateEducations } from '../model';
+import type {
+  CandidateEducation,
+  CandidateEducations,
+  EducationLevel,
+} from '../model';
 
 export type SaveCandidateEducationInput = {
-  level: string;
+  level: EducationLevel;
   institution: string;
   specialty: string;
   graduationYear: number;

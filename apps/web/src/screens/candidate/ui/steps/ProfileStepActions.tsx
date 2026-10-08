@@ -20,6 +20,12 @@ export const ProfileStepActions = ({
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   const previous = PROFILE_STEPS[index - 1];
   const next = PROFILE_STEPS[index + 1];
+  const isFormStep = [
+    'profile',
+    'contacts',
+    'experience',
+    'education',
+  ].includes(step);
 
   let label = 'Продолжить без сохранения';
   if (step === 'consents') label = 'Перейти к профилю';
@@ -43,11 +49,7 @@ export const ProfileStepActions = ({
         {next && (
           <Button
             type="button"
-            variant={
-              step === 'profile' || step === 'contacts' || step === 'experience'
-                ? 'outline'
-                : 'default'
-            }
+            variant={isFormStep ? 'outline' : 'default'}
             size="lg"
             disabled={busy || (step === 'consents' && !processing)}
             className="ml-auto w-full sm:w-auto"
@@ -64,7 +66,7 @@ export const ProfileStepActions = ({
           можно разрешить позже.
         </p>
       )}
-      {(step === 'profile' || step === 'contacts' || step === 'experience') && (
+      {isFormStep && (
         <p className="text-sm text-muted-foreground">
           «Продолжить без сохранения» оставит изменения в черновике этой
           страницы.

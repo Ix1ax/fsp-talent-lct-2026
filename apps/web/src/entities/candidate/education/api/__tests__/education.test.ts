@@ -18,7 +18,7 @@ vi.mock('@/shared/api/client', async () => {
 });
 
 const input = {
-  level: 'secondary',
+  level: 'secondary' as const,
   institution: 'Школа',
   specialty: '',
   graduationYear: 2100,

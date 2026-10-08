@@ -17,11 +17,13 @@ export { getCandidateContacts, saveCandidateContacts } from './contacts';
 export type {
   CandidateEducation,
   CandidateEducations,
+  EducationLevel,
   SaveCandidateEducationInput,
 } from './education';
 export {
   addCandidateEducation,
   deleteCandidateEducation,
+  EDUCATION_LEVELS,
   getCandidateEducations,
   saveCandidateEducation,
 } from './education';

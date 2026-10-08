@@ -1,4 +1,5 @@
 export { useAsyncMutation } from './useAsyncMutation';
+export { useCollectionEditor } from './useCollectionEditor';
 export { useCountdown } from './useCountdown';
 export { useDebounce } from './useDebounce';
 export { useFocusGuard } from './useFocusGuard';
