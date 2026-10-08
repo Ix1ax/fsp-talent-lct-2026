@@ -2191,9 +2191,9 @@ paths:
         schema: {type: string, format: uuid}
     get:
       operationId: getCandidateBankCard
-      summary: Карточка доступного кандидата
+      summary: Подробная карточка доступного кандидата
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Контакты, локальный ID пользователя, аватар и свободное описание не возвращаются."
+      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Возвращает одобренные активные навыки, уровни самооценки и подтверждения, результат текущей подтверждённой категории, периоды работы и уровень образования. Контакты, локальный ID пользователя, аватар, названия организаций, должности и свободное описание не возвращаются: свободный текст может содержать контакты. Импортированные языки и достижения ФСП в этот ответ пока не включены."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2203,7 +2203,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CandidateBankCard'
+                $ref: '#/components/schemas/CandidateBankDetails'
         '400':
           $ref: '#/components/responses/CandidateBankBadRequest'
         '401':
@@ -6015,6 +6015,49 @@ components:
         salary_min_rub: 180000
         search_status: open
         work_format_ids: [3]
+    CandidateBankDetails:
+      allOf:
+        - $ref: '#/components/schemas/CandidateBankCard'
+        - type: object
+          required: [skills, assessment, experience, education]
+          properties:
+            skills:
+              type: array
+              items:
+                type: object
+                required: [id, code, name, claimed_level, verified_level, source]
+                properties:
+                  id: {type: string, format: uuid}
+                  code: {type: string}
+                  name: {type: string}
+                  claimed_level: {type: integer, minimum: 1, maximum: 5, nullable: true}
+                  verified_level: {type: integer, minimum: 1, maximum: 5, nullable: true}
+                  source: {type: string, enum: [claimed, test]}
+            assessment:
+              type: object
+              nullable: true
+              description: Результат теста текущей подтверждённой категории. Без подтверждения — null. Вопросы и ответы не раскрываются.
+              required: [score_percent, confirmed_at]
+              properties:
+                score_percent: {type: number, minimum: 0, maximum: 100}
+                confirmed_at: {type: string, format: date-time}
+            experience:
+              type: array
+              description: Периоды работы без свободных текстов. Текущее место первым, затем по дате начала.
+              items:
+                type: object
+                required: [started_on, ended_on]
+                properties:
+                  started_on: {type: string, pattern: '^\d{4}-\d{2}$', example: '2024-05'}
+                  ended_on: {type: string, nullable: true, pattern: '^\d{4}-\d{2}$', example: '2025-06'}
+            education:
+              type: array
+              items:
+                type: object
+                required: [level, graduation_year]
+                properties:
+                  level: {type: string, enum: [secondary, vocational, incomplete_higher, higher, bachelor, master, phd, doctor]}
+                  graduation_year: {type: integer, minimum: 1950, maximum: 2100}
     CandidateBankPage:
       type: object
       required: [items, total, limit, offset]
