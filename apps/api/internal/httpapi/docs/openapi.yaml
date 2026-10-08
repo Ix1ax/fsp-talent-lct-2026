@@ -6,6 +6,136 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/fsp:
+    get:
+      operationId: getFSP
+      tags: [ФСП]
+      summary: Привязка и достижения ФСП
+      description: "Только собственный профиль кандидата с согласием processing. Используется синтетический реестр fsp_mock; это не подтверждение реального ФСП ID. Идентичность берётся из проверенного входа, тело запроса не требуется. Ошибка источника сохраняет прежние достижения. Повторная привязка не создаёт дубли."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: "Состояние привязки; без истории items пустой."
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FSPProfile'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет роли кандидата, профиля или согласия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Нет привязки для sync или конфликт идентичности
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Источник недоступен или вернул некорректные данные
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+    delete:
+      operationId: unlinkFSP
+      tags: [ФСП]
+      summary: Удалить собственную привязку ФСП и импортированные достижения
+      description: "Повторный вызов безопасен. Доступен после отзыва processing. Подтверждённый тестом грейд сохраняется."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '204':
+          description: Привязка отсутствует
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет активного профиля кандидата
+        '503':
+          description: Сервис недоступен
+        '500':
+          description: Внутренняя ошибка
+  /api/v1/me/fsp/link:
+    post:
+      operationId: linkFSP
+      tags: [ФСП]
+      summary: Привязать тестовый ФСП ID
+      description: "Только собственный профиль кандидата с согласием processing. Используется синтетический реестр fsp_mock; это не подтверждение реального ФСП ID. Идентичность берётся из проверенного входа, тело запроса не требуется. Ошибка источника сохраняет прежние достижения. Повторная привязка не создаёт дубли."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: "Состояние привязки; без истории items пустой."
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FSPProfile'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет роли кандидата, профиля или согласия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Нет привязки для sync или конфликт идентичности
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Источник недоступен или вернул некорректные данные
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/me/fsp/sync:
+    post:
+      operationId: syncFSP
+      tags: [ФСП]
+      summary: Обновить достижения ФСП
+      description: "Только собственный профиль кандидата с согласием processing. Используется синтетический реестр fsp_mock; это не подтверждение реального ФСП ID. Идентичность берётся из проверенного входа, тело запроса не требуется. Ошибка источника сохраняет прежние достижения. Повторная привязка не создаёт дубли."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: "Состояние привязки; без истории items пустой."
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FSPProfile'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет роли кандидата, профиля или согласия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Нет привязки для sync или конфликт идентичности
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Источник недоступен или вернул некорректные данные
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
   /healthz:
     get:
       operationId: liveness
@@ -2106,7 +2236,7 @@ paths:
       operationId: listCandidateBank
       summary: Банк кандидатов компании
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive и действующими согласиями processing и publication. Неподтверждённые профили доступны по умолчанию; category=null, grade_status=unconfirmed. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сначала подтверждённые категории, затем результат их теста по убыванию, затем UUID. Без потребности это каталог, а не рейтинг сходства. Профили, контакты и файлы не изменяются."
+      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive и действующими согласиями processing и publication. Неподтверждённые профили доступны по умолчанию; category=null, grade_status=unconfirmed. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сначала подтверждённые категории, затем результат их теста по убыванию, затем UUID. Бонус ФСП переставляет кандидатов только внутри одной подтверждённой категории. Без потребности это каталог, а не рейтинг сходства. Профили, контакты и файлы не изменяются."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2140,6 +2270,10 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: has_fsp_achievements
+          in: query
+          description: "true — есть достижения, false — нет; без параметра оба варианта."
+          schema: {type: boolean}
         - name: grade_status
           in: query
           description: "Статус подтверждения грейда. all — все публичные профили; confirmed — категория подтверждена успешным тестом; unconfirmed — подтверждённой категории нет."
@@ -2193,7 +2327,7 @@ paths:
       operationId: getCandidateBankCard
       summary: Подробная карточка доступного кандидата
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Возвращает одобренные активные навыки, уровни самооценки и подтверждения, результат текущей подтверждённой категории, периоды работы и уровень образования. Контакты, локальный ID пользователя, аватар, названия организаций, должности и свободное описание не возвращаются: свободный текст может содержать контакты. Импортированные языки и достижения ФСП в этот ответ пока не включены."
+      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Возвращает одобренные активные навыки, уровни самооценки и подтверждения, результат текущей подтверждённой категории, периоды работы и уровень образования. Контакты, локальный ID пользователя, аватар, названия организаций, должности и свободное описание не возвращаются: свободный текст может содержать контакты. Возвращает импортированные достижения ФСП без participant_id. Импортированные языки пока не включены."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2264,6 +2398,10 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: has_fsp_achievements
+          in: query
+          description: "true — есть достижения, false — нет; без параметра оба варианта."
+          schema: {type: boolean}
         - name: grade_status
           in: query
           description: "Статус подтверждения грейда. all — все публичные профили; confirmed — категория подтверждена успешным тестом; unconfirmed — подтверждённой категории нет."
@@ -5761,6 +5899,38 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    FSPAchievement:
+      type: object
+      required: [id, event_id, event_name, discipline, occurred_on, result, place, source]
+      properties:
+        id: {type: string}
+        event_id: {type: string}
+        event_name: {type: string, example: Тестовый кубок ФСП}
+        discipline: {type: string, example: Алгоритмы}
+        occurred_on: {type: string, format: date}
+        result: {type: string, example: Первое место}
+        place: {type: integer, minimum: 1, nullable: true}
+        source: {type: string, example: fsp_mock}
+    FSPLink:
+      type: object
+      required: [participant_id, source, linked_at, synced_at, sync_status]
+      properties:
+        participant_id: {type: string}
+        source: {type: string, example: fsp_mock}
+        linked_at: {type: string, format: date-time}
+        synced_at: {type: string, format: date-time, nullable: true}
+        sync_status: {type: string, enum: [ready, empty, unavailable]}
+    FSPProfile:
+      type: object
+      required: [link, items]
+      properties:
+        link:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/FSPLink'
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/FSPAchievement'}
     AdminSkillApproveInput:
       type: object
       additionalProperties: false
@@ -5976,8 +6146,10 @@ components:
     CandidateBankCard:
       type: object
       description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
-      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids, category, declared_category, grade_status]
+      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids, category, declared_category, grade_status, achievements_count, fsp_bonus]
       properties:
+        achievements_count: {type: integer, minimum: 0, description: Число импортированных достижений}
+        fsp_bonus: {type: number, minimum: 0, maximum: 5, description: Бонус только внутри одной подтверждённой категории; грейд и match_score не меняет}
         grade_status: {type: string, enum: [confirmed, unconfirmed]}
         declared_category:
           type: object
@@ -6019,8 +6191,11 @@ components:
       allOf:
         - $ref: '#/components/schemas/CandidateBankCard'
         - type: object
-          required: [skills, assessment, experience, education]
+          required: [skills, assessment, experience, education, achievements]
           properties:
+            achievements:
+              type: array
+              items: {$ref: '#/components/schemas/FSPAchievement'}
             skills:
               type: array
               items:
@@ -6164,8 +6339,7 @@ components:
           description: Критерии квалификации, которые пока не оцениваются
           items:
             type: string
-            enum: [fsp_achievements]
-          example: [fsp_achievements]
+          example: []
     CandidateOfferInput:
       type: object
       additionalProperties: false
@@ -7472,9 +7646,8 @@ components:
             - $ref: '#/components/schemas/CandidateCategory'
         achievements:
           type: array
-          description: Заготовка под достижения ФСП; пока всегда пустой массив.
-          items:
-            type: object
+          description: Импортированные достижения; без истории пустой массив.
+          items: {$ref: '#/components/schemas/FSPAchievement'}
         experience:
           type: array
           description: "Места работы: сначала текущее, затем по началу от новых к старым."
