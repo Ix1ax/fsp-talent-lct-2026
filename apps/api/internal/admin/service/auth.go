@@ -13,6 +13,7 @@ import (
 )
 
 type Store interface {
+	UpdateStatus(context.Context, string, string, string) (entity.Account, error)
 	List(context.Context, string, int, int) ([]entity.Account, error)
 	Lookup(context.Context, string) (entity.Account, string, error)
 	AllowLogin(context.Context, []byte, int) error
@@ -120,4 +121,15 @@ func (s *Service) List(ctx context.Context, actor entity.Account, limit, offset 
 		return nil, entity.ErrForbidden
 	}
 	return s.store.List(ctx, actor.ID, limit, offset)
+}
+
+func (s *Service) UpdateStatus(ctx context.Context, actor entity.Account, id string, in entity.StatusInput) (entity.Account, error) {
+	if actor.Role != "superadmin" || actor.Status != "active" {
+		return entity.Account{}, entity.ErrForbidden
+	}
+	id, err := entity.NormalizeStatusID(id, in)
+	if err != nil {
+		return entity.Account{}, err
+	}
+	return s.store.UpdateStatus(ctx, actor.ID, id, in.Status)
 }

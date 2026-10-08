@@ -22,6 +22,13 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *service.Service) {
 			status, code, message = 401, "unauthorized", "Неверная почта, пароль или сессия"
 		case errors.Is(err, entity.ErrForbidden):
 			status, code, message = 403, "forbidden", "Создавать администраторов может только суперадмин"
+			if c.Request.Method == http.MethodPatch {
+				message = "Изменять статус администратора может только суперадмин"
+			}
+		case errors.Is(err, entity.ErrNotFound):
+			status, code, message = 404, "admin_not_found", err.Error()
+		case errors.Is(err, entity.ErrStatusChangeForbidden):
+			status, code, message = 409, "admin_status_change_forbidden", err.Error()
 		case errors.Is(err, entity.ErrConflict):
 			status, code, message = 409, "admin_exists", "Администратор с такой почтой уже существует"
 		case errors.Is(err, entity.ErrRateLimited):
@@ -108,4 +115,24 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *service.Service) {
 		}
 		c.JSON(201, created)
 	})
+	protected.PATCH("/admins/:id", func(c *gin.Context) {
+		value, _ := c.Get("admin_account")
+		actor := value.(entity.Account)
+		if actor.Role != "superadmin" {
+			fail(c, entity.ErrForbidden)
+			return
+		}
+		var in entity.StatusInput
+		if err := request.JSON(c, &in); err != nil {
+			fail(c, err)
+			return
+		}
+		account, err := admins.UpdateStatus(c.Request.Context(), actor, c.Param("id"), in)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.JSON(200, account)
+	})
+
 }

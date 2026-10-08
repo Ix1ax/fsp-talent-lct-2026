@@ -159,3 +159,50 @@ func (r *Repository) List(ctx context.Context, actor string, limit, offset int) 
 	}
 	return items, tx.Commit(ctx)
 }
+
+// UpdateStatus блокирует аккаунт до смены статуса и отзыва всех сессий.
+// IssueSession использует FOR SHARE той же записи, поэтому вход не может обойти блокировку.
+func (r *Repository) UpdateStatus(ctx context.Context, actor, id, status string) (entity.Account, error) {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return entity.Account{}, err
+	}
+	defer tx.Rollback(ctx)
+	var allowed bool
+	err = tx.QueryRow(ctx, `SELECT true FROM admin_accounts WHERE id=$1 AND role='superadmin' AND status='active' FOR SHARE`, actor).Scan(&allowed)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return entity.Account{}, entity.ErrForbidden
+	}
+	if err != nil {
+		return entity.Account{}, err
+	}
+	if actor == id {
+		return entity.Account{}, entity.ErrStatusChangeForbidden
+	}
+	a, err := scan(tx.QueryRow(ctx, `SELECT `+columns+` FROM admin_accounts a WHERE id=$1 FOR UPDATE`, id))
+	if errors.Is(err, entity.ErrUnauthorized) {
+		return a, entity.ErrNotFound
+	}
+	if err != nil {
+		return a, err
+	}
+	if a.Role != "admin" {
+		return a, entity.ErrStatusChangeForbidden
+	}
+	old := a.Status
+	if _, err = tx.Exec(ctx, `UPDATE admin_accounts SET status=$2 WHERE id=$1`, id, status); err != nil {
+		return a, err
+	}
+	if status == "blocked" {
+		if _, err = tx.Exec(ctx, `DELETE FROM admin_sessions WHERE admin_id=$1`, id); err != nil {
+			return a, err
+		}
+	}
+	if old != status {
+		if _, err = tx.Exec(ctx, `INSERT INTO admin_status_events(actor_id,admin_id,old_status,new_status) VALUES($1,$2,$3,$4)`, actor, id, old, status); err != nil {
+			return a, err
+		}
+	}
+	a.Status = status
+	return a, tx.Commit(ctx)
+}

@@ -24,3 +24,20 @@ func TestCredentialsValidation(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestStatusInputValidation(t *testing.T) {
+	const id = "11111111-1111-4111-8111-111111111111"
+	for _, status := range []string{"active", "blocked"} {
+		if got, err := NormalizeStatusID(id, StatusInput{Status: status}); err != nil || got != id {
+			t.Fatalf("%s: %s %v", status, got, err)
+		}
+	}
+	if _, err := NormalizeStatusID("not-a-uuid", StatusInput{Status: "active"}); err == nil {
+		t.Fatal("принят неверный UUID")
+	}
+	for _, status := range []string{"", "deleted", "ACTIVE"} {
+		if _, err := NormalizeStatusID(id, StatusInput{Status: status}); err == nil {
+			t.Fatalf("принят статус %s", status)
+		}
+	}
+}

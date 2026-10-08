@@ -3,6 +3,7 @@ package entity
 
 import (
 	"errors"
+	"github.com/google/uuid"
 	"net/mail"
 	"strings"
 	"time"
@@ -54,4 +55,24 @@ type Login struct {
 	TokenType   string    `json:"token_type"`
 	ExpiresAt   time.Time `json:"expires_at"`
 	Admin       Account   `json:"admin"`
+}
+
+var (
+	ErrNotFound              = errors.New("Администратор не найден")
+	ErrStatusChangeForbidden = errors.New("Нельзя изменить свой статус или статус суперадминистратора")
+)
+
+type StatusInput struct {
+	Status string `json:"status"`
+}
+
+func NormalizeStatusID(id string, in StatusInput) (string, error) {
+	parsed, err := uuid.Parse(id)
+	if err != nil {
+		return "", &ValidationError{Message: "Некорректный UUID администратора"}
+	}
+	if in.Status != "active" && in.Status != "blocked" {
+		return "", &ValidationError{Message: "Статус должен быть active или blocked"}
+	}
+	return parsed.String(), nil
 }
