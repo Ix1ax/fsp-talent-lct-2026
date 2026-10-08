@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { kindSchema } from '@/entities/admin';
 
+import { getAdminPasswordIssue } from '../lib';
+
 const cleanText = (max: number) =>
   z
     .string()
@@ -22,10 +24,10 @@ export const loginFormSchema = z.object({
   password: z.string().min(1, 'Введите пароль'),
 });
 export const accountFormSchema = loginFormSchema.extend({
-  password: z.string().refine((v) => {
-    const size = new TextEncoder().encode(v).length;
-    return size >= 12 && size <= 72;
-  }, 'Пароль должен содержать 12–72 байта UTF-8'),
+  password: z.string().superRefine((value, context) => {
+    const message = getAdminPasswordIssue(value);
+    if (message) context.addIssue({ code: 'custom', message });
+  }),
 });
 export const catalogFormSchema = z.object({
   code: z.string(),
