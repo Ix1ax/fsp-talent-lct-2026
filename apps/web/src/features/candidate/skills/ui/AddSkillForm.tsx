@@ -112,7 +112,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
         >
           {hint}
         </p>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+        <div className="grid items-end gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="flex flex-col gap-2">
             <Label htmlFor="candidate-skill-level">Самооценка</Label>
             <Controller

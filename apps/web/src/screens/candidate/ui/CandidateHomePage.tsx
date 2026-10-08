@@ -187,7 +187,7 @@ export const CandidateHomePage = ({
             <TabsContent
               value="consents"
               forceMount
-              className="data-[state=inactive]:hidden"
+              className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <CandidateConsentsCard
                 consents={fullProfile.consents}
@@ -211,7 +211,7 @@ export const CandidateHomePage = ({
           <TabsContent
             value="profile"
             forceMount
-            className="data-[state=inactive]:hidden"
+            className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Card>
               <CardHeader>
@@ -251,7 +251,7 @@ export const CandidateHomePage = ({
             <TabsContent
               value="contacts"
               forceMount
-              className="data-[state=inactive]:hidden"
+              className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
             >
               <CandidateContactsCard
                 importedDraft={importedResume?.contacts}
@@ -278,7 +278,7 @@ export const CandidateHomePage = ({
               <TabsContent
                 value="experience"
                 forceMount
-                className="data-[state=inactive]:hidden"
+                className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {importedResume && (
                   <ResumeCareerDrafts
@@ -307,7 +307,7 @@ export const CandidateHomePage = ({
               <TabsContent
                 value="education"
                 forceMount
-                className="data-[state=inactive]:hidden"
+                className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {importedResume && (
                   <ResumeCareerDrafts
@@ -336,7 +336,7 @@ export const CandidateHomePage = ({
               <TabsContent
                 value="skills"
                 forceMount
-                className="data-[state=inactive]:hidden"
+                className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-sm text-muted-foreground">
@@ -376,7 +376,7 @@ export const CandidateHomePage = ({
               <TabsContent
                 value="readiness"
                 forceMount
-                className="data-[state=inactive]:hidden"
+                className="data-[state=inactive]:hidden focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <ProfileReadinessCard
                   readiness={fullProfile.readiness}

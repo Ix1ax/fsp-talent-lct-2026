@@ -68,6 +68,7 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
   const running = useRef(false);
   const request = useRef<AbortController | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const uploadButton = useRef<HTMLButtonElement>(null);
 
   useUnsavedChanges(!!props.applied || !!pending);
   useEffect(() => () => request.current?.abort(), []);
@@ -197,6 +198,7 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
           </p>
         )}
         <Button
+          ref={uploadButton}
           disabled={
             props.busy ||
             !props.processing ||
@@ -257,6 +259,11 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
           workFormats={props.workFormats}
           replacingDraft={!!props.applied}
           processing={props.processing}
+          onRestoreFocus={() => {
+            if (uploadButton.current && !uploadButton.current.disabled)
+              uploadButton.current.focus();
+            else input.current?.focus();
+          }}
           onClose={() => {
             setReview(undefined);
             setPending(undefined);

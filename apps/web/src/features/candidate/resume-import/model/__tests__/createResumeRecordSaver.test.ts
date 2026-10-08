@@ -14,6 +14,33 @@ const setup = () => {
   return { options, saver: createResumeRecordSaver(options) };
 };
 describe('saving imported records', () => {
+  it('uses the current busy state and callbacks when other forms change', async () => {
+    const { saver } = setup();
+    const write = vi.fn(async () => ({ id: 'saved' }));
+    const onSaved = vi.fn();
+    expect(await saver.save(0, write, { isBusy: () => true, onSaved })).toBe(
+      false,
+    );
+    expect(write).not.toHaveBeenCalled();
+    expect(await saver.save(0, write, { isBusy: () => false, onSaved })).toBe(
+      true,
+    );
+    expect(onSaved).toHaveBeenCalledOnce();
+  });
+  it('does not write after authentication failure and allows a later retry', async () => {
+    const { options, saver } = setup();
+    options.authenticate.mockRejectedValueOnce(
+      new Error('Session unavailable'),
+    );
+    const write = vi.fn(async () => ({ id: 'saved' }));
+    expect(await saver.save(0, write)).toBe(false);
+    expect(write).not.toHaveBeenCalled();
+    expect(options.onStatus).toHaveBeenLastCalledWith(0, {
+      error: 'Save failed',
+    });
+    expect(await saver.save(0, write)).toBe(true);
+    expect(write).toHaveBeenCalledOnce();
+  });
   it('marks a successful write before refreshing and never repeats it after reload failure', async () => {
     const { options, saver } = setup();
     options.onSaved.mockImplementation(() => {

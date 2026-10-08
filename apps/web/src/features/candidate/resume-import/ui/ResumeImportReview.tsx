@@ -33,6 +33,7 @@ interface ResumeImportReviewProps {
   processing: boolean;
   onApply: () => void;
   onClose: () => void;
+  onRestoreFocus: () => void;
 }
 
 export const ResumeImportReview = (props: ResumeImportReviewProps) => {
@@ -57,7 +58,13 @@ export const ResumeImportReview = (props: ResumeImportReviewProps) => {
         if (!open) props.onClose();
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl"
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          props.onRestoreFocus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Проверьте результат импорта</DialogTitle>
           <DialogDescription>
