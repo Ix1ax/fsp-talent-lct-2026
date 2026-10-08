@@ -1,10 +1,15 @@
+import {
+  type FormDraftBridge,
+  useFormDraftImport,
+  useUnsavedChanges,
+} from '@/shared/hooks';
 import { Button, toast } from '@/shared/ui';
 import type { CandidateContacts } from '@/entities/candidate';
 
-import { useCandidateContactsForm } from '../model';
+import { type ContactsFormValues, useCandidateContactsForm } from '../model';
 import { ContactsTextFields } from './ContactsTextFields';
 
-interface CandidateContactsFormProps {
+interface CandidateContactsFormProps extends FormDraftBridge<ContactsFormValues> {
   contacts: CandidateContacts | null;
   defaultName?: string;
   defaultEmail: string;
@@ -18,7 +23,9 @@ interface CandidateContactsFormProps {
 
 export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
   const { form, message, dirty, save } = useCandidateContactsForm(props);
+  useFormDraftImport(form, props);
   useUnsavedChanges(form.formState.isDirty);
+
   return (
     <form
       noValidate
@@ -54,4 +61,3 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
     </form>
   );
 };
-import { useUnsavedChanges } from '@/shared/hooks';

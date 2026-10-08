@@ -12,6 +12,7 @@ import { toExperienceFormValues, toExperienceInput } from '../lib';
 import { type ExperienceFormValues, experienceSchema } from '../model';
 
 interface ExperienceFormProps {
+  initialValues?: ExperienceFormValues;
   record?: CandidateExperience;
   disabled: boolean;
   busy: boolean;
@@ -52,6 +53,7 @@ const fields = [
 
 export const ExperienceForm = ({
   record,
+  initialValues,
   disabled,
   busy,
   error,
@@ -61,7 +63,7 @@ export const ExperienceForm = ({
   const prefix = useId();
   const form = useForm<ExperienceFormValues>({
     resolver: zodResolver(experienceSchema),
-    defaultValues: toExperienceFormValues(record),
+    defaultValues: initialValues ?? toExperienceFormValues(record),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
@@ -97,7 +99,7 @@ export const ExperienceForm = ({
                   type={field.type}
                   placeholder={field.placeholder}
                   disabled={disabled || inactive}
-                  autoFocus={field.key === 'company'}
+                  autoFocus={!initialValues && field.key === 'company'}
                   aria-invalid={!inactive && !!errors[field.key]}
                   aria-describedby={
                     !inactive && errors[field.key] ? `${id}-error` : undefined

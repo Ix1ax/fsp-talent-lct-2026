@@ -27,6 +27,7 @@ import {
 } from '../model';
 
 interface EducationFormProps {
+  initialValues?: EducationFormValues;
   record?: CandidateEducation;
   disabled: boolean;
   busy: boolean;
@@ -58,6 +59,7 @@ const fields = [
 
 export const EducationForm = ({
   record,
+  initialValues,
   disabled,
   busy,
   error,
@@ -67,7 +69,7 @@ export const EducationForm = ({
   const prefix = useId();
   const form = useForm<EducationFormValues>({
     resolver: zodResolver(educationSchema),
-    defaultValues: toEducationFormValues(record),
+    defaultValues: initialValues ?? toEducationFormValues(record),
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
@@ -144,7 +146,7 @@ export const EducationForm = ({
                 {...form.register(field.key)}
                 type={field.type}
                 placeholder={field.placeholder}
-                autoFocus={field.key === 'institution'}
+                autoFocus={!initialValues && field.key === 'institution'}
                 aria-invalid={!!errors[field.key]}
                 aria-describedby={
                   [

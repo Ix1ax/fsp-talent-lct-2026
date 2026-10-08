@@ -21,6 +21,7 @@ import {
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import {
+  type AppliedResume,
   applyConsentRevocation,
   CandidateAvatar,
   CandidateConsentsCard,
@@ -30,6 +31,11 @@ import {
   CandidateProfileForm,
   CandidateSkillsCard,
   reconcileConsents,
+  ResumeCareerDrafts,
+  ResumeImportCard,
+  ResumeSkillDrafts,
+  toContactsFormValues,
+  toProfileFormValues,
 } from '@/features/candidate';
 
 import { PROFILE_STEPS, type ProfileStep } from '../constants';
@@ -67,6 +73,14 @@ export const CandidateHomePage = ({
   const [step, setStep] = useState<ProfileStep>('consents');
   const [refreshing, startTransition] = useTransition();
   const navigationRef = useRef<HTMLDivElement>(null);
+  const [importedResume, setImportedResume] = useState<AppliedResume>();
+  const [careerRevision, setCareerRevision] = useState(0);
+  const profileDraftReader = useRef<
+    (() => Record<string, unknown>) | undefined
+  >(undefined);
+  const contactsDraftReader = useRef<
+    (() => Record<string, unknown>) | undefined
+  >(undefined);
 
   const profile = fullProfile?.profile ?? undefined;
   const permissions = fullProfile
@@ -85,6 +99,10 @@ export const CandidateHomePage = ({
     setStep(next);
     navigationRef.current?.scrollIntoView({ block: 'start' });
   };
+  const handleImportedRecordSaved = () => {
+    setCareerRevision((current) => current + 1);
+    refreshAfterSave();
+  };
 
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6 sm:py-10">
@@ -98,6 +116,33 @@ export const CandidateHomePage = ({
           вы.
         </p>
       </header>
+      {!loadError && fullProfile && (
+        <ResumeImportCard
+          processing={permissions.processing}
+          profileId={profile?.id}
+          skills={fullProfile.skills}
+          workFormats={workFormats}
+          busy={busy}
+          applied={importedResume}
+          onBusyChange={setBusy}
+          onConsentRequired={refreshFullProfile}
+          onGoToConsents={() => changeStep('consents')}
+          getCurrentDraft={() => ({
+            profile:
+              profileDraftReader.current?.() ?? toProfileFormValues(profile),
+            contacts:
+              contactsDraftReader.current?.() ??
+              toContactsFormValues(fullProfile.contacts, {
+                name: user.name,
+                email: user.email,
+              }),
+          })}
+          onApply={(resume) => {
+            setImportedResume(resume);
+            changeStep('profile');
+          }}
+        />
+      )}
       {loadError ? (
         <Card>
           <CardHeader>
@@ -177,6 +222,10 @@ export const CandidateHomePage = ({
               <CardContent className="flex flex-col gap-6">
                 {fullProfile && (
                   <CandidateProfileForm
+                    importedDraft={importedResume?.profile}
+                    onDraftReader={(reader) => {
+                      profileDraftReader.current = reader;
+                    }}
                     profile={profile}
                     workFormats={workFormats}
                     consents={fullProfile.consents}
@@ -205,6 +254,10 @@ export const CandidateHomePage = ({
               className="data-[state=inactive]:hidden"
             >
               <CandidateContactsCard
+                importedDraft={importedResume?.contacts}
+                onDraftReader={(reader) => {
+                  contactsDraftReader.current = reader;
+                }}
                 contacts={fullProfile.contacts}
                 consents={fullProfile.consents}
                 defaultName={user.name}
@@ -227,7 +280,21 @@ export const CandidateHomePage = ({
                 forceMount
                 className="data-[state=inactive]:hidden"
               >
+                {importedResume && (
+                  <ResumeCareerDrafts
+                    key={importedResume.id}
+                    resume={importedResume}
+                    kind="experience"
+                    profileId={profile?.id}
+                    active={step === 'experience'}
+                    revision={careerRevision}
+                    busy={busy}
+                    onBusyChange={setBusy}
+                    onSaved={handleImportedRecordSaved}
+                  />
+                )}
                 <CandidateExperienceCard
+                  revision={careerRevision}
                   profileId={profile?.id}
                   active={step === 'experience'}
                   busy={busy}
@@ -242,7 +309,21 @@ export const CandidateHomePage = ({
                 forceMount
                 className="data-[state=inactive]:hidden"
               >
+                {importedResume && (
+                  <ResumeCareerDrafts
+                    key={importedResume.id}
+                    resume={importedResume}
+                    kind="education"
+                    profileId={profile?.id}
+                    active={step === 'education'}
+                    revision={careerRevision}
+                    busy={busy}
+                    onBusyChange={setBusy}
+                    onSaved={handleImportedRecordSaved}
+                  />
+                )}
                 <CandidateEducationCard
+                  revision={careerRevision}
                   profileId={profile?.id}
                   active={step === 'education'}
                   busy={busy}
@@ -267,6 +348,21 @@ export const CandidateHomePage = ({
                     </Link>
                   </Button>
                 </div>
+                {importedResume && (
+                  <ResumeSkillDrafts
+                    key={importedResume.id}
+                    resume={importedResume}
+                    profileExists={!!profile}
+                    processing={permissions.processing}
+                    skills={fullProfile.skills}
+                    busy={busy}
+                    onBusyChange={setBusy}
+                    onSaved={refreshAfterSave}
+                    onSkillsChange={(skills) =>
+                      updateFullProfile((current) => ({ ...current, skills }))
+                    }
+                  />
+                )}
                 <CandidateSkillsCard
                   skills={fullProfile.skills}
                   profileExists={!!profile}

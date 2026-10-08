@@ -19,6 +19,7 @@ import { ExperienceItem } from './ExperienceItem';
 interface CandidateExperienceCardProps {
   profileId?: string;
   active: boolean;
+  revision?: number;
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;

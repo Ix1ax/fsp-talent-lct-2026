@@ -1,3 +1,4 @@
+import type { FormDraftBridge } from '@/shared/hooks';
 import {
   Button,
   Card,
@@ -12,9 +13,10 @@ import {
   getConsentPermissions,
 } from '@/entities/candidate';
 
+import type { ContactsFormValues } from '../model';
 import { CandidateContactsForm } from './CandidateContactsForm';
 
-interface CandidateContactsCardProps {
+interface CandidateContactsCardProps extends FormDraftBridge<ContactsFormValues> {
   contacts: CandidateContacts | null;
   consents: CandidateConsents;
   defaultName?: string;
@@ -44,9 +46,7 @@ export const CandidateContactsCard = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {processing ? (
-          <CandidateContactsForm {...props} processing={processing} />
-        ) : (
+        {!processing && (
           <div className="flex flex-col gap-3">
             <p className="text-sm text-muted-foreground">
               Для просмотра и сохранения контактов дайте согласие на обработку
@@ -66,6 +66,9 @@ export const CandidateContactsCard = ({
               </a>
             </Button>
           </div>
+        )}
+        {(processing || props.importedDraft) && (
+          <CandidateContactsForm {...props} processing={processing} />
         )}
       </CardContent>
     </Card>

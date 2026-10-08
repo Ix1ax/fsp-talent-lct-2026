@@ -19,6 +19,7 @@ import { EducationItem } from './EducationItem';
 interface CandidateEducationCardProps {
   profileId?: string;
   active: boolean;
+  revision?: number;
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;

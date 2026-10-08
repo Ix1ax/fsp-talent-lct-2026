@@ -1,4 +1,8 @@
-import { useUnsavedChanges } from '@/shared/hooks';
+import {
+  type FormDraftBridge,
+  useFormDraftImport,
+  useUnsavedChanges,
+} from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 import {
@@ -8,11 +12,11 @@ import {
 } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
-import { useCandidateProfileForm } from '../model';
+import { type ProfileFormValues, useCandidateProfileForm } from '../model';
 import { ProfileEmploymentFields } from './ProfileEmploymentFields';
 import { ProfileTextFields } from './ProfileTextFields';
 
-interface CandidateProfileFormProps {
+interface CandidateProfileFormProps extends FormDraftBridge<ProfileFormValues> {
   profile?: CandidateProfile;
   consents: CandidateConsents;
   onConsentRequired: () => Promise<void>;
@@ -32,6 +36,8 @@ export const CandidateProfileForm = ({
   onBusyChange,
   onProfileChange,
   onSaved,
+  importedDraft,
+  onDraftReader,
 }: CandidateProfileFormProps) => {
   const { form, message, success, dirty, consentError, save } =
     useCandidateProfileForm({
@@ -41,6 +47,7 @@ export const CandidateProfileForm = ({
       onBusyChange,
       onProfileChange,
     });
+  useFormDraftImport(form, { importedDraft, onDraftReader });
   useUnsavedChanges(form.formState.isDirty);
   let submitLabel = profile ? 'Сохранить изменения' : 'Создать профиль';
   if (onSaved) submitLabel = 'Сохранить и продолжить';

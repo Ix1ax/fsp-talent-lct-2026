@@ -18,6 +18,7 @@ import { EXPERIENCE_LIMIT } from './experienceSchema';
 type UseCandidateExperienceOptions = {
   profileId?: string;
   active: boolean;
+  revision?: number;
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;
@@ -27,6 +28,7 @@ type UseCandidateExperienceOptions = {
 export const useCandidateExperience = ({
   profileId,
   active,
+  revision,
   busy,
   onBusyChange,
   onCountChange,
@@ -104,7 +106,7 @@ export const useCandidateExperience = ({
       disposed = true;
       request.current?.abort();
     };
-  }, [active, profileId, refresh]);
+  }, [active, profileId, refresh, revision]);
 
   const mutate = async (action: () => Promise<unknown>, success: string) => {
     if (
