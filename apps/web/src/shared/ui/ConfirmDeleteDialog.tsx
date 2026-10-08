@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+
 import { Button } from './Button';
 import {
   Dialog,
@@ -9,6 +11,7 @@ import {
 } from './Dialog';
 
 interface ConfirmDeleteDialogProps {
+  children?: ReactNode;
   title: string;
   description: string;
   error?: string;
@@ -17,6 +20,7 @@ interface ConfirmDeleteDialogProps {
   onClose: () => void;
 }
 export const ConfirmDeleteDialog = ({
+  children,
   title,
   description,
   error,
@@ -40,6 +44,7 @@ export const ConfirmDeleteDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {children}
         {error && (
           <p role="alert" className="text-sm text-destructive">
             {error}
