@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
+import { CheckIcon } from 'lucide-react';
 
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -14,15 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
   FadeIn,
-  PageTransition,
 } from '@/shared/ui';
 import { formatDuration } from '@/shared/utils';
 import type { AssessmentAttempt } from '@/entities/assessment';
 
-import { useAssessmentRunner } from '../model';
+import { useAssessmentNavigation, useAssessmentRunner } from '../model';
+import { AssessmentAnswerReview } from './AssessmentAnswerReview';
 import { AssessmentFocusWarning } from './AssessmentFocusWarning';
+import { AssessmentQuestionPanel } from './AssessmentQuestionPanel';
 import { AssessmentResultCard } from './AssessmentResultCard';
-import { QuestionAnswerForm } from './QuestionAnswerForm';
 
 interface AssessmentRunnerProps {
   initialAttempt: AssessmentAttempt;
@@ -47,27 +44,24 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     forceFinish,
   } = useAssessmentRunner(initialAttempt);
 
-  const [index, setIndex] = useState(0);
   const [confirm, setConfirm] = useState(false);
-
-  const questions = [...attempt.questions].sort(
-    (a, b) => a.position - b.position,
-  );
-  const question = questions[index];
-  const answered = questions.filter((item) => {
-    const saved = queue.get(item.id)?.saved;
-    return !!(saved?.selected?.length || saved?.text?.trim());
-  }).length;
-
-  const unanswered = questions.filter((item) => {
-    const draft = queue.get(item.id)?.answer;
-    return !draft?.selected?.length && !draft?.text?.trim();
-  }).length;
-
-  const navigate = (next: number) => {
-    if (question && !locked) void queue.flush(question.id);
-    setIndex(next);
-  };
+  const {
+    questions,
+    question,
+    index,
+    reviewing,
+    progress,
+    completed,
+    unanswered,
+    navigate,
+    reviewAnswers,
+    invalidate,
+  } = useAssessmentNavigation({
+    questions: attempt.questions,
+    queue,
+    busy,
+    locked,
+  });
 
   if (attempt.result)
     return (
@@ -101,20 +95,44 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           )}
         </div>
       )}
-      <div className="flex flex-wrap justify-between gap-3 tabular-nums">
-        <p role="timer" aria-label="Оставшееся время">
-          Осталось {formatDuration(remaining)}
+      <section
+        aria-label="Ход теста"
+        className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <div className="flex flex-wrap gap-x-6 gap-y-2 tabular-nums">
+            <p
+              role="timer"
+              aria-label="Оставшееся время"
+              className="font-medium"
+            >
+              Осталось {formatDuration(remaining)}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Готово: {completed} из {questions.length}
+            </p>
+          </div>
+          {!reviewing && (
+            <Button
+              variant="ghost"
+              className="min-h-11 text-muted-foreground"
+              disabled={busy || locked}
+              onClick={() => setConfirm(true)}
+            >
+              Завершить досрочно
+            </Button>
+          )}
+        </div>
+        <progress
+          className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+          value={completed}
+          max={Math.max(1, questions.length)}
+          aria-label="Завершённые задания"
+        />
+        <p className="text-xs text-muted-foreground">
+          Задание засчитывается после перехода дальше и сохранения ответа.
         </p>
-        <p>
-          Сохранено ответов: {answered} из {questions.length}
-        </p>
-      </div>
-      <progress
-        className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
-        value={answered}
-        max={Math.max(1, questions.length)}
-        aria-label="Прогресс ответов"
-      />
+      </section>
       {error && <p role="alert">{error}</p>}
       {consentBlocked && (
         <Button asChild variant="outline">
@@ -136,83 +154,58 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           </Button>
         </div>
       )}
-      <nav aria-label="Задания" className="flex flex-wrap gap-2">
-        {questions.map((item, position) => (
-          <Button
-            key={item.id}
-            className="min-h-11 min-w-11"
-            aria-label={`Задание ${item.position}`}
-            variant={position === index ? 'default' : 'outline'}
-            aria-current={position === index ? 'step' : undefined}
-            disabled={busy}
-            onClick={() => navigate(position)}
-          >
-            {item.position}
-          </Button>
-        ))}
-      </nav>
-      {question && (
-        <PageTransition
-          transitionKey={question.id}
-          distance={0}
-          className="min-w-0"
-        >
-          <Card className="min-w-0">
-            <CardHeader>
-              <CardTitle>Задание {question.position}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex min-w-0 flex-col gap-5">
-              <p className="whitespace-pre-wrap wrap-anywhere">
-                {question.prompt.text}
-              </p>
-              {question.prompt.code && (
-                <pre
-                  tabIndex={0}
-                  aria-label="Код задания"
-                  className="max-w-full overflow-x-auto rounded bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
-                >
-                  <code>{question.prompt.code}</code>
-                </pre>
+      {!reviewing && (
+        <nav aria-label="Задания" className="flex flex-wrap gap-2">
+          {questions.map((item, position) => (
+            <Button
+              key={item.id}
+              className="h-11 w-14 shrink-0 px-2"
+              aria-label={`Задание ${item.position}${progress[position] === 'complete' ? ', готово' : ''}`}
+              variant={position === index ? 'default' : 'outline'}
+              aria-current={position === index ? 'step' : undefined}
+              disabled={busy}
+              onClick={() => navigate(position)}
+            >
+              {item.position}
+              {progress[position] === 'complete' && (
+                <CheckIcon aria-hidden="true" className="size-3.5" />
               )}
-              <QuestionAnswerForm
-                key={question.id}
-                question={question}
-                state={queue.get(question.id)!}
-                disabled={busy || locked}
-                onChange={(answer) => update(question.id, answer)}
-                onSave={() =>
-                  locked ? Promise.resolve(false) : queue.flush(question.id)
-                }
-              />
-            </CardContent>
-          </Card>
-        </PageTransition>
+            </Button>
+          ))}
+        </nav>
       )}
-      <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-between">
-        <Button
-          variant="outline"
-          className="min-h-11"
-          disabled={index === 0 || busy}
-          onClick={() => navigate(index - 1)}
-        >
-          Назад
-        </Button>
-        <Button
-          variant="outline"
-          className="min-h-11"
-          disabled={index >= questions.length - 1 || busy}
-          onClick={() => navigate(index + 1)}
-        >
-          Далее
-        </Button>
-      </div>
-      <Button
-        className="h-auto min-h-11 whitespace-normal"
-        disabled={busy || locked}
-        onClick={() => setConfirm(true)}
-      >
-        Завершить тест
-      </Button>
+      {reviewing && (
+        <FadeIn distance={0}>
+          <AssessmentAnswerReview
+            questions={questions}
+            progress={progress}
+            completed={completed}
+            unanswered={unanswered}
+            disabled={busy || locked}
+            onSelect={navigate}
+            onFinish={() => setConfirm(true)}
+          />
+        </FadeIn>
+      )}
+      {!reviewing && question && (
+        <AssessmentQuestionPanel
+          question={question}
+          state={queue.get(question.id)!}
+          index={index}
+          questionCount={questions.length}
+          busy={busy}
+          locked={locked}
+          onChange={(answer) => {
+            invalidate(question.id);
+            update(question.id, answer);
+          }}
+          onSave={() =>
+            locked ? Promise.resolve(false) : queue.flush(question.id)
+          }
+          onNavigate={navigate}
+          onReview={reviewAnswers}
+        />
+      )}
       <Dialog
         open={confirm && !locked}
         onOpenChange={(open) => {
@@ -221,7 +214,9 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
       >
         <DialogContent showCloseButton={!busy}>
           <DialogHeader>
-            <DialogTitle>Завершить тест?</DialogTitle>
+            <DialogTitle>
+              {reviewing ? 'Завершить тест?' : 'Завершить тест досрочно?'}
+            </DialogTitle>
             <DialogDescription>
               Без ответа: {unanswered}. Перед завершением отправим все текущие
               ответы. После отправки изменить их нельзя.
