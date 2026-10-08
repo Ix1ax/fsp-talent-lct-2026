@@ -52,7 +52,11 @@ export const moderationFormSchema = z.object({
 export const questionFormSchema = z
   .object({
     skill_id: z.string().uuid('Выберите навык'),
-    difficulty: z.number().int().min(1).max(5),
+    difficulty: z
+      .number({ error: 'Введите сложность от 1 до 5' })
+      .int('Сложность должна быть целым числом')
+      .min(1, 'Сложность — от 1 до 5')
+      .max(5, 'Сложность — от 1 до 5'),
     kind: kindSchema,
     text: cleanText(5000),
     code: z.string().max(10000),
@@ -118,9 +122,9 @@ export const questionFormSchema = z
   });
 const decimal = (min: number, max: number) =>
   z
-    .number()
-    .min(min)
-    .max(max)
+    .number({ error: 'Введите число' })
+    .min(min, `Минимальное значение — ${min}`)
+    .max(max, `Максимальное значение — ${max}`)
     .refine(
       (n) => Math.abs(n * 100 - Math.round(n * 100)) < 0.000001,
       'Максимум 2 знака после запятой',
@@ -128,16 +132,36 @@ const decimal = (min: number, max: number) =>
 export const templateFormSchema = z
   .object({
     stack_skill_id: z.string().uuid('Выберите основной навык'),
-    specialization_id: z.number().int().min(1).max(32767),
-    grade_id: z.number().int().min(1).max(32767),
-    time_limit_sec: z.number().int().min(300).max(14400),
+    specialization_id: z
+      .number({ error: 'Выберите специализацию' })
+      .int()
+      .min(1, 'Выберите специализацию')
+      .max(32767, 'Выберите специализацию из списка'),
+    grade_id: z
+      .number({ error: 'Выберите грейд' })
+      .int()
+      .min(1, 'Выберите грейд')
+      .max(32767, 'Выберите грейд из списка'),
+    time_limit_sec: z
+      .number({ error: 'Введите время в секундах' })
+      .int('Время должно быть целым числом')
+      .min(300, 'Минимум 300 секунд (5 минут)')
+      .max(14400, 'Максимум 14400 секунд (4 часа)'),
     pass_score: decimal(1, 100),
     blueprint: z
       .array(
         z.object({
           skill_id: z.string().uuid('Выберите навык'),
-          difficulty: z.number().int().min(1).max(5),
-          question_count: z.number().int().min(1).max(50),
+          difficulty: z
+            .number({ error: 'Введите сложность от 1 до 5' })
+            .int('Сложность должна быть целым числом')
+            .min(1, 'Сложность — от 1 до 5')
+            .max(5, 'Сложность — от 1 до 5'),
+          question_count: z
+            .number({ error: 'Введите количество вопросов' })
+            .int('Количество должно быть целым числом')
+            .min(1, 'Минимум 1 вопрос')
+            .max(50, 'Максимум 50 вопросов'),
           weight: decimal(0.01, 100),
         }),
       )

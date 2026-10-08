@@ -29,11 +29,36 @@ interface AdminSidebarProps {
   onLogout: () => void;
 }
 const links = [
-  { path: 'catalogs', label: 'Справочники', icon: BookOpen },
-  { path: 'moderation', label: 'Модерация навыков', icon: ShieldCheck },
-  { path: 'questions', label: 'Банк заданий', icon: FileQuestion },
-  { path: 'templates', label: 'Шаблоны тестов', icon: Layers },
-  { path: 'admins', label: 'Администраторы', icon: Users },
+  {
+    path: 'catalogs',
+    mobileLabel: 'Каталоги',
+    label: 'Справочники',
+    icon: BookOpen,
+  },
+  {
+    path: 'moderation',
+    mobileLabel: 'Модерация',
+    label: 'Модерация навыков',
+    icon: ShieldCheck,
+  },
+  {
+    path: 'questions',
+    mobileLabel: 'Задания',
+    label: 'Банк заданий',
+    icon: FileQuestion,
+  },
+  {
+    path: 'templates',
+    mobileLabel: 'Тесты',
+    label: 'Шаблоны тестов',
+    icon: Layers,
+  },
+  {
+    path: 'admins',
+    mobileLabel: 'Админы',
+    label: 'Администраторы',
+    icon: Users,
+  },
 ];
 export const AdminSidebar = ({
   admin,
@@ -82,7 +107,7 @@ export const AdminSidebar = ({
       >
         {links
           .filter((l) => l.path !== 'admins' || admin.role === 'superadmin')
-          .map(({ path, label, icon: Icon }) => {
+          .map(({ path, label, mobileLabel, icon: Icon }) => {
             const active =
               pathname === `/admin/${path}` ||
               pathname.startsWith(`/admin/${path}/`) ||
@@ -95,7 +120,7 @@ export const AdminSidebar = ({
                     aria-label={label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-3 whitespace-nowrap px-3 py-3 text-sm lg:justify-start',
+                      'flex min-h-11 min-w-11 shrink-0 flex-col items-center justify-center gap-1 whitespace-nowrap px-2 py-2 text-sm lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3',
                       active
                         ? 'bg-accent text-brand-text'
                         : 'text-muted-foreground hover:bg-muted',
@@ -103,6 +128,9 @@ export const AdminSidebar = ({
                     )}
                   >
                     <Icon size={18} className="shrink-0" />
+                    <span className="text-[10px] leading-4 lg:hidden">
+                      {mobileLabel}
+                    </span>
                     <span
                       className={cn(
                         'sr-only lg:not-sr-only',
