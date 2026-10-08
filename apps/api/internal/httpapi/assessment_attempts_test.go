@@ -20,7 +20,7 @@ type scriptedAttempts struct{ err error }
 func (s scriptedAttempts) Available(context.Context, string, int) ([]entity.AvailableTemplate, error) {
 	return []entity.AvailableTemplate{{SpecializationID: 1, GradeID: 2, CanStart: true, Reason: "ok"}}, s.err
 }
-func (s scriptedAttempts) StartAttempt(context.Context, string, int16, int16, int) (entity.Attempt, error) {
+func (s scriptedAttempts) StartAttempt(context.Context, string, int16, int16, int, string) (entity.Attempt, error) {
 	return entity.Attempt{ID: aid, Status: "active", Questions: []entity.AttemptQuestion{{ID: "q1", Position: 1, Prompt: entity.Prompt{Text: "Вопрос?"}}}}, s.err
 }
 func (s scriptedAttempts) CurrentAttempt(context.Context, string, int) (entity.Attempt, error) {
@@ -59,7 +59,7 @@ func TestAssessmentAttemptRoutesAccess(t *testing.T) {
 	e := attemptEnv(t, scriptedAttempts{})
 	for _, tc := range []struct{ method, path, body string }{
 		{"GET", base + "/available", ""},
-		{"POST", base + "/attempts", `{"specialization_id":1,"grade_id":2}`},
+		{"POST", base + "/attempts", `{"stack_skill_id":"00000000-0000-4000-8000-000000000001","specialization_id":1,"grade_id":2}`},
 		{"GET", base + "/attempts/current", ""},
 		{"GET", base + "/attempts/" + aid, ""},
 		{"PUT", base + "/attempts/" + aid + "/answers/" + qid, `{"text":"x"}`},
@@ -94,8 +94,8 @@ func TestAssessmentAttemptRoutesBadInput(t *testing.T) {
 	e := attemptEnv(t, scriptedAttempts{})
 	tok := e.Token(t, "cand")
 	for name, tc := range map[string]struct{ method, path, body string }{
-		"неизвестное поле":     {"POST", base + "/attempts", `{"specialization_id":1,"grade_id":2,"x":1}`},
-		"нулевой грейд":        {"POST", base + "/attempts", `{"specialization_id":1}`},
+		"неизвестное поле":     {"POST", base + "/attempts", `{"stack_skill_id":"00000000-0000-4000-8000-000000000001","specialization_id":1,"grade_id":2,"x":1}`},
+		"нулевой грейд":        {"POST", base + "/attempts", `{"stack_skill_id":"00000000-0000-4000-8000-000000000001","specialization_id":1}`},
 		"не JSON":              {"POST", base + "/attempts", `nope`},
 		"плохой id попытки":    {"GET", base + "/attempts/nope", ""},
 		"плохой id в ответе":   {"PUT", base + "/attempts/" + aid + "/answers/nope", `{"text":"x"}`},
@@ -134,7 +134,7 @@ func TestAssessmentAttemptRouteErrors(t *testing.T) {
 		"неожиданная":  {context.DeadlineExceeded, 500, "internal_error", ""},
 	} {
 		e := attemptEnv(t, scriptedAttempts{err: tc.err})
-		w := e.Do(t, "POST", base+"/attempts", e.Token(t, "cand"), `{"specialization_id":1,"grade_id":2}`)
+		w := e.Do(t, "POST", base+"/attempts", e.Token(t, "cand"), `{"stack_skill_id":"00000000-0000-4000-8000-000000000001","specialization_id":1,"grade_id":2}`)
 		if w.Code != tc.status || testutil.ErrorCode(t, w) != tc.code || !strings.Contains(w.Body.String(), tc.extra) {
 			t.Errorf("%s: %d %s", name, w.Code, w.Body)
 		}
@@ -147,7 +147,7 @@ func TestAssessmentAttemptRouteErrors(t *testing.T) {
 func TestAssessmentAttemptRouteBodies(t *testing.T) {
 	e := attemptEnv(t, scriptedAttempts{})
 	tok := e.Token(t, "cand")
-	w := e.Do(t, "POST", base+"/attempts", tok, `{"specialization_id":1,"grade_id":2}`)
+	w := e.Do(t, "POST", base+"/attempts", tok, `{"stack_skill_id":"00000000-0000-4000-8000-000000000001","specialization_id":1,"grade_id":2}`)
 	var started entity.Attempt
 	if w.Code != 201 || json.Unmarshal(w.Body.Bytes(), &started) != nil || started.ID != aid || len(started.Questions) != 1 {
 		t.Fatalf("старт: %d %s", w.Code, w.Body)

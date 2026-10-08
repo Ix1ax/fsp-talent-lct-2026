@@ -3,7 +3,7 @@ package entity
 import "testing"
 
 func validTemplate() TemplateInput {
-	return TemplateInput{SpecializationID: 1, GradeID: 2, TimeLimitSec: 1800, PassScore: 60, Blueprint: []BlueprintRow{
+	return TemplateInput{StackSkillID: "00000000-0000-4000-8000-000000000001", SpecializationID: 1, GradeID: 2, TimeLimitSec: 1800, PassScore: 60, Blueprint: []BlueprintRow{
 		{SkillID: "00000000-0000-4000-8000-000000000001", Difficulty: 1, QuestionCount: 4, Weight: 1},
 		{SkillID: "00000000-0000-4000-8000-000000000001", Difficulty: 2, QuestionCount: 2, Weight: 2.5},
 	}}

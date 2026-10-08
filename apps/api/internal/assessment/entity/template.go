@@ -13,6 +13,7 @@ type BlueprintRow struct {
 }
 
 type TemplateInput struct {
+	StackSkillID     string         `json:"stack_skill_id"`
 	SpecializationID int16          `json:"specialization_id"`
 	GradeID          int16          `json:"grade_id"`
 	TimeLimitSec     int            `json:"time_limit_sec"`
@@ -28,6 +29,8 @@ type BlueprintRowView struct {
 }
 
 type Template struct {
+	StackName        *string            `json:"stack_name"`
+	StackSkillID     string             `json:"stack_skill_id"`
 	ID               string             `json:"id"`
 	SpecializationID int16              `json:"specialization_id"`
 	GradeID          int16              `json:"grade_id"`
@@ -41,6 +44,7 @@ type Template struct {
 }
 
 type TemplateFilter struct {
+	StackSkillID              string
 	SpecializationID, GradeID int16
 	Status                    string
 	Limit, Offset             int
@@ -56,6 +60,11 @@ type TemplatePage struct {
 func twoDecimals(v float64) bool { return math.Abs(v*100-math.Round(v*100)) < 1e-6 }
 
 func (in *TemplateInput) Normalize() error {
+	stack, err := NormalizeID(in.StackSkillID)
+	if err != nil {
+		return invalid("Выберите основной навык теста (stack_skill_id)")
+	}
+	in.StackSkillID = stack
 	if in.SpecializationID <= 0 || in.GradeID <= 0 {
 		return invalid("Выберите специализацию и грейд из справочника")
 	}
@@ -91,10 +100,27 @@ func (in *TemplateInput) Normalize() error {
 		}
 		seen[key] = true
 	}
+	foundStack := false
+	for _, row := range in.Blueprint {
+		if row.SkillID == in.StackSkillID {
+			foundStack = true
+			break
+		}
+	}
+	if !foundStack {
+		return invalid("Основной навык должен входить в состав теста")
+	}
 	return nil
 }
 
 func (f *TemplateFilter) Normalize() error {
+	if f.StackSkillID != "" {
+		id, err := NormalizeID(f.StackSkillID)
+		if err != nil {
+			return err
+		}
+		f.StackSkillID = id
+	}
 	skill, difficulty, kind := "", int16(0), ""
 	if f.SpecializationID < 0 || f.GradeID < 0 {
 		return invalid("Некорректные специализация или грейд в фильтре")

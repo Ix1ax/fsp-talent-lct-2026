@@ -16,7 +16,8 @@ import (
 func finalizeLocked(ctx context.Context, tx pgx.Tx, profileID, attemptID string, expired bool) error {
 	var specID, gradeID int16
 	var passScore float64
-	if err := tx.QueryRow(ctx, `SELECT specialization_id,grade_id,pass_score::float8 FROM assessment_attempts WHERE id=$1`, attemptID).Scan(&specID, &gradeID, &passScore); err != nil {
+	var stack *string
+	if err := tx.QueryRow(ctx, `SELECT a.specialization_id,a.grade_id,a.pass_score::float8,coalesce(s.merged_into,a.stack_skill_id)::text FROM assessment_attempts a LEFT JOIN skills s ON s.id=a.stack_skill_id WHERE a.id=$1`, attemptID).Scan(&specID, &gradeID, &passScore, &stack); err != nil {
 		return err
 	}
 	rows, err := tx.Query(ctx, `SELECT q.id::text,coalesce(s.merged_into,s.id)::text,q.points::float8,q.grading_snapshot,a.answer
@@ -70,9 +71,16 @@ func finalizeLocked(ctx context.Context, tx pgx.Tx, profileID, attemptID string,
 		}
 	}
 	percent, skills := entity.Score(items)
+	// Общий балл не может компенсировать провал основного стека.
+	stackPassed := stack == nil
+	for _, skill := range skills {
+		if stack != nil && skill.SkillID == *stack && skill.Percent() >= passScore {
+			stackPassed = true
+		}
+	}
 	status := entity.AttemptFailed
 	switch {
-	case percent >= passScore:
+	case percent >= passScore && stackPassed:
 		status = entity.AttemptPassed
 	case expired:
 		status = entity.AttemptExpired

@@ -9,7 +9,7 @@ import (
 // AttemptStore — хранилище попыток прохождения тестов.
 type AttemptStore interface {
 	Available(ctx context.Context, userID string, retakeDays int) ([]entity.AvailableTemplate, error)
-	StartAttempt(ctx context.Context, userID string, specializationID, gradeID int16, retakeDays int) (entity.Attempt, error)
+	StartAttempt(ctx context.Context, userID string, specializationID, gradeID int16, retakeDays int, stackSkillID string) (entity.Attempt, error)
 	CurrentAttempt(ctx context.Context, userID string, retakeDays int) (entity.Attempt, error)
 	GetAttempt(ctx context.Context, userID, attemptID string, retakeDays int) (entity.Attempt, error)
 	SaveAnswer(ctx context.Context, userID, attemptID, questionID string, a entity.Answer) error
@@ -34,7 +34,7 @@ func (s *AttemptService) Start(ctx context.Context, userID string, in entity.Sta
 	if err := in.Normalize(); err != nil {
 		return entity.Attempt{}, err
 	}
-	return s.store.StartAttempt(ctx, userID, in.SpecializationID, in.GradeID, s.retakeDays)
+	return s.store.StartAttempt(ctx, userID, in.SpecializationID, in.GradeID, s.retakeDays, in.StackSkillID)
 }
 
 func (s *AttemptService) Current(ctx context.Context, userID string) (entity.Attempt, error) {

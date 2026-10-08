@@ -9,11 +9,11 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/entity"
 )
 
-const templateColumns = `id::text,specialization_id,grade_id,version,time_limit_sec,pass_score::float8,status,created_at,published_at`
+const templateColumns = `id::text,specialization_id,grade_id,version,time_limit_sec,pass_score::float8,status,created_at,published_at,coalesce(stack_skill_id::text,''),(SELECT name FROM skills WHERE id=assessment_templates.stack_skill_id)`
 
 func scanTemplate(row pgx.Row) (entity.Template, error) {
 	var t entity.Template
-	err := row.Scan(&t.ID, &t.SpecializationID, &t.GradeID, &t.Version, &t.TimeLimitSec, &t.PassScore, &t.Status, &t.CreatedAt, &t.PublishedAt)
+	err := row.Scan(&t.ID, &t.SpecializationID, &t.GradeID, &t.Version, &t.TimeLimitSec, &t.PassScore, &t.Status, &t.CreatedAt, &t.PublishedAt, &t.StackSkillID, &t.StackName)
 	return t, dbError(err)
 }
 
@@ -48,9 +48,9 @@ func (r *Repository) GetTemplate(ctx context.Context, id string) (entity.Templat
 	return getTemplate(ctx, r.db, id)
 }
 
-// lockPair сериализует создание и публикацию шаблонов одной пары (специализация, грейд).
-func lockPair(ctx context.Context, tx pgx.Tx, specialization, grade int16) error {
-	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('assessment_template:'||$1::int::text||':'||$2::int::text, 0))`, specialization, grade)
+// lockPair сериализует создание и публикацию шаблонов одной тройки (специализация, стек, грейд).
+func lockPair(ctx context.Context, tx pgx.Tx, specialization, grade int16, stack string) error {
+	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtextextended('assessment_template:'||$1::int::text||':'||$2::int::text||':'||$3::text, 0))`, specialization, grade, stack)
 	return err
 }
 
@@ -60,6 +60,9 @@ func (r *Repository) CreateTemplate(ctx context.Context, actorID string, in enti
 		return entity.Template{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err := in.Normalize(); err != nil {
+		return entity.Template{}, err
+	}
 	var usable bool
 	err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations WHERE id=$1 AND active) AND EXISTS(SELECT 1 FROM grades WHERE id=$2 AND active)`, in.SpecializationID, in.GradeID).Scan(&usable)
 	if err != nil {
@@ -83,13 +86,13 @@ func (r *Repository) CreateTemplate(ctx context.Context, actorID string, in enti
 	if found != len(distinct) {
 		return entity.Template{}, &entity.ValidationError{Message: "Неизвестный или выключенный навык в составе: выберите активные навыки из справочника"}
 	}
-	if err = lockPair(ctx, tx, in.SpecializationID, in.GradeID); err != nil {
+	if err = lockPair(ctx, tx, in.SpecializationID, in.GradeID, in.StackSkillID); err != nil {
 		return entity.Template{}, err
 	}
 	var id string
-	err = tx.QueryRow(ctx, `INSERT INTO assessment_templates(specialization_id,grade_id,version,time_limit_sec,pass_score,created_by)
- VALUES($1,$2,(SELECT COALESCE(max(version),0)+1 FROM assessment_templates WHERE specialization_id=$1 AND grade_id=$2),$3,$4,$5) RETURNING id::text`,
-		in.SpecializationID, in.GradeID, in.TimeLimitSec, in.PassScore, actorID).Scan(&id)
+	err = tx.QueryRow(ctx, `INSERT INTO assessment_templates(specialization_id,grade_id,version,time_limit_sec,pass_score,created_by,stack_skill_id)
+ VALUES($1,$2,(SELECT COALESCE(max(version),0)+1 FROM assessment_templates WHERE specialization_id=$1 AND grade_id=$2 AND stack_skill_id=$6),$3,$4,$5,$6) RETURNING id::text`,
+		in.SpecializationID, in.GradeID, in.TimeLimitSec, in.PassScore, actorID, in.StackSkillID).Scan(&id)
 	if err != nil {
 		return entity.Template{}, err
 	}
@@ -115,12 +118,12 @@ func (r *Repository) ListTemplates(ctx context.Context, f entity.TemplateFilter)
 		return page, err
 	}
 	defer tx.Rollback(ctx)
-	const where = ` WHERE ($1::int=0 OR specialization_id=$1::int) AND ($2::int=0 OR grade_id=$2::int) AND ($3='' OR status=$3)`
-	args := []any{int(f.SpecializationID), int(f.GradeID), f.Status}
+	const where = ` WHERE ($1::int=0 OR specialization_id=$1::int) AND ($2::int=0 OR grade_id=$2::int) AND ($3='' OR status=$3) AND ($4='' OR stack_skill_id=nullif($4,'')::uuid)`
+	args := []any{int(f.SpecializationID), int(f.GradeID), f.Status, f.StackSkillID}
 	if err = tx.QueryRow(ctx, `SELECT count(*) FROM assessment_templates`+where, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+templateColumns+` FROM assessment_templates`+where+` ORDER BY specialization_id,grade_id,version DESC LIMIT $4 OFFSET $5`, append(args, f.Limit, f.Offset)...)
+	rows, err := tx.Query(ctx, `SELECT `+templateColumns+` FROM assessment_templates`+where+` ORDER BY specialization_id,grade_id,version DESC LIMIT $5 OFFSET $6`, append(args, f.Limit, f.Offset)...)
 	if err != nil {
 		return page, err
 	}
@@ -139,16 +142,16 @@ func (r *Repository) ListTemplates(ctx context.Context, f entity.TemplateFilter)
 	return page, tx.Commit(ctx)
 }
 
-// lockTemplate берёт блокировку пары шаблона, затем строку шаблона: так публикации одной пары идут по очереди.
-func lockTemplate(ctx context.Context, tx pgx.Tx, id string) (specialization, grade int16, status string, err error) {
-	if err = tx.QueryRow(ctx, `SELECT specialization_id,grade_id FROM assessment_templates WHERE id=$1`, id).Scan(&specialization, &grade); err != nil {
-		return 0, 0, "", dbError(err)
+// lockTemplate берёт блокировку тройки шаблона, затем строку шаблона: так публикации одной тройки идут по очереди.
+func lockTemplate(ctx context.Context, tx pgx.Tx, id string) (specialization, grade int16, status, stack string, err error) {
+	if err = tx.QueryRow(ctx, `SELECT specialization_id,grade_id,coalesce(stack_skill_id::text,'') FROM assessment_templates WHERE id=$1`, id).Scan(&specialization, &grade, &stack); err != nil {
+		return 0, 0, "", "", dbError(err)
 	}
-	if err = lockPair(ctx, tx, specialization, grade); err != nil {
-		return 0, 0, "", err
+	if err = lockPair(ctx, tx, specialization, grade, stack); err != nil {
+		return 0, 0, "", "", err
 	}
 	err = tx.QueryRow(ctx, `SELECT status FROM assessment_templates WHERE id=$1 FOR UPDATE`, id).Scan(&status)
-	return specialization, grade, status, dbError(err)
+	return specialization, grade, status, stack, dbError(err)
 }
 
 func (r *Repository) PublishTemplate(ctx context.Context, actorID, id string) (entity.Template, error) {
@@ -157,9 +160,19 @@ func (r *Repository) PublishTemplate(ctx context.Context, actorID, id string) (e
 		return entity.Template{}, err
 	}
 	defer tx.Rollback(ctx)
-	specialization, grade, status, err := lockTemplate(ctx, tx, id)
+	specialization, grade, status, stack, err := lockTemplate(ctx, tx, id)
 	if err != nil {
 		return entity.Template{}, err
+	}
+	if stack == "" {
+		return entity.Template{}, &entity.ValidationError{Message: "Создайте новую версию шаблона с выбранным стеком"}
+	}
+	var stackValid bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM skills WHERE id=$1 AND active AND moderation_status='approved' FOR SHARE) AND EXISTS(SELECT 1 FROM assessment_blueprints WHERE template_id=$2 AND skill_id=$1)`, stack, id).Scan(&stackValid); err != nil {
+		return entity.Template{}, err
+	}
+	if !stackValid {
+		return entity.Template{}, &entity.ValidationError{Message: "Стек должен быть активным навыком и входить в состав теста"}
 	}
 	if status != entity.StatusDraft {
 		return entity.Template{}, entity.ErrConflict
@@ -192,7 +205,7 @@ func (r *Repository) PublishTemplate(ctx context.Context, actorID, id string) (e
 		})
 		return entity.Template{}, &entity.InsufficientError{Items: shortage}
 	}
-	if _, err = tx.Exec(ctx, `UPDATE assessment_templates SET status='archived' WHERE specialization_id=$1 AND grade_id=$2 AND status='published'`, specialization, grade); err != nil {
+	if _, err = tx.Exec(ctx, `UPDATE assessment_templates SET status='archived' WHERE specialization_id=$1 AND grade_id=$2 AND stack_skill_id=$3 AND status='published'`, specialization, grade, stack); err != nil {
 		return entity.Template{}, err
 	}
 	if _, err = tx.Exec(ctx, `UPDATE assessment_templates SET status='published',published_at=clock_timestamp() WHERE id=$1`, id); err != nil {
@@ -213,7 +226,7 @@ func (r *Repository) ArchiveTemplate(ctx context.Context, actorID, id string) (e
 		return entity.Template{}, err
 	}
 	defer tx.Rollback(ctx)
-	_, _, status, err := lockTemplate(ctx, tx, id)
+	_, _, status, _, err := lockTemplate(ctx, tx, id)
 	if err != nil {
 		return entity.Template{}, err
 	}

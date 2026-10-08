@@ -7,6 +7,8 @@ import (
 )
 
 type HistoryItem struct {
+	StackSkillID     *string      `json:"stack_skill_id"`
+	StackName        *string      `json:"stack_name"`
 	ID               string       `json:"id"`
 	Status           string       `json:"status"`
 	SpecializationID int16        `json:"specialization_id"`
