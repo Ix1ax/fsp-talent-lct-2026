@@ -2,7 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { Button, Card } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import {
   AdminApiError,
   adminRequest,
@@ -10,6 +10,8 @@ import {
   queryString,
 } from '@/entities/admin';
 import {
+  AdminConfirmDialog,
+  AdminPanel,
   ErrorNotice,
   Status,
   useAdminMutation,
@@ -38,14 +40,14 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
   const shortages =
     mutation.error instanceof AdminApiError ? mutation.error.shortages : [];
   return (
-    <Card className="min-w-0 gap-5 p-4 sm:p-6 lg:p-8">
+    <AdminPanel>
       <h1 className="text-2xl font-semibold">
         Состав теста{template && ` · v${template.version}`}
       </h1>
       <p className="text-sm text-muted-foreground">
         {template?.stack_name ?? 'Шаблон теста'}
       </p>
-      <ErrorNotice error={detail.error} />
+      <ErrorNotice error={detail.error} onRetry={detail.reload} />
       <ErrorNotice error={mutation.error} />
       {template && (
         <>
@@ -57,7 +59,7 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
               {template.blueprint?.reduce((n, r) => n + r.question_count, 0)}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             <Button
               disabled={mutation.busy || !template.blueprint?.length}
               onClick={() => router.push(`/admin/templates/${id}/preview`)}
@@ -81,7 +83,8 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
             )}
             {template.status !== 'archived' && (
               <Button
-                variant="destructive"
+                variant="outline"
+                className="text-destructive hover:text-destructive"
                 disabled={mutation.busy}
                 onClick={() => setConfirm('archive')}
               >
@@ -103,39 +106,34 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
             </p>
           )}
           {confirm && (
-            <div className="grid gap-3 border bg-muted p-4">
-              <p className="text-sm">
-                {confirm === 'publish'
-                  ? 'Опубликовать шаблон? Предыдущий опубликованный шаблон этого стека, специализации и грейда будет архивирован.'
-                  : 'Архивировать шаблон? Восстановление не предусмотрено, предыдущая версия не опубликуется автоматически.'}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  disabled={mutation.busy}
-                  onClick={() =>
-                    void mutation.run(async () => {
-                      await adminRequest(
-                        session!.access_token,
-                        `/assessments/templates/${id}/${confirm}`,
-                        adminSchemas.template,
-                        { method: 'POST' },
-                      );
-                      setConfirm(null);
-                      refresh();
-                    })
-                  }
-                >
-                  Подтвердить
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={mutation.busy}
-                  onClick={() => setConfirm(null)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </div>
+            <AdminConfirmDialog
+              title={
+                confirm === 'publish'
+                  ? 'Опубликовать шаблон?'
+                  : 'Архивировать шаблон?'
+              }
+              description={
+                confirm === 'publish'
+                  ? 'Предыдущий опубликованный шаблон этого стека, специализации и грейда будет архивирован.'
+                  : 'Восстановление не предусмотрено, предыдущая версия не опубликуется автоматически.'
+              }
+              busy={mutation.busy}
+              error={mutation.error}
+              destructive={confirm === 'archive'}
+              onClose={() => setConfirm(null)}
+              onConfirm={async () => {
+                await mutation.run(async () => {
+                  await adminRequest(
+                    session!.access_token,
+                    `/assessments/templates/${id}/${confirm}`,
+                    adminSchemas.template,
+                    { method: 'POST' },
+                  );
+                  setConfirm(null);
+                  refresh();
+                });
+              }}
+            />
           )}
           {template.blueprint?.map((row) => {
             const shortage = shortages.find(
@@ -148,7 +146,7 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
             return (
               <div
                 key={`${row.skill_id}:${row.difficulty}`}
-                className="grid gap-2 border p-4"
+                className="grid min-w-0 gap-2 rounded-lg border p-4"
               >
                 <div className="flex flex-wrap justify-between gap-2">
                   <h3 className="font-medium">{row.skill_name}</h3>
@@ -164,7 +162,7 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
                 </p>
                 <Link
                   href={`/admin/questions?${queryString({ skill_id: row.skill_id, difficulty: row.difficulty, active: 'true', status: 'published' })}`}
-                  className="text-sm text-brand-text"
+                  className="flex min-h-11 items-center text-sm text-brand-text underline-offset-4 hover:underline"
                 >
                   Открыть подходящие задания →
                 </Link>
@@ -173,6 +171,6 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
           })}
         </>
       )}
-    </Card>
+    </AdminPanel>
   );
 };

@@ -56,10 +56,10 @@ export const AccountEditor = ({ onClose, onSaved }: AccountEditorProps) => {
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto"
+        className="max-h-[90dvh] overflow-y-auto wrap-anywhere [&_button]:min-h-11 [&_[data-slot=dialog-close]]:size-11"
         showCloseButton={!mutation.busy}
       >
-        <DialogTitle>Новый администратор</DialogTitle>
+        <DialogTitle className="pr-10">Новый администратор</DialogTitle>
         <DialogDescription>
           Будет создан активный аккаунт с ролью администратора.
         </DialogDescription>

@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, type CatalogItem } from '@/entities/admin';
 import {
+  AdminAnimatedList,
   AdminListLoading,
   ErrorNotice,
   ModerationEditor,
@@ -37,31 +38,32 @@ export const ModerationPage = () => {
     adminSchemas.catalogs,
   );
   const row = (item: CatalogItem) => (
-    <div
+    <StaggerItem
       key={item.id}
-      className="grid gap-4 border-b py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+      className="grid min-w-0 gap-4 py-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
     >
-      <div>
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 wrap-anywhere">
+        <div className="min-w-0">
           <h2 className="font-medium">{item.name}</h2>
-          <Status value={item.moderation_status ?? 'pending'} />
-        </div>
-        <p className="mt-2 text-sm text-muted-foreground">
-          {item.code}
-          {(item.aliases ?? []).length > 0 && ` · ${item.aliases!.join(', ')}`}
-        </p>
-        <p className="mt-1 text-xs text-caption">ID: {item.id}</p>
-        {item.submitted_at && (
-          <p className="mt-1 text-xs text-caption">
-            Отправлен: {new Date(item.submitted_at).toLocaleString('ru-RU')}
-            {item.submitted_by && ` · Автор: ${item.submitted_by}`}
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            {item.code}
+            {(item.aliases ?? []).length > 0 &&
+              ` · ${item.aliases!.join(', ')}`}
           </p>
-        )}
-        {item.moderation_reason && (
-          <p className="mt-2 text-sm">Причина: {item.moderation_reason}</p>
-        )}
+          {item.submitted_at && (
+            <p className="mt-1 text-xs text-caption">
+              Отправлен: {new Date(item.submitted_at).toLocaleString('ru-RU')}
+              {item.submitted_by && ` · Автор: ${item.submitted_by}`}
+            </p>
+          )}
+          {item.moderation_reason && (
+            <p className="mt-2 text-sm">Причина: {item.moderation_reason}</p>
+          )}
+        </div>
+        <Status value={item.moderation_status ?? 'pending'} />
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap [&_button]:min-h-11">
         {item.moderation_status === 'pending' && (
           <Button
             size="sm"
@@ -91,7 +93,7 @@ export const ModerationPage = () => {
           </>
         )}
       </div>
-    </div>
+    </StaggerItem>
   );
   const refresh = () => {
     list.reload();
@@ -99,14 +101,14 @@ export const ModerationPage = () => {
     options.reload();
   };
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <AdminPageHeader
         title="Модерация навыков"
         description="Проверьте названия, одобрите новые навыки или объедините дубли."
       />
-      <Card className="relative gap-4 p-4 sm:p-6">
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
         <h2 className="font-medium">Ожидают решения</h2>
-        <ErrorNotice error={list.error} />
+        <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем очередь…' : ''}
         </p>
@@ -117,7 +119,7 @@ export const ModerationPage = () => {
               Очередь пуста
             </p>
           )}
-          {list.data?.items.map(row)}
+          <AdminAnimatedList>{list.data?.items.map(row)}</AdminAnimatedList>
         </div>
         <Pagination
           offset={offset}
@@ -126,7 +128,7 @@ export const ModerationPage = () => {
           onChange={setOffset}
         />
       </Card>
-      <Card className="relative gap-4 p-4 sm:p-6">
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
         <h2 className="font-medium">Уже одобренные навыки</h2>
         <p className="text-sm text-muted-foreground">
           Одобренный навык тоже можно отклонить или объединить.
@@ -140,8 +142,8 @@ export const ModerationPage = () => {
           )}
           disabled={options.loading}
         />
-        <ErrorNotice error={options.error} />
-        <ErrorNotice error={detail.error} />
+        <ErrorNotice error={options.error} onRetry={options.reload} />
+        <ErrorNotice error={detail.error} onRetry={detail.reload} />
         {detail.loading && <p role="status">Открываем навык…</p>}
         {card && row(card)}
       </Card>

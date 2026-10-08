@@ -102,10 +102,12 @@ export const CatalogEditor = ({
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+        className="max-h-[90dvh] overflow-y-auto wrap-anywhere [&_button]:min-h-11 [&_[data-slot=dialog-close]]:size-11 sm:max-w-lg"
         showCloseButton={!mutation.busy}
       >
-        <DialogTitle>{item ? 'Изменить запись' : 'Новая запись'}</DialogTitle>
+        <DialogTitle className="pr-10">
+          {item ? 'Изменить запись' : 'Новая запись'}
+        </DialogTitle>
         <DialogDescription>
           {item
             ? 'Код и порядок грейда изменить нельзя.'

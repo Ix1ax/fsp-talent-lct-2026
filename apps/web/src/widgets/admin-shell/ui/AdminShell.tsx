@@ -1,8 +1,10 @@
 'use client';
 
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { PageTransition } from '@/shared/ui';
 import { AdminProvider, useAdminSession } from '@/features/admin';
 
 import { useSidebarCollapsed } from '../model';
@@ -14,9 +16,15 @@ interface AdminShellProps {
   children: ReactNode;
 }
 const Content = ({ children }: AdminShellProps) => {
+  const pathname = usePathname();
   const { session, loading, error, retry, logout } = useAdminSession();
   const { collapsed, toggle: toggleSidebar } = useSidebarCollapsed();
   const [exiting, setExiting] = useState(false);
+  const contentRef = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
 
   const exit = async () => {
     setExiting(true);
@@ -44,7 +52,7 @@ const Content = ({ children }: AdminShellProps) => {
 
   return (
     <div
-      className={`min-h-screen motion-safe:transition-[grid-template-columns] motion-safe:duration-200 lg:grid ${collapsed ? 'lg:grid-cols-[72px_minmax(0,1fr)]' : 'lg:grid-cols-[260px_minmax(0,1fr)]'}`}
+      className={`h-dvh overflow-hidden lg:grid ${collapsed ? 'lg:grid-cols-[72px_minmax(0,1fr)]' : 'lg:grid-cols-[260px_minmax(0,1fr)]'}`}
     >
       <AdminSidebar
         admin={session.admin}
@@ -53,13 +61,22 @@ const Content = ({ children }: AdminShellProps) => {
         exiting={exiting}
         onLogout={() => void exit()}
       />
-      <main className="relative isolate min-w-0">
+      <main
+        ref={contentRef}
+        className="relative isolate h-dvh min-w-0 overflow-y-auto overscroll-y-contain"
+      >
         <AdminShellHeader exiting={exiting} onLogout={() => void exit()} />
         <div
           key={session.admin.id}
           className="relative z-10 mx-auto w-full max-w-[1440px] p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8"
         >
-          {children}
+          <PageTransition
+            transitionKey={pathname}
+            distance={0}
+            className="min-w-0"
+          >
+            {children}
+          </PageTransition>
         </div>
       </main>
     </div>

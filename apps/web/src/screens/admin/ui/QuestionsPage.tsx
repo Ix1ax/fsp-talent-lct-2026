@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, kindLabels, queryString } from '@/entities/admin';
 import {
+  AdminAnimatedList,
   AdminListLoading,
   AdminSelect,
   ErrorNotice,
@@ -40,7 +41,7 @@ export const QuestionsPage = () => {
     setOffset(0);
   };
   return (
-    <div className="grid content-start gap-6">
+    <div className="grid min-w-0 content-start gap-6">
       <AdminPageHeader
         title="Банк заданий"
         description="Задания и версии для автоматических тестов."
@@ -53,9 +54,9 @@ export const QuestionsPage = () => {
           </Button>
         }
       />
-      <Card className="relative gap-4 p-4 sm:p-6">
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
         <details className="rounded-md border border-border p-4">
-          <summary className="cursor-pointer text-sm font-medium">
+          <summary className="min-h-11 cursor-pointer content-center text-sm font-medium">
             Фильтры
             {Object.values(filters).some(Boolean)
               ? ` · выбрано ${Object.values(filters).filter(Boolean).length}`
@@ -119,10 +120,11 @@ export const QuestionsPage = () => {
                 ]}
               />
             </div>
-            <div className="flex h-9 justify-end">
+            <div className="flex min-h-11 justify-end">
               <Button
                 disabled={!Object.values(filters).some(Boolean)}
                 size="sm"
+                className="min-h-11"
                 variant="ghost"
                 onClick={() => {
                   setFilters({
@@ -144,42 +146,45 @@ export const QuestionsPage = () => {
             </p>
           </div>
         </details>
-        <ErrorNotice error={options.error} />
-        <ErrorNotice error={list.error} />
+        <ErrorNotice error={options.error} onRetry={options.reload} />
+        <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем задания…' : ''}
         </p>
-        <div className="divide-y border-t">
+        <div className="border-t">
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
               Заданий не найдено
             </p>
           )}
-          {list.data?.items.map((question) => (
-            <div
-              key={question.id}
-              className="grid gap-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-            >
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">{question.skill_name}</span>
+          <AdminAnimatedList>
+            {list.data?.items.map((question) => (
+              <StaggerItem
+                key={question.id}
+                className="grid min-w-0 gap-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+              >
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 wrap-anywhere">
+                  <div className="min-w-0">
+                    <span className="font-medium">{question.skill_name}</span>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {kindLabels[question.kind]} · Сложность{' '}
+                      {question.difficulty} · Последняя v
+                      {question.latest_version} · Опубликована:{' '}
+                      {question.published_version
+                        ? `v${question.published_version}`
+                        : 'нет'}
+                    </p>
+                  </div>
                   <Status value={question.active ? 'active' : 'archived'} />
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {kindLabels[question.kind]} · Сложность {question.difficulty}{' '}
-                  · Последняя v{question.latest_version} · Опубликована:{' '}
-                  {question.published_version
-                    ? `v${question.published_version}`
-                    : 'нет'}
-                </p>
-                <p className="mt-1 text-xs text-caption">{question.id}</p>
-              </div>
-              <Button variant="outline" asChild>
-                <Link href={`/admin/questions/${question.id}`}> Открыть</Link>
-              </Button>
-            </div>
-          ))}
+                <Button variant="outline" asChild>
+                  <Link href={`/admin/questions/${question.id}`}> Открыть</Link>
+                </Button>
+              </StaggerItem>
+            ))}
+          </AdminAnimatedList>
         </div>
         <Pagination
           offset={offset}

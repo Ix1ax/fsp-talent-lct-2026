@@ -29,11 +29,16 @@ export const Field = ({
   error,
   reserveErrorSpace = true,
 }: FieldProps) => (
-  <label className="grid min-w-0 gap-1.5 text-sm">
+  <label className="grid min-w-0 gap-1.5 text-sm [&_input]:min-h-11 [&_input]:text-base [&_textarea]:text-base sm:[&_input]:text-sm sm:[&_textarea]:text-sm">
     <span className="font-medium">{label}</span>
     {children}
     {(reserveErrorSpace || error) && (
-      <span className="min-h-4 text-xs text-destructive">{error}</span>
+      <span
+        role={error ? 'alert' : undefined}
+        className="min-h-4 text-xs text-destructive"
+      >
+        {error}
+      </span>
     )}
   </label>
 );
@@ -64,10 +69,12 @@ export const AdminSelect = ({
       >
         <SelectTrigger
           id={id}
-          className="w-full min-w-0 data-[size=default]:h-11"
+          className="w-full min-w-0 data-[size=default]:h-11 text-base sm:text-sm"
           aria-label={label}
         >
-          <SelectValue placeholder={label} />
+          <SelectValue placeholder={label}>
+            {options.find((option) => option.value === value)?.label ?? label}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent
           position="popper"
@@ -86,17 +93,27 @@ export const AdminSelect = ({
 };
 interface ErrorNoticeProps {
   error: unknown;
+  onRetry?: () => void;
 }
-export const ErrorNotice = ({ error }: ErrorNoticeProps) => {
+export const ErrorNotice = ({ error, onRetry }: ErrorNoticeProps) => {
   if (!error) return null;
   const message =
     error instanceof Error ? error.message : 'Не удалось выполнить запрос';
   return (
     <div
       role="alert"
-      className="border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"
+      className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive wrap-anywhere"
     >
       {message}
+      {onRetry && (
+        <Button
+          variant="outline"
+          className="mt-3 min-h-11 w-fit bg-background text-foreground"
+          onClick={onRetry}
+        >
+          Повторить загрузку
+        </Button>
+      )}
       {error instanceof AdminApiError && error.requestId && (
         <div className="mt-2 text-xs">Код запроса: {error.requestId}</div>
       )}
@@ -110,7 +127,7 @@ export const ErrorNotice = ({ error }: ErrorNoticeProps) => {
 };
 export const Status = ({ value }: { value: string }) => (
   <span
-    className={`inline-block shrink-0 whitespace-nowrap border px-2 py-1 text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
+    className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center whitespace-normal border px-2 py-1 text-center text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
   >
     {statusLabels[value] ?? value}
   </span>
@@ -129,7 +146,7 @@ export const Pagination = ({
   onChange,
   loading,
 }: PaginationProps) => (
-  <div className="flex min-h-10 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
+  <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm tabular-nums">
     <span className="text-muted-foreground">
       {count ? `${offset + 1}–${offset + count}` : 'Нет записей'}
       {total !== undefined && ` из ${total}`}
@@ -138,6 +155,7 @@ export const Pagination = ({
       <div className="flex gap-2">
         <Button
           variant="outline"
+          className="h-11"
           disabled={loading || offset === 0}
           onClick={() => onChange(Math.max(0, offset - 20))}
         >
@@ -145,6 +163,7 @@ export const Pagination = ({
         </Button>
         <Button
           variant="outline"
+          className="h-11"
           disabled={
             loading ||
             (total === undefined ? count < 20 : offset + count >= total) ||
@@ -188,7 +207,7 @@ export const SkillPicker = ({
         disabled={disabled}
         placeholder={
           value
-            ? (items.find((s) => s.id === value)?.name ?? `Выбрано: ${value}`)
+            ? (items.find((s) => s.id === value)?.name ?? 'Недоступный навык')
             : 'Выберите навык'
         }
       />

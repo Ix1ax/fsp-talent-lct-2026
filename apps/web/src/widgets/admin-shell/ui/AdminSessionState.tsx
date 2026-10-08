@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@/shared/ui';
+import { Button, LoadingText } from '@/shared/ui';
 import { AdminLoginForm, ErrorNotice } from '@/features/admin';
 
 interface AdminSessionStateProps {
@@ -20,11 +20,8 @@ export const AdminSessionState = ({
 }: AdminSessionStateProps) => {
   if (loading)
     return (
-      <div
-        className="grid min-h-screen place-items-center text-muted-foreground"
-        role="status"
-      >
-        Проверяем сессию…
+      <div className="grid min-h-screen place-items-center text-muted-foreground">
+        <LoadingText text="Проверяем сессию…" />
       </div>
     );
 

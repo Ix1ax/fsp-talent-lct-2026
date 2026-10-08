@@ -47,14 +47,18 @@ export const useServerPreview = (templateId: string) => {
     [storageKey],
   );
   const run = async (action: () => Promise<void>) => {
-    if (lock.current || !session) return;
+    if (lock.current || !session) return false;
+
     lock.current = true;
     setBusy(true);
     setError(null);
+
     try {
       await action();
+      return true;
     } catch (err) {
       setError(err);
+      return false;
     } finally {
       lock.current = false;
       setBusy(false);

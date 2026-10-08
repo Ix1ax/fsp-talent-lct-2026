@@ -4,8 +4,16 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
+import { MOTION_LAYOUT_IDS } from '@/shared/contants';
 import { useDebounce } from '@/shared/hooks';
-import { Button, Card, ConfirmDeleteDialog, Input } from '@/shared/ui';
+import {
+  AnimatedIndicator,
+  Button,
+  Card,
+  ConfirmDeleteDialog,
+  Input,
+  StaggerItem,
+} from '@/shared/ui';
 import {
   AdminApiError,
   type CatalogItem,
@@ -18,9 +26,11 @@ import {
   updateAdminCatalogItem,
 } from '@/entities/admin';
 import {
+  AdminAnimatedList,
   AdminListLoading,
   CatalogEditor,
   ErrorNotice,
+  Field,
   Pagination,
   Status,
   useAdminMutation,
@@ -28,6 +38,7 @@ import {
 } from '@/features/admin';
 
 import { AdminPageHeader } from './AdminPageHeader';
+import { CatalogItemActions } from './CatalogItemActions';
 
 export const CatalogsPage = () => {
   const { session } = useAdminSession();
@@ -84,7 +95,7 @@ export const CatalogsPage = () => {
     });
 
   return (
-    <div className="grid content-start gap-6">
+    <div className="grid min-w-0 content-start gap-6">
       <AdminPageHeader
         title="Справочники"
         description="Значения для профилей, потребностей и тестов."
@@ -96,13 +107,15 @@ export const CatalogsPage = () => {
         }
       />
       <div
+        role="group"
         aria-label="Вид справочника"
-        className="flex flex-wrap gap-1 rounded-lg bg-muted p-1"
+        className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:flex sm:flex-wrap"
       >
         {catalogKinds.map((value) => (
           <Button
             key={value}
-            variant={kind === value ? 'secondary' : 'ghost'}
+            variant="ghost"
+            className="relative isolate h-auto min-h-11 whitespace-normal"
             aria-pressed={kind === value}
             onClick={() => {
               cancel();
@@ -113,106 +126,92 @@ export const CatalogsPage = () => {
               setEditor(null);
             }}
           >
+            {kind === value && (
+              <AnimatedIndicator
+                layoutId={MOTION_LAYOUT_IDS.ADMIN_CATALOG_KIND}
+                className="absolute inset-0 -z-10 rounded-md bg-card"
+              />
+            )}
             {catalogLabels[value]}
           </Button>
         ))}
       </div>
-      <Card className="relative gap-4 p-4 sm:p-6">
-        <Input
-          aria-label="Поиск по справочнику"
-          placeholder="Поиск по названию, коду или синониму"
-          maxLength={100}
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            debounce(e.target.value);
-          }}
-        />
-        <ErrorNotice error={loadError} />
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
+        <Field label="Найти запись" reserveErrorSpace={false}>
+          <Input
+            type="search"
+            aria-label="Поиск по справочнику"
+            placeholder="Поиск по названию, коду или синониму"
+            maxLength={100}
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              debounce(e.target.value);
+            }}
+          />
+        </Field>
+        <ErrorNotice error={loadError} onRetry={reload} />
         <ErrorNotice error={mutation.error} />
         <p role="status" aria-live="polite" className="sr-only">
           {loading ? 'Загружаем справочник…' : ''}
         </p>
-        <div className="divide-y border-t">
+        <div className="border-t">
           <AdminListLoading loading={loading} hasData={!!catalogs} />
           {!loading && !loadError && !catalogs?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
               Записей не найдено
             </p>
           )}
-          {catalogs?.items.map((item) => {
-            const editable =
-              kind !== 'skills' || item.moderation_status === 'approved';
-            return (
-              <div
-                key={item.id}
-                className="grid gap-4 py-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
-              >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{item.name}</span>
-                    <Status
-                      value={item.active === false ? 'archived' : 'active'}
+          <AdminAnimatedList>
+            {catalogs?.items.map((item) => {
+              const editable =
+                kind !== 'skills' || item.moderation_status === 'approved';
+              return (
+                <StaggerItem
+                  key={item.id}
+                  className="grid min-w-0 gap-4 py-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center"
+                >
+                  <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 wrap-anywhere">
+                    <div className="min-w-0">
+                      <span className="font-medium">{item.name}</span>
+
+                      <p className="mt-1 text-xs text-caption">
+                        {item.code}
+                        {item.rank !== undefined && ` · Порядок: ${item.rank}`}
+                        {(item.aliases ?? []).length > 0 &&
+                          ` · ${item.aliases!.join(', ')}`}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end justify-center gap-1.5 self-center">
+                      <Status
+                        value={item.active === false ? 'archived' : 'active'}
+                      />
+                      {item.moderation_status && (
+                        <Status value={item.moderation_status} />
+                      )}
+                    </div>
+                  </div>
+                  {editable ? (
+                    <CatalogItemActions
+                      item={item}
+                      kind={kind}
+                      busy={mutation.busy}
+                      onEdit={() => setEditor(item)}
+                      onToggle={() => toggle(item)}
+                      onDelete={() => setDeleting(item)}
                     />
-                    {item.moderation_status && (
-                      <Status value={item.moderation_status} />
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-caption">
-                    {item.code}
-                    {item.rank !== undefined && ` · Порядок: ${item.rank}`}
-                    {(item.aliases ?? []).length > 0 &&
-                      ` · ${item.aliases!.join(', ')}`}
-                  </p>
-                </div>
-                {editable ? (
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setEditor(item)}
+                  ) : (
+                    <Link
+                      href={`/admin/moderation?${queryString({ skill_id: item.id })}`}
+                      className="flex min-h-11 items-center text-sm text-brand-text"
                     >
-                      Изменить
-                    </Button>
-                    {kind === 'skills' && (
-                      <Button size="sm" variant="outline" asChild>
-                        <Link
-                          href={`/admin/moderation?${queryString({ skill_id: item.id })}`}
-                        >
-                          Модерация
-                        </Link>
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      className="min-w-28"
-                      variant="ghost"
-                      disabled={mutation.busy}
-                      onClick={() => toggle(item)}
-                    >
-                      {item.active === false ? 'Восстановить' : 'В архив'}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-destructive hover:text-destructive"
-                      disabled={mutation.busy}
-                      onClick={() => setDeleting(item)}
-                    >
-                      Удалить
-                    </Button>
-                  </div>
-                ) : (
-                  <Link
-                    href={`/admin/moderation?${queryString({ skill_id: item.id })}`}
-                    className="text-sm text-brand-text"
-                  >
-                    К модерации
-                  </Link>
-                )}
-              </div>
-            );
-          })}
+                      К модерации
+                    </Link>
+                  )}
+                </StaggerItem>
+              );
+            })}
+          </AdminAnimatedList>
         </div>
         <Pagination
           offset={offset}

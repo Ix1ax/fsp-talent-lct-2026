@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
-import { BrandLogo, Button, Input, ThemeToggle } from '@/shared/ui';
+import { BrandLogo, Button, FadeIn, Input, ThemeToggle } from '@/shared/ui';
 import { AdminApiError } from '@/entities/admin';
 
 import { loginFormSchema } from '../constants';
@@ -43,7 +43,7 @@ export const AdminLoginForm = () => {
   };
   return (
     <div className="flex min-h-screen items-center justify-center p-5">
-      <div className="w-full max-w-md border bg-card p-5 sm:p-8">
+      <FadeIn className="w-full max-w-md rounded-xl border bg-card p-5 sm:p-8">
         <div className="mb-10 flex items-center justify-between">
           <BrandLogo />
           <ThemeToggle />
@@ -52,7 +52,7 @@ export const AdminLoginForm = () => {
           <p className="mb-2 text-xs uppercase tracking-widest text-brand-text">
             Управление платформой
           </p>
-          <h1 className="text-3xl font-semibold">Вход в админку</h1>
+          <h1 className="text-2xl font-semibold sm:text-3xl">Вход в админку</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             Используйте отдельный аккаунт администратора.
           </p>
@@ -76,14 +76,20 @@ export const AdminLoginForm = () => {
             />
           </Field>
           <ErrorNotice error={error} />
-          <Button disabled={form.formState.isSubmitting || blocked}>
+          <Button
+            className="min-h-11"
+            disabled={form.formState.isSubmitting || blocked}
+          >
             {form.formState.isSubmitting ? 'Входим…' : 'Войти'}
           </Button>
         </form>
-        <Link href="/" className="mt-6 block text-sm text-muted-foreground">
+        <Link
+          href="/"
+          className="mt-6 flex min-h-11 items-center text-sm text-muted-foreground"
+        >
           ← На сайт
         </Link>
-      </div>
+      </FadeIn>
     </div>
   );
 };

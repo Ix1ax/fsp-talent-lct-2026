@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
-import { Button, Card } from '@/shared/ui';
+import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, queryString } from '@/entities/admin';
 import {
+  AdminAnimatedList,
   AdminListLoading,
   AdminSelect,
   ErrorNotice,
@@ -37,9 +38,10 @@ export const TemplatesPage = () => {
     setOffset(0);
   };
   const label = (kind: string, id: number) =>
-    options.data[kind]?.find((s) => s.id === String(id))?.name ?? `ID ${id}`;
+    options.data[kind]?.find((s) => s.id === String(id))?.name ??
+    'Значение не найдено';
   return (
-    <div className="grid content-start gap-6">
+    <div className="grid min-w-0 content-start gap-6">
       <AdminPageHeader
         title="Шаблоны тестов"
         description="Стек, специализация, грейд и состав заданий."
@@ -52,9 +54,9 @@ export const TemplatesPage = () => {
           </Button>
         }
       />
-      <Card className="relative gap-4 p-4 sm:p-6">
+      <Card className="relative min-w-0 gap-4 p-4 sm:p-6">
         <details className="rounded-md border border-border p-4">
-          <summary className="cursor-pointer text-sm font-medium">
+          <summary className="min-h-11 cursor-pointer content-center text-sm font-medium">
             Фильтры
             {Object.values(filters).some(Boolean)
               ? ` · выбрано ${Object.values(filters).filter(Boolean).length}`
@@ -110,10 +112,11 @@ export const TemplatesPage = () => {
                 ]}
               />
             </div>
-            <div className="flex h-9 justify-end">
+            <div className="flex min-h-11 justify-end">
               <Button
                 disabled={!Object.values(filters).some(Boolean)}
                 size="sm"
+                className="min-h-11"
                 variant="ghost"
                 onClick={() => {
                   setFilters({
@@ -130,45 +133,49 @@ export const TemplatesPage = () => {
             </div>
           </div>
         </details>
-        <ErrorNotice error={options.error} />
-        <ErrorNotice error={list.error} />
+        <ErrorNotice error={options.error} onRetry={options.reload} />
+        <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем шаблоны…' : ''}
         </p>
-        <div className="divide-y border-t">
+        <div className="border-t">
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
               Шаблонов не найдено
             </p>
           )}
-          {list.data?.items.map((template) => (
-            <div
-              key={template.id}
-              className="grid gap-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
-            >
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-medium">
-                    {template.stack_name ?? 'Стек не задан'} · v
-                    {template.version}
-                  </span>
+          <AdminAnimatedList>
+            {list.data?.items.map((template) => (
+              <StaggerItem
+                key={template.id}
+                className="grid min-w-0 gap-4 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+              >
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-3 wrap-anywhere">
+                  <div className="min-w-0">
+                    <span className="font-medium">
+                      {template.stack_name ?? 'Стек не задан'} · v
+                      {template.version}
+                    </span>
+
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {label('specializations', template.specialization_id)} ·{' '}
+                      {label('grades', template.grade_id)} ·{' '}
+                      {template.time_limit_sec / 60} мин · {template.pass_score}
+                      %
+                    </p>
+                  </div>
                   <Status value={template.status} />
                 </div>
-                <p className="mt-2 text-sm text-muted-foreground">
-                  {label('specializations', template.specialization_id)} ·{' '}
-                  {label('grades', template.grade_id)} ·{' '}
-                  {template.time_limit_sec / 60} мин · {template.pass_score}%
-                </p>
-              </div>
-              <Button variant="outline" asChild>
-                <Link href={`/admin/templates/${template.id}`}>
-                  {' '}
-                  Открыть состав
-                </Link>
-              </Button>
-            </div>
-          ))}
+                <Button variant="outline" asChild>
+                  <Link href={`/admin/templates/${template.id}`}>
+                    {' '}
+                    Открыть состав
+                  </Link>
+                </Button>
+              </StaggerItem>
+            ))}
+          </AdminAnimatedList>
         </div>
         <Pagination
           offset={offset}

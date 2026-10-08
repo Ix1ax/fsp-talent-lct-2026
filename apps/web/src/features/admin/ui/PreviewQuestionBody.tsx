@@ -17,7 +17,7 @@ export const PreviewQuestionBody = ({
 }: PreviewQuestionBodyProps) => {
   const { prompt, answer_form: grading } = question;
   return (
-    <section className="grid min-w-0 min-h-64 content-start gap-4 border p-4">
+    <section className="grid min-w-0 min-h-64 content-start gap-4 rounded-lg border p-4">
       <p className="text-xs text-caption">
         {question.skill_name} · Сложность {question.difficulty} · Версия{' '}
         {question.version}
@@ -26,7 +26,11 @@ export const PreviewQuestionBody = ({
         {prompt.text}
       </h3>
       {prompt.code && (
-        <pre className="min-w-0 overflow-x-auto bg-muted p-4 text-sm">
+        <pre
+          tabIndex={0}
+          aria-label="Код задания"
+          className="min-w-0 max-w-full overflow-x-auto rounded-md bg-muted p-3 text-sm focus-visible:outline-2 focus-visible:outline-ring"
+        >
           <code>{prompt.code}</code>
         </pre>
       )}
@@ -42,7 +46,7 @@ export const PreviewQuestionBody = ({
           prompt.options?.map((option) => (
             <label
               key={option.id}
-              className="flex cursor-pointer items-start gap-3 border p-3"
+              className="flex min-h-12 min-w-0 cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors has-checked:border-primary has-checked:bg-primary/5 has-focus-visible:ring-2 has-focus-visible:ring-ring"
             >
               <Checkbox
                 aria-label={option.text}

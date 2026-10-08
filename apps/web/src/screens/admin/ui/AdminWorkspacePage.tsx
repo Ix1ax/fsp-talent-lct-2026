@@ -51,25 +51,34 @@ export const AdminWorkspacePage = ({
   else if (action === 'edit') current = 'Новая версия';
   const loading = template.loading || question.loading;
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-6">
       <nav
         aria-label="Хлебные крошки"
         className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
       >
-        <Link href="/admin" className="hover:text-foreground">
+        <Link
+          href="/admin"
+          className="inline-flex min-h-11 items-center hover:text-foreground"
+        >
           Админка
         </Link>
-        <ChevronRight size={14} />
-        <Link href={base} className="hover:text-foreground">
+        <ChevronRight size={14} aria-hidden="true" className="shrink-0" />
+        <Link
+          href={base}
+          className="inline-flex min-h-11 items-center hover:text-foreground"
+        >
           {label}
         </Link>
-        <ChevronRight size={14} />
+        <ChevronRight size={14} aria-hidden="true" className="shrink-0" />
         {action && (
           <>
-            <Link href={`${base}/${id}`} className="hover:text-foreground">
+            <Link
+              href={`${base}/${id}`}
+              className="inline-flex min-h-11 items-center hover:text-foreground"
+            >
               Карточка
             </Link>
-            <ChevronRight size={14} />
+            <ChevronRight size={14} aria-hidden="true" className="shrink-0" />
           </>
         )}
         <span aria-current="page" className="text-foreground">

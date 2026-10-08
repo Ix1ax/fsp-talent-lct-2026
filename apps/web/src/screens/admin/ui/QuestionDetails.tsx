@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Button, Card } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { adminRequest, adminSchemas, kindLabels } from '@/entities/admin';
 import {
+  AdminConfirmDialog,
+  AdminPanel,
   ErrorNotice,
   Status,
   useAdminMutation,
@@ -30,14 +32,14 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
   const [confirm, setConfirm] = useState<number | 'archive' | null>(null);
   const question = detail.data;
   return (
-    <Card className="min-w-0 gap-5 p-4 sm:p-6 lg:p-8">
+    <AdminPanel>
       <h1 className="text-2xl font-semibold">Карточка задания</h1>
       <p className="text-sm text-muted-foreground">
         {question
           ? `${question.skill_name} · Сложность ${question.difficulty} · ${kindLabels[question.kind]}`
           : 'Загружаем версии…'}
       </p>
-      <ErrorNotice error={detail.error} />
+      <ErrorNotice error={detail.error} onRetry={detail.reload} />
       <ErrorNotice error={mutation.error} />
       {question && (
         <>
@@ -50,7 +52,7 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
                 : 'нет'}
             </span>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             <Button
               variant="outline"
               disabled={mutation.busy || !question.active}
@@ -59,7 +61,8 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
               Создать новую версию
             </Button>
             <Button
-              variant="destructive"
+              variant="outline"
+              className="text-destructive hover:text-destructive"
               disabled={mutation.busy || !question.active}
               onClick={() => setConfirm('archive')}
             >
@@ -67,50 +70,48 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
             </Button>
           </div>
           {confirm !== null && (
-            <div className="grid gap-3 border bg-muted p-4">
-              <p className="text-sm">
-                {confirm === 'archive'
-                  ? 'Архивировать задание? Оно станет недоступным для новых тестов. Восстановление не предусмотрено.'
-                  : `Опубликовать v${confirm}? Предыдущая опубликованная версия будет архивирована.`}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  disabled={mutation.busy}
-                  onClick={() =>
-                    void mutation.run(async () => {
-                      if (confirm === 'archive')
-                        await adminRequest(
-                          session!.access_token,
-                          `/assessments/questions/${id}/archive`,
-                          adminSchemas.question,
-                          { method: 'POST' },
-                        );
-                      else
-                        await adminRequest(
-                          session!.access_token,
-                          `/assessments/questions/${id}/versions/${confirm}/publish`,
-                          adminSchemas.version,
-                          { method: 'POST' },
-                        );
-                      setConfirm(null);
-                      refresh();
-                    })
-                  }
-                >
-                  Подтвердить
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={mutation.busy}
-                  onClick={() => setConfirm(null)}
-                >
-                  Отмена
-                </Button>
-              </div>
-            </div>
+            <AdminConfirmDialog
+              title={
+                confirm === 'archive'
+                  ? 'Архивировать задание?'
+                  : `Опубликовать v${confirm}?`
+              }
+              description={
+                confirm === 'archive'
+                  ? 'Задание станет недоступным для новых тестов. Восстановление не предусмотрено.'
+                  : 'Предыдущая опубликованная версия будет архивирована.'
+              }
+              busy={mutation.busy}
+              error={mutation.error}
+              destructive={confirm === 'archive'}
+              onClose={() => setConfirm(null)}
+              onConfirm={async () => {
+                await mutation.run(async () => {
+                  if (confirm === 'archive')
+                    await adminRequest(
+                      session!.access_token,
+                      `/assessments/questions/${id}/archive`,
+                      adminSchemas.question,
+                      { method: 'POST' },
+                    );
+                  else
+                    await adminRequest(
+                      session!.access_token,
+                      `/assessments/questions/${id}/versions/${confirm}/publish`,
+                      adminSchemas.version,
+                      { method: 'POST' },
+                    );
+                  setConfirm(null);
+                  refresh();
+                });
+              }}
+            />
           )}
           {question.versions?.map((version) => (
-            <section key={version.version} className="grid gap-3 border p-4">
+            <section
+              key={version.version}
+              className="grid min-w-0 gap-3 rounded-lg border p-4"
+            >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <h3 className="font-medium">Версия {version.version}</h3>
@@ -130,7 +131,11 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
                 {version.prompt.text}
               </p>
               {version.prompt.code && (
-                <pre className="min-w-0 overflow-x-auto bg-muted p-3 text-xs">
+                <pre
+                  tabIndex={0}
+                  aria-label="Код задания"
+                  className="min-w-0 max-w-full overflow-x-auto rounded-md bg-muted p-3 text-xs focus-visible:outline-2 focus-visible:outline-ring"
+                >
                   <code>{version.prompt.code}</code>
                 </pre>
               )}
@@ -158,6 +163,6 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
           ))}
         </>
       )}
-    </Card>
+    </AdminPanel>
   );
 };

@@ -2,7 +2,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
-import { Button, Card, Checkbox, Input, Textarea } from '@/shared/ui';
+import { Button, Checkbox, Input, Textarea } from '@/shared/ui';
 import {
   adminRequest,
   adminSchemas,
@@ -18,6 +18,7 @@ import {
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { useAdminOptions } from '../model/useAdminOptions';
+import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
 interface QuestionEditorProps {
@@ -94,7 +95,7 @@ export const QuestionEditor = ({
     });
   });
   return (
-    <Card className="min-w-0 gap-5 p-4 sm:p-6 lg:p-8">
+    <AdminPanel>
       <h1 className="text-2xl font-semibold">
         {question ? 'Новая версия задания' : 'Новое задание'}
       </h1>
@@ -117,7 +118,7 @@ export const QuestionEditor = ({
                   />
                 )}
               />
-              <p className="mt-1 text-sm text-destructive">
+              <p className="mt-1 min-h-5 text-sm text-destructive">
                 {form.formState.errors.skill_id?.message}
               </p>
             </div>
@@ -201,13 +202,13 @@ export const QuestionEditor = ({
             <section className="grid gap-3">
               <h3 className="font-medium">Варианты ответа</h3>
               <p className="text-sm text-muted-foreground">
-                Отметьте правильные ответы. ID сохраняет связь с проверкой.
+                Отметьте правильные ответы.
               </p>
               <Controller
                 control={form.control}
                 name="multiple"
                 render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex min-h-11 items-center gap-2 text-sm">
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={(v) => field.onChange(v === true)}
@@ -225,16 +226,17 @@ export const QuestionEditor = ({
                     control={form.control}
                     name={`options.${index}.correct`}
                     render={({ field }) => (
-                      <Checkbox
-                        aria-label={`Правильный ответ ${index + 1}`}
-                        className="mt-3"
-                        checked={field.value}
-                        onCheckedChange={(v) => field.onChange(v === true)}
-                      />
+                      <label className="flex size-11 cursor-pointer items-center justify-center">
+                        <Checkbox
+                          aria-label={`Правильный ответ ${index + 1}`}
+                          checked={field.value}
+                          onCheckedChange={(v) => field.onChange(v === true)}
+                        />
+                      </label>
                     )}
                   />
                   <Input
-                    aria-label={`ID варианта ${index + 1}`}
+                    aria-label={`Код варианта ${index + 1}`}
                     className="w-full"
                     {...form.register(`options.${index}.id`)}
                   />
@@ -286,7 +288,7 @@ export const QuestionEditor = ({
                 control={form.control}
                 name="case_sensitive"
                 render={({ field }) => (
-                  <label className="flex items-center gap-2 text-sm">
+                  <label className="flex min-h-11 items-center gap-2 text-sm">
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={(v) => field.onChange(v === true)}
@@ -312,6 +314,6 @@ export const QuestionEditor = ({
           </div>
         </fieldset>
       </form>
-    </Card>
+    </AdminPanel>
   );
 };
