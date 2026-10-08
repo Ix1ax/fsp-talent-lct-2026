@@ -12,6 +12,11 @@ import (
 func TestResumePDFUnicodeAndPagination(t *testing.T) {
 	summary := "Разрабатываю сервисы на Go и PostgreSQL. Работал над поиском кандидатов и интеграциями."
 	p := entity.FullProfile{Profile: &entity.Profile{ProfileInput: entity.ProfileInput{Summary: &summary, SearchStatus: "open", ExperienceMonths: 36}}, Contacts: &entity.Contacts{ContactsInput: entity.ContactsInput{FullName: "Иван Петров", Email: "ivan@example.test"}}, Category: &entity.Category{Specialization: "Бэкенд", Grade: "Middle"}, Onboarding: entity.Onboarding{Survey: &entity.Survey{SurveyInput: entity.SurveyInput{Industry: "Информационные технологии", SoftSkills: []string{"Работа в команде"}}}}}
+	goName, javaName := "Go", "Java"
+	p.Qualifications = []entity.Category{
+		{Specialization: "Бэкенд", Grade: "Middle", StackName: &goName},
+		{Specialization: "Бэкенд", Grade: "Junior", StackName: &javaName},
+	}
 	data, err := Render(p)
 	if err != nil || !bytes.HasPrefix(data, []byte("%PDF-")) {
 		t.Fatal(err)
@@ -26,7 +31,7 @@ func TestResumePDFUnicodeAndPagination(t *testing.T) {
 	}
 	var out bytes.Buffer
 	out.ReadFrom(text)
-	if !strings.Contains(out.String(), "Middle") {
+	if !strings.Contains(out.String(), "Middle") || !strings.Contains(out.String(), "Java") || !strings.Contains(out.String(), "Go") {
 		t.Fatal("Потерян текст PDF", out.String())
 	}
 	if path := os.Getenv("TEST_PDF_OUTPUT"); path != "" {

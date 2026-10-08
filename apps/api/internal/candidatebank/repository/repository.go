@@ -17,22 +17,22 @@ func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
 const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
  LEFT JOIN LATERAL (
- SELECT c.specialization_id,c.grade_id,a.score_percent FROM candidate_categories c
+ SELECT c.specialization_id,c.grade_id,a.score_percent,a.stack_skill_id,a.stack_name FROM candidate_categories c
  JOIN assessment_attempts a ON a.id=c.attempt_id AND a.candidate_id=c.candidate_id
  AND a.status='passed' AND a.specialization_id=c.specialization_id AND a.grade_id=c.grade_id
  WHERE c.candidate_id=p.id) category ON true
  LEFT JOIN LATERAL (
- SELECT choice.specialization_id,choice.grade_id FROM (
- SELECT o.specialization_id,o.grade_id,0 AS priority,o.updated_at AS chosen_at,o.candidate_id::text AS tie FROM candidate_onboarding o WHERE o.candidate_id=p.id
- UNION ALL SELECT a.specialization_id,a.grade_id,1,a.started_at,a.id::text FROM assessment_attempts a WHERE a.candidate_id=p.id
+ SELECT choice.specialization_id,choice.grade_id,choice.stack_skill_id,(SELECT name FROM skills WHERE id=choice.stack_skill_id) AS stack_name FROM (
+ SELECT o.specialization_id,o.grade_id,o.stack_skill_id,0 AS priority,o.updated_at AS chosen_at,o.candidate_id::text AS tie FROM candidate_onboarding o WHERE o.candidate_id=p.id
+ UNION ALL SELECT a.specialization_id,a.grade_id,a.stack_skill_id,1,a.started_at,a.id::text FROM assessment_attempts a WHERE a.candidate_id=p.id
  ) choice ORDER BY choice.priority,choice.chosen_at DESC,choice.tie DESC LIMIT 1) declared ON true
  WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL AND c.company_id IS NULL)
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL AND c.company_id IS NULL)`
 const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_rub,p.search_status,
  ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id) AS work_format_ids,
- CASE WHEN category.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id) END AS category,
- CASE WHEN declared.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',declared.specialization_id,'grade_id',declared.grade_id) END AS declared_category,
+ CASE WHEN category.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id,'stack_skill_id',category.stack_skill_id,'stack_name',category.stack_name) END AS category,
+ CASE WHEN declared.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',declared.specialization_id,'grade_id',declared.grade_id,'stack_skill_id',declared.stack_skill_id,'stack_name',declared.stack_name) END AS declared_category,
  CASE WHEN category.grade_id IS NOT NULL THEN 'confirmed' ELSE 'unconfirmed' END AS grade_status,
  (SELECT count(*)::int FROM fsp_achievements fa WHERE fa.candidate_id=p.id) AS achievements_count,
  CASE WHEN category.grade_id IS NOT NULL THEN COALESCE((SELECT max(CASE WHEN place<=3 THEN 5 WHEN place IS NOT NULL THEN 3 ELSE 1 END)::float8 FROM fsp_achievements fa WHERE fa.candidate_id=p.id),0) ELSE 0 END AS fsp_bonus`

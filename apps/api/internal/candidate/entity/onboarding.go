@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"github.com/google/uuid"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -8,6 +9,7 @@ import (
 
 // SurveyInput — ответы первичного опроса, не подтверждение квалификации.
 type SurveyInput struct {
+	StackSkillID     string   `json:"stack_skill_id"`
 	Industry         string   `json:"industry"`
 	SpecializationID int16    `json:"specialization_id"`
 	GradeID          int16    `json:"grade_id"`
@@ -22,6 +24,11 @@ func (in *SurveyInput) Normalize() error {
 	if in.SpecializationID <= 0 || in.GradeID <= 0 {
 		return invalid("Выберите специализацию и предполагаемый грейд")
 	}
+	stack, err := uuid.Parse(in.StackSkillID)
+	if err != nil || stack == uuid.Nil {
+		return invalid("Выберите основной навык (stack_skill_id)")
+	}
+	in.StackSkillID = stack.String()
 	if len(in.SoftSkills) > 20 {
 		return invalid("Допустимо до 20 софт-скиллов")
 	}
@@ -42,10 +49,13 @@ func (in *SurveyInput) Normalize() error {
 }
 
 type Survey struct {
+	GradeRank int16 `json:"-"`
 	SurveyInput
 	UpdatedAt time.Time `json:"updated_at"`
 }
 type OnboardingAttempt struct {
+	StackSkillID     *string   `json:"stack_skill_id"`
+	StackName        *string   `json:"stack_name"`
 	ID               string    `json:"id"`
 	Status           string    `json:"status"`
 	SpecializationID int16     `json:"specialization_id"`
@@ -58,7 +68,7 @@ type Onboarding struct {
 	LatestAttempt *OnboardingAttempt `json:"latest_attempt"`
 }
 
-func BuildOnboarding(processing bool, p *Profile, survey *Survey, attempt *OnboardingAttempt, category *Category, now time.Time) Onboarding {
+func BuildOnboarding(processing bool, p *Profile, survey *Survey, attempt *OnboardingAttempt, category *Category, now time.Time, qualifications ...Category) Onboarding {
 	out := Onboarding{NextStep: "consent", Survey: survey, LatestAttempt: attempt}
 	if !processing {
 		out.Survey = nil
@@ -74,12 +84,17 @@ func BuildOnboarding(processing bool, p *Profile, survey *Survey, attempt *Onboa
 		return out
 	}
 	out.NextStep = "survey"
-	if survey == nil {
+	if survey == nil || survey.StackSkillID == "" {
 		return out
 	}
 	out.NextStep = "test"
-	if category != nil && category.SpecializationID == survey.SpecializationID && category.GradeID == survey.GradeID {
+	if category != nil && category.SpecializationID == survey.SpecializationID && (category.GradeID == survey.GradeID || (survey.GradeRank > 0 && category.GradeRank >= survey.GradeRank)) && category.StackSkillID != nil && *category.StackSkillID == survey.StackSkillID {
 		out.NextStep = "complete"
+	}
+	for _, c := range qualifications {
+		if c.SpecializationID == survey.SpecializationID && (c.GradeID == survey.GradeID || (survey.GradeRank > 0 && c.GradeRank >= survey.GradeRank)) && c.StackSkillID != nil && *c.StackSkillID == survey.StackSkillID {
+			out.NextStep = "complete"
+		}
 	}
 	return out
 }

@@ -91,8 +91,18 @@ func Render(p entity.FullProfile) ([]byte, error) {
 		}
 	}
 	heading("Квалификация")
-	if p.Category != nil {
-		line(p.Category.Specialization + " · " + p.Category.Grade + " — подтверждено тестом")
+	categories := p.Qualifications
+	if len(categories) == 0 && p.Category != nil {
+		categories = []entity.Category{*p.Category}
+	}
+	if len(categories) > 0 {
+		for _, category := range categories {
+			stack := ""
+			if category.StackName != nil {
+				stack = " · " + *category.StackName
+			}
+			line(category.Specialization + stack + " · " + category.Grade + " — подтверждено тестом")
+		}
 	} else {
 		line("Грейд пока не подтверждён тестом")
 	}

@@ -45,6 +45,25 @@ func (r *Repository) GetDetails(ctx context.Context, userID, companyID, candidat
 	if err != nil {
 		return d, err
 	}
+	d.Qualifications = []entity.Qualification{}
+	rows, err = tx.Query(ctx, `SELECT DISTINCT ON (h.specialization_id,a.stack_skill_id) h.specialization_id,sp.name,h.grade_id,g.name,h.achieved_at,a.stack_skill_id::text,a.stack_name
+ FROM grade_history h JOIN assessment_attempts a ON a.id=h.attempt_id JOIN specializations sp ON sp.id=h.specialization_id JOIN grades g ON g.id=h.grade_id
+ WHERE h.candidate_id=$1 ORDER BY h.specialization_id,a.stack_skill_id,g.rank DESC,h.achieved_at DESC,h.id DESC`, candidateID)
+	if err != nil {
+		return d, err
+	}
+	for rows.Next() {
+		var c entity.Qualification
+		if err = rows.Scan(&c.SpecializationID, &c.Specialization, &c.GradeID, &c.Grade, &c.ConfirmedAt, &c.StackSkillID, &c.StackName); err != nil {
+			rows.Close()
+			return d, err
+		}
+		d.Qualifications = append(d.Qualifications, c)
+	}
+	rows.Close()
+	if err = rows.Err(); err != nil {
+		return d, err
+	}
 	var result entity.DetailAssessment
 	err = tx.QueryRow(ctx, `SELECT a.score_percent,c.confirmed_at FROM candidate_categories c
  JOIN assessment_attempts a ON a.id=c.attempt_id AND a.candidate_id=c.candidate_id

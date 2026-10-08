@@ -66,6 +66,7 @@ type FullConsents struct {
 
 // FullSnapshot — согласованный снимок данных кандидата из хранилища.
 type FullSnapshot struct {
+	Qualifications  []Category
 	WorkFormatNames []string
 	Survey          *Survey
 	LatestAttempt   *OnboardingAttempt
@@ -81,6 +82,9 @@ type FullSnapshot struct {
 
 // Category — текущая категория кандидата: специализация и грейд, подтверждённые последним пройденным тестом.
 type Category struct {
+	GradeRank        int16     `json:"-"`
+	StackSkillID     *string   `json:"stack_skill_id"`
+	StackName        *string   `json:"stack_name"`
 	SpecializationID int16     `json:"specialization_id"`
 	Specialization   string    `json:"specialization"`
 	GradeID          int16     `json:"grade_id"`
@@ -90,6 +94,7 @@ type Category struct {
 
 // FullProfile — ответ GET /me/profile/full. Достижения поступают только из адаптера реестра ФСП.
 type FullProfile struct {
+	Qualifications  []Category              `json:"qualifications"`
 	WorkFormatNames []string                `json:"work_format_names"`
 	Onboarding      Onboarding              `json:"onboarding"`
 	Profile         *Profile                `json:"profile"`
