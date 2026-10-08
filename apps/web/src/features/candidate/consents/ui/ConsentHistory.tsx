@@ -1,3 +1,4 @@
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 import type { CandidateConsents } from '@/entities/candidate';
 
@@ -29,7 +30,7 @@ export const ConsentHistory = ({
   onRefresh,
 }: ConsentHistoryProps) => (
   <section
-    id="consent-history"
+    id={CANDIDATE_ELEMENT_IDS.consents.history}
     aria-label="История согласий"
     className="flex flex-col gap-3"
   >

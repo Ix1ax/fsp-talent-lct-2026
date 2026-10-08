@@ -1,15 +1,21 @@
 import type { ReactNode } from 'react';
 
+import { FieldMessage } from '@/shared/ui';
+
 interface ProfileFieldProps {
   id: string;
+  errorId: string;
   label: string;
   error?: string;
+  errorLines?: 1 | 2;
   children: ReactNode;
 }
 export const ProfileField = ({
   id,
+  errorId,
   label,
   error,
+  errorLines = 1,
   children,
 }: ProfileFieldProps) => (
   <div className="flex flex-col gap-2">
@@ -17,10 +23,6 @@ export const ProfileField = ({
       {label}
     </label>
     {children}
-    {error && (
-      <p id={`${id}-error`} className="text-sm text-destructive">
-        {error}
-      </p>
-    )}
+    <FieldMessage id={errorId} message={error} lines={errorLines} />
   </div>
 );

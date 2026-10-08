@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import {
   Button,
   Card,
@@ -49,7 +50,7 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
   const disabled = busy || pending;
 
   return (
-    <Card id="consents">
+    <Card id={CANDIDATE_ELEMENT_IDS.consents.section}>
       <CardHeader>
         <CardTitle>Согласия и видимость профиля</CardTitle>
         <CardDescription>
@@ -100,7 +101,7 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
           variant="ghost"
           disabled={disabled}
           aria-expanded={showHistory}
-          aria-controls="consent-history"
+          aria-controls={CANDIDATE_ELEMENT_IDS.consents.history}
           className="min-h-11 self-start"
           onClick={() => {
             setShowHistory(!showHistory);

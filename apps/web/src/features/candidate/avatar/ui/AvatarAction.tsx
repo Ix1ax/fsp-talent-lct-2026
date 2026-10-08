@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CameraIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 
 interface AvatarActionProps {
@@ -36,7 +37,7 @@ export const AvatarAction = ({
           className={`${onReplace ? 'size-11' : 'size-full'} rounded-full p-0 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white`}
           disabled={disabled}
           aria-label={label}
-          aria-describedby="avatar-help"
+          aria-describedby={CANDIDATE_ELEMENT_IDS.avatar.hint}
           title={label}
           onClick={onClick}
         >

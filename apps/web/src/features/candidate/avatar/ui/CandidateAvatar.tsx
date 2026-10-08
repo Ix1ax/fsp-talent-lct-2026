@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
 import {
@@ -61,14 +62,14 @@ export const CandidateAvatar = ({
   const reportError = useCallback(
     (message: string, field: 'file' | 'root' = 'root') => {
       form.setError(field, { message });
-      toast.error(message, { id: 'candidate-avatar' });
+      toast.error(message, { id: CANDIDATE_ELEMENT_IDS.avatar.input });
     },
     [form],
   );
 
   const reportSuccess = useCallback((message: string) => {
     setMessage(message);
-    toast.success(message, { id: 'candidate-avatar' });
+    toast.success(message, { id: CANDIDATE_ELEMENT_IDS.avatar.input });
   }, []);
 
   const chooseFile = async (file: File) => {
@@ -194,7 +195,7 @@ export const CandidateAvatar = ({
 
   return (
     <section
-      id="candidate-avatar-section"
+      id={CANDIDATE_ELEMENT_IDS.avatar.section}
       aria-label="Фото профиля"
       className="flex flex-col gap-4"
       aria-busy={disabled}
@@ -222,7 +223,10 @@ export const CandidateAvatar = ({
           onRemove={profile?.avatarFileId ? () => setDeleting(true) : undefined}
         />
       )}
-      <p id="avatar-help" className="text-sm text-muted-foreground">
+      <p
+        id={CANDIDATE_ELEMENT_IDS.avatar.hint}
+        className="text-sm text-muted-foreground"
+      >
         Фото необязательно, его видите только вы. JPEG или PNG.
       </p>
       <form
@@ -243,7 +247,7 @@ export const CandidateAvatar = ({
                 inputRef.current = element;
                 field.ref(element);
               }}
-              id="candidate-avatar"
+              id={CANDIDATE_ELEMENT_IDS.avatar.input}
               name={field.name}
               type="file"
               className="hidden"
@@ -252,7 +256,12 @@ export const CandidateAvatar = ({
               disabled={disabled}
               aria-label="Выбрать фото"
               aria-describedby={
-                errors.file ? 'avatar-help avatar-file-error' : 'avatar-help'
+                errors.file
+                  ? [
+                      CANDIDATE_ELEMENT_IDS.avatar.hint,
+                      CANDIDATE_ELEMENT_IDS.avatar.error,
+                    ].join(' ')
+                  : CANDIDATE_ELEMENT_IDS.avatar.hint
               }
               onBlur={field.onBlur}
               onChange={(event) => {
@@ -286,7 +295,7 @@ export const CandidateAvatar = ({
         )}
         {errors.file && (
           <p
-            id="avatar-file-error"
+            id={CANDIDATE_ELEMENT_IDS.avatar.error}
             role="alert"
             className="text-sm text-destructive"
           >

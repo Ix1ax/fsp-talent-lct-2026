@@ -1,7 +1,9 @@
 import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
 import { CheckIcon } from 'lucide-react';
 
 import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
+import { useMotionSettings } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
 import {
   Select,
@@ -26,6 +28,7 @@ export const ProfileStepNavigation = ({
   savedSteps,
   onStepChange,
 }: ProfileStepNavigationProps) => {
+  const { reducedMotion, transition } = useMotionSettings();
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   return (
     <div className="flex min-w-0 flex-col gap-3">
@@ -88,12 +91,25 @@ export const ProfileStepNavigation = ({
             <span>
               {position + 1}. {item.title}
             </span>
-            {savedSteps.includes(item.id) && (
-              <CheckIcon
-                className="size-4 shrink-0 text-success"
-                aria-label="Данные сохранены"
-              />
-            )}
+            <span className="flex size-4 shrink-0 items-center justify-center">
+              <AnimatePresence initial={false}>
+                {savedSteps.includes(item.id) && (
+                  <motion.span
+                    key="saved"
+                    className="inline-flex"
+                    initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+                    transition={transition}
+                  >
+                    <CheckIcon
+                      className="size-4 text-success"
+                      aria-label="Данные сохранены"
+                    />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </span>
           </Link>
         ))}
       </nav>

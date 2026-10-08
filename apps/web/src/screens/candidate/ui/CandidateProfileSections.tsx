@@ -1,3 +1,5 @@
+import { FadeIn } from '@/shared/ui';
+
 import { PROFILE_STEPS } from '../constants';
 import type { CandidateWorkspace } from '../model';
 import {
@@ -38,7 +40,9 @@ export const CandidateProfileSections = ({
             aria-label={title}
             className="w-full min-w-0"
           >
-            <Section workspace={workspace} />
+            <FadeIn visible={workspace.step === id} initial={false}>
+              <Section workspace={workspace} />
+            </FadeIn>
           </section>
         );
       })}

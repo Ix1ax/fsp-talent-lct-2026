@@ -1,7 +1,9 @@
 import { type Control, Controller } from 'react-hook-form';
 
+import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import {
   Checkbox,
+  FieldMessage,
   Select,
   SelectContent,
   SelectItem,
@@ -39,7 +41,7 @@ export const ProfileEmploymentFields = ({
           <fieldset disabled={!workFormats || busy}>
             <legend className="text-sm font-medium">Форматы работы</legend>
             <p
-              id="profile-work-formats-hint"
+              id={CANDIDATE_ELEMENT_IDS.profile.workFormats.hint}
               className="mt-1 mb-3 text-sm text-muted-foreground"
             >
               Можно выбрать несколько вариантов.
@@ -63,8 +65,11 @@ export const ProfileEmploymentFields = ({
                     aria-invalid={!!fieldState.error}
                     aria-describedby={
                       fieldState.error
-                        ? 'profile-work-formats-hint profile-work-formats-error'
-                        : 'profile-work-formats-hint'
+                        ? [
+                            CANDIDATE_ELEMENT_IDS.profile.workFormats.hint,
+                            CANDIDATE_ELEMENT_IDS.profile.workFormats.error,
+                          ].join(' ')
+                        : CANDIDATE_ELEMENT_IDS.profile.workFormats.hint
                     }
                     onCheckedChange={(checked) => {
                       const ids = field.value.filter((id) => id !== format.id);
@@ -77,15 +82,11 @@ export const ProfileEmploymentFields = ({
                 </label>
               ))}
             </div>
-            {fieldState.error && (
-              <p
-                id="profile-work-formats-error"
-                role="alert"
-                className="text-sm text-destructive"
-              >
-                {fieldState.error.message}
-              </p>
-            )}
+            <FieldMessage
+              id={CANDIDATE_ELEMENT_IDS.profile.workFormats.error}
+              message={fieldState.error?.message}
+              className="mt-2"
+            />
           </fieldset>
         )}
       />
@@ -94,7 +95,8 @@ export const ProfileEmploymentFields = ({
         control={control}
         render={({ field, fieldState }) => (
           <ProfileField
-            id="profile-search-status"
+            id={CANDIDATE_ELEMENT_IDS.profile.searchStatus.input}
+            errorId={CANDIDATE_ELEMENT_IDS.profile.searchStatus.error}
             label="Статус поиска"
             error={fieldState.error?.message}
           >
@@ -106,11 +108,13 @@ export const ProfileEmploymentFields = ({
               <SelectTrigger
                 className="h-11! w-full text-base sm:text-sm"
                 ref={field.ref}
-                id="profile-search-status"
+                id={CANDIDATE_ELEMENT_IDS.profile.searchStatus.input}
                 onBlur={field.onBlur}
                 aria-invalid={!!fieldState.error}
                 aria-describedby={
-                  fieldState.error ? 'profile-search-status-error' : undefined
+                  fieldState.error
+                    ? CANDIDATE_ELEMENT_IDS.profile.searchStatus.error
+                    : undefined
                 }
               >
                 <SelectValue />

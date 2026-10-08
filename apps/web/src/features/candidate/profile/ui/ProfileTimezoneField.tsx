@@ -1,6 +1,10 @@
 import { type Control, Controller } from 'react-hook-form';
 
-import { TIMEZONE_LABELS, TIMEZONES } from '@/shared/contants';
+import {
+  CANDIDATE_ELEMENT_IDS,
+  TIMEZONE_LABELS,
+  TIMEZONES,
+} from '@/shared/contants';
 import { Combobox } from '@/shared/ui';
 
 import type { ProfileFormValues } from '../model';
@@ -40,13 +44,15 @@ export const ProfileTimezoneField = ({
           });
         return (
           <ProfileField
-            id="profile-timezone"
+            id={CANDIDATE_ELEMENT_IDS.profile.timezone.input}
+            errorId={CANDIDATE_ELEMENT_IDS.profile.timezone.error}
             label="Часовой пояс"
             error={fieldState.error?.message}
+            errorLines={2}
           >
             <Combobox
               ref={field.ref}
-              id="profile-timezone"
+              id={CANDIDATE_ELEMENT_IDS.profile.timezone.input}
               value={field.value}
               onValueChange={field.onChange}
               onBlur={field.onBlur}
@@ -55,7 +61,9 @@ export const ProfileTimezoneField = ({
               emptyMessage="Часовой пояс не найден."
               aria-invalid={!!fieldState.error}
               aria-describedby={
-                fieldState.error ? 'profile-timezone-error' : undefined
+                fieldState.error
+                  ? CANDIDATE_ELEMENT_IDS.profile.timezone.error
+                  : undefined
               }
             />
           </ProfileField>

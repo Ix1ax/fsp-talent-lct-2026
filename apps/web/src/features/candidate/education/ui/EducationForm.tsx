@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   Button,
+  FieldMessage,
   Input,
   Select,
   SelectContent,
@@ -19,6 +20,7 @@ import {
 
 import { toEducationFormValues, toEducationInput } from '../lib';
 import {
+  EDUCATION_FIELDS,
   EDUCATION_LEVEL_LABELS,
   type EducationFormValues,
   educationSchema,
@@ -35,27 +37,6 @@ interface EducationFormProps {
   onSave: (input: SaveCandidateEducationInput, id?: string) => Promise<boolean>;
   onClose: () => void;
 }
-
-const fields = [
-  {
-    key: 'institution',
-    label: 'Учебное заведение',
-    placeholder: 'Название школы, колледжа или университета',
-    type: 'text',
-  },
-  {
-    key: 'specialty',
-    label: 'Специальность (необязательно)',
-    placeholder: 'Например, прикладная информатика',
-    type: 'text',
-  },
-  {
-    key: 'graduationYear',
-    label: 'Год окончания',
-    placeholder: 'Например, 2024',
-    type: 'number',
-  },
-] as const;
 
 export const EducationForm = ({
   record,
@@ -124,16 +105,12 @@ export const EducationForm = ({
               </Select>
             )}
           />
-          {errors.level && (
-            <p
-              id={`${prefix}-level-error`}
-              className="text-sm text-destructive"
-            >
-              {errors.level.message}
-            </p>
-          )}
+          <FieldMessage
+            id={`${prefix}-level-error`}
+            message={errors.level?.message}
+          />
         </div>
-        {fields.map((field) => {
+        {EDUCATION_FIELDS.map((field) => {
           const id = `${prefix}-${field.key}`;
           const isYear = field.key === 'graduationYear';
           return (
@@ -173,11 +150,10 @@ export const EducationForm = ({
                   Если ещё учитесь, укажите планируемый год окончания.
                 </p>
               )}
-              {errors[field.key] && (
-                <p id={`${id}-error`} className="text-sm text-destructive">
-                  {errors[field.key]?.message}
-                </p>
-              )}
+              <FieldMessage
+                id={`${id}-error`}
+                message={errors[field.key]?.message}
+              />
             </div>
           );
         })}
