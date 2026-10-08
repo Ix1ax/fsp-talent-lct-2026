@@ -31,6 +31,20 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 				"shortages": shortage.Items,
 			})
 			return
+		case errors.Is(err, entity.ErrPreviewForbidden):
+			abort(c, 403, "forbidden", err.Error())
+		case errors.Is(err, entity.ErrPreviewsUnavailable):
+			abort(c, 503, "previews_unavailable", err.Error())
+		case errors.Is(err, entity.ErrPreviewNotFound):
+			abort(c, 404, "preview_not_found", err.Error())
+		case errors.Is(err, entity.ErrPreviewClosed):
+			abort(c, 409, "preview_closed", err.Error())
+		case errors.Is(err, entity.ErrPreviewExpired):
+			abort(c, 409, "preview_expired", err.Error())
+		case errors.Is(err, entity.ErrPreviewLimit):
+			abort(c, 409, "preview_limit", err.Error())
+		case errors.Is(err, entity.ErrPreviewKeyConflict):
+			abort(c, 409, "idempotency_conflict", err.Error())
 		case errors.Is(err, entity.ErrNotFound):
 			abort(c, 404, "assessment_not_found", err.Error())
 		case errors.Is(err, entity.ErrConflict):
@@ -201,6 +215,51 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 		}
 		c.JSON(200, result)
 	})
+	g.POST("/templates/:id/previews", func(c *gin.Context) {
+		preview, err := assessments.StartPreview(c.Request.Context(), actor(c), c.Param("id"), c.GetHeader("Idempotency-Key"))
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.Header("Location", basePath+"/previews/"+preview.ID)
+		c.JSON(201, preview)
+	})
+	g.GET("/previews/:id", func(c *gin.Context) {
+		preview, err := assessments.GetPreview(c.Request.Context(), actor(c), c.Param("id"), false)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.JSON(200, preview)
+	})
+	g.PUT("/previews/:id/answers/:question_id", func(c *gin.Context) {
+		var answer entity.Answer
+		if err := request.JSON(c, &answer); err != nil {
+			fail(c, err)
+			return
+		}
+		if err := assessments.SavePreviewAnswer(c.Request.Context(), actor(c), c.Param("id"), c.Param("question_id"), answer); err != nil {
+			fail(c, err)
+			return
+		}
+		c.Status(204)
+	})
+	g.POST("/previews/:id/submit", func(c *gin.Context) {
+		preview, err := assessments.GetPreview(c.Request.Context(), actor(c), c.Param("id"), true)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.JSON(200, preview)
+	})
+	g.DELETE("/previews/:id", func(c *gin.Context) {
+		if err := assessments.DeletePreview(c.Request.Context(), actor(c), c.Param("id")); err != nil {
+			fail(c, err)
+			return
+		}
+		c.Status(204)
+	})
+
 }
 
 func abort(c *gin.Context, status int, code, message string) {

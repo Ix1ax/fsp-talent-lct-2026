@@ -168,6 +168,16 @@ type pickedQuestion struct {
 // pickQuestions выбирает случайные активные задания с опубликованной версией по строкам состава и блокирует их FOR SHARE,
 // чтобы администратор не архивировал их в момент выдачи. Нехватка даёт ErrUnavailable.
 func pickQuestions(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQuestion, error) {
+	picked, err := pickQuestionsDetailed(ctx, tx, templateID)
+	var shortage *entity.InsufficientError
+	if errors.As(err, &shortage) {
+		return nil, entity.ErrUnavailable
+	}
+	return picked, err
+}
+
+// pickQuestionsDetailed используется и кандидатами, и предпросмотром; порядок перемешивается по строкам банка.
+func pickQuestionsDetailed(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQuestion, error) {
 	type row struct {
 		skillID    string
 		difficulty int16
@@ -192,6 +202,7 @@ func pickQuestions(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQ
 		return nil, err
 	}
 	var picked []pickedQuestion
+	var shortages []entity.Shortage
 	for _, b := range blueprint {
 		versions, err := tx.Query(ctx, `SELECT v.id::text FROM assessment_questions q JOIN assessment_question_versions v ON v.question_id=q.id AND v.status='published'
  JOIN skills s ON s.id=q.skill_id AND s.active AND s.moderation_status='approved'
@@ -214,8 +225,11 @@ func pickQuestions(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQ
 			return nil, err
 		}
 		if n < b.count {
-			return nil, entity.ErrUnavailable
+			shortages = append(shortages, entity.Shortage{SkillID: b.skillID, Difficulty: b.difficulty, Required: b.count, Available: n})
 		}
+	}
+	if len(shortages) > 0 {
+		return nil, &entity.InsufficientError{Items: shortages}
 	}
 	return picked, nil
 }

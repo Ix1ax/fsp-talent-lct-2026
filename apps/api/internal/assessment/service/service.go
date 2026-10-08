@@ -21,9 +21,15 @@ type Store interface {
 	ArchiveTemplate(ctx context.Context, actorID, id string) (entity.Template, error)
 }
 
-type Service struct{ store Store }
+type Service struct {
+	store    Store
+	previews PreviewStore
+}
 
-func New(store Store) *Service { return &Service{store: store} }
+func New(store Store) *Service {
+	previews, _ := store.(PreviewStore)
+	return &Service{store: store, previews: previews}
+}
 
 func (s *Service) CreateQuestion(ctx context.Context, actorID string, in entity.QuestionInput) (entity.Question, error) {
 	if err := in.Normalize(); err != nil {
