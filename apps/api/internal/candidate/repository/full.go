@@ -90,5 +90,42 @@ func (r *Repository) FullSnapshot(ctx context.Context, userID string) (entity.Fu
 			return snapshot, err
 		}
 	}
+	if snapshot.Profile != nil {
+		var survey entity.Survey
+		err = tx.QueryRow(ctx, `SELECT industry,specialization_id,grade_id,soft_skills,updated_at FROM candidate_onboarding WHERE candidate_id=$1`, snapshot.Profile.ID).Scan(&survey.Industry, &survey.SpecializationID, &survey.GradeID, &survey.SoftSkills, &survey.UpdatedAt)
+		if err == nil {
+			snapshot.Survey = &survey
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			return snapshot, err
+		}
+		var attempt entity.OnboardingAttempt
+		err = tx.QueryRow(ctx, `SELECT id::text,status,specialization_id,grade_id,deadline_at FROM assessment_attempts WHERE candidate_id=$1 ORDER BY started_at DESC,id DESC LIMIT 1`, snapshot.Profile.ID).Scan(&attempt.ID, &attempt.Status, &attempt.SpecializationID, &attempt.GradeID, &attempt.DeadlineAt)
+		if err == nil {
+			snapshot.LatestAttempt = &attempt
+		} else if !errors.Is(err, pgx.ErrNoRows) {
+			return snapshot, err
+		}
+	}
+
+	snapshot.WorkFormatNames = []string{}
+	if snapshot.Profile != nil {
+		rows, err = tx.Query(ctx, `SELECT f.name FROM work_formats f JOIN candidate_work_formats c ON c.work_format_id=f.id WHERE c.candidate_id=$1 ORDER BY f.id`, snapshot.Profile.ID)
+		if err != nil {
+			return snapshot, err
+		}
+		for rows.Next() {
+			var name string
+			if err = rows.Scan(&name); err != nil {
+				rows.Close()
+				return snapshot, err
+			}
+			snapshot.WorkFormatNames = append(snapshot.WorkFormatNames, name)
+		}
+		rows.Close()
+		if err = rows.Err(); err != nil {
+			return snapshot, err
+		}
+	}
+
 	return snapshot, tx.Commit(ctx)
 }
