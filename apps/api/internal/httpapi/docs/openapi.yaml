@@ -6,6 +6,357 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/admin/admins/{admin_id}:
+    patch:
+      operationId: updateAdminStatus
+      tags: [Админка]
+      summary: Блокировать или включить обычного администратора
+      description: "Только superadmin. Изменение собственного аккаунта или superadmin запрещено: 409 admin_status_change_forbidden. Блокировка атомарно отзывает все сессии; включение старые токены не восстанавливает. Повтор того же статуса возвращает 200. Неизвестный UUID — 404 admin_not_found."
+      security:
+        - adminSession: []
+      parameters:
+        - name: admin_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AdminStatusInput'}
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+            X-Request-ID:
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminAccount'}
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Запись не найдена или недоступна
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Конфликт состояния
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '413':
+          description: Превышен размер запроса
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/admin/assessments/templates/{template_id}/previews:
+    post:
+      operationId: startAdminAssessmentPreview
+      tags: [Админка]
+      summary: Начать серверное пробное прохождение
+      description: "Конкретный draft или published шаблон; archived — 409 assessment_conflict. Не более 3 активных preview на администратора (409 preview_limit). Снимки банка и веса фиксируются. Отдельные таблицы без влияния на кандидатов. Хранение 7 дней от старта, ленивая очистка. Правильные ответы доступны только после submit или истечения. Идемпотентный повтор также возвращает 201."
+      security:
+        - adminSession: []
+      parameters:
+        - name: template_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: Idempotency-Key
+          in: header
+          required: false
+          description: 'Печатный ASCII без пробелов, 1–128 символов. Повтор возвращает тот же preview в пределах retain_until; другой шаблон — 409 idempotency_conflict.'
+          schema: {type: string, minLength: 1, maxLength: 128, pattern: '^[!-~]+$'}
+      responses:
+        '201':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+            X-Request-ID:
+              schema: {type: string}
+            Location:
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminAssessmentPreview'}
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав при проверке аккаунта в БД
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Запись не найдена или недоступна
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: 'assessment_conflict, preview_limit, idempotency_conflict или insufficient_questions с shortages'
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/AssessmentInsufficientQuestions'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/admin/assessments/previews/{preview_id}:
+    get:
+      operationId: getAdminAssessmentPreview
+      tags: [Админка]
+      summary: Восстановить своё пробное прохождение
+      description: "Чужой, удалённый или старше retain_until — 404 preview_not_found. При дедлайне автоматически финализирует сохранённые ответы: 200 expired с результатом. Время сервера в server_time."
+      security:
+        - adminSession: []
+      parameters:
+        - name: preview_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+            X-Request-ID:
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminAssessmentPreview'}
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав при проверке аккаунта в БД
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Запись не найдена или недоступна
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+    delete:
+      operationId: deleteAdminAssessmentPreview
+      tags: [Админка]
+      summary: Удалить своё пробное прохождение
+      description: "Физически удаляет preview и ответы. Повтор и чужой UUID возвращают 204 без раскрытия существования. После удаления GET возвращает 404; отменённый объект не хранится, cancelled не возвращается."
+      security:
+        - adminSession: []
+      parameters:
+        - name: preview_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав при проверке аккаунта в БД
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/admin/assessments/previews/{preview_id}/answers/{question_id}:
+    put:
+      operationId: saveAdminPreviewAnswer
+      tags: [Админка]
+      summary: Сохранить или заменить ответ предпросмотра
+      description: "question_id — id вопроса внутри preview, не question_id банка. 204 при успехе. Те же ValidateAnswer правила, что кандидату. После дедлайна сохраняемые ранее ответы финализируются, новый ответ отклоняется: 409 preview_expired. После submit — 409 preview_closed. Чужой вопрос — 404 preview_not_found."
+      security:
+        - adminSession: []
+      parameters:
+        - name: preview_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: question_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/AssessmentAnswerRequest'}
+      responses:
+        '204':
+          description: Успешно
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав при проверке аккаунта в БД
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Запись не найдена или недоступна
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Конфликт состояния
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '413':
+          description: Превышен размер запроса
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/admin/assessments/previews/{preview_id}/submit:
+    post:
+      operationId: submitAdminAssessmentPreview
+      tags: [Админка]
+      summary: Завершить своё пробное прохождение
+      description: "Повтор возвращает сохранённый результат. После дедлайна статус expired независимо от passed. Вес вопроса равен весу строки blueprint / question_count, фиксируется numeric(10,4), как у кандидата. Нет частичных баллов; пропуск — 0. Процент округляется до сотых, для passed общий и основной навык должны достигнуть pass_score. Текст нормализует пробелы и при case_sensitive=false регистр."
+      security:
+        - adminSession: []
+      parameters:
+        - name: preview_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Успешно
+          headers:
+            Cache-Control:
+              schema: {type: string, example: no-store}
+            X-Request-ID:
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AdminAssessmentPreview'}
+        '400':
+          description: Некорректный UUID, JSON или параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          description: Недействующая админская сессия
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '403':
+          description: Недостаточно прав при проверке аккаунта в БД
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Запись не найдена или недоступна
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
   /api/v1/me/assessments/history:
     get:
       operationId: getCandidateAssessmentHistory
@@ -6082,6 +6433,91 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AdminStatusInput:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status: {type: string, enum: [active, blocked]}
+    AdminPreviewAnswerForm:
+      type: object
+      required: [type, multiple]
+      properties:
+        type: {type: string, enum: [choice, text]}
+        multiple: {type: boolean}
+    AdminPreviewQuestion:
+      type: object
+      required: [id, question_id, position, version, skill_id, skill_name, difficulty, weight, kind, prompt, answer_form, answer]
+      properties:
+        id: {type: string, format: uuid, description: ID вопроса внутри preview для PUT ответа}
+        question_id: {type: string, format: uuid, description: ID исходного задания банка}
+        position: {type: integer, minimum: 1}
+        version: {type: integer, minimum: 1}
+        skill_id: {type: string, format: uuid}
+        skill_name: {type: string}
+        difficulty: {type: integer, minimum: 1, maximum: 5}
+        weight: {type: number, description: Стоимость одного вопроса после деления веса строки и округления до 4 знаков}
+        kind: {type: string, enum: [choice, code_reading, short_answer]}
+        prompt: {$ref: '#/components/schemas/AssessmentPrompt'}
+        answer_form: {$ref: '#/components/schemas/AdminPreviewAnswerForm'}
+        answer:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AssessmentAnswer'
+    AdminPreviewReview:
+      type: object
+      required: [id, correct, answered, correct_answer]
+      properties:
+        id: {type: string, format: uuid}
+        correct: {type: boolean}
+        answered: {type: boolean}
+        correct_answer:
+          description: Правила проверки из снимка, только после завершения
+          allOf:
+            - $ref: '#/components/schemas/AssessmentGradingSpec'
+    AdminPreviewResult:
+      type: object
+      required: [score_percent, pass_score, passed, correct_count, unanswered_count, question_count, skills, questions]
+      properties:
+        score_percent: {type: number, minimum: 0, maximum: 100}
+        pass_score: {type: number, minimum: 1, maximum: 100}
+        passed: {type: boolean, description: Общий процент и процент основного навыка не ниже pass_score}
+        correct_count: {type: integer, minimum: 0}
+        unanswered_count: {type: integer, minimum: 0}
+        question_count: {type: integer, minimum: 1}
+        skills:
+          type: array
+          items:
+            type: object
+            required: [skill_id, percent]
+            properties:
+              skill_id: {type: string, format: uuid}
+              percent: {type: number}
+        questions:
+          type: array
+          items: {$ref: '#/components/schemas/AdminPreviewReview'}
+    AdminAssessmentPreview:
+      type: object
+      required: [id, template_id, template_version, status, started_at, expires_at, server_time, finished_at, retain_until, time_limit_sec, pass_score, questions, result]
+      properties:
+        id: {type: string, format: uuid}
+        template_id: {type: string, format: uuid}
+        template_version: {type: integer, minimum: 1}
+        status: {type: string, enum: [in_progress, submitted, expired]}
+        started_at: {type: string, format: date-time}
+        expires_at: {type: string, format: date-time}
+        server_time: {type: string, format: date-time}
+        finished_at: {type: string, format: date-time, nullable: true}
+        retain_until: {type: string, format: date-time, description: 7 дней от старта; после этого недоступен и удаляется лениво}
+        time_limit_sec: {type: integer, minimum: 300, maximum: 14400}
+        pass_score: {type: number}
+        questions:
+          type: array
+          items: {$ref: '#/components/schemas/AdminPreviewQuestion'}
+        result:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/AdminPreviewResult'
     AssessmentHistoryItem:
       type: object
       required: [stack_skill_id, stack_name, id, status, specialization_id, grade_id, started_at, finished_at, score_percent, category]
