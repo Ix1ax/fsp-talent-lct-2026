@@ -29,7 +29,7 @@ func TestCandidateSurveyAndExport(t *testing.T) {
 	repo := candidaterepo.NewRepository(db)
 	s := candidateservice.NewFullProfileService(repo, "v1")
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	in := candidateentity.SurveyInput{Industry: "IT", SpecializationID: spec, GradeID: grade, SoftSkills: []string{"Коммуникация"}}
+	in := candidateentity.SurveyInput{StackSkillID: goSkill, Industry: "IT", SpecializationID: spec, GradeID: grade, SoftSkills: []string{"Коммуникация"}}
 	if _, err := s.PutSurvey(ctx, user, in); err != nil {
 		t.Fatal(err)
 	}
@@ -40,7 +40,7 @@ func TestCandidateSurveyAndExport(t *testing.T) {
 	if data, err := s.ExportPDF(ctx, user); err != nil || len(data) == 0 {
 		t.Fatal(err)
 	}
-	attempt, err := assessmentrepo.New(db).StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := assessmentrepo.New(db).StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +68,7 @@ func TestSkillMergeDuringAttempt(t *testing.T) {
 	user := attemptCandidate(t, db)
 	repo := assessmentrepo.New(db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func TestGradeChangeBlocksParallelStarts(t *testing.T) {
 	user := attemptCandidate(t, db)
 	repo := assessmentrepo.New(db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +129,11 @@ func TestGradeChangeBlocksParallelStarts(t *testing.T) {
 	var wg sync.WaitGroup
 	for i := 0; i < 5; i++ {
 		wg.Add(1)
-		go func() { defer wg.Done(); _, e := repo.StartAttempt(ctx, user, ms, mg, retakeDays); errs <- e }()
+		go func() {
+			defer wg.Done()
+			_, e := repo.StartAttempt(ctx, user, ms, mg, retakeDays, defaultTestStack(ms))
+			errs <- e
+		}()
 	}
 	wg.Wait()
 	close(errs)
@@ -156,7 +160,7 @@ func TestCandidateCompletionHTTPPrivacy(t *testing.T) {
 		f.tokens[who] = f.auth.Token(t, who)
 	}
 	spec, grade := pairIDs(t, f.db, "backend", "junior")
-	body := fmt.Sprintf(`{"industry":"IT","specialization_id":%d,"grade_id":%d,"soft_skills":["Коммуникация"]}`, spec, grade)
+	body := fmt.Sprintf(`{"stack_skill_id":"00000000-0000-4000-8000-000000000001","industry":"IT","specialization_id":%d,"grade_id":%d,"soft_skills":["Коммуникация"]}`, spec, grade)
 	f.request(t, "PUT", "/api/v1/me/profile/onboarding", "candidate", body, 200)
 	f.request(t, "PUT", "/api/v1/me/profile/onboarding", "owner", body, 403)
 	f.request(t, "PUT", "/api/v1/me/profile/onboarding", "no_profile", body, 404)
@@ -171,7 +175,7 @@ func TestCandidateCompletionHTTPPrivacy(t *testing.T) {
 	f.request(t, "GET", "/api/v1/me/profile/export.pdf", "owner", "", 403)
 	f.request(t, "GET", "/api/v1/me/profile/export.pdf", "no_profile", "", 404)
 	f.request(t, "GET", "/api/v1/me/assessments/history?limit=0", "candidate", "", 400)
-	a, err := assessmentrepo.New(f.db).StartAttempt(context.Background(), f.ids["candidate"], spec, grade, retakeDays)
+	a, err := assessmentrepo.New(f.db).StartAttempt(context.Background(), f.ids["candidate"], spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -195,7 +199,7 @@ func TestFailedPromotionKeepsCategory(t *testing.T) {
 	repo := assessmentrepo.New(db)
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -207,7 +211,7 @@ func TestFailedPromotionKeepsCategory(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, middle := pairIDs(t, db, "backend", "middle")
-	a, err = repo.StartAttempt(ctx, user, spec, middle, retakeDays)
+	a, err = repo.StartAttempt(ctx, user, spec, middle, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}

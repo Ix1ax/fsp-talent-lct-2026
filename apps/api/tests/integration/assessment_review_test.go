@@ -44,7 +44,7 @@ func TestAbandonedAttemptDoesNotBlockRetake(t *testing.T) {
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	begin := func() (string, entity.Attempt) {
 		user := attemptCandidate(t, db)
-		a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+		a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -81,7 +81,7 @@ func TestAbandonedAttemptDoesNotBlockRetake(t *testing.T) {
 
 	user, a = begin()
 	abandon(t, db, user, 30*24*time.Hour)
-	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays); err != nil {
+	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec)); err != nil {
 		t.Fatalf("старт через месяц после брошенной попытки: %v", err)
 	}
 
@@ -89,7 +89,7 @@ func TestAbandonedAttemptDoesNotBlockRetake(t *testing.T) {
 	user, a = begin()
 	abandon(t, db, user, time.Hour)
 	var cooldown *entity.RetakeError
-	_, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	_, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if !errors.As(err, &cooldown) {
 		t.Fatalf("старт сразу после просрочки: %v", err)
 	}
@@ -109,7 +109,7 @@ func TestAbandonedPassedAttemptPersistsOutcomes(t *testing.T) {
 	ctx := context.Background()
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	user := attemptCandidate(t, db)
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +145,7 @@ func TestAttemptQuestionExposesSelectionMode(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	tpl, err := repo.CreateTemplate(ctx, admin, entity.TemplateInput{SpecializationID: spec, GradeID: grade, TimeLimitSec: 600, PassScore: 50,
+	tpl, err := repo.CreateTemplate(ctx, admin, entity.TemplateInput{StackSkillID: goSkill, SpecializationID: spec, GradeID: grade, TimeLimitSec: 600, PassScore: 50,
 		Blueprint: []entity.BlueprintRow{{SkillID: goSkill, Difficulty: 1, QuestionCount: 1, Weight: 1}, {SkillID: goSkill, Difficulty: 2, QuestionCount: 1, Weight: 1}}})
 	if err != nil {
 		t.Fatal(err)
@@ -154,7 +154,7 @@ func TestAttemptQuestionExposesSelectionMode(t *testing.T) {
 		t.Fatal(err)
 	}
 	user := attemptCandidate(t, db)
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil || len(a.Questions) != 2 {
 		t.Fatalf("%+v %v", a, err)
 	}
@@ -181,7 +181,7 @@ func TestEvidenceAndSkillModeration(t *testing.T) {
 	git, sql := skillID("git"), skillID("sql")
 
 	user := attemptCandidate(t, db)
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestAttemptAfterConsentRevoked(t *testing.T) {
 	ctx := context.Background()
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	user := attemptCandidate(t, db)
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -263,7 +263,7 @@ func TestStartUnknownGradeAfterPass(t *testing.T) {
 	ctx := context.Background()
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	user := attemptCandidate(t, db)
-	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -271,7 +271,7 @@ func TestStartUnknownGradeAfterPass(t *testing.T) {
 	if _, err = repo.SubmitAttempt(ctx, user, a.ID, retakeDays); err != nil {
 		t.Fatal(err)
 	}
-	if _, err = repo.StartAttempt(ctx, user, spec, 99, retakeDays); !errors.Is(err, entity.ErrUnavailable) {
+	if _, err = repo.StartAttempt(ctx, user, spec, 99, retakeDays, defaultTestStack(spec)); !errors.Is(err, entity.ErrUnavailable) {
 		t.Fatalf("неизвестный грейд: %v", err)
 	}
 }

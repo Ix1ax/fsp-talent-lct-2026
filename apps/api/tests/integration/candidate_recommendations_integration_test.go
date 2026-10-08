@@ -98,7 +98,7 @@ func confirmBankCandidate(t *testing.T, f *offerFixture, who string) {
 	grantConsentRows(t, f.db, f.ids[who], "processing", "publication")
 	spec, grade := pairIDs(t, f.db, "backend", "junior")
 	repo := assessmentrepo.New(f.db)
-	attempt, err := repo.StartAttempt(ctx, f.ids[who], spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, f.ids[who], spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -81,7 +81,7 @@ func TestSubmitPassWritesOutcomes(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,7 +125,7 @@ func TestSubmitFailWritesNothing(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,7 +155,7 @@ func TestSkillConfirmedOnlyAboveThreshold(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -191,7 +191,7 @@ func TestSubmitIdempotentAndConcurrent(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -242,7 +242,7 @@ func TestLazyExpiry(t *testing.T) {
 
 	// Без ответов: просрочка закрывает попытку как expired, ответ отклоняется.
 	user := attemptCandidate(t, db)
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,7 +259,7 @@ func TestLazyExpiry(t *testing.T) {
 
 	// Чтение просроченной попытки закрывает её по сохранённым ответам: достаточно верных — passed.
 	other := attemptCandidate(t, db)
-	second, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays)
+	second, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +277,7 @@ func TestSubmitVsExpiryRace(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,11 +320,11 @@ func TestSaveAnswerValidation(t *testing.T) {
 	ctx := context.Background()
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	user, other := attemptCandidate(t, db), attemptCandidate(t, db)
-	mine, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	mine, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
-	theirs, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays)
+	theirs, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -387,7 +387,7 @@ func backendMiddle(t *testing.T, db *pgxpool.Pool, repo *assessmentrepo.Reposito
 	t.Helper()
 	spec, grade := pairIDs(t, db, "backend", "middle")
 	admin := assessmentAdmin(t, db)
-	tpl, err := repo.CreateTemplate(context.Background(), admin, entity.TemplateInput{SpecializationID: spec, GradeID: grade, TimeLimitSec: 1800, PassScore: 60,
+	tpl, err := repo.CreateTemplate(context.Background(), admin, entity.TemplateInput{StackSkillID: goSkill, SpecializationID: spec, GradeID: grade, TimeLimitSec: 1800, PassScore: 60,
 		Blueprint: []entity.BlueprintRow{{SkillID: goSkill, Difficulty: 1, QuestionCount: 3, Weight: 3}}})
 	if err != nil {
 		t.Fatal(err)
@@ -406,7 +406,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 	jspec, jgrade := pairIDs(t, db, "backend", "junior")
 	mspec, mgrade := backendMiddle(t, db, repo)
 
-	junior, err := repo.StartAttempt(ctx, user, jspec, jgrade, retakeDays)
+	junior, err := repo.StartAttempt(ctx, user, jspec, jgrade, retakeDays, defaultTestStack(jspec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -416,7 +416,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 	}
 
 	// Тот же грейд закрыт, повышение ждёт отдельного интервала изменения категории.
-	if _, err = repo.StartAttempt(ctx, user, jspec, jgrade, retakeDays); !errors.Is(err, entity.ErrAlreadyConfirmed) {
+	if _, err = repo.StartAttempt(ctx, user, jspec, jgrade, retakeDays, defaultTestStack(jspec)); !errors.Is(err, entity.ErrAlreadyConfirmed) {
 		t.Fatalf("повторный Junior: %v", err)
 	}
 	items, err := repo.Available(ctx, user, retakeDays)
@@ -425,7 +425,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 	}
 	for _, it := range items {
 		switch {
-		case it.SpecializationID == jspec && it.GradeID == jgrade:
+		case it.StackSkillID == goSkill && it.SpecializationID == jspec && it.GradeID == jgrade:
 			if it.CanStart || it.Reason != "already_confirmed" || !it.Confirmed {
 				t.Fatalf("Junior: %+v", it)
 			}
@@ -436,7 +436,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 		}
 	}
 
-	if _, err = repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays); !errors.Is(err, entity.ErrGradeChangeCooldown) {
+	if _, err = repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays, defaultTestStack(mspec)); !errors.Is(err, entity.ErrGradeChangeCooldown) {
 		t.Fatalf("Не ограничена смена грейда: %v", err)
 	}
 	// Только тестовый сдвиг времени: не ждём неделю в автотесте.
@@ -444,7 +444,7 @@ func TestGradeProgressionAndEvidenceNotLowered(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Middle: Go подтверждён на 66.67% (уровень 3), прежний уровень 5 не понижается.
-	middle, err := repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays)
+	middle, err := repo.StartAttempt(ctx, user, mspec, mgrade, retakeDays, defaultTestStack(mspec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -474,7 +474,7 @@ func TestRetakeAfterCooldown(t *testing.T) {
 	ctx := context.Background()
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	first, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	first, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -482,7 +482,7 @@ func TestRetakeAfterCooldown(t *testing.T) {
 		t.Fatal(err)
 	}
 	var cooldown *entity.RetakeError
-	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays); !errors.Is(err, entity.ErrRetakeCooldown) || !errors.As(err, &cooldown) || cooldown.RetryAt.Before(time.Now().Add(6*24*time.Hour)) {
+	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec)); !errors.Is(err, entity.ErrRetakeCooldown) || !errors.As(err, &cooldown) || cooldown.RetryAt.Before(time.Now().Add(6*24*time.Hour)) {
 		t.Fatalf("пересдача сразу: %v", err)
 	}
 	// Состарим завершённую попытку: триггер защищает её от правок, поэтому отключаем его на время теста.
@@ -491,7 +491,7 @@ func TestRetakeAfterCooldown(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	second, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	second, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil || second.ID == first.ID {
 		t.Fatalf("пересдача через срок: %+v (%v)", second, err)
 	}

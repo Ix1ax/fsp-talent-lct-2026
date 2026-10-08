@@ -119,7 +119,7 @@ func TestAssessmentRoutes(t *testing.T) {
 	if err = db.QueryRow(ctx, `SELECT (SELECT id FROM specializations WHERE code='backend'),(SELECT id FROM grades WHERE code='junior')`).Scan(&specID, &gradeID); err != nil {
 		t.Fatal(err)
 	}
-	template := `{"specialization_id":` + itoa(specID) + `,"grade_id":` + itoa(gradeID) + `,"time_limit_sec":1800,"pass_score":60,"blueprint":[{"skill_id":"` + goSkill + `","difficulty":1,"question_count":2,"weight":1}]}`
+	template := `{"stack_skill_id":"` + goSkill + `","specialization_id":` + itoa(specID) + `,"grade_id":` + itoa(gradeID) + `,"time_limit_sec":1800,"pass_score":60,"blueprint":[{"skill_id":"` + goSkill + `","difficulty":1,"question_count":2,"weight":1}]}`
 	var tpl struct{ ID string }
 	if err = json.Unmarshal([]byte(call("POST", base+"/templates", token, template, 201)), &tpl); err != nil || tpl.ID == "" {
 		t.Fatal(err)

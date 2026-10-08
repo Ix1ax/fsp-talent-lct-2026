@@ -35,10 +35,10 @@ func TestAssessmentDemoBank(t *testing.T) {
 	}{{"backend", 1800, []string{"Go", "SQL", "Git"}, 5}, {"frontend", 1500, []string{"JavaScript", "TypeScript", "React"}, 4}} {
 		var id string
 		var published int
-		if err := db.QueryRow(ctx, `SELECT count(*) FROM assessment_templates t WHERE t.status='published' AND t.specialization_id=(SELECT id FROM specializations WHERE code=$1) AND t.grade_id=(SELECT id FROM grades WHERE code='junior')`, c.spec).Scan(&published); err != nil || published != 1 {
+		if err := db.QueryRow(ctx, `SELECT count(*) FROM assessment_templates t WHERE t.status='published' AND t.specialization_id=(SELECT id FROM specializations WHERE code=$1) AND t.grade_id=(SELECT id FROM grades WHERE code='junior') AND t.stack_skill_id=$2`, c.spec, defaultTestStack(map[string]int16{"backend": 1, "frontend": 2}[c.spec])).Scan(&published); err != nil || published != 1 {
 			t.Fatalf("%s: опубликованных шаблонов %d (%v)", c.spec, published, err)
 		}
-		if err := db.QueryRow(ctx, `SELECT id::text FROM assessment_templates WHERE status='published' AND grade_id=(SELECT id FROM grades WHERE code='junior') AND specialization_id=(SELECT id FROM specializations WHERE code=$1)`, c.spec).Scan(&id); err != nil {
+		if err := db.QueryRow(ctx, `SELECT id::text FROM assessment_templates WHERE status='published' AND grade_id=(SELECT id FROM grades WHERE code='junior') AND specialization_id=(SELECT id FROM specializations WHERE code=$1) AND stack_skill_id=$2`, c.spec, defaultTestStack(map[string]int16{"backend": 1, "frontend": 2}[c.spec])).Scan(&id); err != nil {
 			t.Fatal(err)
 		}
 		tpl, err := repo.GetTemplate(ctx, id)
@@ -73,7 +73,7 @@ func TestAssessmentDemoBank(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer rows.Close()
-	allowed := map[string]bool{"go": true, "sql": true, "git": true, "javascript": true, "typescript": true, "react": true}
+	allowed := map[string]bool{"java": true, "go": true, "sql": true, "git": true, "javascript": true, "typescript": true, "react": true}
 	total := 0
 	for rows.Next() {
 		var kind, skill, status string
@@ -98,7 +98,7 @@ func TestAssessmentDemoBank(t *testing.T) {
 	if err = rows.Err(); err != nil {
 		t.Fatal(err)
 	}
-	if total != 44 {
+	if total != 56 {
 		t.Fatalf("демо-заданий %d, ожидали 32", total)
 	}
 }

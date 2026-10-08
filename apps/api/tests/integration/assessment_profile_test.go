@@ -29,7 +29,7 @@ func TestFullProfileCategoryAndTestEvidence(t *testing.T) {
 		t.Fatalf("до теста: %+v (%v)", before, err)
 	}
 
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}

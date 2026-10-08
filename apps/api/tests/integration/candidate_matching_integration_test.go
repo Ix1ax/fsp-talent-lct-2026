@@ -39,7 +39,7 @@ func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
 	grantConsentRows(t, f.db, f.ids["other_candidate"], "processing", "publication")
 	f.exec(t, `INSERT INTO candidate_skills(candidate_id,skill_id,claimed_level) VALUES($1,$2,3)`, f.profiles["other_candidate"], goSkill)
 	attempts := assessmentrepo.New(f.db)
-	active, err := attempts.StartAttempt(ctx, f.ids["other_candidate"], spec, grade, retakeDays)
+	active, err := attempts.StartAttempt(ctx, f.ids["other_candidate"], spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}

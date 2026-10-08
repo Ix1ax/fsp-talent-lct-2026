@@ -10,12 +10,13 @@ import (
 )
 
 // Синтетические знания заданы независимо от конкретного случайного вопроса:
-// слабый не решает задания; средний решает базовые задания, а в backend также Go сложности 2; сильный решает обе сложности.
+// слабый не решает задания; средний решает базовые задания и основной язык, но не дополнительные навыки сложности 2; сильный решает обе сложности.
 func TestAssessmentQualityEvaluation(t *testing.T) {
 	db := testDB(t)
 	ctx := context.Background()
 	repo := assessmentrepo.New(db)
-	for _, specCode := range []string{"backend", "frontend"} {
+	for _, track := range []struct{ spec, stack string }{{"backend", goSkill}, {"backend", javaStack}, {"frontend", "00000000-0000-4000-8000-000000000002"}} {
+		specCode := track.spec
 		for _, gradeCode := range []string{"junior", "middle"} {
 			spec, grade := pairIDs(t, db, specCode, gradeCode)
 			for _, kind := range []string{"weak", "medium", "strong"} {
@@ -23,7 +24,7 @@ func TestAssessmentQualityEvaluation(t *testing.T) {
 				seen := map[string]bool{}
 				for trial := 0; trial < 4; trial++ {
 					user := attemptCandidate(t, db)
-					a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+					a, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, track.stack)
 					if err != nil {
 						t.Fatal(err)
 					}
@@ -37,7 +38,7 @@ func TestAssessmentQualityEvaluation(t *testing.T) {
 					}
 					seen[fingerprint] = true
 					answerWith(t, db, repo, user, a, func(q entity.AttemptQuestion) bool {
-						return kind == "strong" || (kind == "medium" && (q.Difficulty == 1 || (specCode == "backend" && q.SkillID == goSkill)))
+						return kind == "strong" || (kind == "medium" && (q.Difficulty == 1 || q.SkillID == track.stack))
 					})
 					done, err := repo.SubmitAttempt(ctx, user, a.ID, retakeDays)
 					if err != nil {
@@ -45,7 +46,7 @@ func TestAssessmentQualityEvaluation(t *testing.T) {
 					}
 					wantPassed := kind == "strong" || (kind == "medium" && gradeCode == "junior")
 					if done.Result.Passed != wantPassed {
-						t.Fatalf("%s/%s %s: score=%v passed=%v", specCode, gradeCode, kind, done.Result.ScorePercent, done.Result.Passed)
+						t.Fatalf("%s/%s %s: score=%v passed=%v", specCode+"/"+track.stack, gradeCode, kind, done.Result.ScorePercent, done.Result.Passed)
 					}
 					if kind == "strong" && done.Result.ScorePercent != 100 {
 						t.Fatal("Сильный кандидат не получил 100%")
@@ -59,10 +60,10 @@ func TestAssessmentQualityEvaluation(t *testing.T) {
 					if !wantPassed && done.Result.Category != nil {
 						t.Fatal("Категория присвоена после провала")
 					}
-					t.Logf("%s/%s %s trial=%d: %.2f%% passed=%v", specCode, gradeCode, kind, trial+1, done.Result.ScorePercent, done.Result.Passed)
+					t.Logf("%s/%s %s trial=%d: %.2f%% passed=%v", specCode+"/"+track.stack, gradeCode, kind, trial+1, done.Result.ScorePercent, done.Result.Passed)
 				}
 				// Порядок вопросов тоже случайный; фиксируем число разных реальных снимков для отчёта.
-				t.Logf("%s/%s %s: %d разных снимков из 4", specCode, gradeCode, kind, len(seen))
+				t.Logf("%s/%s %s: %d разных снимков из 4", specCode+"/"+track.stack, gradeCode, kind, len(seen))
 			}
 		}
 	}
