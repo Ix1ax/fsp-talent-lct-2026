@@ -2,15 +2,7 @@
 
 import { type ReactNode, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import {
-  BookOpen,
-  FileQuestion,
-  Layers,
-  LogOut,
-  ShieldCheck,
-  Users,
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { BrandLogo, Button, ThemeToggle } from '@/shared/ui';
@@ -21,19 +13,16 @@ import {
   useAdminSession,
 } from '@/features/admin';
 
+import { useSidebarCollapsed } from '../model';
+import { AdminBackground } from './AdminBackground';
+import { AdminSidebar } from './AdminSidebar';
+
 interface AdminShellProps {
   children: ReactNode;
 }
-const links = [
-  { path: 'catalogs', label: 'Справочники', icon: BookOpen },
-  { path: 'moderation', label: 'Модерация навыков', icon: ShieldCheck },
-  { path: 'questions', label: 'Банк заданий', icon: FileQuestion },
-  { path: 'templates', label: 'Шаблоны тестов', icon: Layers },
-  { path: 'admins', label: 'Администраторы', icon: Users },
-];
 const Content = ({ children }: AdminShellProps) => {
   const { session, loading, error, retry, logout } = useAdminSession();
-  const pathname = usePathname();
+  const { collapsed, toggle: toggleSidebar } = useSidebarCollapsed();
   const [exiting, setExiting] = useState(false);
   if (loading)
     return (
@@ -68,70 +57,31 @@ const Content = ({ children }: AdminShellProps) => {
     }
   };
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="flex min-w-0 flex-col border-b bg-card lg:sticky lg:top-0 lg:h-dvh lg:overflow-y-auto lg:border-r lg:border-b-0">
-        <div className="flex h-16 shrink-0 items-center border-b px-6">
-          <Link href="/admin">
-            <BrandLogo />
-          </Link>
-        </div>
-        <div className="hidden px-6 pt-6 pb-3 text-xs uppercase tracking-widest text-caption lg:block">
-          Администрирование
-        </div>
-        <nav
-          aria-label="Разделы админки"
-          className="flex gap-1 overflow-x-auto p-3 lg:grid lg:overflow-visible lg:pt-0"
-        >
-          {links
-            .filter(
-              (l) => l.path !== 'admins' || session.admin.role === 'superadmin',
-            )
-            .map(({ path, label, icon: Icon }) => (
-              <Link
-                key={path}
-                href={`/admin/${path}`}
-                aria-current={
-                  pathname === `/admin/${path}` ||
-                  (path === 'catalogs' && pathname === '/admin')
-                    ? 'page'
-                    : undefined
-                }
-                className={`flex shrink-0 items-center gap-3 whitespace-nowrap px-3 py-3 text-sm ${pathname === `/admin/${path}` || (path === 'catalogs' && pathname === '/admin') ? 'bg-accent text-brand-text' : 'text-muted-foreground hover:bg-muted'}`}
-              >
-                <Icon size={18} />
-                {label}
-              </Link>
-            ))}
-        </nav>
-        <div className="mt-auto hidden shrink-0 border-t p-6 lg:block">
-          <p
-            className="truncate text-sm font-medium"
-            title={session.admin.email}
-          >
-            {session.admin.email}
-          </p>
-          <p className="mt-1 text-xs text-caption">
-            {session.admin.role === 'superadmin'
-              ? 'Главный администратор'
-              : 'Администратор'}
-          </p>
-          <Button
-            variant="ghost"
-            className="mt-3 px-0"
-            disabled={exiting}
-            onClick={() => void exit()}
-          >
-            <LogOut />
-            Выйти
-          </Button>
-        </div>
-      </aside>
-      <main className="min-w-0">
-        <header className="border-b bg-card">
+    <div
+      className={`min-h-screen motion-safe:transition-[grid-template-columns] motion-safe:duration-200 lg:grid ${collapsed ? 'lg:grid-cols-[72px_minmax(0,1fr)]' : 'lg:grid-cols-[260px_minmax(0,1fr)]'}`}
+    >
+      <AdminSidebar
+        admin={session.admin}
+        collapsed={collapsed}
+        onToggle={toggleSidebar}
+        exiting={exiting}
+        onLogout={() => void exit()}
+      />
+      <main className="relative isolate min-w-0">
+        <header className="sticky top-0 z-20 border-b bg-card lg:relative">
           <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-5 lg:px-8">
-            <span className="text-sm text-muted-foreground">
-              Платформа / Админка
-            </span>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin"
+                aria-label="ФСП Скаут — админка"
+                className="lg:hidden"
+              >
+                <BrandLogo compact />
+              </Link>
+              <span className="hidden text-sm text-muted-foreground lg:inline">
+                <span className="hidden sm:inline">Платформа / </span>Админка
+              </span>
+            </div>
             <div className="flex shrink-0 items-center gap-3">
               <Button variant="ghost" asChild>
                 <Link href="/">Открыть сайт ↗</Link>
@@ -152,7 +102,7 @@ const Content = ({ children }: AdminShellProps) => {
         </header>
         <div
           key={session.admin.id}
-          className="mx-auto w-full max-w-7xl p-5 lg:p-8"
+          className="relative z-10 mx-auto w-full max-w-7xl p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8"
         >
           {children}
         </div>
@@ -162,6 +112,11 @@ const Content = ({ children }: AdminShellProps) => {
 };
 export const AdminShell = ({ children }: AdminShellProps) => (
   <AdminProvider>
-    <Content>{children}</Content>
+    <div data-admin-shell className="relative isolate min-h-screen">
+      <AdminBackground />
+      <div className="relative z-10">
+        <Content>{children}</Content>
+      </div>
+    </div>
   </AdminProvider>
 );
