@@ -54,7 +54,12 @@ export const useAdminOptions = () => {
       })
       .catch((error: unknown) => {
         if (!controller.signal.aborted)
-          setResult({ session, revision, data: {}, error });
+          setResult((previous) => ({
+            session,
+            revision,
+            data: previous?.session === session ? previous.data : {},
+            error,
+          }));
       });
     return () => controller.abort();
   }, [revision, session]);
@@ -62,7 +67,7 @@ export const useAdminOptions = () => {
     result?.session === session && result?.revision === revision
       ? result
       : null;
-  const data = current?.data ?? {};
+  const data = result?.session === session ? result.data : {};
   return {
     data,
     error: current?.error ?? null,

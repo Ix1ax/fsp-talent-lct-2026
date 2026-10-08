@@ -18,6 +18,7 @@ import {
   queryString,
 } from '@/entities/admin';
 import {
+  AdminListLoading,
   CatalogEditor,
   ErrorNotice,
   Pagination,
@@ -86,7 +87,7 @@ export const CatalogsPage = () => {
           </Button>
         ))}
       </div>
-      <Card className="gap-5 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <Input
           aria-label="Поиск по справочнику"
           placeholder="Поиск по названию, коду или синониму"
@@ -99,13 +100,16 @@ export const CatalogsPage = () => {
         />
         <ErrorNotice error={list.error} />
         <ErrorNotice error={mutation.error} />
-        {list.loading && <p role="status">Загружаем справочник…</p>}
-        {!list.loading && !list.error && !list.data?.items.length && (
-          <p className="py-8 text-center text-muted-foreground">
-            Записей не найдено
-          </p>
-        )}
+        <p role="status" aria-live="polite" className="sr-only">
+          {list.loading ? 'Загружаем справочник…' : ''}
+        </p>
         <div className="divide-y border-t">
+          <AdminListLoading loading={list.loading} hasData={!!list.data} />
+          {!list.loading && !list.error && !list.data?.items.length && (
+            <p className="py-6 text-center text-muted-foreground">
+              Записей не найдено
+            </p>
+          )}
           {list.data?.items.map((item) => {
             const editable =
               kind !== 'skills' || item.moderation_status === 'approved';
@@ -151,6 +155,7 @@ export const CatalogsPage = () => {
                     )}
                     <Button
                       size="sm"
+                      className="min-w-28"
                       variant="ghost"
                       disabled={mutation.busy}
                       onClick={() => toggle(item)}

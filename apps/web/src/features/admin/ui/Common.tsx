@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Skeleton,
 } from '@/shared/ui';
 import {
   AdminApiError,
@@ -20,12 +21,20 @@ interface FieldProps {
   label: string;
   children: ReactNode;
   error?: string;
+  reserveErrorSpace?: boolean;
 }
-export const Field = ({ label, children, error }: FieldProps) => (
-  <label className="grid gap-2 text-sm">
+export const Field = ({
+  label,
+  children,
+  error,
+  reserveErrorSpace = true,
+}: FieldProps) => (
+  <label className="grid min-w-0 gap-1.5 text-sm">
     <span className="font-medium">{label}</span>
     {children}
-    {error && <span className="text-destructive">{error}</span>}
+    {(reserveErrorSpace || error) && (
+      <span className="min-h-4 text-xs text-destructive">{error}</span>
+    )}
   </label>
 );
 interface AdminSelectProps {
@@ -97,7 +106,7 @@ export const ErrorNotice = ({ error }: ErrorNoticeProps) => {
 };
 export const Status = ({ value }: { value: string }) => (
   <span
-    className={`inline-block border px-2 py-1 text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
+    className={`inline-block shrink-0 whitespace-nowrap border px-2 py-1 text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
   >
     {statusLabels[value] ?? value}
   </span>
@@ -116,31 +125,33 @@ export const Pagination = ({
   onChange,
   loading,
 }: PaginationProps) => (
-  <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
+  <div className="flex min-h-10 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm">
     <span className="text-muted-foreground">
       {count ? `${offset + 1}–${offset + count}` : 'Нет записей'}
       {total !== undefined && ` из ${total}`}
     </span>
-    <div className="flex gap-2">
-      <Button
-        variant="outline"
-        disabled={loading || offset === 0}
-        onClick={() => onChange(Math.max(0, offset - 20))}
-      >
-        Назад
-      </Button>
-      <Button
-        variant="outline"
-        disabled={
-          loading ||
-          (total === undefined ? count < 20 : offset + count >= total) ||
-          offset >= 10000
-        }
-        onClick={() => onChange(offset + 20)}
-      >
-        Далее
-      </Button>
-    </div>
+    {(offset > 0 || count >= 20 || (total ?? 0) > 20) && (
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          disabled={loading || offset === 0}
+          onClick={() => onChange(Math.max(0, offset - 20))}
+        >
+          Назад
+        </Button>
+        <Button
+          variant="outline"
+          disabled={
+            loading ||
+            (total === undefined ? count < 20 : offset + count >= total) ||
+            offset >= 10000
+          }
+          onClick={() => onChange(offset + 20)}
+        >
+          Далее
+        </Button>
+      </div>
+    )}
   </div>
 );
 interface SkillPickerProps {
@@ -159,7 +170,7 @@ export const SkillPicker = ({
 }: SkillPickerProps) => {
   const id = useId();
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2">
       <Label htmlFor={id}>{label}</Label>
       <Combobox
         id={id}
@@ -180,3 +191,26 @@ export const SkillPicker = ({
     </div>
   );
 };
+
+export const AdminListLoading = ({
+  loading,
+  hasData,
+}: {
+  loading: boolean;
+  hasData: boolean;
+}) => (
+  <>
+    {loading && (
+      <div
+        aria-hidden="true"
+        className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-primary"
+      />
+    )}
+    {loading && !hasData && (
+      <div aria-hidden="true" className="grid gap-2 py-4">
+        <Skeleton className="h-5 w-1/3" />
+        <Skeleton className="h-4 w-1/2" />
+      </div>
+    )}
+  </>
+);

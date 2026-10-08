@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { Button, Card } from '@/shared/ui';
 import { adminSchemas, type CatalogItem } from '@/entities/admin';
 import {
+  AdminListLoading,
   ErrorNotice,
   ModerationEditor,
   Pagination,
@@ -36,7 +37,7 @@ export const ModerationPage = () => {
   const row = (item: CatalogItem) => (
     <div
       key={item.id}
-      className="grid gap-4 border-b py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+      className="grid gap-4 border-b py-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
     >
       <div>
         <div className="flex flex-wrap items-center gap-2">
@@ -102,16 +103,21 @@ export const ModerationPage = () => {
           Проверьте названия, одобрите новые навыки или объедините дубли.
         </p>
       </div>
-      <Card className="gap-4 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <h2 className="font-medium">Ожидают решения</h2>
         <ErrorNotice error={list.error} />
-        {list.loading && <p role="status">Загружаем очередь…</p>}
-        {!list.loading && !list.error && !list.data?.items.length && (
-          <p className="py-8 text-center text-muted-foreground">
-            Очередь пуста
-          </p>
-        )}
-        {list.data?.items.map(row)}
+        <p role="status" aria-live="polite" className="sr-only">
+          {list.loading ? 'Загружаем очередь…' : ''}
+        </p>
+        <div>
+          <AdminListLoading loading={list.loading} hasData={!!list.data} />
+          {!list.loading && !list.error && !list.data?.items.length && (
+            <p className="py-6 text-center text-muted-foreground">
+              Очередь пуста
+            </p>
+          )}
+          {list.data?.items.map(row)}
+        </div>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}
@@ -119,7 +125,7 @@ export const ModerationPage = () => {
           onChange={setOffset}
         />
       </Card>
-      <Card className="gap-4 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <h2 className="font-medium">Уже одобренные навыки</h2>
         <p className="text-sm text-muted-foreground">
           Одобренный навык тоже можно отклонить или объединить.

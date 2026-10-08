@@ -93,7 +93,10 @@ export const ModerationEditor = ({
         if (!open && !mutation.busy) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-lg" showCloseButton={!mutation.busy}>
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+        showCloseButton={!mutation.busy}
+      >
         <DialogTitle>
           {titles[action]} «{item.name}»
         </DialogTitle>
@@ -131,7 +134,7 @@ export const ModerationEditor = ({
             <Textarea {...form.register('reason')} />
           </Field>
           <ErrorNotice error={mutation.error} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

@@ -43,7 +43,7 @@ export const AdminLoginForm = () => {
   };
   return (
     <div className="flex min-h-screen items-center justify-center p-5">
-      <div className="w-full max-w-md border bg-card p-8">
+      <div className="w-full max-w-md border bg-card p-5 sm:p-8">
         <div className="mb-10 flex items-center justify-between">
           <BrandLogo />
           <ThemeToggle />

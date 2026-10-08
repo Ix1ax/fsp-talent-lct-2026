@@ -100,7 +100,10 @@ export const CatalogEditor = ({
         if (!open && !mutation.busy) onClose();
       }}
     >
-      <DialogContent className="sm:max-w-lg" showCloseButton={!mutation.busy}>
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-lg"
+        showCloseButton={!mutation.busy}
+      >
         <DialogTitle>{item ? 'Изменить запись' : 'Новая запись'}</DialogTitle>
         <DialogDescription>
           {item
@@ -135,7 +138,7 @@ export const CatalogEditor = ({
             </Field>
           )}
           <ErrorNotice error={mutation.error} />
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="outline"

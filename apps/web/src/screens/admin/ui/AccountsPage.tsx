@@ -7,6 +7,7 @@ import { Button, Card } from '@/shared/ui';
 import { adminSchemas } from '@/entities/admin';
 import {
   AccountEditor,
+  AdminListLoading,
   ErrorNotice,
   Pagination,
   Status,
@@ -43,26 +44,36 @@ export const AccountsPage = () => {
           </Button>
         }
       />
-      <Card className="gap-5 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <ErrorNotice error={list.error} />
-        {list.loading && <p role="status">Загружаем аккаунты…</p>}
-        {list.data?.items.map((account) => (
-          <div
-            key={account.id}
-            className="flex flex-wrap items-center justify-between gap-3 border-b py-4"
-          >
-            <div>
-              <p className="font-medium">{account.email}</p>
-              <p className="mt-1 text-xs text-caption">
-                {account.role === 'superadmin'
-                  ? 'Главный администратор'
-                  : 'Администратор'}{' '}
-                · {new Date(account.created_at).toLocaleDateString('ru-RU')}
-              </p>
+        <p role="status" aria-live="polite" className="sr-only">
+          {list.loading ? 'Загружаем аккаунты…' : ''}
+        </p>
+        <div>
+          <AdminListLoading loading={list.loading} hasData={!!list.data} />
+          {!list.loading && !list.error && !list.data?.items.length && (
+            <p className="py-6 text-center text-muted-foreground">
+              Администраторов не найдено
+            </p>
+          )}
+          {list.data?.items.map((account) => (
+            <div
+              key={account.id}
+              className="flex flex-wrap items-center justify-between gap-3 border-b py-4 last:border-b-0"
+            >
+              <div>
+                <p className="font-medium wrap-anywhere">{account.email}</p>
+                <p className="mt-1 text-xs text-caption">
+                  {account.role === 'superadmin'
+                    ? 'Главный администратор'
+                    : 'Администратор'}{' '}
+                  · {new Date(account.created_at).toLocaleDateString('ru-RU')}
+                </p>
+              </div>
+              <Status value={account.status} />
             </div>
-            <Status value={account.status} />
-          </div>
-        ))}
+          ))}
+        </div>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}
