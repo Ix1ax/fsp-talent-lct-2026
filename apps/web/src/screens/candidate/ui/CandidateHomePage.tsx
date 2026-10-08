@@ -38,6 +38,8 @@ export const CandidateHomePage = ({
     experienceCount,
     educationCount,
     navigationRef,
+    profileContainerRef,
+    sectionContentRef,
     changeStep,
     refreshError,
     dataRefreshing,
@@ -46,6 +48,7 @@ export const CandidateHomePage = ({
 
   return (
     <main
+      ref={profileContainerRef}
       hidden={pathname === STATIC_ROUTES.CANDIDATE}
       className="mx-auto w-full max-w-6xl flex-1 px-5 py-8 sm:px-6 sm:py-10"
     >
@@ -81,7 +84,10 @@ export const CandidateHomePage = ({
                   onStepChange={changeStep}
                 />
               </div>
-              <div className="grid min-w-0 gap-5">
+              <div
+                ref={sectionContentRef}
+                className="grid min-w-0 scroll-mt-24 gap-5"
+              >
                 <p role="status" className="sr-only">
                   {busy ? 'Сохранение изменений…' : ''}
                 </p>

@@ -68,6 +68,11 @@ export const ProfileStepNavigation = ({
           <Link
             key={item.id}
             href={DYNAMIC_ROUTES.CANDIDATE(item.id)}
+            scroll={false}
+            onNavigate={(event) => {
+              event.preventDefault();
+              onStepChange(item.id);
+            }}
             aria-current={item.id === step ? 'page' : undefined}
             aria-disabled={busy || undefined}
             tabIndex={busy ? -1 : undefined}

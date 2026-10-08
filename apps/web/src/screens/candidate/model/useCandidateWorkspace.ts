@@ -46,8 +46,14 @@ export const useCandidateWorkspace = ({
     (() => Record<string, unknown>) | undefined
   >(undefined);
 
-  const { step, changeStep, navigationRef, navigateFromReadiness } =
-    useCandidateStepNavigation({ initialFullProfile, busy });
+  const {
+    step,
+    changeStep,
+    navigationRef,
+    profileContainerRef,
+    sectionContentRef,
+    navigateFromReadiness,
+  } = useCandidateStepNavigation({ initialFullProfile, busy });
 
   const profile = fullProfile?.profile ?? undefined;
   const permissions = fullProfile
@@ -102,6 +108,8 @@ export const useCandidateWorkspace = ({
     educationCount,
     step,
     navigationRef,
+    profileContainerRef,
+    sectionContentRef,
     changeStep,
     importedResume,
     careerRevision,
