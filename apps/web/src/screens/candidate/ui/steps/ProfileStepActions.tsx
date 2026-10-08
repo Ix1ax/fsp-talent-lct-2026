@@ -44,7 +44,9 @@ export const ProfileStepActions = ({
           <Button
             type="button"
             variant={
-              step === 'profile' || step === 'contacts' ? 'outline' : 'default'
+              step === 'profile' || step === 'contacts' || step === 'experience'
+                ? 'outline'
+                : 'default'
             }
             size="lg"
             disabled={busy || (step === 'consents' && !processing)}
@@ -62,7 +64,7 @@ export const ProfileStepActions = ({
           можно разрешить позже.
         </p>
       )}
-      {(step === 'profile' || step === 'contacts') && (
+      {(step === 'profile' || step === 'contacts' || step === 'experience') && (
         <p className="text-sm text-muted-foreground">
           «Продолжить без сохранения» оставит изменения в черновике этой
           страницы.

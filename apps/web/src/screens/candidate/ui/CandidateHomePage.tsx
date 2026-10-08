@@ -27,6 +27,7 @@ import {
   reconcileConsents,
 } from '@/features/candidate-consents';
 import { CandidateContactsCard } from '@/features/candidate-contacts';
+import { CandidateExperienceCard } from '@/features/candidate-experience';
 import { CandidateProfileForm } from '@/features/candidate-profile';
 import { CandidateSkillsCard } from '@/features/candidate-skills';
 
@@ -60,6 +61,7 @@ export const CandidateHomePage = ({
     refreshError,
   } = useCandidateFullProfile(initialFullProfile);
   const [busy, setBusy] = useState(false);
+  const [experienceCount, setExperienceCount] = useState(0);
   const [step, setStep] = useState<ProfileStep>('consents');
   const [refreshing, startTransition] = useTransition();
   const navigationRef = useRef<HTMLDivElement>(null);
@@ -123,7 +125,7 @@ export const CandidateHomePage = ({
             <ProfileStepNavigation
               step={step}
               busy={busy}
-              savedSteps={getSavedProfileSteps(fullProfile)}
+              savedSteps={getSavedProfileSteps(fullProfile, experienceCount)}
               onStepChange={changeStep}
             />
           </div>
@@ -205,7 +207,7 @@ export const CandidateHomePage = ({
                 onBusyChange={handleFormBusyChange}
                 onConsentRequired={refreshFullProfile}
                 onGoToConsents={() => changeStep('consents')}
-                onSaved={() => changeStep('skills')}
+                onSaved={() => changeStep('experience')}
                 onContactsChange={(contacts) => {
                   updateFullProfile((current) => ({ ...current, contacts }));
                 }}
@@ -214,6 +216,20 @@ export const CandidateHomePage = ({
           )}
           {fullProfile && (
             <>
+              <TabsContent
+                value="experience"
+                forceMount
+                className="data-[state=inactive]:hidden"
+              >
+                <CandidateExperienceCard
+                  profileId={profile?.id}
+                  active={step === 'experience'}
+                  busy={busy}
+                  onBusyChange={handleFormBusyChange}
+                  onCountChange={setExperienceCount}
+                  onGoToProfile={() => changeStep('profile')}
+                />
+              </TabsContent>
               <TabsContent
                 value="skills"
                 forceMount

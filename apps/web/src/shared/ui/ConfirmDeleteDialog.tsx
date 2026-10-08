@@ -11,6 +11,7 @@ import {
 interface ConfirmDeleteDialogProps {
   title: string;
   description: string;
+  error?: string;
   busy: boolean;
   onConfirm: () => Promise<boolean>;
   onClose: () => void;
@@ -18,6 +19,7 @@ interface ConfirmDeleteDialogProps {
 export const ConfirmDeleteDialog = ({
   title,
   description,
+  error,
   busy,
   onConfirm,
   onClose,
@@ -38,6 +40,11 @@ export const ConfirmDeleteDialog = ({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
         <DialogFooter>
           <Button
             type="button"
