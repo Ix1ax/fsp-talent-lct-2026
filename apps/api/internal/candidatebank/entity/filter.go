@@ -18,6 +18,7 @@ type Filter struct {
 	SkillID                                  *string
 	VerifiedSkillOnly                        bool
 	GradeStatus                              string
+	HasFSPAchievements                       *bool
 }
 
 func ParseFilter(raw string) (Filter, error) {
@@ -26,7 +27,7 @@ func ParseFilter(raw string) (Filter, error) {
 	if err != nil {
 		return f, fmt.Errorf("Некорректная строка параметров")
 	}
-	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true, "grade_status": true}
+	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true, "grade_status": true, "has_fsp_achievements": true}
 	for key, values := range q {
 		if !allowed[key] {
 			return f, fmt.Errorf("Неизвестный параметр: %s", key)
@@ -115,6 +116,14 @@ func ParseFilter(raw string) (Filter, error) {
 		}
 		f.GradeStatus = v
 	}
+	if v, ok := q["has_fsp_achievements"]; ok {
+		if v[0] != "true" && v[0] != "false" {
+			return f, fmt.Errorf("has_fsp_achievements должен быть true или false")
+		}
+		b := v[0] == "true"
+		f.HasFSPAchievements = &b
+	}
+
 	return f, nil
 }
 

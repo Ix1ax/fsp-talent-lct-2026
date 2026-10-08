@@ -21,6 +21,14 @@ func qualificationConditions(f entity.Filter, offset int) (string, []any) {
  AND (COALESCE(NULLIF($%d::text,''),'all')='all'
  OR ($%d='confirmed' AND category.grade_id IS NOT NULL)
  OR ($%d='unconfirmed' AND category.grade_id IS NULL))`, offset+1, offset+1, offset+2, offset+2, offset+3, offset+3, offset+4, offset+5, offset+5, offset+5)
+	// Значение уже разобрано в bool: параметров не добавляем, чтобы сохранить позиции условий потребности.
+	if f.HasFSPAchievements != nil {
+		if *f.HasFSPAchievements {
+			sql += ` AND EXISTS(SELECT 1 FROM fsp_achievements fa WHERE fa.candidate_id=p.id)`
+		} else {
+			sql += ` AND NOT EXISTS(SELECT 1 FROM fsp_achievements fa WHERE fa.candidate_id=p.id)`
+		}
+	}
 	return sql, args
 }
 

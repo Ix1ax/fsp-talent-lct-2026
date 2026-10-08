@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	fspentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/entity"
 	"time"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/entity"
@@ -64,13 +65,17 @@ func (s *FullProfileService) Get(ctx context.Context, userID string) (entity.Ful
 		months := entity.EstimateExperienceMonths(experience, s.now())
 		estimated = &months
 	}
+	achievements := snapshot.Achievements
+	if achievements == nil || !processing {
+		achievements = []fspentity.Achievement{}
+	}
 	return entity.FullProfile{
 		Profile:                   snapshot.Profile,
 		Consents:                  entity.FullConsents{CurrentPolicyVersion: s.policyVersion, Items: consents},
 		Contacts:                  contacts,
 		Skills:                    skills,
 		Category:                  snapshot.Category,
-		Achievements:              []any{},
+		Achievements:              achievements,
 		Experience:                experience,
 		Education:                 education,
 		ExperienceEstimatedMonths: estimated,

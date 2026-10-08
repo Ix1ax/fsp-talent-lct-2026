@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	fsprepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/repository"
 
 	"github.com/jackc/pgx/v5"
 
@@ -80,6 +81,12 @@ func (r *Repository) FullSnapshot(ctx context.Context, userID string) (entity.Fu
 		case err == nil:
 			snapshot.Category = &c
 		case !errors.Is(err, pgx.ErrNoRows):
+			return snapshot, err
+		}
+	}
+	if snapshot.Profile != nil {
+		snapshot.Achievements, err = fsprepo.Achievements(ctx, tx, snapshot.Profile.ID)
+		if err != nil {
 			return snapshot, err
 		}
 	}

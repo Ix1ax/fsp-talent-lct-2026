@@ -48,7 +48,7 @@ func TestCandidateRecommendations(t *testing.T) {
 		return page
 	}
 	p := read("")
-	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "similarity" || len(p.UnassessedCriteria) != 1 {
+	if p.Total != 2 || len(p.Items) != 2 || p.NeedID != need || p.MatchingMode != "similarity" || len(p.UnassessedCriteria) != 0 {
 		t.Fatalf("Неверная подборка: %+v", p)
 	}
 	if p.Items[0].SkillMatchScore != nil || len(p.Items[0].Skills) != 0 {

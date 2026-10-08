@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	fsprepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/repository"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
 	"github.com/jackc/pgx/v5"
@@ -86,6 +87,10 @@ func (r *Repository) GetDetails(ctx context.Context, userID, companyID, candidat
 	}
 	err = rows.Err()
 	rows.Close()
+	if err != nil {
+		return d, err
+	}
+	d.Achievements, err = fsprepo.Achievements(ctx, tx, candidateID)
 	if err != nil {
 		return d, err
 	}

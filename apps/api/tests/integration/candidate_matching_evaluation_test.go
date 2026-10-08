@@ -188,7 +188,7 @@ func TestCandidateMatchingEvaluation(t *testing.T) {
 			if !reflect.DeepEqual(actual, scenario.Expected) || !reflect.DeepEqual(scores, scenario.Scores) || !reflect.DeepEqual(matchScores, scenario.MatchScores) || page.Total != int64(len(scenario.Expected)) {
 				t.Fatalf("Ожидали %v (%v), получили %v (%v), total=%d", scenario.Expected, scenario.Scores, actual, scores, page.Total)
 			}
-			if page.MatchingMode != "similarity" || !reflect.DeepEqual(page.UnassessedCriteria, []string{"fsp_achievements"}) {
+			if page.MatchingMode != "similarity" || len(page.UnassessedCriteria) != 0 {
 				t.Fatal("Неверно описаны критерии")
 			}
 			f.request(t, "GET", path, "outsider", "", 404)

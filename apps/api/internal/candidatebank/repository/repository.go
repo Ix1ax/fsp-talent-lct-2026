@@ -25,17 +25,19 @@ const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
  SELECT a.specialization_id,a.grade_id FROM assessment_attempts a WHERE a.candidate_id=p.id
  ORDER BY a.started_at DESC,a.id DESC LIMIT 1) declared ON true
  WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
- AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL)
- AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL)`
+ AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL AND c.company_id IS NULL)
+ AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL AND c.company_id IS NULL)`
 const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_rub,p.search_status,
- ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id),
+ ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id) AS work_format_ids,
  CASE WHEN category.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id) END AS category,
  CASE WHEN declared.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',declared.specialization_id,'grade_id',declared.grade_id) END AS declared_category,
- CASE WHEN category.grade_id IS NOT NULL THEN 'confirmed' ELSE 'unconfirmed' END AS grade_status`
+ CASE WHEN category.grade_id IS NOT NULL THEN 'confirmed' ELSE 'unconfirmed' END AS grade_status,
+ (SELECT count(*)::int FROM fsp_achievements fa WHERE fa.candidate_id=p.id) AS achievements_count,
+ CASE WHEN category.grade_id IS NOT NULL THEN COALESCE((SELECT max(CASE WHEN place<=3 THEN 5 WHEN place IS NOT NULL THEN 3 ELSE 1 END)::float8 FROM fsp_achievements fa WHERE fa.candidate_id=p.id),0) ELSE 0 END AS fsp_bonus`
 
 func scan(row pgx.Row) (entity.Card, error) {
 	var c entity.Card
-	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category, &c.DeclaredCategory, &c.GradeStatus)
+	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category, &c.DeclaredCategory, &c.GradeStatus, &c.AchievementsCount, &c.FSPBonus)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, entity.ErrNotFound
 	}
@@ -83,7 +85,13 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+columns+conditions+fmt.Sprintf(` ORDER BY (category.grade_id IS NOT NULL) DESC,category.score_percent DESC NULLS LAST,p.id LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
+	rows, err := tx.Query(ctx, `WITH ranked AS (SELECT `+columns+`,category.score_percent AS test_score`+conditions+`),
+ positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY (grade_status='confirmed') DESC,test_score DESC NULLS LAST,id) AS base_position FROM ranked),
+ slots AS (SELECT positioned.*,
+ array_agg(base_position) OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
+ row_number() OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY test_score+fsp_bonus DESC NULLS LAST,id) AS group_position FROM positioned)
+ SELECT id,city,timezone,experience_months,salary_min_rub,search_status,work_format_ids,category,declared_category,grade_status,achievements_count,fsp_bonus
+ FROM slots ORDER BY group_slots[group_position::int]`+fmt.Sprintf(` LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
 
 	if err != nil {
 		return page, err

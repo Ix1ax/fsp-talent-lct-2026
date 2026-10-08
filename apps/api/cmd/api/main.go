@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	fspregistry "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/registry"
+	fsprepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/repository"
+	fspservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -79,6 +82,7 @@ func run(log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
+			FSP:                fspservice.New(fsprepo.New(deps.DB), fspregistry.Mock{}),
 			Admins:             adminservice.New(adminrepository.New(deps.DB)),
 			AdminCatalogs:      admincatalogservice.New(admincatalogrepo.New(deps.DB)),
 			Assessments:        assessmentservice.New(assessmentrepository.New(deps.DB)),

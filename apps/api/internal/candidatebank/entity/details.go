@@ -1,14 +1,18 @@
 package entity
 
-import "time"
+import (
+	fspentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/entity"
+	"time"
+)
 
 // Details — отдельный ответ работодателю. Контакты, свободный текст и внутренние ID попыток сюда не попадают.
 type Details struct {
 	Card
-	Skills     []DetailSkill      `json:"skills"`
-	Assessment *DetailAssessment  `json:"assessment"`
-	Experience []DetailExperience `json:"experience"`
-	Education  []DetailEducation  `json:"education"`
+	Achievements []fspentity.Achievement `json:"achievements"`
+	Skills       []DetailSkill           `json:"skills"`
+	Assessment   *DetailAssessment       `json:"assessment"`
+	Experience   []DetailExperience      `json:"experience"`
+	Education    []DetailEducation       `json:"education"`
 }
 
 type DetailSkill struct {

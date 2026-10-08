@@ -1,6 +1,7 @@
 package entity
 
 import (
+	fspentity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/entity"
 	"time"
 
 	consententity "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/entity"
@@ -65,13 +66,14 @@ type FullConsents struct {
 
 // FullSnapshot — согласованный снимок данных кандидата из хранилища.
 type FullSnapshot struct {
-	Profile    *Profile
-	Consents   []consententity.Consent
-	Contacts   *Contacts
-	Skills     []Skill
-	Category   *Category
-	Experience []Experience
-	Education  []Education
+	Achievements []fspentity.Achievement
+	Profile      *Profile
+	Consents     []consententity.Consent
+	Contacts     *Contacts
+	Skills       []Skill
+	Category     *Category
+	Experience   []Experience
+	Education    []Education
 }
 
 // Category — текущая категория кандидата: специализация и грейд, подтверждённые последним пройденным тестом.
@@ -83,14 +85,14 @@ type Category struct {
 	ConfirmedAt      time.Time `json:"confirmed_at"`
 }
 
-// FullProfile — ответ GET /me/profile/full. Achievements пока заготовка под достижения ФСП.
+// FullProfile — ответ GET /me/profile/full. Достижения поступают только из адаптера реестра ФСП.
 type FullProfile struct {
-	Profile      *Profile     `json:"profile"`
-	Consents     FullConsents `json:"consents"`
-	Contacts     *Contacts    `json:"contacts"`
-	Skills       []Skill      `json:"skills"`
-	Category     *Category    `json:"category"`
-	Achievements []any        `json:"achievements"`
+	Profile      *Profile                `json:"profile"`
+	Consents     FullConsents            `json:"consents"`
+	Contacts     *Contacts               `json:"contacts"`
+	Skills       []Skill                 `json:"skills"`
+	Category     *Category               `json:"category"`
+	Achievements []fspentity.Achievement `json:"achievements"`
 	// Опыт и образование кандидата; ExperienceEstimatedMonths — подсказка по местам работы (nil, если их нет).
 	Experience                []Experience `json:"experience"`
 	Education                 []Education  `json:"education"`
