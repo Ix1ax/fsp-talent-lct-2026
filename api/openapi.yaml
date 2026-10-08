@@ -5401,6 +5401,10 @@ paths:
         - adminSession: []
       description: "Без состава. Состав возвращает GET шаблона."
       parameters:
+        - name: stack_skill_id
+          in: query
+          description: Основной навык выбранного стека.
+          schema: {type: string, format: uuid}
         - {name: specialization_id, in: query, schema: {type: integer, minimum: 1}}
         - {name: grade_id, in: query, schema: {type: integer, minimum: 1}}
         - {name: status, in: query, schema: {type: string, enum: [draft, published, archived]}}
@@ -5443,7 +5447,7 @@ paths:
       tags: [Админка — банк заданий]
       security:
         - adminSession: []
-      description: "Версия пары специализация и грейд назначается автоматически. Специализация, грейд и навыки должны быть активными."
+      description: "Версия тройки специализация, основной навык (stack_skill_id) и грейд назначается автоматически. Основной навык должен входить в blueprint. Специализация, грейд и навыки должны быть активными."
       requestBody:
         required: true
         content:
@@ -5553,7 +5557,7 @@ paths:
       tags: [Админка — банк заданий]
       security:
         - adminSession: []
-      description: "Для каждой строки состава нужно не меньше question_count активных заданий с опубликованной версией, иначе 409 insufficient_questions с перечнем нехватки. Ранее опубликованный шаблон пары архивируется."
+      description: "Для каждой строки состава нужно не меньше question_count активных заданий с опубликованной версией, иначе 409 insufficient_questions с перечнем нехватки. Архивируется только ранее опубликованный шаблон той же специализации, стека и грейда. Шаблоны других стеков не затрагиваются."
       responses:
         '200':
           description: "Шаблон опубликован."
@@ -5665,7 +5669,7 @@ paths:
         - keycloakOAuth:
             - openid
             - email
-      description: "Опубликованные шаблоны тестов по парам специализация и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, grade_change_cooldown, already_confirmed, consent_required, assessment_unavailable), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
+      description: "Опубликованные шаблоны тестов по тройкам специализация, основной навык (stack_skill_id) и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, grade_change_cooldown, already_confirmed, consent_required, assessment_unavailable), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
       responses:
         '200':
           description: "Список тестов."
@@ -6080,8 +6084,10 @@ components:
   schemas:
     AssessmentHistoryItem:
       type: object
-      required: [id, status, specialization_id, grade_id, started_at, finished_at, score_percent, category]
+      required: [stack_skill_id, stack_name, id, status, specialization_id, grade_id, started_at, finished_at, score_percent, category]
       properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
         id: {type: string, format: uuid}
         status: {type: string, enum: [active, passed, failed, expired]}
         specialization_id: {type: integer}
@@ -6106,8 +6112,9 @@ components:
     CandidateSurveyInput:
       type: object
       additionalProperties: false
-      required: [industry, specialization_id, grade_id]
+      required: [stack_skill_id, industry, specialization_id, grade_id]
       properties:
+        stack_skill_id: {type: string, format: uuid}
         industry: {type: string, minLength: 1, maxLength: 200, example: Информационные технологии}
         specialization_id: {type: integer, minimum: 1}
         grade_id: {type: integer, minimum: 1, description: Предполагаемый уровень; не подтверждённый грейд}
@@ -6118,8 +6125,9 @@ components:
           items: {type: string, minLength: 1, maxLength: 100}
     CandidateSurvey:
       type: object
-      required: [industry, specialization_id, grade_id, soft_skills, updated_at]
+      required: [stack_skill_id, industry, specialization_id, grade_id, soft_skills, updated_at]
       properties:
+        stack_skill_id: {type: string, description: UUID выбранного навыка; пустая строка у старого опроса требует повторного выбора}
         industry: {type: string, minLength: 1, maxLength: 200}
         specialization_id: {type: integer, minimum: 1}
         grade_id: {type: integer, minimum: 1, description: Самооценка}
@@ -6140,8 +6148,10 @@ components:
         latest_attempt:
           type: object
           nullable: true
-          required: [id, status, specialization_id, grade_id, deadline_at]
+          required: [id, status, specialization_id, grade_id, deadline_at, stack_skill_id, stack_name]
           properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
             id: {type: string, format: uuid}
             status: {type: string, enum: [active, passed, failed, expired]}
             specialization_id: {type: integer}
@@ -6403,16 +6413,20 @@ components:
           type: object
           nullable: true
           description: Самооценка из опроса, либо выбор последней попытки при отсутствии опроса. Это не подтверждённая категория; без опроса и попыток null.
-          required: [specialization_id, grade_id]
+          required: [specialization_id, grade_id, stack_skill_id, stack_name]
           properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
             specialization_id: {type: integer, minimum: 1}
             grade_id: {type: integer, minimum: 1}
         category:
           type: object
           nullable: true
-          required: [specialization_id, grade_id]
+          required: [specialization_id, grade_id, stack_skill_id, stack_name]
           description: Категория успешного теста. null означает отсутствие подтверждения.
           properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
             specialization_id: {type: integer, minimum: 1}
             grade_id: {type: integer, minimum: 1}
         id: {type: string, format: uuid}
@@ -6439,8 +6453,12 @@ components:
       allOf:
         - $ref: '#/components/schemas/CandidateBankCard'
         - type: object
-          required: [skills, assessment, experience, education, achievements]
+          required: [qualifications, skills, assessment, experience, education, achievements]
           properties:
+            qualifications:
+              type: array
+              description: Подтверждённые уровни по стекам; без ID попыток и ответов.
+              items: {$ref: '#/components/schemas/CandidateCategory'}
             achievements:
               type: array
               items: {$ref: '#/components/schemas/FSPAchievement'}
@@ -7849,6 +7867,7 @@ components:
     CandidateFullProfile:
       type: object
       required:
+        - qualifications
         - onboarding
         - work_format_names
         - profile
@@ -7862,6 +7881,10 @@ components:
         - experience_estimated_months
         - readiness
       properties:
+        qualifications:
+          type: array
+          description: Лучший подтверждённый уровень по каждой специализации и стеку. category остаётся последней присвоенной категорией.
+          items: {$ref: '#/components/schemas/CandidateCategory'}
         onboarding: {$ref: '#/components/schemas/CandidateOnboarding'}
         work_format_names:
           type: array
@@ -8088,8 +8111,9 @@ components:
     AssessmentTemplateInput:
       type: object
       additionalProperties: false
-      required: [specialization_id, grade_id, time_limit_sec, pass_score, blueprint]
+      required: [stack_skill_id, specialization_id, grade_id, time_limit_sec, pass_score, blueprint]
       properties:
+        stack_skill_id: {type: string, format: uuid}
         specialization_id: {type: integer, minimum: 1}
         grade_id: {type: integer, minimum: 1}
         time_limit_sec: {type: integer, minimum: 300, maximum: 14400}
@@ -8102,8 +8126,10 @@ components:
           items: {$ref: '#/components/schemas/AssessmentBlueprintRow'}
     AssessmentTemplate:
       type: object
-      required: [id, specialization_id, grade_id, version, time_limit_sec, pass_score, status, created_at, published_at]
+      required: [stack_skill_id, stack_name, id, specialization_id, grade_id, version, time_limit_sec, pass_score, status, created_at, published_at]
       properties:
+        stack_skill_id: {type: string, description: UUID основного навыка; пустая строка у старого шаблона без стека}
+        stack_name: {type: string, nullable: true}
         id: {type: string, format: uuid}
         specialization_id: {type: integer}
         grade_id: {type: integer}
@@ -8171,8 +8197,9 @@ components:
     AssessmentStartRequest:
       type: object
       additionalProperties: false
-      required: [specialization_id, grade_id]
+      required: [stack_skill_id, specialization_id, grade_id]
       properties:
+        stack_skill_id: {type: string, format: uuid}
         specialization_id: {type: integer, minimum: 1, example: 1}
         grade_id: {type: integer, minimum: 1, example: 2}
     AssessmentAnswerRequest:
@@ -8189,8 +8216,10 @@ components:
           maxLength: 500
     AssessmentAvailable:
       type: object
-      required: [specialization_id, grade_id, time_limit_sec, pass_score, question_count, can_start, reason, retry_at, confirmed]
+      required: [stack_skill_id, stack_name, specialization_id, grade_id, time_limit_sec, pass_score, question_count, can_start, reason, retry_at, confirmed]
       properties:
+        stack_skill_id: {type: string, format: uuid}
+        stack_name: {type: string}
         specialization_id: {type: integer}
         grade_id: {type: integer}
         time_limit_sec: {type: integer}
@@ -8240,8 +8269,10 @@ components:
         level: {type: integer, nullable: true, minimum: 1, maximum: 5}
     CandidateCategory:
       type: object
-      required: [specialization_id, specialization, grade_id, grade, confirmed_at]
+      required: [stack_skill_id, stack_name, specialization_id, specialization, grade_id, grade, confirmed_at]
       properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
         specialization_id: {type: integer}
         specialization: {type: string, example: Бэкенд}
         grade_id: {type: integer}
@@ -8260,14 +8291,16 @@ components:
           items: {$ref: '#/components/schemas/AssessmentSkillResult'}
         category:
           nullable: true
-          description: "Категория кандидата после успешной попытки."
+          description: "Категория и стек успешной попытки. Для успеха нужен проходной общий балл и проходной результат по основному навыку. Старые попытки имеют stack_skill_id и stack_name = null."
           allOf:
             - $ref: '#/components/schemas/CandidateCategory'
         retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (если не пройден)."}
     AssessmentAttempt:
       type: object
-      required: [id, status, specialization_id, grade_id, started_at, deadline_at, finished_at, time_limit_sec, questions, result]
+      required: [stack_skill_id, stack_name, id, status, specialization_id, grade_id, started_at, deadline_at, finished_at, time_limit_sec, questions, result]
       properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
         id: {type: string, format: uuid}
         status: {type: string, enum: [active, passed, failed, expired]}
         specialization_id: {type: integer}
