@@ -13,6 +13,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  FadeIn,
+  PageTransition,
 } from '@/shared/ui';
 import { formatDuration } from '@/shared/utils';
 import type { AssessmentAttempt } from '@/entities/assessment';
@@ -67,7 +69,12 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     setIndex(next);
   };
 
-  if (attempt.result) return <AssessmentResultCard result={attempt.result} />;
+  if (attempt.result)
+    return (
+      <FadeIn distance={0}>
+        <AssessmentResultCard result={attempt.result} />
+      </FadeIn>
+    );
 
   return (
     <>
@@ -94,7 +101,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           )}
         </div>
       )}
-      <div className="flex flex-wrap justify-between gap-3">
+      <div className="flex flex-wrap justify-between gap-3 tabular-nums">
         <p role="timer" aria-label="Оставшееся время">
           Осталось {formatDuration(remaining)}
         </p>
@@ -103,7 +110,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
         </p>
       </div>
       <progress
-        className="h-2 w-full"
+        className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
         value={answered}
         max={Math.max(1, questions.length)}
         aria-label="Прогресс ответов"
@@ -145,39 +152,46 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
         ))}
       </nav>
       {question && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Задание {question.position}</CardTitle>
-          </CardHeader>
-          <CardContent className="flex min-w-0 flex-col gap-5">
-            <p className="whitespace-pre-wrap wrap-anywhere">
-              {question.prompt.text}
-            </p>
-            {question.prompt.code && (
-              <pre
-                tabIndex={0}
-                aria-label="Код задания"
-                className="max-w-full overflow-x-auto rounded bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
-              >
-                <code>{question.prompt.code}</code>
-              </pre>
-            )}
-            <QuestionAnswerForm
-              key={question.id}
-              question={question}
-              state={queue.get(question.id)!}
-              disabled={busy || locked}
-              onChange={(answer) => update(question.id, answer)}
-              onSave={() =>
-                locked ? Promise.resolve(false) : queue.flush(question.id)
-              }
-            />
-          </CardContent>
-        </Card>
+        <PageTransition
+          transitionKey={question.id}
+          distance={0}
+          className="min-w-0"
+        >
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Задание {question.position}</CardTitle>
+            </CardHeader>
+            <CardContent className="flex min-w-0 flex-col gap-5">
+              <p className="whitespace-pre-wrap wrap-anywhere">
+                {question.prompt.text}
+              </p>
+              {question.prompt.code && (
+                <pre
+                  tabIndex={0}
+                  aria-label="Код задания"
+                  className="max-w-full overflow-x-auto rounded bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
+                >
+                  <code>{question.prompt.code}</code>
+                </pre>
+              )}
+              <QuestionAnswerForm
+                key={question.id}
+                question={question}
+                state={queue.get(question.id)!}
+                disabled={busy || locked}
+                onChange={(answer) => update(question.id, answer)}
+                onSave={() =>
+                  locked ? Promise.resolve(false) : queue.flush(question.id)
+                }
+              />
+            </CardContent>
+          </Card>
+        </PageTransition>
       )}
-      <div className="flex flex-wrap justify-between gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:flex sm:justify-between">
         <Button
           variant="outline"
+          className="min-h-11"
           disabled={index === 0 || busy}
           onClick={() => navigate(index - 1)}
         >
@@ -185,13 +199,18 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
         </Button>
         <Button
           variant="outline"
+          className="min-h-11"
           disabled={index >= questions.length - 1 || busy}
           onClick={() => navigate(index + 1)}
         >
           Далее
         </Button>
       </div>
-      <Button disabled={busy || locked} onClick={() => setConfirm(true)}>
+      <Button
+        className="h-auto min-h-11 whitespace-normal"
+        disabled={busy || locked}
+        onClick={() => setConfirm(true)}
+      >
         Завершить тест
       </Button>
       <Dialog

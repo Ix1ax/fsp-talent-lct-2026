@@ -3,7 +3,14 @@
 import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import {
+  AsyncState,
+  Button,
+  FadeIn,
+  Skeleton,
+  Stagger,
+  StaggerItem,
+} from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 
 import { useAssessments } from '../model';
@@ -30,20 +37,20 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
   } = useAssessments();
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-5 py-8 sm:px-6 sm:py-10">
-      <Button asChild variant="outline" className="self-start">
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
+      <Button asChild variant="outline" className="min-h-11 self-start">
         <Link href="/candidate">
           <ArrowLeftIcon aria-hidden="true" />В кабинет
         </Link>
       </Button>
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold">Тестирование</h1>
+      <FadeIn className="flex flex-col gap-2">
+        <h1 className="text-2xl font-semibold sm:text-3xl">Тестирование</h1>
         <p className="text-muted-foreground">
           Подтвердите навыки и грейд. Результаты проверяются автоматически.
         </p>
-      </header>
+      </FadeIn>
       {current && (
-        <Button asChild>
+        <Button asChild className="h-auto min-h-11 whitespace-normal">
           <Link href={`/candidate/assessments/${current}`}>
             Продолжить активный тест
           </Link>
@@ -62,7 +69,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
         />
       )}
       <Button
-        className="self-start"
+        className="min-h-11 self-start"
         variant="outline"
         disabled={loading || busy}
         onClick={refresh}
@@ -81,16 +88,26 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
           description="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
         />
       )}
-      {!loading &&
-        items.map((test, index) => (
-          <AvailableAssessmentCard
-            key={`${test.specializationId}-${test.gradeId}-${index}`}
-            test={test}
-            catalogs={catalogs}
-            disabled={busy || !!current}
-            onSelect={select}
-          />
-        ))}
+      {!loading && (
+        <Stagger
+          interval={Math.min(0.04, 0.2 / Math.max(1, items.length))}
+          className="grid gap-4"
+        >
+          {items.map((test, index) => (
+            <StaggerItem
+              key={`${test.specializationId}-${test.gradeId}-${index}`}
+              className="min-w-0"
+            >
+              <AvailableAssessmentCard
+                test={test}
+                catalogs={catalogs}
+                disabled={busy || !!current}
+                onSelect={select}
+              />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      )}
       <StartAssessmentDialog
         test={selected}
         busy={busy}

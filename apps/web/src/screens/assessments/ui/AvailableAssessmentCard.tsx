@@ -27,15 +27,17 @@ export const AvailableAssessmentCard = ({
   onSelect,
 }: AvailableAssessmentCardProps) => {
   return (
-    <Card>
+    <Card className="min-w-0">
       <CardHeader>
-        <CardTitle>{getAssessmentTitle(test, catalogs)}</CardTitle>
+        <CardTitle className="wrap-anywhere">
+          {getAssessmentTitle(test, catalogs)}
+        </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         {test.confirmed && (
           <Badge variant="secondary">Уровень подтверждён</Badge>
         )}
-        <dl className="grid grid-cols-3 gap-3 text-sm">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 text-sm">
           <div>
             <dt className="text-muted-foreground">Задания</dt>
             <dd className="mt-1 font-medium">{test.questionCount}</dd>
@@ -60,7 +62,7 @@ export const AvailableAssessmentCard = ({
           </Link>
         )}
         <Button
-          className="self-start"
+          className="h-auto min-h-11 w-full whitespace-normal sm:w-auto sm:self-start"
           disabled={!test.canStart || disabled}
           onClick={() => onSelect(test)}
         >

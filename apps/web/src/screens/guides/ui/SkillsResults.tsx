@@ -1,3 +1,4 @@
+import { FadeIn } from '@/shared/ui';
 import type { Skill, SkillsSearchQuery } from '@/entities/catalog';
 
 import { getEmptySkillsMessage } from '../lib';
@@ -31,10 +32,12 @@ export const SkillsResults = ({ skills, query, error }: SkillsResultsProps) => {
   }
 
   return (
-    <ul className="grid gap-3 auto-rows-fr sm:grid-cols-2">
-      {skills.map((skill) => (
-        <SkillCard key={skill.id} skill={skill} />
-      ))}
-    </ul>
+    <FadeIn key={query.q ?? ''} distance={0}>
+      <ul className="grid gap-3 auto-rows-fr sm:grid-cols-2">
+        {skills.map((skill) => (
+          <SkillCard key={skill.id} skill={skill} />
+        ))}
+      </ul>
+    </FadeIn>
   );
 };
