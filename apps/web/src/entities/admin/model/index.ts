@@ -142,3 +142,15 @@ export const kindLabels = {
   short_answer: 'Короткий ответ',
   code_reading: 'Чтение кода',
 };
+
+export type PreviewQuestion = {
+  id: string;
+  skillName: string;
+  difficulty: number;
+  weight: number;
+  version: QuestionVersion;
+};
+export type TemplatePreview = {
+  questions: PreviewQuestion[];
+  shortages: Shortage[];
+};
