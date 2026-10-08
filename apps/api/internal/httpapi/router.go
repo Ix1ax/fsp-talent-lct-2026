@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	fspservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/service"
+	fspweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/web"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -40,6 +42,7 @@ import (
 type Checker interface{ Check(context.Context) error }
 
 type Options struct {
+	FSP                     *fspservice.Service
 	Admins                  *adminservice.Service
 	AdminCatalogs           *admincatalogservice.Service
 	Assessments             *assessmentservice.Service
@@ -146,6 +149,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
 	consentweb.Register(api, log, verifier, opts.Users, opts.Consents)
+	fspweb.Register(api, log, verifier, opts.Users, opts.FSP)
 	candidateweb.Register(api, log, verifier, candidateweb.Options{Users: opts.Users, Profiles: opts.Candidates, Avatars: opts.Avatars, Contacts: opts.CandidateContacts, Skills: opts.CandidateSkills, Full: opts.CandidateFull, Career: opts.CandidateCareer, Resume: opts.CandidateResume})
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(404, gin.H{"error": gin.H{"code": "not_found", "message": "Маршрут не найден"}})
