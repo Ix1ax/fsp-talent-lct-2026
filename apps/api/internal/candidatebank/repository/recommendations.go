@@ -8,9 +8,9 @@ import (
 )
 
 // Recommend ранжирует по сходству с потребностью. Исключают только явные фильтры и приватность.
-// TODO: подключить подтверждённые достижения ФСП к ранжированию внутри категории.
+// ФСП меняет порядок только внутри одной подтверждённой категории; её позиции среди других групп сохраняются.
 func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID string, filter entity.Filter) (entity.RecommendationPage, error) {
-	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "similarity", UnassessedCriteria: []string{"fsp_achievements"}}
+	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "similarity", UnassessedCriteria: []string{}}
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
 	if err != nil {
 		return page, err
@@ -58,7 +58,13 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 	query := `WITH matched AS (SELECT ` + columns + `,` + signals + `,category.score_percent::float8 AS test_score,` + skillMatches + ` AS skills ` + conditions + `),
  scored AS (SELECT matched.*,` + weightedSkillScore + ` AS skill_score FROM matched),
  ranked AS (SELECT scored.*,` + similarityScore + ` AS match_score,` + similarityCriteria + ` AS criteria FROM scored)
- SELECT * FROM ranked ORDER BY (grade_status='confirmed') DESC,match_score DESC,test_score DESC NULLS LAST,id
+  , positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY (grade_status='confirmed') DESC,match_score DESC,test_score DESC NULLS LAST,id) AS base_position FROM ranked),
+ slots AS (SELECT positioned.*,
+ array_agg(base_position) OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
+ row_number() OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY match_score+fsp_bonus DESC,test_score DESC NULLS LAST,id) AS group_position FROM positioned)
+ SELECT id,city,timezone,experience_months,salary_min_rub,search_status,work_format_ids,category,declared_category,grade_status,achievements_count,fsp_bonus,
+ format_match,salary_match,city_match,timezone_match,specialization_match,grade_match,test_score,skills,skill_score,match_score,criteria
+ FROM slots ORDER BY group_slots[group_position::int]
  LIMIT $17 OFFSET $18`
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
@@ -71,7 +77,7 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 		var score, testScore *float64
 		var matchScore float64
 		var criteria []entity.MatchCriterion
-		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus,
+		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus, &card.AchievementsCount, &card.FSPBonus,
 			&fm, &sm, &cm, &tm, &specMatch, &gradeMatch, &testScore, &skills, &score, &matchScore, &criteria)
 		if err != nil {
 			rows.Close()
@@ -80,6 +86,9 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 		item := entity.Explain(card, fm, sm, cm, tm)
 		item.Skills, item.SkillMatchScore, item.TestScorePercent, item.MatchScore, item.Criteria = skills, score, testScore, matchScore, criteria
 		item.ExplainQualification(specMatch, gradeMatch, grade != nil)
+		if card.FSPBonus > 0 {
+			item.Reasons = append(item.Reasons, "Достижения ФСП повышают приоритет внутри подтверждённой категории")
+		}
 		page.Items = append(page.Items, item)
 	}
 	err = rows.Err()
