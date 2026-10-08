@@ -1,23 +1,23 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import { Button, Card } from '@/shared/ui';
 import { adminSchemas, queryString } from '@/entities/admin';
 import {
+  AdminListLoading,
   AdminSelect,
   ErrorNotice,
   Pagination,
   SkillPicker,
   Status,
-  TemplateEditor,
   useAdminOptions,
   useAdminQuery,
 } from '@/features/admin';
 
 import { AdminPageHeader } from './AdminPageHeader';
-import { TemplateDetails } from './TemplateDetails';
 
 export const TemplatesPage = () => {
   const [filters, setFilters] = useState({
@@ -27,8 +27,6 @@ export const TemplatesPage = () => {
     status: '',
   });
   const [offset, setOffset] = useState(0);
-  const [creating, setCreating] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
   const options = useAdminOptions();
   const list = useAdminQuery(
     `/assessments/templates?${queryString({ ...filters, limit: 20, offset })}`,
@@ -46,13 +44,15 @@ export const TemplatesPage = () => {
         title="Шаблоны тестов"
         description="Стек, специализация, грейд и состав заданий."
         action={
-          <Button onClick={() => setCreating(true)}>
-            <Plus />
-            Добавить шаблон
+          <Button asChild>
+            <Link href="/admin/templates/new">
+              <Plus />
+              Добавить шаблон
+            </Link>
           </Button>
         }
       />
-      <Card className="gap-5 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <SkillPicker
             label="Основной навык"
@@ -96,9 +96,9 @@ export const TemplatesPage = () => {
             ]}
           />
         </div>
-        {Object.values(filters).some(Boolean) && (
+        <div className="flex h-9 justify-end">
           <Button
-            className="justify-self-end"
+            disabled={!Object.values(filters).some(Boolean)}
             size="sm"
             variant="ghost"
             onClick={() => {
@@ -113,16 +113,19 @@ export const TemplatesPage = () => {
           >
             Сбросить фильтры
           </Button>
-        )}
+        </div>
         <ErrorNotice error={options.error} />
         <ErrorNotice error={list.error} />
-        {list.loading && <p role="status">Загружаем шаблоны…</p>}
-        {!list.loading && !list.error && !list.data?.items.length && (
-          <p className="py-8 text-center text-muted-foreground">
-            Шаблонов не найдено
-          </p>
-        )}
+        <p role="status" aria-live="polite" className="sr-only">
+          {list.loading ? 'Загружаем шаблоны…' : ''}
+        </p>
         <div className="divide-y border-t">
+          <AdminListLoading loading={list.loading} hasData={!!list.data} />
+          {!list.loading && !list.error && !list.data?.items.length && (
+            <p className="py-6 text-center text-muted-foreground">
+              Шаблонов не найдено
+            </p>
+          )}
           {list.data?.items.map((template) => (
             <div
               key={template.id}
@@ -142,11 +145,11 @@ export const TemplatesPage = () => {
                   {template.time_limit_sec / 60} мин · {template.pass_score}%
                 </p>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setSelected(template.id)}
-              >
-                Открыть состав
+              <Button variant="outline" asChild>
+                <Link href={`/admin/templates/${template.id}`}>
+                  {' '}
+                  Открыть состав
+                </Link>
               </Button>
             </div>
           ))}
@@ -159,19 +162,6 @@ export const TemplatesPage = () => {
           onChange={setOffset}
         />
       </Card>
-      {creating && (
-        <TemplateEditor
-          onClose={() => setCreating(false)}
-          onSaved={list.reload}
-        />
-      )}
-      {selected && (
-        <TemplateDetails
-          id={selected}
-          onClose={() => setSelected(null)}
-          onSaved={list.reload}
-        />
-      )}
     </div>
   );
 };

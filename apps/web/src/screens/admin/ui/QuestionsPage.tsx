@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 
 import { Button, Card } from '@/shared/ui';
 import { adminSchemas, kindLabels, queryString } from '@/entities/admin';
 import {
+  AdminListLoading,
   AdminSelect,
   ErrorNotice,
   Pagination,
-  QuestionEditor,
   SkillPicker,
   Status,
   useAdminOptions,
@@ -18,7 +19,6 @@ import {
 } from '@/features/admin';
 
 import { AdminPageHeader } from './AdminPageHeader';
-import { QuestionDetails } from './QuestionDetails';
 
 export const QuestionsPage = () => {
   const params = useSearchParams();
@@ -30,8 +30,6 @@ export const QuestionsPage = () => {
     kind: '',
   });
   const [offset, setOffset] = useState(0);
-  const [creating, setCreating] = useState(false);
-  const [selected, setSelected] = useState<string | null>(null);
   const options = useAdminOptions();
   const list = useAdminQuery(
     `/assessments/questions?${queryString({ ...filters, limit: 20, offset })}`,
@@ -47,13 +45,15 @@ export const QuestionsPage = () => {
         title="Банк заданий"
         description="Задания и версии для автоматических тестов."
         action={
-          <Button onClick={() => setCreating(true)}>
-            <Plus />
-            Добавить задание
+          <Button asChild>
+            <Link href="/admin/questions/new">
+              <Plus />
+              Добавить задание
+            </Link>
           </Button>
         }
       />
-      <Card className="gap-5 p-4 sm:p-6">
+      <Card className="relative gap-4 p-4 sm:p-6">
         <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <SkillPicker
             label="Навык"
@@ -111,9 +111,9 @@ export const QuestionsPage = () => {
             ]}
           />
         </div>
-        {Object.values(filters).some(Boolean) && (
+        <div className="flex h-9 justify-end">
           <Button
-            className="justify-self-end"
+            disabled={!Object.values(filters).some(Boolean)}
             size="sm"
             variant="ghost"
             onClick={() => {
@@ -129,20 +129,23 @@ export const QuestionsPage = () => {
           >
             Сбросить фильтры
           </Button>
-        )}
+        </div>
         <p className="text-xs text-caption">
           Статус относится к версиям: у одного задания могут быть и черновик, и
           опубликованная версия.
         </p>
         <ErrorNotice error={options.error} />
         <ErrorNotice error={list.error} />
-        {list.loading && <p role="status">Загружаем задания…</p>}
-        {!list.loading && !list.error && !list.data?.items.length && (
-          <p className="py-8 text-center text-muted-foreground">
-            Заданий не найдено
-          </p>
-        )}
+        <p role="status" aria-live="polite" className="sr-only">
+          {list.loading ? 'Загружаем задания…' : ''}
+        </p>
         <div className="divide-y border-t">
+          <AdminListLoading loading={list.loading} hasData={!!list.data} />
+          {!list.loading && !list.error && !list.data?.items.length && (
+            <p className="py-6 text-center text-muted-foreground">
+              Заданий не найдено
+            </p>
+          )}
           {list.data?.items.map((question) => (
             <div
               key={question.id}
@@ -162,11 +165,8 @@ export const QuestionsPage = () => {
                 </p>
                 <p className="mt-1 text-xs text-caption">{question.id}</p>
               </div>
-              <Button
-                variant="outline"
-                onClick={() => setSelected(question.id)}
-              >
-                Открыть
+              <Button variant="outline" asChild>
+                <Link href={`/admin/questions/${question.id}`}> Открыть</Link>
               </Button>
             </div>
           ))}
@@ -179,19 +179,6 @@ export const QuestionsPage = () => {
           onChange={setOffset}
         />
       </Card>
-      {creating && (
-        <QuestionEditor
-          onClose={() => setCreating(false)}
-          onSaved={list.reload}
-        />
-      )}
-      {selected && (
-        <QuestionDetails
-          id={selected}
-          onClose={() => setSelected(null)}
-          onSaved={list.reload}
-        />
-      )}
     </div>
   );
 };
