@@ -23,6 +23,7 @@ interface CandidateExperienceCardProps {
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;
+  onSaved?: () => void;
   onGoToProfile: () => void;
 }
 
@@ -73,7 +74,7 @@ export const CandidateExperienceCard = (
             </Button>
           </div>
         )}
-        {props.profileId && (
+        {(props.profileId || editor) && (
           <>
             {actions.loading && (
               <p role="status" className="text-sm text-muted-foreground">

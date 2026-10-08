@@ -8,6 +8,7 @@ interface ProfileStepActionsProps {
   step: ProfileStep;
   busy: boolean;
   processing: boolean;
+  profileExists: boolean;
   onStepChange: (step: ProfileStep) => void;
 }
 
@@ -15,6 +16,7 @@ export const ProfileStepActions = ({
   step,
   busy,
   processing,
+  profileExists,
   onStepChange,
 }: ProfileStepActionsProps) => {
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
@@ -51,7 +53,9 @@ export const ProfileStepActions = ({
             type="button"
             variant={isFormStep ? 'outline' : 'default'}
             size="lg"
-            disabled={busy || (step === 'consents' && !processing)}
+            disabled={
+              busy || (step === 'consents' && !processing && !profileExists)
+            }
             className="ml-auto w-full sm:w-auto"
             onClick={() => onStepChange(next.id)}
           >
@@ -62,8 +66,9 @@ export const ProfileStepActions = ({
       </div>
       {step === 'consents' && (
         <p className="text-sm text-muted-foreground">
-          Для создания профиля нужно согласие на обработку данных. Публикацию
-          можно разрешить позже.
+          {profileExists
+            ? 'Опыт и образование доступны в следующих шагах. Согласия на обработку и публикацию можно изменить здесь.'
+            : 'Для создания профиля нужно согласие на обработку данных. Публикацию можно разрешить позже.'}
         </p>
       )}
       {isFormStep && (

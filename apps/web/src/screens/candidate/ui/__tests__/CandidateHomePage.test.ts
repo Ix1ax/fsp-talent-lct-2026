@@ -2,7 +2,10 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { CandidateFullProfile } from '@/entities/candidate';
+import type {
+  CandidateFullProfile,
+  CandidateProfile,
+} from '@/entities/candidate';
 import type { SessionUser } from '@/entities/session';
 
 import { CandidateHomePage } from '../CandidateHomePage';
@@ -55,6 +58,20 @@ const render = (initialFullProfile = full) =>
     createElement(CandidateHomePage, { user, initialFullProfile }),
   );
 
+const existingProfile: CandidateProfile = {
+  id: 'profile',
+  avatarFileId: null,
+  headline: null,
+  summary: null,
+  city: null,
+  timezone: null,
+  experienceMonths: 0,
+  salaryMinRub: null,
+  searchStatus: 'hidden',
+  workFormatIds: [],
+  updatedAt: '',
+};
+
 describe('candidate profile steps', () => {
   it('places navigation before the form and offers continuation after processing consent', () => {
     const html = render();
@@ -91,6 +108,26 @@ describe('candidate profile steps', () => {
     expect(html).toContain('Не выполнено');
     expect(html).toContain('aria-label="Шаги настройки профиля"');
     expect(html).toContain('aria-label="Готовность профиля по данным сервера"');
+  });
+  it('shows profile creation links for both career sections before a profile exists', () => {
+    const html = render();
+    expect(html).toContain(
+      'Сначала создайте профиль, чтобы добавлять образование.',
+    );
+    expect(html.match(/>Перейти к профилю</g)).toHaveLength(3);
+    expect(html).not.toContain('>Добавить место работы<');
+    expect(html).not.toContain('>Добавить образование<');
+  });
+  it('offers career sections with an existing profile and revoked processing', () => {
+    const html = render({
+      ...full,
+      profile: existingProfile,
+      consents: { ...full.consents, items: [] },
+    });
+    expect(html).toContain('Добавить место работы');
+    expect(html).toContain('Добавить образование');
+    expect(html).not.toContain('Сначала создайте профиль, чтобы добавлять');
+    expect(html).not.toContain('name="fullName"');
   });
   it('does not render private contact fields when processing is revoked', () => {
     const html = render({

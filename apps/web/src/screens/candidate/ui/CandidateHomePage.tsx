@@ -231,7 +231,8 @@ export const CandidateHomePage = ({
                   profileId={profile?.id}
                   active={step === 'experience'}
                   busy={busy}
-                  onBusyChange={handleFormBusyChange}
+                  onBusyChange={setBusy}
+                  onSaved={refreshAfterSave}
                   onCountChange={setExperienceCount}
                   onGoToProfile={() => changeStep('profile')}
                 />
@@ -245,7 +246,8 @@ export const CandidateHomePage = ({
                   profileId={profile?.id}
                   active={step === 'education'}
                   busy={busy}
-                  onBusyChange={handleFormBusyChange}
+                  onBusyChange={setBusy}
+                  onSaved={refreshAfterSave}
                   onCountChange={setEducationCount}
                   onGoToProfile={() => changeStep('profile')}
                 />
@@ -311,6 +313,7 @@ export const CandidateHomePage = ({
             step={step}
             busy={busy}
             processing={permissions.processing}
+            profileExists={!!profile}
             onStepChange={changeStep}
           />
         </Tabs>

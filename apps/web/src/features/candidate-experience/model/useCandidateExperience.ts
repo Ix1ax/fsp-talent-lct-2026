@@ -21,6 +21,7 @@ type UseCandidateExperienceOptions = {
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;
+  onSaved?: () => void;
 };
 
 export const useCandidateExperience = ({
@@ -29,6 +30,7 @@ export const useCandidateExperience = ({
   busy,
   onBusyChange,
   onCountChange,
+  onSaved,
 }: UseCandidateExperienceOptions) => {
   const [items, setItems] = useState<CandidateExperience[]>();
   const [loading, setLoading] = useState(false);
@@ -130,6 +132,7 @@ export const useCandidateExperience = ({
         setMessage(
           `${success} Не удалось обновить список. Повторите загрузку списка.`,
         );
+      onSaved?.();
       return true;
     } catch (error) {
       const text = getExperienceErrorMessage(error);

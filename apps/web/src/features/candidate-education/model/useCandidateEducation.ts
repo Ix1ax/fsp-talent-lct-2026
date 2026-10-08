@@ -21,6 +21,7 @@ type UseCandidateEducationOptions = {
   busy: boolean;
   onBusyChange: (busy: boolean) => void;
   onCountChange: (count: number) => void;
+  onSaved?: () => void;
 };
 
 export const useCandidateEducation = ({
@@ -29,6 +30,7 @@ export const useCandidateEducation = ({
   busy,
   onBusyChange,
   onCountChange,
+  onSaved,
 }: UseCandidateEducationOptions) => {
   const [items, setItems] = useState<CandidateEducation[]>();
   const [loading, setLoading] = useState(false);
@@ -130,6 +132,7 @@ export const useCandidateEducation = ({
         setMessage(
           `${success} Не удалось обновить список. Повторите загрузку списка.`,
         );
+      onSaved?.();
       return true;
     } catch (error) {
       const text = getEducationErrorMessage(error);
