@@ -4,11 +4,17 @@ import "time"
 
 // StartInput — тело запроса старта попытки.
 type StartInput struct {
-	SpecializationID int16 `json:"specialization_id"`
-	GradeID          int16 `json:"grade_id"`
+	StackSkillID     string `json:"stack_skill_id"`
+	SpecializationID int16  `json:"specialization_id"`
+	GradeID          int16  `json:"grade_id"`
 }
 
 func (in *StartInput) Normalize() error {
+	id, err := NormalizeID(in.StackSkillID)
+	if err != nil {
+		return invalid("Укажите stack_skill_id выбранного стека теста")
+	}
+	in.StackSkillID = id
 	if in.SpecializationID <= 0 || in.GradeID <= 0 {
 		return invalid("Укажите specialization_id и grade_id")
 	}
@@ -38,6 +44,8 @@ type SkillResult struct {
 
 // CategoryRef — категория кандидата.
 type CategoryRef struct {
+	StackSkillID     *string   `json:"stack_skill_id"`
+	StackName        *string   `json:"stack_name"`
 	SpecializationID int16     `json:"specialization_id"`
 	Specialization   string    `json:"specialization"`
 	GradeID          int16     `json:"grade_id"`
@@ -47,16 +55,19 @@ type CategoryRef struct {
 
 // AttemptResult — итог завершённой попытки. Правильные ответы не раскрываются.
 type AttemptResult struct {
-	Passed       bool          `json:"passed"`
-	ScorePercent float64       `json:"score_percent"`
-	PassScore    float64       `json:"pass_score"`
-	Skills       []SkillResult `json:"skills"`
-	Category     *CategoryRef  `json:"category"`
-	RetryAt      *time.Time    `json:"retry_at"`
+	NextGradeChangeAt *time.Time    `json:"next_grade_change_at"`
+	Passed            bool          `json:"passed"`
+	ScorePercent      float64       `json:"score_percent"`
+	PassScore         float64       `json:"pass_score"`
+	Skills            []SkillResult `json:"skills"`
+	Category          *CategoryRef  `json:"category"`
+	RetryAt           *time.Time    `json:"retry_at"`
 }
 
 // Attempt — попытка. Пока она активна, Questions заполнен, а Result равен nil; после завершения наоборот.
 type Attempt struct {
+	StackSkillID     *string           `json:"stack_skill_id"`
+	StackName        *string           `json:"stack_name"`
 	ID               string            `json:"id"`
 	Status           string            `json:"status"`
 	SpecializationID int16             `json:"specialization_id"`
@@ -71,15 +82,19 @@ type Attempt struct {
 
 // Состояния доступности теста для кандидата.
 const (
-	ReasonOK        = "ok"
-	ReasonActive    = "attempt_active"
-	ReasonCooldown  = "retake_cooldown"
-	ReasonConfirmed = "already_confirmed"
-	ReasonConsent   = "consent_required"
+	ReasonOK          = "ok"
+	ReasonUnavailable = "assessment_unavailable"
+	ReasonActive      = "attempt_active"
+	ReasonGradeChange = "grade_change_cooldown"
+	ReasonCooldown    = "retake_cooldown"
+	ReasonConfirmed   = "already_confirmed"
+	ReasonConsent     = "consent_required"
 )
 
 // AvailableTemplate — опубликованный тест и его состояние для кандидата.
 type AvailableTemplate struct {
+	StackName        string     `json:"stack_name"`
+	StackSkillID     string     `json:"stack_skill_id"`
 	SpecializationID int16      `json:"specialization_id"`
 	GradeID          int16      `json:"grade_id"`
 	TimeLimitSec     int        `json:"time_limit_sec"`

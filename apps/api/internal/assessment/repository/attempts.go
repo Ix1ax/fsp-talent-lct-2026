@@ -69,7 +69,7 @@ func closeExpired(ctx context.Context, tx pgx.Tx, profileID string) error {
 	return finalizeLocked(ctx, tx, profileID, id, true)
 }
 
-func (r *Repository) StartAttempt(ctx context.Context, userID string, specializationID, gradeID int16, retakeDays int) (entity.Attempt, error) {
+func (r *Repository) StartAttempt(ctx context.Context, userID string, specializationID, gradeID int16, retakeDays int, stackSkillID string) (entity.Attempt, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
 		return entity.Attempt{}, err
@@ -101,13 +101,22 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 	if !errors.Is(err, pgx.ErrNoRows) {
 		return entity.Attempt{}, err
 	}
+	var known bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations s,grades g WHERE s.id=$1 AND g.id=$2 AND s.active AND g.active FOR SHARE OF s,g)`, specializationID, gradeID).Scan(&known); err != nil {
+		return entity.Attempt{}, err
+	}
+	if !known {
+		return reject(entity.ErrUnavailable)
+	}
 	state, err := pairState(ctx, tx, profileID, retakeDays)
 	if err != nil {
 		return entity.Attempt{}, err
 	}
-	switch st := state(specializationID, gradeID); st.Reason {
+	switch st := state(specializationID, gradeID, stackSkillID); st.Reason {
 	case entity.ReasonConfirmed:
 		return reject(entity.ErrAlreadyConfirmed)
+	case entity.ReasonGradeChange:
+		return reject(&entity.GradeChangeError{RetryAt: *st.RetryAt})
 	case entity.ReasonCooldown:
 		return reject(&entity.RetakeError{RetryAt: *st.RetryAt})
 	}
@@ -115,7 +124,8 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 	var templateID string
 	var limit int
 	var passScore float64
-	err = tx.QueryRow(ctx, `SELECT id::text,time_limit_sec,pass_score FROM assessment_templates WHERE specialization_id=$1 AND grade_id=$2 AND status='published' FOR SHARE`, specializationID, gradeID).Scan(&templateID, &limit, &passScore)
+	var stackName string
+	err = tx.QueryRow(ctx, `SELECT t.id::text,t.time_limit_sec,t.pass_score,s.name FROM assessment_templates t JOIN skills s ON s.id=t.stack_skill_id AND s.active AND s.moderation_status='approved' WHERE t.specialization_id=$1 AND t.grade_id=$2 AND t.stack_skill_id=$3 AND t.status='published' FOR SHARE OF t,s`, specializationID, gradeID, stackSkillID).Scan(&templateID, &limit, &passScore, &stackName)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return reject(entity.ErrUnavailable)
 	}
@@ -130,8 +140,8 @@ func (r *Repository) StartAttempt(ctx context.Context, userID string, specializa
 		return entity.Attempt{}, err
 	}
 	var attemptID string
-	err = tx.QueryRow(ctx, `INSERT INTO assessment_attempts(candidate_id,template_id,specialization_id,grade_id,status,deadline_at,time_limit_sec,pass_score)
- VALUES($1,$2,$3,$4,'active',clock_timestamp()+make_interval(secs=>$5::int),$5::int,$6) RETURNING id::text`, profileID, templateID, specializationID, gradeID, limit, passScore).Scan(&attemptID)
+	err = tx.QueryRow(ctx, `INSERT INTO assessment_attempts(candidate_id,template_id,specialization_id,grade_id,status,deadline_at,time_limit_sec,pass_score,stack_skill_id,stack_name)
+ VALUES($1,$2,$3,$4,'active',clock_timestamp()+make_interval(secs=>$5::int),$5::int,$6,$7,$8) RETURNING id::text`, profileID, templateID, specializationID, gradeID, limit, passScore, stackSkillID, stackName).Scan(&attemptID)
 	if err != nil {
 		return entity.Attempt{}, err
 	}
@@ -184,7 +194,8 @@ func pickQuestions(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQ
 	var picked []pickedQuestion
 	for _, b := range blueprint {
 		versions, err := tx.Query(ctx, `SELECT v.id::text FROM assessment_questions q JOIN assessment_question_versions v ON v.question_id=q.id AND v.status='published'
- WHERE q.skill_id=$1 AND q.difficulty=$2 AND q.active ORDER BY random() LIMIT $3 FOR SHARE OF q, v`, b.skillID, b.difficulty, b.count)
+ JOIN skills s ON s.id=q.skill_id AND s.active AND s.moderation_status='approved'
+ WHERE q.skill_id=$1 AND q.difficulty=$2 AND q.active ORDER BY random() LIMIT $3 FOR SHARE OF q, v, s`, b.skillID, b.difficulty, b.count)
 		if err != nil {
 			return nil, err
 		}
@@ -212,19 +223,24 @@ func pickQuestions(ctx context.Context, tx pgx.Tx, templateID string) ([]pickedQ
 // pairState возвращает функцию, которая по паре (специализация, грейд) говорит, можно ли начать тест.
 // Подтверждённым считается грейд не выше уже пройденного в той же специализации; срок пересдачи считается
 // от последней неудачной или просроченной попытки пары.
-func pairState(ctx context.Context, q querier, profileID string, retakeDays int) (func(spec, grade int16) entity.AvailableTemplate, error) {
-	ranks := map[int16]int16{}
-	rows, err := q.Query(ctx, `SELECT h.specialization_id,max(g.rank) FROM grade_history h JOIN grades g ON g.id=h.grade_id WHERE h.candidate_id=$1 GROUP BY h.specialization_id`, profileID)
+func pairState(ctx context.Context, q querier, profileID string, retakeDays int) (func(spec, grade int16, stack string) entity.AvailableTemplate, error) {
+	type scope struct {
+		spec  int16
+		stack string
+	}
+	ranks := map[scope]int16{}
+	rows, err := q.Query(ctx, `SELECT h.specialization_id,coalesce(a.stack_skill_id::text,''),max(g.rank) FROM grade_history h JOIN grades g ON g.id=h.grade_id JOIN assessment_attempts a ON a.id=h.attempt_id WHERE h.candidate_id=$1 GROUP BY h.specialization_id,a.stack_skill_id`, profileID)
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
 		var spec, rank int16
-		if err = rows.Scan(&spec, &rank); err != nil {
+		var stack string
+		if err = rows.Scan(&spec, &stack, &rank); err != nil {
 			rows.Close()
 			return nil, err
 		}
-		ranks[spec] = rank
+		ranks[scope{spec, stack}] = rank
 	}
 	rows.Close()
 	if err = rows.Err(); err != nil {
@@ -247,16 +263,19 @@ func pairState(ctx context.Context, q querier, profileID string, retakeDays int)
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}
-	type pair struct{ spec, grade int16 }
+	type pair struct {
+		spec, grade int16
+		stack       string
+	}
 	last := map[pair]time.Time{}
-	rows, err = q.Query(ctx, `SELECT specialization_id,grade_id,max(finished_at) FROM assessment_attempts WHERE candidate_id=$1 AND status IN ('failed','expired') GROUP BY specialization_id,grade_id`, profileID)
+	rows, err = q.Query(ctx, `SELECT specialization_id,grade_id,coalesce(stack_skill_id::text,''),max(finished_at) FROM assessment_attempts WHERE candidate_id=$1 AND status IN ('failed','expired') GROUP BY specialization_id,grade_id,stack_skill_id`, profileID)
 	if err != nil {
 		return nil, err
 	}
 	for rows.Next() {
 		var p pair
 		var at time.Time
-		if err = rows.Scan(&p.spec, &p.grade, &at); err != nil {
+		if err = rows.Scan(&p.spec, &p.grade, &p.stack, &at); err != nil {
 			rows.Close()
 			return nil, err
 		}
@@ -270,13 +289,28 @@ func pairState(ctx context.Context, q querier, profileID string, retakeDays int)
 	if err = q.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&now); err != nil {
 		return nil, err
 	}
-	return func(spec, grade int16) entity.AvailableTemplate {
-		out := entity.AvailableTemplate{SpecializationID: spec, GradeID: grade, CanStart: true, Reason: entity.ReasonOK}
-		if target, known := gradeRank[grade]; known && entity.Confirmed(ranks[spec], target) && ranks[spec] > 0 {
+	var lastSuccess *time.Time
+	var latestSpec, latestGrade int16
+	if err = q.QueryRow(ctx, `SELECT coalesce((SELECT specialization_id FROM grade_history WHERE candidate_id=$1 ORDER BY achieved_at DESC,id DESC LIMIT 1),0),coalesce((SELECT grade_id FROM grade_history WHERE candidate_id=$1 ORDER BY achieved_at DESC,id DESC LIMIT 1),0)`, profileID).Scan(&latestSpec, &latestGrade); err != nil {
+		return nil, err
+	}
+	if err = q.QueryRow(ctx, `SELECT max(achieved_at) FROM grade_history WHERE candidate_id=$1`, profileID).Scan(&lastSuccess); err != nil {
+		return nil, err
+	}
+	return func(spec, grade int16, stack string) entity.AvailableTemplate {
+		out := entity.AvailableTemplate{StackSkillID: stack, SpecializationID: spec, GradeID: grade, CanStart: true, Reason: entity.ReasonOK}
+		if target, known := gradeRank[grade]; known && entity.Confirmed(ranks[scope{spec, stack}], target) && ranks[scope{spec, stack}] > 0 {
 			out.CanStart, out.Reason, out.Confirmed = false, entity.ReasonConfirmed, true
 			return out
 		}
-		if at, ok := last[pair{spec, grade}]; ok {
+		if lastSuccess != nil && (latestSpec != spec || latestGrade != grade) {
+			retry := lastSuccess.Add(entity.GradeChangeDays * 24 * time.Hour)
+			if now.Before(retry) {
+				out.CanStart, out.Reason, out.RetryAt = false, entity.ReasonGradeChange, &retry
+				return out
+			}
+		}
+		if at, ok := last[pair{spec, grade, stack}]; ok {
 			if allowed, retryAt := entity.CheckRetake(now, &at, retakeDays); !allowed {
 				out.CanStart, out.Reason, out.RetryAt = false, entity.ReasonCooldown, &retryAt
 			}
@@ -310,28 +344,34 @@ func (r *Repository) Available(ctx context.Context, userID string, retakeDays in
 	if err != nil {
 		return nil, err
 	}
-	rows, err := tx.Query(ctx, `SELECT t.specialization_id,t.grade_id,t.time_limit_sec,t.pass_score::float8,
- (SELECT coalesce(sum(b.question_count),0) FROM assessment_blueprints b WHERE b.template_id=t.id)::int
- FROM assessment_templates t JOIN grades g ON g.id=t.grade_id WHERE t.status='published' ORDER BY t.specialization_id,g.rank`)
+	rows, err := tx.Query(ctx, `SELECT t.stack_skill_id::text,sk.name,t.specialization_id,t.grade_id,t.time_limit_sec,t.pass_score::float8,
+ (SELECT coalesce(sum(b.question_count),0) FROM assessment_blueprints b WHERE b.template_id=t.id)::int,
+ NOT EXISTS (SELECT 1 FROM assessment_blueprints b WHERE b.template_id=t.id AND `+availableExpr+` < b.question_count)
+ FROM assessment_templates t JOIN skills sk ON sk.id=t.stack_skill_id AND sk.active AND sk.moderation_status='approved' JOIN grades g ON g.id=t.grade_id JOIN specializations s ON s.id=t.specialization_id WHERE t.status='published' AND s.active AND g.active ORDER BY t.specialization_id,g.rank`)
 	if err != nil {
 		return nil, err
 	}
 	items := []entity.AvailableTemplate{}
 	for rows.Next() {
 		var spec, grade int16
+		var stack, stackName string
 		var limit, count int
 		var pass float64
-		if err = rows.Scan(&spec, &grade, &limit, &pass, &count); err != nil {
+		var enough bool
+		if err = rows.Scan(&stack, &stackName, &spec, &grade, &limit, &pass, &count, &enough); err != nil {
 			rows.Close()
 			return nil, err
 		}
-		item := state(spec, grade)
+		item := state(spec, grade, stack)
+		item.StackName = stackName
 		item.TimeLimitSec, item.PassScore, item.QuestionCount = limit, pass, count
 		switch {
 		case active:
 			item.CanStart, item.Reason, item.RetryAt = false, entity.ReasonActive, nil
 		case !consent && item.CanStart:
 			item.CanStart, item.Reason = false, entity.ReasonConsent
+		case item.CanStart && (!enough || count == 0):
+			item.CanStart, item.Reason = false, entity.ReasonUnavailable
 		}
 		items = append(items, item)
 	}
@@ -394,8 +434,8 @@ func loadAttempt(ctx context.Context, q querier, id string, retakeDays int) (ent
 	a := entity.Attempt{Questions: []entity.AttemptQuestion{}}
 	var score *float64
 	var passScore float64
-	err := q.QueryRow(ctx, `SELECT id::text,status,specialization_id,grade_id,started_at,deadline_at,finished_at,time_limit_sec,score_percent::float8,pass_score::float8
- FROM assessment_attempts WHERE id=$1`, id).Scan(&a.ID, &a.Status, &a.SpecializationID, &a.GradeID, &a.StartedAt, &a.DeadlineAt, &a.FinishedAt, &a.TimeLimitSec, &score, &passScore)
+	err := q.QueryRow(ctx, `SELECT id::text,status,specialization_id,grade_id,started_at,deadline_at,finished_at,time_limit_sec,score_percent::float8,pass_score::float8,stack_skill_id::text,stack_name
+ FROM assessment_attempts WHERE id=$1`, id).Scan(&a.ID, &a.Status, &a.SpecializationID, &a.GradeID, &a.StartedAt, &a.DeadlineAt, &a.FinishedAt, &a.TimeLimitSec, &score, &passScore, &a.StackSkillID, &a.StackName)
 	if err != nil {
 		return a, dbError(err)
 	}
@@ -432,11 +472,13 @@ func loadAttempt(ctx context.Context, q querier, id string, retakeDays int) (ent
 
 func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passScore float64, retakeDays int) (entity.AttemptResult, error) {
 	res := entity.AttemptResult{Passed: a.Status == entity.AttemptPassed, ScorePercent: score, PassScore: passScore, Skills: []entity.SkillResult{}}
-	// Подтверждение засчитывается, только если итоги записаны (есть запись истории) и навык по-прежнему одобрен.
-	rows, err := q.Query(ctx, `SELECT q.skill_id::text,s.name,sum(q.points)::float8,sum(coalesce(an.awarded,0))::float8,
- (s.active AND s.moderation_status='approved' AND EXISTS(SELECT 1 FROM grade_history h WHERE h.attempt_id=$1))
- FROM attempt_questions q JOIN skills s ON s.id=q.skill_id LEFT JOIN attempt_answers an ON an.attempt_question_id=q.id
- WHERE q.attempt_id=$1 GROUP BY q.skill_id,s.name,s.active,s.moderation_status ORDER BY min(q.position)`, a.ID)
+	// История вопросов неизменна, подтверждение и отображаемый ID следуют за объединённым навыком.
+	rows, err := q.Query(ctx, `SELECT target.id::text,target.name,sum(q.points)::float8,sum(coalesce(an.awarded,0))::float8,
+ (target.active AND target.moderation_status='approved' AND EXISTS(SELECT 1 FROM grade_history h WHERE h.attempt_id=$1))
+ FROM attempt_questions q JOIN skills original ON original.id=q.skill_id
+ JOIN skills target ON target.id=coalesce(original.merged_into,original.id)
+ LEFT JOIN attempt_answers an ON an.attempt_question_id=q.id
+ WHERE q.attempt_id=$1 GROUP BY target.id,target.name,target.active,target.moderation_status ORDER BY min(q.position)`, a.ID)
 	if err != nil {
 		return res, err
 	}
@@ -465,6 +507,7 @@ func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passSco
  JOIN specializations sp ON sp.id=h.specialization_id JOIN grades g ON g.id=h.grade_id WHERE h.attempt_id=$1`, a.ID).Scan(&c.SpecializationID, &c.Specialization, &c.GradeID, &c.Grade, &c.ConfirmedAt)
 		switch {
 		case err == nil:
+			c.StackSkillID, c.StackName = a.StackSkillID, a.StackName
 			res.Category = &c
 		case !errors.Is(err, pgx.ErrNoRows): // нет записи, если итоги не писались (согласие отозвано)
 			return res, err
@@ -472,6 +515,14 @@ func loadResult(ctx context.Context, q querier, a entity.Attempt, score, passSco
 	} else if a.FinishedAt != nil {
 		retryAt := a.FinishedAt.Add(time.Duration(retakeDays) * 24 * time.Hour)
 		res.RetryAt = &retryAt
+	}
+	var latest *time.Time
+	if err = q.QueryRow(ctx, `SELECT max(achieved_at) FROM grade_history WHERE candidate_id=(SELECT candidate_id FROM assessment_attempts WHERE id=$1)`, a.ID).Scan(&latest); err != nil {
+		return res, err
+	}
+	if latest != nil {
+		next := latest.Add(entity.GradeChangeDays * 24 * time.Hour)
+		res.NextGradeChangeAt = &next
 	}
 	return res, nil
 }

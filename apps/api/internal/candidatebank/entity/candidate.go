@@ -24,8 +24,10 @@ type Card struct {
 
 // Category содержит только категорию успешного теста, без самооценки из резюме.
 type Category struct {
-	SpecializationID int16 `json:"specialization_id"`
-	GradeID          int16 `json:"grade_id"`
+	StackSkillID     *string `json:"stack_skill_id"`
+	StackName        *string `json:"stack_name"`
+	SpecializationID int16   `json:"specialization_id"`
+	GradeID          int16   `json:"grade_id"`
 }
 
 type Page struct {

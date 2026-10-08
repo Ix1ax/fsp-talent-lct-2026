@@ -69,7 +69,18 @@ func (s *FullProfileService) Get(ctx context.Context, userID string) (entity.Ful
 	if achievements == nil || !processing {
 		achievements = []fspentity.Achievement{}
 	}
+	names := snapshot.WorkFormatNames
+	if names == nil {
+		names = []string{}
+	}
+	qualifications := snapshot.Qualifications
+	if qualifications == nil {
+		qualifications = []entity.Category{}
+	}
 	return entity.FullProfile{
+		Qualifications:            qualifications,
+		WorkFormatNames:           names,
+		Onboarding:                entity.BuildOnboarding(processing, snapshot.Profile, snapshot.Survey, snapshot.LatestAttempt, snapshot.Category, s.now(), qualifications...),
 		Profile:                   snapshot.Profile,
 		Consents:                  entity.FullConsents{CurrentPolicyVersion: s.policyVersion, Items: consents},
 		Contacts:                  contacts,

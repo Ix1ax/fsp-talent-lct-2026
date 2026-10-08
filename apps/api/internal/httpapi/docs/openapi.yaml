@@ -6,6 +6,185 @@ info:
 servers:
   - url: /
 paths:
+  /api/v1/me/assessments/history:
+    get:
+      operationId: getCandidateAssessmentHistory
+      tags: [Тестирование кандидата]
+      summary: История собственных попыток и присвоенных категорий
+      description: "Только текущий кандидат. Новые попытки первыми. Возвращает результаты и категорию, присвоенную каждой успешной попыткой, без вопросов и правильных ответов. Чтение истории доступно после отзыва processing; новые ответы и старт запрещены. Просроченная попытка закрывается без присвоения категории при отозванном согласии."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      parameters:
+        - name: limit
+          in: query
+          schema: {type: integer, minimum: 1, maximum: 100, default: 20}
+        - name: offset
+          in: query
+          schema: {type: integer, minimum: 0, maximum: 10000, default: 0}
+      responses:
+        '200':
+          description: Страница истории
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AssessmentHistoryPage'}
+        '400':
+          description: Некорректные параметры
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет активной роли кандидата
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Профиль не создан
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Тестирование не настроено
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/me/profile/onboarding:
+    get:
+      operationId: getCandidateOnboarding
+      tags: [Кандидат]
+      summary: Состояние первичного пути кандидата
+      description: "Следующий шаг, сохранённый опрос и последняя попытка. Без processing опрос и попытка скрыты; возвращается шаг consent. Истёкшая active-попытка не даёт шаг in_progress; для актуализации результата вызовите GET /me/assessments/attempts/{id} с ID последней попытки. Ответ не кешируется."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: Следующий шаг и собственные данные
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateOnboarding'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет активной роли кандидата
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+    put:
+      operationId: putCandidateSurvey
+      tags: [Кандидат]
+      summary: Сохранить опрос, предполагаемый грейд и софт-скиллы
+      description: "Нужны собственный профиль и processing. Запрос полностью заменяет опрос. Специализация и грейд должны быть активны в справочнике; это самооценка, подтверждённая категория не меняется."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/CandidateSurveyInput'}
+      responses:
+        '200':
+          description: Сохранённый опрос
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/CandidateSurvey'}
+        '400':
+          description: Некорректный опрос или неизвестный/архивированный справочник
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет активной роли кандидата
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Сначала создайте профиль
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Нужно согласие processing
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '413':
+          description: Превышен допустимый размер запроса
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+  /api/v1/me/profile/export.pdf:
+    get:
+      operationId: exportCandidatePDF
+      tags: [Кандидат]
+      summary: Скачать собственное стандартное резюме PDF
+      description: "Нужны профиль и processing. Только текущий кандидат; чужой ID не принимается. PDF включает контакты, резюме, навыки, опыт, образование, софт-скиллы, подтверждённую категорию и достижения. Без подтверждения грейд явно отмечен. Ответ private, no-store; скачивание resume.pdf."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: Готовое резюме
+          content:
+            application/pdf:
+              schema: {type: string, format: binary}
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Нет активной роли кандидата
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '404':
+          description: Профиль не создан
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '409':
+          description: Нужно согласие processing
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '503':
+          description: Экспорт занят или сервис не настроен
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
+        '500':
+          description: Внутренняя ошибка
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Error'}
   /api/v1/me/fsp:
     get:
       operationId: getFSP
@@ -2280,11 +2459,11 @@ paths:
           schema: {type: string, enum: [all, confirmed, unconfirmed], default: all}
         - name: specialization_id
           in: query
-          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор последней попытки при отсутствии категории. Профили без выбранной специализации исключаются."
+          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор опроса, либо последней попытки при отсутствии опроса при отсутствии категории. Профили без выбранной специализации исключаются."
           schema: {type: integer, minimum: 1, maximum: 32767}
         - name: grade_id
           in: query
-          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор последней попытки. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
+          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор опроса, либо последней попытки при отсутствии опроса. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
           schema: {type: integer, minimum: 1, maximum: 32767}
         - name: skill_id
           in: query
@@ -2408,11 +2587,11 @@ paths:
           schema: {type: string, enum: [all, confirmed, unconfirmed], default: all}
         - name: specialization_id
           in: query
-          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор последней попытки при отсутствии категории. Профили без выбранной специализации исключаются."
+          description: "Жёсткий фильтр специализации: подтверждённая категория, либо выбор опроса, либо последней попытки при отсутствии опроса при отсутствии категории. Профили без выбранной специализации исключаются."
           schema: {type: integer, minimum: 1, maximum: 32767}
         - name: grade_id
           in: query
-          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор последней попытки. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
+          description: "Жёсткий фильтр точного грейда: подтверждённая категория, либо выбор опроса, либо последней попытки при отсутствии опроса. Для поиска только подтверждённых уровней дополнительно задайте grade_status=confirmed."
           schema: {type: integer, minimum: 1, maximum: 32767}
         - name: skill_id
           in: query
@@ -5222,6 +5401,10 @@ paths:
         - adminSession: []
       description: "Без состава. Состав возвращает GET шаблона."
       parameters:
+        - name: stack_skill_id
+          in: query
+          description: Основной навык выбранного стека.
+          schema: {type: string, format: uuid}
         - {name: specialization_id, in: query, schema: {type: integer, minimum: 1}}
         - {name: grade_id, in: query, schema: {type: integer, minimum: 1}}
         - {name: status, in: query, schema: {type: string, enum: [draft, published, archived]}}
@@ -5264,7 +5447,7 @@ paths:
       tags: [Админка — банк заданий]
       security:
         - adminSession: []
-      description: "Версия пары специализация и грейд назначается автоматически. Специализация, грейд и навыки должны быть активными."
+      description: "Версия тройки специализация, основной навык (stack_skill_id) и грейд назначается автоматически. Основной навык должен входить в blueprint. Специализация, грейд и навыки должны быть активными."
       requestBody:
         required: true
         content:
@@ -5374,7 +5557,7 @@ paths:
       tags: [Админка — банк заданий]
       security:
         - adminSession: []
-      description: "Для каждой строки состава нужно не меньше question_count активных заданий с опубликованной версией, иначе 409 insufficient_questions с перечнем нехватки. Ранее опубликованный шаблон пары архивируется."
+      description: "Для каждой строки состава нужно не меньше question_count активных заданий с опубликованной версией, иначе 409 insufficient_questions с перечнем нехватки. Архивируется только ранее опубликованный шаблон той же специализации, стека и грейда. Шаблоны других стеков не затрагиваются."
       responses:
         '200':
           description: "Шаблон опубликован."
@@ -5486,7 +5669,7 @@ paths:
         - keycloakOAuth:
             - openid
             - email
-      description: "Опубликованные шаблоны тестов по парам специализация и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, already_confirmed, consent_required), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
+      description: "Опубликованные шаблоны тестов по тройкам специализация, основной навык (stack_skill_id) и грейд с состоянием для кандидата: can_start, причина (reason: ok, attempt_active, retake_cooldown, grade_change_cooldown, already_confirmed, consent_required, assessment_unavailable), retry_at для пересдачи, признак confirmed. Просроченная активная попытка перед ответом закрывается. Ответ не кешируется."
       responses:
         '200':
           description: "Список тестов."
@@ -5583,7 +5766,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '409':
-          description: "attempt_active (в error есть attempt_id), retake_cooldown (в error есть retry_at), already_confirmed, assessment_unavailable (нет опубликованного шаблона или не хватает заданий), consent_required."
+          description: "attempt_active (в error есть attempt_id), retake_cooldown или grade_change_cooldown (в error есть retry_at), already_confirmed, assessment_unavailable (нет опубликованного шаблона или не хватает заданий), consent_required."
           content:
             application/json:
               schema:
@@ -5899,6 +6082,81 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AssessmentHistoryItem:
+      type: object
+      required: [stack_skill_id, stack_name, id, status, specialization_id, grade_id, started_at, finished_at, score_percent, category]
+      properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
+        id: {type: string, format: uuid}
+        status: {type: string, enum: [active, passed, failed, expired]}
+        specialization_id: {type: integer}
+        grade_id: {type: integer}
+        started_at: {type: string, format: date-time}
+        finished_at: {type: string, format: date-time, nullable: true}
+        score_percent: {type: number, minimum: 0, maximum: 100, nullable: true}
+        category:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CandidateCategory'
+    AssessmentHistoryPage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/AssessmentHistoryItem'}
+        total: {type: integer, minimum: 0}
+        limit: {type: integer, minimum: 1, maximum: 100}
+        offset: {type: integer, minimum: 0, maximum: 10000}
+    CandidateSurveyInput:
+      type: object
+      additionalProperties: false
+      required: [stack_skill_id, industry, specialization_id, grade_id]
+      properties:
+        stack_skill_id: {type: string, format: uuid}
+        industry: {type: string, minLength: 1, maxLength: 200, example: Информационные технологии}
+        specialization_id: {type: integer, minimum: 1}
+        grade_id: {type: integer, minimum: 1, description: Предполагаемый уровень; не подтверждённый грейд}
+        soft_skills:
+          type: array
+          maxItems: 20
+          uniqueItems: true
+          items: {type: string, minLength: 1, maxLength: 100}
+    CandidateSurvey:
+      type: object
+      required: [stack_skill_id, industry, specialization_id, grade_id, soft_skills, updated_at]
+      properties:
+        stack_skill_id: {type: string, description: UUID выбранного навыка; пустая строка у старого опроса требует повторного выбора}
+        industry: {type: string, minLength: 1, maxLength: 200}
+        specialization_id: {type: integer, minimum: 1}
+        grade_id: {type: integer, minimum: 1, description: Самооценка}
+        soft_skills:
+          type: array
+          maxItems: 20
+          items: {type: string, minLength: 1, maxLength: 100}
+        updated_at: {type: string, format: date-time}
+    CandidateOnboarding:
+      type: object
+      required: [next_step, survey, latest_attempt]
+      properties:
+        next_step: {type: string, enum: [consent, profile, survey, test, in_progress, complete]}
+        survey:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/CandidateSurvey'
+        latest_attempt:
+          type: object
+          nullable: true
+          required: [id, status, specialization_id, grade_id, deadline_at, stack_skill_id, stack_name]
+          properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
+            id: {type: string, format: uuid}
+            status: {type: string, enum: [active, passed, failed, expired]}
+            specialization_id: {type: integer}
+            grade_id: {type: integer}
+            deadline_at: {type: string, format: date-time}
     FSPAchievement:
       type: object
       required: [id, event_id, event_name, discipline, occurred_on, result, place, source]
@@ -6154,17 +6412,21 @@ components:
         declared_category:
           type: object
           nullable: true
-          description: Выбор специализации и грейда последней попытки теста. Это не подтверждённая категория; до первой попытки null.
-          required: [specialization_id, grade_id]
+          description: Самооценка из опроса, либо выбор последней попытки при отсутствии опроса. Это не подтверждённая категория; без опроса и попыток null.
+          required: [specialization_id, grade_id, stack_skill_id, stack_name]
           properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
             specialization_id: {type: integer, minimum: 1}
             grade_id: {type: integer, minimum: 1}
         category:
           type: object
           nullable: true
-          required: [specialization_id, grade_id]
+          required: [specialization_id, grade_id, stack_skill_id, stack_name]
           description: Категория успешного теста. null означает отсутствие подтверждения.
           properties:
+            stack_skill_id: {type: string, format: uuid, nullable: true}
+            stack_name: {type: string, nullable: true}
             specialization_id: {type: integer, minimum: 1}
             grade_id: {type: integer, minimum: 1}
         id: {type: string, format: uuid}
@@ -6191,8 +6453,12 @@ components:
       allOf:
         - $ref: '#/components/schemas/CandidateBankCard'
         - type: object
-          required: [skills, assessment, experience, education, achievements]
+          required: [qualifications, skills, assessment, experience, education, achievements]
           properties:
+            qualifications:
+              type: array
+              description: Подтверждённые уровни по стекам; без ID попыток и ответов.
+              items: {$ref: '#/components/schemas/CandidateCategory'}
             achievements:
               type: array
               items: {$ref: '#/components/schemas/FSPAchievement'}
@@ -7601,6 +7867,9 @@ components:
     CandidateFullProfile:
       type: object
       required:
+        - qualifications
+        - onboarding
+        - work_format_names
         - profile
         - consents
         - contacts
@@ -7612,6 +7881,14 @@ components:
         - experience_estimated_months
         - readiness
       properties:
+        qualifications:
+          type: array
+          description: Лучший подтверждённый уровень по каждой специализации и стеку. category остаётся последней присвоенной категорией.
+          items: {$ref: '#/components/schemas/CandidateCategory'}
+        onboarding: {$ref: '#/components/schemas/CandidateOnboarding'}
+        work_format_names:
+          type: array
+          items: {type: string}
         profile:
           nullable: true
           description: Профиль или null, если он ещё не создан.
@@ -7834,8 +8111,9 @@ components:
     AssessmentTemplateInput:
       type: object
       additionalProperties: false
-      required: [specialization_id, grade_id, time_limit_sec, pass_score, blueprint]
+      required: [stack_skill_id, specialization_id, grade_id, time_limit_sec, pass_score, blueprint]
       properties:
+        stack_skill_id: {type: string, format: uuid}
         specialization_id: {type: integer, minimum: 1}
         grade_id: {type: integer, minimum: 1}
         time_limit_sec: {type: integer, minimum: 300, maximum: 14400}
@@ -7848,8 +8126,10 @@ components:
           items: {$ref: '#/components/schemas/AssessmentBlueprintRow'}
     AssessmentTemplate:
       type: object
-      required: [id, specialization_id, grade_id, version, time_limit_sec, pass_score, status, created_at, published_at]
+      required: [stack_skill_id, stack_name, id, specialization_id, grade_id, version, time_limit_sec, pass_score, status, created_at, published_at]
       properties:
+        stack_skill_id: {type: string, description: UUID основного навыка; пустая строка у старого шаблона без стека}
+        stack_name: {type: string, nullable: true}
         id: {type: string, format: uuid}
         specialization_id: {type: integer}
         grade_id: {type: integer}
@@ -7917,8 +8197,9 @@ components:
     AssessmentStartRequest:
       type: object
       additionalProperties: false
-      required: [specialization_id, grade_id]
+      required: [stack_skill_id, specialization_id, grade_id]
       properties:
+        stack_skill_id: {type: string, format: uuid}
         specialization_id: {type: integer, minimum: 1, example: 1}
         grade_id: {type: integer, minimum: 1, example: 2}
     AssessmentAnswerRequest:
@@ -7935,16 +8216,18 @@ components:
           maxLength: 500
     AssessmentAvailable:
       type: object
-      required: [specialization_id, grade_id, time_limit_sec, pass_score, question_count, can_start, reason, retry_at, confirmed]
+      required: [stack_skill_id, stack_name, specialization_id, grade_id, time_limit_sec, pass_score, question_count, can_start, reason, retry_at, confirmed]
       properties:
+        stack_skill_id: {type: string, format: uuid}
+        stack_name: {type: string}
         specialization_id: {type: integer}
         grade_id: {type: integer}
         time_limit_sec: {type: integer}
         pass_score: {type: number, description: "Проходной балл в процентах."}
         question_count: {type: integer}
         can_start: {type: boolean}
-        reason: {type: string, enum: [ok, attempt_active, retake_cooldown, already_confirmed, consent_required]}
-        retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (при retake_cooldown)."}
+        reason: {type: string, enum: [ok, attempt_active, retake_cooldown, grade_change_cooldown, already_confirmed, consent_required, assessment_unavailable]}
+        retry_at: {type: string, format: date-time, nullable: true, description: "Дата следующего старта при retake_cooldown или grade_change_cooldown."}
         confirmed: {type: boolean, description: "Этот грейд уже подтверждён."}
     AssessmentAvailableList:
       type: object
@@ -7986,8 +8269,10 @@ components:
         level: {type: integer, nullable: true, minimum: 1, maximum: 5}
     CandidateCategory:
       type: object
-      required: [specialization_id, specialization, grade_id, grade, confirmed_at]
+      required: [stack_skill_id, stack_name, specialization_id, specialization, grade_id, grade, confirmed_at]
       properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
         specialization_id: {type: integer}
         specialization: {type: string, example: Бэкенд}
         grade_id: {type: integer}
@@ -7995,8 +8280,9 @@ components:
         confirmed_at: {type: string, format: date-time}
     AssessmentAttemptResult:
       type: object
-      required: [passed, score_percent, pass_score, skills, category, retry_at]
+      required: [passed, score_percent, pass_score, skills, category, retry_at, next_grade_change_at]
       properties:
+        next_grade_change_at: {type: string, format: date-time, nullable: true, description: Семь дней после последнего успешного присвоения категории; null до первого успеха}
         passed: {type: boolean}
         score_percent: {type: number}
         pass_score: {type: number}
@@ -8005,14 +8291,16 @@ components:
           items: {$ref: '#/components/schemas/AssessmentSkillResult'}
         category:
           nullable: true
-          description: "Категория кандидата после успешной попытки."
+          description: "Категория и стек успешной попытки. Для успеха нужен проходной общий балл и проходной результат по основному навыку. Старые попытки имеют stack_skill_id и stack_name = null."
           allOf:
             - $ref: '#/components/schemas/CandidateCategory'
         retry_at: {type: string, format: date-time, nullable: true, description: "Когда можно пересдать (если не пройден)."}
     AssessmentAttempt:
       type: object
-      required: [id, status, specialization_id, grade_id, started_at, deadline_at, finished_at, time_limit_sec, questions, result]
+      required: [stack_skill_id, stack_name, id, status, specialization_id, grade_id, started_at, deadline_at, finished_at, time_limit_sec, questions, result]
       properties:
+        stack_skill_id: {type: string, format: uuid, nullable: true}
+        stack_name: {type: string, nullable: true}
         id: {type: string, format: uuid}
         status: {type: string, enum: [active, passed, failed, expired]}
         specialization_id: {type: integer}

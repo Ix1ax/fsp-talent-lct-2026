@@ -161,7 +161,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 			fail(c, err)
 			return
 		}
-		f := entity.TemplateFilter{Status: c.Query("status"), Limit: limit, Offset: offset}
+		f := entity.TemplateFilter{StackSkillID: c.Query("stack_skill_id"), Status: c.Query("status"), Limit: limit, Offset: offset}
 		if f.SpecializationID, err = int16Query(c, "specialization_id"); err != nil {
 			fail(c, err)
 			return

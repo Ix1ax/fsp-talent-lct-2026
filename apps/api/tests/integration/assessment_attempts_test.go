@@ -39,7 +39,7 @@ func attemptCandidate(t *testing.T, db *pgxpool.Pool) string {
 func demoTemplateSize(t *testing.T, db *pgxpool.Pool, spec, grade int16) int {
 	t.Helper()
 	var n int
-	if err := db.QueryRow(context.Background(), `SELECT sum(b.question_count) FROM assessment_blueprints b JOIN assessment_templates t ON t.id=b.template_id WHERE t.specialization_id=$1 AND t.grade_id=$2 AND t.status='published'`, spec, grade).Scan(&n); err != nil {
+	if err := db.QueryRow(context.Background(), `SELECT sum(b.question_count) FROM assessment_blueprints b JOIN assessment_templates t ON t.id=b.template_id WHERE t.specialization_id=$1 AND t.grade_id=$2 AND t.status='published' AND t.stack_skill_id=$3`, spec, grade, defaultTestStack(spec)).Scan(&n); err != nil {
 		t.Fatal(err)
 	}
 	return n
@@ -51,7 +51,7 @@ func TestStartAttemptSnapshotsWithoutGradingSpec(t *testing.T) {
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
 
-	attempt, err := repo.StartAttempt(context.Background(), user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(context.Background(), user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,12 +88,12 @@ func TestStartAttemptOneActive(t *testing.T) {
 	spec, grade := pairIDs(t, db, "backend", "junior")
 	fspec, fgrade := pairIDs(t, db, "frontend", "junior")
 
-	first, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	first, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var active *entity.ActiveError
-	_, err = repo.StartAttempt(ctx, user, fspec, fgrade, retakeDays)
+	_, err = repo.StartAttempt(ctx, user, fspec, fgrade, retakeDays, defaultTestStack(fspec))
 	if !errors.Is(err, entity.ErrAttemptActive) || !errors.As(err, &active) || active.AttemptID != first.ID {
 		t.Fatalf("второй старт: %v", err)
 	}
@@ -105,7 +105,7 @@ func TestStartAttemptOneActive(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays)
+			_, err := repo.StartAttempt(ctx, other, spec, grade, retakeDays, defaultTestStack(spec))
 			switch {
 			case err == nil:
 				started.Add(1)
@@ -131,7 +131,7 @@ func TestStartAttemptUnavailable(t *testing.T) {
 
 	// Для пары без шаблона и для неизвестных справочников.
 	for _, pair := range [][2]int16{{3, 4}, {99, 99}} {
-		if _, err := repo.StartAttempt(ctx, user, pair[0], pair[1], retakeDays); !errors.Is(err, entity.ErrUnavailable) {
+		if _, err := repo.StartAttempt(ctx, user, pair[0], pair[1], retakeDays, defaultTestStack(pair[0])); !errors.Is(err, entity.ErrUnavailable) {
 			t.Fatalf("пара %v: %v", pair, err)
 		}
 	}
@@ -139,7 +139,7 @@ func TestStartAttemptUnavailable(t *testing.T) {
 	if _, err := db.Exec(ctx, `UPDATE assessment_questions SET active=false WHERE skill_id=$1`, goSkill); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays); !errors.Is(err, entity.ErrUnavailable) {
+	if _, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec)); !errors.Is(err, entity.ErrUnavailable) {
 		t.Fatalf("банк сократился: %v", err)
 	}
 	var attempts int
@@ -177,7 +177,7 @@ func TestStartAttemptRequiresActiveCandidate(t *testing.T) {
 		"работодатель":    {newUser("employer", "active", false, false), candidateentity.ErrForbidden},
 		"заблокированный": {newUser("candidate", "blocked", true, true), candidateentity.ErrForbidden},
 	} {
-		if _, err := repo.StartAttempt(ctx, tc.user, spec, grade, retakeDays); !errors.Is(err, tc.want) {
+		if _, err := repo.StartAttempt(ctx, tc.user, spec, grade, retakeDays, defaultTestStack(spec)); !errors.Is(err, tc.want) {
 			t.Errorf("%s: %v", name, err)
 		}
 		if _, err := repo.Available(ctx, tc.user, retakeDays); tc.want != candidateentity.ErrConsentRequired && !errors.Is(err, tc.want) {
@@ -193,7 +193,7 @@ func TestAttemptSnapshotSurvivesBankChanges(t *testing.T) {
 	user := attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
 
-	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestGetAttemptIsPrivate(t *testing.T) {
 	ctx := context.Background()
 	owner, stranger := attemptCandidate(t, db), attemptCandidate(t, db)
 	spec, grade := pairIDs(t, db, "backend", "junior")
-	attempt, err := repo.StartAttempt(ctx, owner, spec, grade, retakeDays)
+	attempt, err := repo.StartAttempt(ctx, owner, spec, grade, retakeDays, defaultTestStack(spec))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -254,14 +254,14 @@ func TestAvailableStates(t *testing.T) {
 	}
 
 	items, err := repo.Available(ctx, user, retakeDays)
-	if err != nil || len(items) != 2 {
+	if err != nil || len(items) != 6 {
 		t.Fatalf("список: %+v (%v)", items, err)
 	}
 	if b := find(items, spec, grade); !b.CanStart || b.Reason != "ok" || b.QuestionCount != demoTemplateSize(t, db, spec, grade) || b.PassScore != 60 || b.TimeLimitSec != 1800 {
 		t.Fatalf("backend: %+v", b)
 	}
 
-	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays); err != nil {
+	if _, err = repo.StartAttempt(ctx, user, spec, grade, retakeDays, defaultTestStack(spec)); err != nil {
 		t.Fatal(err)
 	}
 	items, _ = repo.Available(ctx, user, retakeDays)

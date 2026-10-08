@@ -33,6 +33,8 @@ func (h profileHandler) fail(c *gin.Context, err error) {
 		abortError(c, 415, "unsupported_file_type", files.ErrType.Error())
 	case errors.Is(err, files.ErrInvalid):
 		abortError(c, 400, "invalid_file", "Файл пустой, повреждён или превышает 4 мегапикселя")
+	case errors.Is(err, service.ErrOnboardingUnavailable):
+		abortError(c, 503, "candidate_unavailable", err.Error())
 	case errors.Is(err, service.ErrStorage):
 		h.log.Error("Ошибка хранилища файлов", "error", err)
 		abortError(c, 503, "storage_unavailable", "Хранилище файлов временно недоступно")

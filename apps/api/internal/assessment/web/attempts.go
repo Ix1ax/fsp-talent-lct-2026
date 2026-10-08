@@ -25,9 +25,12 @@ func RegisterAttempts(api *gin.RouterGroup, log *slog.Logger, verifier auth.Veri
 		var large *http.MaxBytesError
 		var active *entity.ActiveError
 		var retake *entity.RetakeError
+		var gradeChange *entity.GradeChangeError
 		switch {
 		case errors.As(err, &active):
 			abortWith(c, 409, "attempt_active", err.Error(), gin.H{"attempt_id": active.AttemptID})
+		case errors.As(err, &gradeChange):
+			abortWith(c, 409, "grade_change_cooldown", err.Error(), gin.H{"retry_at": gradeChange.RetryAt.UTC().Format(time.RFC3339)})
 		case errors.As(err, &retake):
 			abortWith(c, 409, "retake_cooldown", err.Error(), gin.H{"retry_at": retake.RetryAt.UTC().Format(time.RFC3339)})
 		case errors.Is(err, entity.ErrAlreadyConfirmed):
@@ -68,6 +71,14 @@ func RegisterAttempts(api *gin.RouterGroup, log *slog.Logger, verifier auth.Veri
 	})
 	owner := func(c *gin.Context) string { u, _ := middleware.UserFrom(c); return u.ID }
 
+	g.GET("/history", func(c *gin.Context) {
+		page, err := attempts.History(c.Request.Context(), owner(c), c.Request.URL.RawQuery)
+		if err != nil {
+			fail(c, err)
+			return
+		}
+		c.JSON(200, page)
+	})
 	g.GET("/available", func(c *gin.Context) {
 		items, err := attempts.Available(c.Request.Context(), owner(c))
 		if err != nil {

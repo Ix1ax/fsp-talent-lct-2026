@@ -38,7 +38,7 @@ func publishedQuestion(t *testing.T, repo *assessmentrepo.Repository, admin, ski
 }
 
 func goTemplate(spec, grade int16) entity.TemplateInput {
-	return entity.TemplateInput{SpecializationID: spec, GradeID: grade, TimeLimitSec: 1800, PassScore: 60, Blueprint: []entity.BlueprintRow{
+	return entity.TemplateInput{StackSkillID: goSkill, SpecializationID: spec, GradeID: grade, TimeLimitSec: 1800, PassScore: 60, Blueprint: []entity.BlueprintRow{
 		{SkillID: goSkill, Difficulty: 1, QuestionCount: 2, Weight: 1},
 		{SkillID: goSkill, Difficulty: 2, QuestionCount: 1, Weight: 2.5},
 	}}
@@ -285,4 +285,12 @@ func TestAssessmentTemplatePublishConcurrency(t *testing.T) {
 	if err := db.QueryRow(ctx, `SELECT count(*) FROM assessment_templates WHERE specialization_id=$1 AND grade_id=$2 AND status='published'`, spec, grade).Scan(&published); err != nil || published != 1 {
 		t.Fatalf("опубликованных шаблонов пары %d (%v)", published, err)
 	}
+}
+
+// defaultTestStack выбирает явный стек фиксированных демосценариев, не используется API.
+func defaultTestStack(spec int16) string {
+	if spec == 2 {
+		return "00000000-0000-4000-8000-000000000002"
+	}
+	return goSkill
 }

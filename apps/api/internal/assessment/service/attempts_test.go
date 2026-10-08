@@ -19,8 +19,8 @@ func (m *memAttempts) Available(_ context.Context, _ string, days int) ([]entity
 	m.calls, m.days = m.calls+1, days
 	return nil, m.err
 }
-func (m *memAttempts) StartAttempt(_ context.Context, _ string, spec, grade int16, days int) (entity.Attempt, error) {
-	m.calls, m.days, m.start = m.calls+1, days, entity.StartInput{SpecializationID: spec, GradeID: grade}
+func (m *memAttempts) StartAttempt(_ context.Context, _ string, spec, grade int16, days int, stack string) (entity.Attempt, error) {
+	m.calls, m.days, m.start = m.calls+1, days, entity.StartInput{StackSkillID: "00000000-0000-4000-8000-000000000001", SpecializationID: spec, GradeID: grade}
 	return entity.Attempt{ID: "a"}, m.err
 }
 func (m *memAttempts) CurrentAttempt(_ context.Context, _ string, days int) (entity.Attempt, error) {
@@ -49,8 +49,11 @@ func TestAttemptServiceValidation(t *testing.T) {
 	var v *entity.ValidationError
 	text := "x"
 	for name, err := range map[string]error{
-		"нулевая специализация":      func() error { _, err := s.Start(ctx, "u", entity.StartInput{GradeID: 2}); return err }(),
-		"нулевой грейд":              func() error { _, err := s.Start(ctx, "u", entity.StartInput{SpecializationID: 1}); return err }(),
+		"нулевая специализация": func() error { _, err := s.Start(ctx, "u", entity.StartInput{GradeID: 2}); return err }(),
+		"нулевой грейд": func() error {
+			_, err := s.Start(ctx, "u", entity.StartInput{StackSkillID: "00000000-0000-4000-8000-000000000001", SpecializationID: 1})
+			return err
+		}(),
 		"плохой id попытки":          func() error { _, err := s.Get(ctx, "u", "nope"); return err }(),
 		"плохой id при submit":       func() error { _, err := s.Submit(ctx, "u", "nope"); return err }(),
 		"плохой id попытки в ответе": s.SaveAnswer(ctx, "u", "nope", id2, entity.Answer{Text: &text}),
@@ -69,7 +72,7 @@ func TestAttemptServicePassesRetakeDays(t *testing.T) {
 	store := &memAttempts{}
 	s := NewAttempts(store, 9)
 	ctx := context.Background()
-	if _, err := s.Start(ctx, "u", entity.StartInput{SpecializationID: 1, GradeID: 2}); err != nil || store.days != 9 || store.start.GradeID != 2 {
+	if _, err := s.Start(ctx, "u", entity.StartInput{StackSkillID: "00000000-0000-4000-8000-000000000001", SpecializationID: 1, GradeID: 2}); err != nil || store.days != 9 || store.start.GradeID != 2 {
 		t.Fatalf("старт: %+v %v", store, err)
 	}
 	store.days = 0

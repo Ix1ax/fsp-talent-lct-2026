@@ -48,6 +48,9 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, op
 	g.POST("", h.create)
 	g.GET("", h.get)
 	g.GET("/full", h.getFull)
+	g.GET("/export.pdf", h.exportPDF)
+	g.GET("/onboarding", h.getOnboarding)
+	g.PUT("/onboarding", h.putOnboarding)
 	g.PATCH("", h.update)
 	avatar := g.Group("/avatar", func(c *gin.Context) {
 		if h.avatars == nil {

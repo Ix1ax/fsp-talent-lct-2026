@@ -9,13 +9,14 @@ import (
 )
 
 var (
-	ErrAttemptActive    = errors.New("У вас уже есть активная попытка тестирования")
-	ErrRetakeCooldown   = errors.New("Пересдать этот тест можно позже")
-	ErrAlreadyConfirmed = errors.New("Этот грейд уже подтверждён")
-	ErrUnavailable      = errors.New("Тест по этой специализации и грейду сейчас недоступен")
-	ErrAttemptClosed    = errors.New("Попытка уже завершена")
-	ErrAttemptNotFound  = errors.New("Попытка не найдена")
-	ErrQuestionNotFound = errors.New("Задание не найдено в этой попытке")
+	ErrAttemptActive       = errors.New("У вас уже есть активная попытка тестирования")
+	ErrGradeChangeCooldown = errors.New("Изменить подтверждённую категорию можно позже")
+	ErrRetakeCooldown      = errors.New("Пересдать этот тест можно позже")
+	ErrAlreadyConfirmed    = errors.New("Этот грейд в выбранном стеке уже подтверждён")
+	ErrUnavailable         = errors.New("Тест по выбранной специализации, стеку и грейду сейчас недоступен")
+	ErrAttemptClosed       = errors.New("Попытка уже завершена")
+	ErrAttemptNotFound     = errors.New("Попытка не найдена")
+	ErrQuestionNotFound    = errors.New("Задание не найдено в этой попытке")
 )
 
 // ActiveError сообщает, какая попытка уже идёт.
@@ -203,3 +204,11 @@ func CheckRetake(now time.Time, lastFinished *time.Time, days int) (bool, time.T
 
 // Confirmed — цель не выше уже подтверждённого грейда той же специализации.
 func Confirmed(currentRank, targetRank int16) bool { return targetRank <= currentRank }
+
+// GradeChangeDays — интервал между успешными присвоениями категории; отдельно от пересдачи после провала.
+const GradeChangeDays = 7
+
+type GradeChangeError struct{ RetryAt time.Time }
+
+func (e *GradeChangeError) Error() string        { return ErrGradeChangeCooldown.Error() }
+func (e *GradeChangeError) Is(target error) bool { return target == ErrGradeChangeCooldown }

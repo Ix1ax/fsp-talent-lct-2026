@@ -66,18 +66,25 @@ type FullConsents struct {
 
 // FullSnapshot — согласованный снимок данных кандидата из хранилища.
 type FullSnapshot struct {
-	Achievements []fspentity.Achievement
-	Profile      *Profile
-	Consents     []consententity.Consent
-	Contacts     *Contacts
-	Skills       []Skill
-	Category     *Category
-	Experience   []Experience
-	Education    []Education
+	Qualifications  []Category
+	WorkFormatNames []string
+	Survey          *Survey
+	LatestAttempt   *OnboardingAttempt
+	Achievements    []fspentity.Achievement
+	Profile         *Profile
+	Consents        []consententity.Consent
+	Contacts        *Contacts
+	Skills          []Skill
+	Category        *Category
+	Experience      []Experience
+	Education       []Education
 }
 
 // Category — текущая категория кандидата: специализация и грейд, подтверждённые последним пройденным тестом.
 type Category struct {
+	GradeRank        int16     `json:"-"`
+	StackSkillID     *string   `json:"stack_skill_id"`
+	StackName        *string   `json:"stack_name"`
 	SpecializationID int16     `json:"specialization_id"`
 	Specialization   string    `json:"specialization"`
 	GradeID          int16     `json:"grade_id"`
@@ -87,12 +94,15 @@ type Category struct {
 
 // FullProfile — ответ GET /me/profile/full. Достижения поступают только из адаптера реестра ФСП.
 type FullProfile struct {
-	Profile      *Profile                `json:"profile"`
-	Consents     FullConsents            `json:"consents"`
-	Contacts     *Contacts               `json:"contacts"`
-	Skills       []Skill                 `json:"skills"`
-	Category     *Category               `json:"category"`
-	Achievements []fspentity.Achievement `json:"achievements"`
+	Qualifications  []Category              `json:"qualifications"`
+	WorkFormatNames []string                `json:"work_format_names"`
+	Onboarding      Onboarding              `json:"onboarding"`
+	Profile         *Profile                `json:"profile"`
+	Consents        FullConsents            `json:"consents"`
+	Contacts        *Contacts               `json:"contacts"`
+	Skills          []Skill                 `json:"skills"`
+	Category        *Category               `json:"category"`
+	Achievements    []fspentity.Achievement `json:"achievements"`
 	// Опыт и образование кандидата; ExperienceEstimatedMonths — подсказка по местам работы (nil, если их нет).
 	Experience                []Experience `json:"experience"`
 	Education                 []Education  `json:"education"`

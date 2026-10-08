@@ -7,6 +7,7 @@ import (
 
 // Details — отдельный ответ работодателю. Контакты, свободный текст и внутренние ID попыток сюда не попадают.
 type Details struct {
+	Qualifications []Qualification `json:"qualifications"`
 	Card
 	Achievements []fspentity.Achievement `json:"achievements"`
 	Skills       []DetailSkill           `json:"skills"`
@@ -40,4 +41,12 @@ type DetailExperience struct {
 type DetailEducation struct {
 	Level          string `json:"level"`
 	GraduationYear int16  `json:"graduation_year"`
+}
+
+// Qualification — лучший подтверждённый уровень по специализации и стеку, без ID попытки.
+type Qualification struct {
+	Category
+	Specialization string    `json:"specialization"`
+	Grade          string    `json:"grade"`
+	ConfirmedAt    time.Time `json:"confirmed_at"`
 }
