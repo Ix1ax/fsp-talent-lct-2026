@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { takeLoginReturnPath } from '@/shared/auth/loginReturnPath';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { getRoleHomeRoute } from '@/entities/session';
 import {
@@ -39,7 +40,7 @@ export const CallbackPage = () => {
           return;
         }
 
-        router.replace(getRoleHomeRoute(result.user.role));
+        router.replace(takeLoginReturnPath(getRoleHomeRoute(result.user.role)));
         return;
       }
 

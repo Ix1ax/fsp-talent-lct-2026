@@ -70,9 +70,15 @@ export const GET = async (request: NextRequest): Promise<Response> => {
   } catch (error) {
     return refreshFailure(error);
   }
-  const destination = new URL(tokens ? next : '/login', request.url);
+  const destination = tokens
+    ? next
+    : `/login${next !== '/' ? `?next=${encodeURIComponent(next)}` : ''}`;
 
-  return NextResponse.redirect(destination);
+  // Keep the browser's origin: request.url can contain the server's bind address.
+  return new NextResponse(null, {
+    status: 307,
+    headers: { Location: destination },
+  });
 };
 
 const refreshFailure = (error: unknown): Response =>

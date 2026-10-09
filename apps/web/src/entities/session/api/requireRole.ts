@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { requireAccessToken } from '@/shared/auth/server';
 import { STATIC_ROUTES } from '@/shared/contants';
+import { sanitizeRedirectPath } from '@/shared/utils';
 
 import type { SessionUser, UserRole } from '../model';
 import { getRoleHomeRoute } from '../model';
@@ -17,7 +18,9 @@ export const requireSessionUser = async (
   const session = await loadSession();
 
   if (session.kind !== 'user') {
-    redirect(STATIC_ROUTES.LOGIN);
+    redirect(
+      `${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(sanitizeRedirectPath(nextPath))}`,
+    );
   }
 
   return session.user;
@@ -30,7 +33,9 @@ export const requireRole = async (
   const user = await requireSessionUser(nextPath);
 
   if (!user.role) {
-    redirect(STATIC_ROUTES.LOGIN);
+    redirect(
+      `${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(sanitizeRedirectPath(nextPath))}`,
+    );
   }
 
   if (user.role !== role) {
