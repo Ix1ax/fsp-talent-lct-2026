@@ -14,6 +14,7 @@ export const isValidInn = (value: string) => {
     check([3, 7, 2, 4, 10, 3, 5, 9, 4, 6, 8]) === digits[11]
   );
 };
+
 export const companySchema = z.object({
   name: z.string().trim().min(1, 'Укажите название').max(200),
   contactEmail: z
@@ -36,4 +37,8 @@ export const companySchema = z.object({
 export const invitationSchema = z.object({
   email: z.string().trim().max(254).pipe(z.email('Укажите корректный email')),
   role: z.enum(['recruiter', 'viewer']),
+});
+
+export const tokenSchema = z.object({
+  token: z.string().trim().min(1, 'Укажите токен приглашения'),
 });

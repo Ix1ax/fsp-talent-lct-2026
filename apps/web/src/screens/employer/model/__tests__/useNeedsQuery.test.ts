@@ -76,3 +76,33 @@ it('changing company hides old data immediately and ignores old list/detail repl
   expect(RenderQuery('B').items).toEqual([needB]);
   expect(RenderQuery('B').selected).toEqual(needB);
 });
+
+it('reuses a completed page after section navigation and invalidates on revision', async () => {
+  const api = {
+    needs: vi.fn(async () => ({ items: [], limit: 20 })),
+    need: vi.fn(),
+  } as unknown as EmployerGateway;
+  const RenderQuery = (enabled: boolean, revision = 0) => {
+    hooks.cursor = 0;
+    hooks.effects = [];
+    const result = useNeedsQuery({
+      api,
+      companyId: 'A',
+      status: 'active',
+      offset: 0,
+      selectedId: '',
+      revision,
+      enabled,
+    });
+    hooks.effects.forEach((effect) => effect());
+    return result;
+  };
+  RenderQuery(true);
+  await Promise.resolve();
+  RenderQuery(false);
+  RenderQuery(true);
+  expect(api.needs).toHaveBeenCalledOnce();
+  RenderQuery(true, 1);
+  await Promise.resolve();
+  expect(api.needs).toHaveBeenCalledTimes(2);
+});

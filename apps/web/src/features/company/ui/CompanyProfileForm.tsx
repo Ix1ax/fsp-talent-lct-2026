@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   Card,
@@ -17,7 +19,7 @@ import {
 import type { Company, CompanyInput } from '@/entities/company';
 import { VERIFICATION_LABELS } from '@/entities/company';
 
-import { companySchema } from '../constants/companySchema';
+import { companySchema } from '../constants';
 
 interface CompanyProfileFormProps {
   company: Company | null;
@@ -49,8 +51,16 @@ export const CompanyProfileForm = ({
       contactUrl: create ? null : company?.contactUrl,
     },
   });
-  const dirty = form.formState.isDirty;
-  useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
+  const { dirty, markSaved } = useFormUnsavedChanges(form, {
+    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
+  });
+
+  useEffect(() => {
+    onDirtyChange(dirty);
+    return () => onDirtyChange(false);
+  }, [dirty, onDirtyChange]);
+
   const readonly = !create && company?.memberRole !== 'owner';
   const fields = [
     { key: 'name', label: 'Название компании', required: true, max: 200 },
@@ -69,6 +79,7 @@ export const CompanyProfileForm = ({
       max: 2048,
     },
   ] as const;
+
   return (
     <Card className="rounded-2xl">
       <CardHeader>
@@ -89,6 +100,7 @@ export const CompanyProfileForm = ({
             try {
               const savedCompany = await onSave(input, create);
               form.reset(input);
+              markSaved();
               onDirtyChange(false);
               onSaved(savedCompany);
             } catch {

@@ -52,9 +52,10 @@ export const EmployerCompanyProfile = ({
   onOpenNeed,
 }: EmployerCompanyProfileProps) => {
   const [editing, setEditing] = useState(false);
-  const unsaved = useUnsavedGuard(dirty, busy);
+  const unsaved = useUnsavedGuard(dirty, busy, false);
   const contentRef = useRef<HTMLDivElement>(null);
   const previousEditing = useRef(editing);
+
   useLayoutEffect(() => {
     if (previousEditing.current === editing) return;
     previousEditing.current = editing;
@@ -64,11 +65,14 @@ export const EmployerCompanyProfile = ({
         block: 'start',
       });
   }, [editing, visible]);
+
   const finish = () => {
     onDirtyChange(false);
     setEditing(false);
   };
+
   const canEdit = company.memberRole === 'owner';
+
   return (
     <div
       ref={contentRef}
@@ -158,6 +162,7 @@ export const EmployerCompanyProfile = ({
             </section>
             {visible && (
               <CompanyProfileVacancies
+                active={visible}
                 company={company}
                 api={api}
                 catalogs={catalogs}

@@ -33,6 +33,7 @@ interface ComboboxProps extends Pick<
   emptyMessage?: string;
   onSearchChange?: (value: string) => void;
   selectedLabel?: string;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export const Combobox = ({
@@ -44,6 +45,7 @@ export const Combobox = ({
   emptyMessage = 'Ничего не найдено.',
   onSearchChange,
   selectedLabel,
+  onOpenChange,
   ...props
 }: ComboboxProps) => {
   const [open, setOpen] = useState(false);
@@ -55,6 +57,7 @@ export const Combobox = ({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
+        onOpenChange?.(next);
         if (!next) onSearchChange?.('');
       }}
     >
@@ -97,6 +100,7 @@ export const Combobox = ({
                 onSelect={() => {
                   onValueChange(option.value);
                   setOpen(false);
+                  onOpenChange?.(false);
                   onSearchChange?.('');
                 }}
               >

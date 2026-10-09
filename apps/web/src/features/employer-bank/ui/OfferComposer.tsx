@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 
 import {
   useAsyncMutation,
-  useUnsavedChanges,
+  useFormUnsavedChanges,
   useUnsavedGuard,
 } from '@/shared/hooks';
 import {
@@ -26,6 +26,7 @@ import type { EmployerBankApi } from '@/entities/employer-bank';
 import type { EmployerNeed } from '@/entities/employer-need';
 
 import { offerSchema } from '../constants/offerSchema';
+import { isUncertainOfferError } from '../lib';
 
 interface OfferComposerProps {
   company: Company;
@@ -60,9 +61,8 @@ export const OfferComposer = ({
       contactUrl: company.contactUrl,
     },
   });
-  const dirty = form.formState.isDirty;
-  const unsaved = useUnsavedGuard(dirty, mutation.pending);
-  useUnsavedChanges(dirty);
+  const { dirty, markSaved } = useFormUnsavedChanges(form);
+  const unsaved = useUnsavedGuard(dirty, mutation.pending, false);
   useEffect(() => {
     onBusyChange(mutation.pending);
     return () => onBusyChange(false);
@@ -90,27 +90,19 @@ export const OfferComposer = ({
             className="grid gap-4"
             onSubmit={form.handleSubmit((input) => {
               if (uncertain) return;
-              void mutation
-                .run(async () => {
-                  try {
-                    const offer = await api.sendCandidateOffer(
-                      company.id,
-                      input,
-                    );
-                    form.reset(input);
-                    onSent(offer);
-                    toast.success('Предложение отправлено');
-                  } catch (error) {
-                    if (
-                      error instanceof Error &&
-                      'status' in error &&
-                      error.status === 0
-                    )
-                      setUncertain(true);
-                    throw error;
-                  }
-                })
-                .catch(() => {});
+
+              void mutation.run(async () => {
+                try {
+                  const offer = await api.sendCandidateOffer(company.id, input);
+                  form.reset(input);
+                  markSaved();
+                  onSent(offer);
+                  toast.success('Предложение отправлено');
+                } catch (error) {
+                  if (isUncertainOfferError(error)) setUncertain(true);
+                  throw error;
+                }
+              });
             })}
           >
             <fieldset
@@ -201,9 +193,9 @@ export const OfferComposer = ({
             )}
             {uncertain && (
               <p role="alert" className="text-sm text-muted-foreground">
-                Ответ сервера не получен. Сначала проверьте историю предложений:
-                запрос мог завершиться. Закройте форму и откройте раздел
-                «Предложения».
+                Результат отправки не подтверждён. Сначала проверьте историю
+                предложений: запрос мог завершиться. Закройте форму и откройте
+                раздел «Предложения».
               </p>
             )}
             <div className="flex flex-wrap gap-3">

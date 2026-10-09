@@ -1,5 +1,5 @@
 export * from './api';
-export * from './model/types';
+export * from './model';
 export type EmployerBankApi = Omit<
   typeof import('./api'),
   'bankFilterParams' | 'validateBankFilters'

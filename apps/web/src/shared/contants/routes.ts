@@ -11,7 +11,6 @@ export const DYNAMIC_ROUTES = {
   CANDIDATE: (path: string) => `/candidate/${path}`,
 };
 
-// The candidate profile layout keeps these forms mounted between steps.
 export const CANDIDATE_DRAFT_ROUTES = [
   '/candidate',
   '/candidate/consents',
@@ -22,3 +21,15 @@ export const CANDIDATE_DRAFT_ROUTES = [
   '/candidate/skills',
   '/candidate/readiness',
 ] as const;
+
+export const EMPLOYER_DRAFT_ROUTES = [
+  '/employer',
+  '/employer/profile',
+  '/employer/documents',
+  '/employer/team',
+  '/employer/vacancies',
+  '/employer/candidates',
+  '/employer/offers',
+] as const;
+export const EMPLOYER_DRAFT_SCOPE = ['company'] as const;
+export const EMPLOYER_NEED_DRAFT_SCOPE = ['company', 'need'] as const;

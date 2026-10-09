@@ -1,11 +1,12 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { useCompanyActions } from '@/features/company';
 import { useNeedActions } from '@/features/employer-need';
 
-import { type EmployerGateway, employerGateway } from '../lib/gateway';
+import { type EmployerGateway, employerGateway } from '../lib';
 import { getEmployerLocationState } from './getEmployerLocationState';
 import {
   loadEmployerCompanies,
@@ -14,26 +15,19 @@ import {
 import { useNeedsQuery } from './useNeedsQuery';
 export const useEmployerBoard = (
   gateway: EmployerGateway = employerGateway,
+  needsEnabled = true,
 ) => {
   const resources = useEmployerResources(gateway);
   const refreshController = useRef<AbortController | null>(null);
   useEffect(() => () => refreshController.current?.abort(), [gateway]);
-  const [initialLocation] = useState(() =>
-    getEmployerLocationState(
-      typeof window === 'undefined' ? '' : window.location.search,
-    ),
-  );
-  const [requestedCompanyId, setCompanyId] = useState(
-    initialLocation.companyId,
-  );
+  const searchParams = useSearchParams();
+  const location = getEmployerLocationState(searchParams.toString());
   const companyId =
-    resources.companies?.find((company) => company.id === requestedCompanyId)
+    resources.companies?.find((company) => company.id === location.companyId)
       ?.id ??
     resources.companies?.[0]?.id ??
     '';
-  const [status, setStatus] = useState<NeedStatus>(initialLocation.status);
-  const [offset, setOffset] = useState(initialLocation.offset);
-  const [selectedId, setSelectedId] = useState(initialLocation.selectedId);
+  const { status, offset, selectedId } = location;
   const [revision, setRevision] = useState(0);
   const query = useNeedsQuery({
     api: gateway,
@@ -42,27 +36,22 @@ export const useEmployerBoard = (
     offset,
     selectedId,
     revision,
-    enabled: !!resources.companies,
+    enabled: !!resources.companies && needsEnabled,
   });
   const needActions = useNeedActions({
     api: gateway,
     companyId,
     need: query.selected,
     onSaved: (next) => {
-      if (next.status !== status || next.id !== selectedId) setOffset(0);
       syncQuery({
         status: next.status,
         selectedId: next.id,
         offset: next.status !== status || next.id !== selectedId ? 0 : offset,
       });
-      setStatus(next.status);
-      setSelectedId(next.id);
       setRevision((v) => v + 1);
     },
     onArchived: () => {
-      setOffset(0);
       syncQuery({ status: 'archived', offset: 0 });
-      setStatus('archived');
       setRevision((v) => v + 1);
     },
   });
@@ -77,11 +66,8 @@ export const useEmployerBoard = (
               current.id === company.id ? company : current,
             ),
       );
-      if (created) {
-        setCompanyId(company.id);
-        setSelectedId('');
-        setOffset(0);
-      }
+      if (created)
+        syncQuery({ companyId: company.id, selectedId: '', offset: 0 });
     },
   });
   const clearError = () => {
@@ -108,26 +94,29 @@ export const useEmployerBoard = (
     window.history.replaceState(
       null,
       '',
-      `${window.location.pathname}?${query}`,
+      `${window.location.pathname}?${query}${window.location.hash}`,
     );
   };
+  useEffect(() => {
+    if (!companyId || location.companyId === companyId) return;
+    const query = new URLSearchParams(window.location.search);
+    query.set('company', companyId);
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}?${query}${window.location.hash}`,
+    );
+  }, [companyId, location.companyId]);
   const chooseCompany = (id: string) => {
     syncQuery({ companyId: id, selectedId: '', offset: 0 });
-    setCompanyId(id);
-    setSelectedId('');
-    setOffset(0);
     clearError();
   };
   const chooseStatus = (tab: NeedStatus) => {
     syncQuery({ status: tab, selectedId: '', offset: 0 });
-    setStatus(tab);
-    setSelectedId('');
-    setOffset(0);
     clearError();
   };
   const select = (id: string) => {
     syncQuery({ selectedId: id });
-    setSelectedId(id);
     clearError();
   };
   const reload = useCallback(() => setRevision((v) => v + 1), []);
@@ -143,15 +132,10 @@ export const useEmployerBoard = (
         companies.find((company) => company.id === preferredId)?.id ??
         companies[0]?.id ??
         '';
-      if (nextId !== companyId) {
-        setSelectedId('');
-        setOffset(0);
-      }
       syncQuery({
         companyId: nextId,
         ...(nextId !== companyId ? { selectedId: '', offset: 0 } : {}),
       });
-      setCompanyId(nextId);
       setRevision((value) => value + 1);
     },
     resources: resources.companies ? { companies: resources.companies } : null,
@@ -181,16 +165,11 @@ export const useEmployerBoard = (
     select,
     openNeed: (need: EmployerNeed) => {
       syncQuery({ status: need.status, offset: 0, selectedId: need.id });
-      setStatus(need.status);
-      setOffset(0);
-      setSelectedId(need.id);
       clearError();
     },
     reload,
     page: (next: number) => {
       syncQuery({ offset: next, selectedId: '' });
-      setOffset(next);
-      setSelectedId('');
     },
     clearError,
   };

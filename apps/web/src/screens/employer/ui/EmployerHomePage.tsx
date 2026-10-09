@@ -1,13 +1,12 @@
 'use client';
 
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 
-import { useUnsavedChanges, useUnsavedGuard } from '@/shared/hooks';
-import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import { cn } from '@/shared/lib/utils';
 import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import type { Skill } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import {
   AcceptInvitation,
@@ -24,13 +23,9 @@ import {
 import { loadStatusVacancies } from '@/features/employer-search';
 import { CompanySwitcher } from '@/widgets/employer-shell';
 
-import {
-  EMPLOYER_SECTIONS,
-  type EmployerSection,
-  getEmployerSection,
-} from '../constants/sections';
-import { employerGateway } from '../lib/gateway';
-import { useEmployerBoard } from '../model/useEmployerBoard';
+import { EMPLOYER_SECTIONS, getEmployerSection } from '../constants';
+import { employerGateway } from '../lib';
+import { useEmployerBoard, useEmployerWorkspace } from '../model';
 import { EmployerCompanyOnboarding } from './EmployerCompanyOnboarding';
 import { EmployerCompanyProfile } from './EmployerCompanyProfile';
 import { EmployerHeader } from './EmployerHeader';
@@ -38,99 +33,54 @@ import { EmployerNavigation } from './EmployerNavigation';
 import { EmployerOverview } from './EmployerOverview';
 import { VacancyBank } from './VacancyBank';
 
+const EMPTY_SKILLS: Skill[] = [];
+
 interface EmployerHomePageProps {
   user: SessionUser;
 }
 export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
   const api = employerGateway;
-  const board = useEmployerBoard();
-  const canLoadSkills = !!board.resources;
-  const loadSkills = useCallback(
-    (signal: AbortSignal) =>
-      canLoadSkills ? api.skills('', signal) : Promise.resolve([]),
-    [api, canLoadSkills],
-  );
-  const skillCatalog = useRemoteData(loadSkills);
-  const skills = skillCatalog.data ?? [];
+  const pathname = usePathname();
+  const section = getEmployerSection(pathname.split('/')[2] ?? '');
+  const board = useEmployerBoard(api, section === 'vacancies');
+  const skills = EMPTY_SKILLS;
   const loadActiveNeeds = useCallback(
     (signal: AbortSignal) =>
       loadStatusVacancies(api, board.companyId, 'active', signal),
     [api, board.companyId],
   );
-  const router = useRouter();
-  const pathname = usePathname();
-  const section = getEmployerSection(pathname.split('/')[2] ?? '');
-  const [createCompany, setCreateCompany] = useState(false);
-  const mainRef = useRef<HTMLElement>(null);
-  const previousView = useRef({ section, createCompany });
-  useLayoutEffect(() => {
-    if (
-      previousView.current.section === section &&
-      previousView.current.createCompany === createCompany
-    )
-      return;
-    previousView.current = { section, createCompany };
-    mainRef.current?.scrollIntoView({ behavior: 'instant', block: 'start' });
-  }, [section, createCompany]);
-  const [createdNeed, setCreatedNeed] = useState(false);
-  const [composer, setComposer] = useState(false);
-  const [drafts, setDrafts] = useState<Record<string, boolean>>({});
-  const dirty = Object.values(drafts).some(Boolean);
-  const setDirty = (value: boolean) =>
-    setDrafts(value ? { workspace: true } : {});
-  const [childBusy, setChildBusy] = useState(false);
-  const busy = board.pending || childBusy;
-  const dirtyChanged = useCallback(
-    (value: boolean) => setDrafts((state) => ({ ...state, vacancies: value })),
-    [],
-  );
-  const profileDirtyChanged = useCallback(
-    (value: boolean) => setDrafts((state) => ({ ...state, profile: value })),
-    [],
-  );
-  const teamDirtyChanged = useCallback(
-    (value: boolean) => setDrafts((state) => ({ ...state, team: value })),
-    [],
-  );
-  const busyChanged = useCallback((value: boolean) => setChildBusy(value), []);
-  const [archiveConfirm, setArchiveConfirm] = useState(false);
-  const [candidateId, setCandidateId] = useState('');
-  const [offer, setOffer] = useState(false);
-  const unsaved = useUnsavedGuard(dirty, busy);
-  const needUnsaved = useUnsavedGuard(drafts.vacancies ?? false, busy);
-  const guardNeed = (action: () => void) =>
-    needUnsaved.guard(() => {
-      setDrafts((state) => ({ ...state, vacancies: false }));
-      action();
-    });
-  useUnsavedChanges(dirty);
-  const guard = (action: () => void) =>
-    unsaved.guard(() => {
-      setDirty(false);
-      action();
-    });
-  const href = (next: EmployerSection, companyId = board.companyId) =>
-    `/employer${next === 'overview' ? '' : `/${next}`}${companyId ? `?company=${encodeURIComponent(companyId)}` : ''}`;
-  const navigate = (next: EmployerSection) => {
-    if (busy) return;
-    const action = () => {
-      setCreateCompany(false);
-      setCandidateId('');
-      setOffer(false);
-      board.clearError();
-      router.push(href(next), { scroll: false });
-    };
-    if (createCompany || next === 'invitation') guard(action);
-    else action();
-  };
-  const startCompany = () =>
-    guard(() => {
-      setCreateCompany(true);
-      setComposer(false);
-      board.clearError();
-      router.push(href('profile'), { scroll: false });
-    });
-  const refreshCompanies = async (id?: string) => board.refreshCompanies(id);
+
+  const {
+    router,
+    drafts,
+    createCompany,
+    setCreateCompany,
+    mainRef,
+    createdNeed,
+    setCreatedNeed,
+    composer,
+    setComposer,
+    busy,
+    dirtyChanged,
+    profileDirtyChanged,
+    teamDirtyChanged,
+    documentsDirtyChanged,
+    invitationDirtyChanged,
+    busyChanged,
+    archiveConfirm,
+    setArchiveConfirm,
+    candidateId,
+    setCandidateId,
+    offer,
+    setOffer,
+    guardNeed,
+    guard,
+    href,
+    navigate,
+    startCompany,
+    refreshCompanies,
+  } = useEmployerWorkspace({ section, board });
+
   const selectedSection = EMPLOYER_SECTIONS.find((item) => item.id === section);
   const index = EMPLOYER_SECTIONS.findIndex((item) => item.id === section);
   const previous = EMPLOYER_SECTIONS[index - 1];
@@ -232,14 +182,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
               onRetry={board.retryCatalogs}
             />
           )}
-          {board.resources && skillCatalog.error && (
-            <AsyncState
-              error
-              title="Навыки недоступны"
-              description={skillCatalog.error}
-              onRetry={skillCatalog.retry}
-            />
-          )}
           {board.error ? (
             <AsyncState
               error
@@ -271,6 +213,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                   </Button>
                   <AcceptInvitation
                     key="invitation"
+                    onDirtyChange={invitationDirtyChanged}
                     api={api}
                     onBusyChange={busyChanged}
                     onAccepted={refreshCompanies}
@@ -295,7 +238,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                     onSave={board.saveCompany}
                     onDirtyChange={profileDirtyChanged}
                     onSaved={(savedCompany) => {
-                      setDrafts((state) => ({ ...state, profile: false }));
+                      profileDirtyChanged(false);
                       setCreateCompany(false);
                       router.push(href('documents', savedCompany.id), {
                         scroll: false,
@@ -309,6 +252,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                   busy={busy}
                   onCreate={startCompany}
                   onAccepted={refreshCompanies}
+                  onDirtyChange={invitationDirtyChanged}
                   onBusyChange={busyChanged}
                 />
               ) : (
@@ -394,10 +338,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                               setComposer(false);
                               setCreatedNeed(false);
                               board.openNeed(need);
-                              router.push(
-                                `${href('vacancies')}&tab=active&need=${encodeURIComponent(need.id)}`,
-                                { scroll: false },
-                              );
+                              router.push(href('vacancies'), { scroll: false });
                             });
                           }}
                         />
@@ -410,6 +351,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           company={company}
                           api={api}
                           onCompanyChange={refreshCompanies}
+                          active={section === 'documents'}
+                          onDirtyChange={documentsDirtyChanged}
                           onBusyChange={busyChanged}
                         />
                       </section>
@@ -419,6 +362,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                       >
                         <CompanyTeam
                           company={company}
+                          active={section === 'team'}
                           userId={user.id}
                           api={api}
                           onCompanyChange={refreshCompanies}
@@ -431,6 +375,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         aria-label="Потребности"
                       >
                         <VacancyBank
+                          active={section === 'vacancies'}
                           board={board}
                           api={api}
                           catalogs={board.catalogs}
@@ -440,8 +385,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           dirty={drafts.vacancies ?? false}
                           archiveConfirm={archiveConfirm}
                           onArchiveConfirm={(value) => {
-                            if (value) guardNeed(() => setArchiveConfirm(true));
-                            else setArchiveConfirm(false);
+                            setArchiveConfirm(value);
                           }}
                           guard={guardNeed}
                           onCreate={() =>
@@ -466,10 +410,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           }
                           onDirtyChange={dirtyChanged}
                           onCreated={() => {
-                            setDrafts((state) => ({
-                              ...state,
-                              vacancies: false,
-                            }));
+                            dirtyChanged(false);
                             setCreatedNeed(true);
                             setComposer(false);
                           }}

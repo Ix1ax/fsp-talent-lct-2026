@@ -4,6 +4,7 @@ import { getUnsavedChangesGuard } from './unsavedChangesGuard';
 
 type UnsavedChangesOptions = {
   preserveWithin?: readonly string[];
+  scopeSearchParams?: readonly string[];
 };
 
 export const useUnsavedChanges = (
@@ -11,16 +12,16 @@ export const useUnsavedChanges = (
   options: UnsavedChangesOptions = {},
 ) => {
   const release = useRef<(() => void) | undefined>(undefined);
-  const { preserveWithin } = options;
+  const { preserveWithin, scopeSearchParams } = options;
   useEffect(() => {
     const guard = getUnsavedChangesGuard();
     if (!dirty) return;
-    release.current = guard.register({ preserveWithin });
+    release.current = guard.register({ preserveWithin, scopeSearchParams });
     return () => {
       release.current?.();
       release.current = undefined;
     };
-  }, [dirty, preserveWithin]);
+  }, [dirty, preserveWithin, scopeSearchParams]);
   const markSaved = () => {
     release.current?.();
     release.current = undefined;

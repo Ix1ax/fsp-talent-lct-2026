@@ -11,6 +11,7 @@ import type { EmployerGateway } from '../lib/gateway';
 import { VacancyCard } from './VacancyCard';
 
 interface CompanyProfileVacanciesProps {
+  active: boolean;
   company: Company;
   api: EmployerGateway;
   catalogs: Catalogs;
@@ -20,7 +21,9 @@ interface CompanyProfileVacanciesProps {
   onVacancies: () => void;
   onOpen: (need: EmployerNeed) => void;
 }
+
 export const CompanyProfileVacancies = ({
+  active,
   company,
   api,
   catalogs,
@@ -34,7 +37,8 @@ export const CompanyProfileVacancies = ({
     (signal: AbortSignal) => api.needs(company.id, 'active', 0, signal),
     [api, company.id],
   );
-  const remote = useRemoteData(load, revision);
+  const remote = useRemoteData(load, revision, active);
+
   return (
     <section
       aria-label="Активные потребности компании"

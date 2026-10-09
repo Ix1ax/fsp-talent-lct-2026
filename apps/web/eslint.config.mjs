@@ -79,8 +79,27 @@ const eslintConfig = [
     },
   },
   {
+    files: ['src/entities/employer-bank/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex:
+                '^@/(?:entities/(?!employer-need/@x/employer-bank$)|features/|widgets/|screens/)',
+              message:
+                'Entity использует shared, собственные модули и явный контракт @x.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: [
       'src/features/company/**/*.{ts,tsx}',
+      'src/features/employer-bank/**/*.{ts,tsx}',
       'src/features/employer-need/**/*.{ts,tsx}',
       'src/features/employer-search/**/*.{ts,tsx}',
     ],

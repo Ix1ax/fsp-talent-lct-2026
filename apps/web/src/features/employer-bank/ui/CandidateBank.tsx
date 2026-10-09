@@ -35,9 +35,11 @@ interface CandidateBankProps {
   revision: number;
   onNeeds: () => void;
 }
+
 type SearchResults =
   | Awaited<ReturnType<EmployerBankApi['getBankCandidates']>>
   | RecommendationPage;
+
 export const CandidateBank = ({
   company,
   catalogs,
@@ -66,6 +68,7 @@ export const CandidateBank = ({
         Number(value) < 0 ||
         Number(value) > 50),
   );
+
   const filterError = experienceInvalid
     ? 'Укажите опыт от 0 до 50 лет.'
     : validateBankFilters(filters);
@@ -73,6 +76,7 @@ export const CandidateBank = ({
     referenceNeed && !filterError && filtersMatchNeed(filters, referenceNeed)
       ? referenceNeed
       : undefined;
+
   const needId = selectedNeed?.id ?? '';
   const load = useCallback(
     (signal: AbortSignal) => {
@@ -96,6 +100,7 @@ export const CandidateBank = ({
     },
     [api, company.id, filterError, filters, offset, needId, selectedNeed],
   );
+
   const remote = useRemoteData<SearchResults>(load);
   const change = (patch: Partial<BankFilters>) => {
     setFilters((value) => ({ ...value, ...patch }));
@@ -108,6 +113,7 @@ export const CandidateBank = ({
     setExperienceMax('');
     setOffset(0);
   };
+
   const recommendations =
     remote.data && 'needId' in remote.data
       ? (remote.data as RecommendationPage)
@@ -120,6 +126,7 @@ export const CandidateBank = ({
     },
     [onBusyChange],
   );
+
   return (
     <>
       <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -144,7 +151,6 @@ export const CandidateBank = ({
           <CandidateFilters
             filters={filters}
             catalogs={catalogs}
-            skills={skills}
             needs={needs.data ?? []}
             needId={needId}
             needsLoading={needs.loading}

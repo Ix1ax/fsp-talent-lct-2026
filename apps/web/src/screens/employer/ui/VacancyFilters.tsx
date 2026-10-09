@@ -1,13 +1,12 @@
 import { RotateCcwIcon, SlidersHorizontalIcon } from 'lucide-react';
 
 import { Button, OptionSelect } from '@/shared/ui';
-import type { Catalogs, Skill } from '@/entities/catalog';
+import { type Catalogs, SkillPicker } from '@/entities/catalog';
 import type { VacancyFilters as Filters } from '@/features/employer-search';
 
 interface VacancyFiltersProps {
   value: Filters;
   catalogs: Catalogs;
-  skills: Skill[];
   disabled: boolean;
   onChange: (patch: Partial<Filters>) => void;
   onReset: () => void;
@@ -15,7 +14,6 @@ interface VacancyFiltersProps {
 export const VacancyFilters = ({
   value,
   catalogs,
-  skills,
   disabled,
   onChange,
   onReset,
@@ -112,15 +110,11 @@ export const VacancyFilters = ({
       </div>
       <label className="grid gap-2 text-sm font-medium text-muted-foreground">
         Навык
-        <OptionSelect
-          aria-label="Навык"
+        <SkillPicker
           disabled={disabled}
           value={value.skillId}
           onValueChange={(value) => onChange({ skillId: value })}
-          options={[
-            { value: '', label: 'Все навыки' },
-            ...skills.map((skill) => ({ value: skill.id, label: skill.name })),
-          ]}
+          emptyLabel="Все навыки"
         />
       </label>
     </fieldset>

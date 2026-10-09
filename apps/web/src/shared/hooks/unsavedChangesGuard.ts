@@ -6,6 +6,7 @@ let historyWriteIndex: number | undefined;
 
 type DraftOptions = {
   preserveWithin?: readonly string[];
+  scopeSearchParams?: readonly string[];
 };
 
 export const leavesCurrentPage = (href: string, current: string) => {
@@ -23,13 +24,18 @@ export const preservesDraft = (
   href: string,
   current: string,
   paths: readonly string[] = [],
+  scopeSearchParams: readonly string[] = [],
 ) => {
   const destination = new URL(href, current);
   const source = new URL(current);
   return (
     destination.origin === source.origin &&
     paths.includes(source.pathname) &&
-    paths.includes(destination.pathname)
+    paths.includes(destination.pathname) &&
+    scopeSearchParams.every(
+      (key) =>
+        destination.searchParams.get(key) === source.searchParams.get(key),
+    )
   );
 };
 
@@ -74,8 +80,8 @@ export const createUnsavedChangesGuard = (browser: Window) => {
   const needsConfirmation = (href: string) =>
     leavesCurrentPage(href, currentHref) &&
     [...drafts.values()].some(
-      ({ preserveWithin }) =>
-        !preservesDraft(href, currentHref, preserveWithin),
+      ({ preserveWithin, scopeSearchParams }) =>
+        !preservesDraft(href, currentHref, preserveWithin, scopeSearchParams),
     );
   const runApproved = (action: () => void) => {
     approvedDepth++;

@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
@@ -19,11 +17,11 @@ import {
   Textarea,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
-import type { NeedInput, NeedStatus } from '@/entities/employer-need';
+import type { NeedInput } from '@/entities/employer-need';
 import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
 
-import { toNeedInput, validateNeed } from '../lib';
-import { loadNeedSkills, useNeedSkills } from '../model/useNeedSkills';
+import { validateNeed } from '../lib';
+import { useNeedFlowEditor } from '../model';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedSummary } from './NeedSummary';
 
@@ -34,6 +32,7 @@ const STEPS = [
   { id: 'readiness', title: 'Готовность' },
 ] as const;
 interface NeedFlowEditorProps {
+  active?: boolean;
   initial: NeedInput;
   catalogs: Catalogs;
   skills: Skill[];
@@ -47,6 +46,7 @@ interface NeedFlowEditorProps {
   onDirtyChange: (value: boolean) => void;
 }
 export const NeedFlowEditor = ({
+  active = true,
   initial,
   catalogs,
   skills: initialSkills,
@@ -59,80 +59,29 @@ export const NeedFlowEditor = ({
   onBack,
   onDirtyChange,
 }: NeedFlowEditorProps) => {
-  const form = useForm<NeedInput>({ defaultValues: toNeedInput(initial) });
-  const value = useWatch({ control: form.control }) as NeedInput;
-  const [step, setStep] = useState(initialStep);
-  const stepNavigationRef = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    const navigation = stepNavigationRef.current;
-    if (navigation && !navigation.closest('[hidden]'))
-      navigation.scrollIntoView({ behavior: 'instant', block: 'start' });
-  }, [step]);
-  const [q, setQ] = useState('');
-  const skillSearch = useNeedSkills(
-    loadNeedSkills,
+  const {
+    value,
+    step,
+    setStep,
+    stepNavigationRef,
     q,
-    value.skills.map((item) => item.skillId),
-  );
-  const skills = [
-    ...new Map(
-      [...initialSkills, ...skillSearch.skills].map((skill) => [
-        skill.id,
-        skill,
-      ]),
-    ).values(),
-  ];
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [saved, setSaved] = useState(false);
-  const dirty = form.formState.isDirty;
-  useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
-  const change = (patch: Partial<NeedInput>) => {
-    for (const key of Object.keys(patch) as (keyof NeedInput)[])
-      if (patch[key] !== undefined)
-        form.setValue(key, patch[key], { shouldDirty: true });
-    setSaved(false);
-  };
-  const submit = async (status: NeedStatus, advance = false) => {
-    if (pending || readonly) return;
-    const next = toNeedInput({
-      ...value,
-      title: value.title.trim(),
-      description: value.description.trim(),
-      city: value.city?.trim() || null,
-      timezone: value.timezone?.trim() || null,
-      status,
-    });
-    const validation = validateNeed(next, status);
-    setErrors(validation);
-    if (Object.keys(validation).length) {
-      if (
-        validation.title ||
-        validation.description ||
-        validation.specializationId ||
-        validation.gradeId
-      )
-        setStep(0);
-      else if (
-        validation.salaryFromRub ||
-        validation.salaryToRub ||
-        validation.city ||
-        validation.timezone ||
-        validation.workFormatIds
-      )
-        setStep(1);
-      else setStep(2);
-      return;
-    }
-    try {
-      await onSave(next);
-      form.reset(next);
-      setSaved(true);
-      onDirtyChange(false);
-      if (advance) setStep(Math.min(3, step + 1));
-    } catch {
-      /* Parent displays the API error. */
-    }
-  };
+    setQ,
+    skillSearch,
+    skills,
+    errors,
+    saved,
+    change,
+    submit,
+  } = useNeedFlowEditor({
+    initial,
+    initialSkills,
+    initialStep,
+    active,
+    pending,
+    readonly,
+    onSave,
+    onDirtyChange,
+  });
   const message = (key: string) =>
     errors[key] && (
       <p role="alert" className="text-sm text-destructive">

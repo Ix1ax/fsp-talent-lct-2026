@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { useAsyncMutation } from '@/shared/hooks';
+import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import { useAsyncMutation, useFormUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
   AsyncState,
@@ -30,10 +31,11 @@ import type {
 } from '@/entities/company';
 import { MEMBER_ROLE_LABELS } from '@/entities/company';
 
-import { invitationSchema } from '../constants/companySchema';
-import type { CompanyManagementApi } from '../model/management';
+import { invitationSchema } from '../constants';
+import type { CompanyManagementApi } from '../model';
 
 interface CompanyTeamProps {
+  active?: boolean;
   company: Company;
   userId: string;
   api: CompanyManagementApi;
@@ -41,13 +43,16 @@ interface CompanyTeamProps {
   onDirtyChange: (value: boolean) => void;
   onCompanyChange: () => Promise<void>;
 }
+
 const STATUS = {
   pending: 'Ожидает принятия',
   accepted: 'Принято',
   revoked: 'Отозвано',
   expired: 'Истекло',
 };
+
 export const CompanyTeam = ({
+  active = true,
   company,
   userId,
   api,
@@ -63,6 +68,7 @@ export const CompanyTeam = ({
       api.getCompanyMembers(company.id, memberOffset, signal),
     [api, company.id, memberOffset],
   );
+
   const invitationsLoad = useCallback(
     (signal: AbortSignal) =>
       owner
@@ -70,37 +76,49 @@ export const CompanyTeam = ({
         : Promise.resolve({ items: [], limit: 20, offset: 0 }),
     [api, company.id, invitationOffset, owner],
   );
-  const members = useRemoteData(membersLoad);
-  const invitations = useRemoteData(invitationsLoad);
+
+  const members = useRemoteData(membersLoad, 0, active);
+  const invitations = useRemoteData(invitationsLoad, 0, active);
   const mutation = useAsyncMutation();
   const [created, setCreated] = useState<CompanyInvitation | null>(null);
   const [remove, setRemove] = useState<
     CompanyMember | CompanyInvitation | null
   >(null);
+
   const form = useForm<{ email: string; role: TeamRole }>({
     resolver: zodResolver(invitationSchema),
     defaultValues: { email: '', role: 'recruiter' },
   });
-  const dirty = form.formState.isDirty;
-  useEffect(() => onDirtyChange(dirty), [dirty, onDirtyChange]);
+
+  const { dirty, markSaved } = useFormUnsavedChanges(form, {
+    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
+  });
+
+  useEffect(() => {
+    onDirtyChange(dirty);
+    return () => onDirtyChange(false);
+  }, [dirty, onDirtyChange]);
+
   useEffect(() => {
     onBusyChange(mutation.pending);
     return () => onBusyChange(false);
   }, [mutation.pending, onBusyChange]);
+
   const refresh = () => {
     members.retry();
     invitations.retry();
   };
+
   const perform = (operation: () => Promise<unknown>) =>
-    void mutation
-      .run(async () => {
-        try {
-          await operation();
-        } finally {
-          refresh();
-        }
-      })
-      .catch(() => {});
+    void mutation.run(async () => {
+      try {
+        await operation();
+      } finally {
+        refresh();
+      }
+    });
+
   return (
     <div className="grid gap-5">
       <Card>
@@ -213,6 +231,7 @@ export const CompanyTeam = ({
                   );
                   setCreated(invitation);
                   form.reset({ email: '', role: 'recruiter' });
+                  markSaved();
                   setInvitationOffset(0);
                   toast.success('Приглашение создано');
                 }),

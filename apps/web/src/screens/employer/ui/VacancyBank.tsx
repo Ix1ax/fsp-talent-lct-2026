@@ -6,6 +6,7 @@ import {
   SlidersHorizontalIcon,
 } from 'lucide-react';
 
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import { cn } from '@/shared/lib/utils';
 import { AsyncState, Button, Input, OptionSelect, Skeleton } from '@/shared/ui';
@@ -34,6 +35,7 @@ import { VacancyFilters } from './VacancyFilters';
 
 interface VacancyBankProps {
   board: EmployerBoard;
+  active?: boolean;
   api: EmployerGateway;
   catalogs: Catalogs;
   skills: Skill[];
@@ -52,6 +54,7 @@ interface VacancyBankProps {
 }
 export const VacancyBank = ({
   board,
+  active = true,
   api,
   catalogs,
   skills,
@@ -80,7 +83,7 @@ export const VacancyBank = ({
         : Promise.resolve([]),
     [api, board.companyId, board.status, filtered],
   );
-  const complete = useRemoteData(load, board.revision);
+  const complete = useRemoteData(load, board.revision, active && filtered);
   const matches = filtered
     ? filterVacancyFeed(complete.data ?? [], filters)
     : [];
@@ -105,6 +108,7 @@ export const VacancyBank = ({
       <div className="mx-auto grid w-full min-w-0 max-w-5xl gap-5">
         {composer ? (
           <NeedFlowEditor
+            active={active}
             key="new"
             initial={emptyNeed()}
             isNew
@@ -136,6 +140,7 @@ export const VacancyBank = ({
         ) : need ? (
           <>
             <NeedFlowEditor
+              active={active}
               key={`${need.id}-${need.status === 'archived'}`}
               initial={need}
               initialStep={created ? 1 : 0}
@@ -196,7 +201,11 @@ export const VacancyBank = ({
           pending={board.pending}
           error={board.saveError}
           onOpenChange={onArchiveConfirm}
-          onConfirm={board.archive}
+          onConfirm={async () => {
+            if (dirty && !confirmUnsavedChanges())
+              throw new DOMException('Архивирование отменено', 'AbortError');
+            await board.archive();
+          }}
         />
       </div>
     );
@@ -223,7 +232,6 @@ export const VacancyBank = ({
         <VacancyFilters
           value={filters}
           catalogs={catalogs}
-          skills={skills}
           disabled={board.pending}
           onChange={updateFilters}
           onReset={reset}

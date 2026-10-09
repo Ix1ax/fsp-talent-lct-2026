@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
-import { useAsyncMutation } from '@/shared/hooks';
+import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import { useAsyncMutation, useUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
   AsyncState,
@@ -26,11 +27,13 @@ import type {
   CompanyFilePurpose,
 } from '@/entities/company';
 
-import { validateCompanyFile } from '../lib/validateCompanyFile';
-import type { CompanyManagementApi } from '../model/management';
+import { validateCompanyFile } from '../lib';
+import type { CompanyManagementApi } from '../model';
 
 interface CompanyDocumentsProps {
   company: Company;
+  active?: boolean;
+  onDirtyChange?: (dirty: boolean) => void;
   api: CompanyManagementApi;
   onCompanyChange: () => Promise<void>;
   onBusyChange: (value: boolean) => void;
@@ -43,6 +46,8 @@ const FILE_STATUS = {
 };
 export const CompanyDocuments = ({
   company,
+  active = true,
+  onDirtyChange,
   api,
   onCompanyChange,
   onBusyChange,
@@ -52,22 +57,35 @@ export const CompanyDocuments = ({
     (signal: AbortSignal) => api.getCompanyFiles(company.id, offset, signal),
     [api, company.id, offset],
   );
-  const remote = useRemoteData(load);
+  const remote = useRemoteData(load, 0, active);
   const mutation = useAsyncMutation();
   const [purpose, setPurpose] =
     useState<CompanyFilePurpose>('company_document');
   const [file, setFile] = useState<File | null>(null);
+
+  const { markSaved } = useUnsavedChanges(!!file, {
+    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
+  });
+
+  useEffect(() => {
+    onDirtyChange?.(!!file);
+    return () => onDirtyChange?.(false);
+  }, [file, onDirtyChange]);
+
   const [remove, setRemove] = useState<CompanyFile | null>(null);
   const [logoState, setLogo] = useState({ fileId: '', url: '' });
   const logo = logoState.fileId === company.logoFileId ? logoState.url : '';
   const input = useRef<HTMLInputElement>(null);
   const readonly = company.memberRole !== 'owner';
+
   useEffect(() => {
     onBusyChange(mutation.pending);
     return () => onBusyChange(false);
   }, [mutation.pending, onBusyChange]);
+
   useEffect(() => {
-    if (!company.logoFileId) return;
+    if (!active || !company.logoFileId) return;
     const controller = new AbortController();
     let url = '';
     void api
@@ -82,11 +100,13 @@ export const CompanyDocuments = ({
       controller.abort();
       if (url) URL.revokeObjectURL(url);
     };
-  }, [api, company.id, company.logoFileId]);
+  }, [api, company.id, company.logoFileId, active]);
+
   const refresh = async () => {
     remote.retry();
     await onCompanyChange();
   };
+
   return (
     <Card>
       <CardHeader>
@@ -117,21 +137,20 @@ export const CompanyDocuments = ({
             onSubmit={(event) => {
               event.preventDefault();
               if (!file) return;
-              void mutation
-                .run(async () => {
-                  await validateCompanyFile(file, purpose);
-                  try {
-                    await api.uploadCompanyFile(company.id, file, purpose);
-                  } catch (error) {
-                    remote.retry();
-                    throw error;
-                  }
-                  setFile(null);
-                  if (input.current) input.current.value = '';
-                  await refresh();
-                  toast.success('Файл загружен');
-                })
-                .catch(() => {});
+              void mutation.run(async () => {
+                await validateCompanyFile(file, purpose);
+                try {
+                  await api.uploadCompanyFile(company.id, file, purpose);
+                } catch (error) {
+                  remote.retry();
+                  throw error;
+                }
+                setFile(null);
+                markSaved();
+                if (input.current) input.current.value = '';
+                await refresh();
+                toast.success('Файл загружен');
+              });
             }}
           >
             <fieldset disabled={mutation.pending} className="grid gap-4">
@@ -213,20 +232,18 @@ export const CompanyDocuments = ({
                   variant="outline"
                   disabled={mutation.pending || item.status !== 'ready'}
                   onClick={() =>
-                    void mutation
-                      .run(async () => {
-                        const blob = await api.downloadCompanyFile(
-                          company.id,
-                          item.id,
-                        );
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = item.originalName;
-                        link.click();
-                        setTimeout(() => URL.revokeObjectURL(url), 1000);
-                      })
-                      .catch(() => {})
+                    void mutation.run(async () => {
+                      const blob = await api.downloadCompanyFile(
+                        company.id,
+                        item.id,
+                      );
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = item.originalName;
+                      link.click();
+                      setTimeout(() => URL.revokeObjectURL(url), 1000);
+                    })
                   }
                 >
                   Скачать
