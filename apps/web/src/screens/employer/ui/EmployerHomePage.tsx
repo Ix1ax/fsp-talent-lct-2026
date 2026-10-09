@@ -2,10 +2,10 @@
 
 import { type ReactNode, useCallback, useState } from 'react';
 
+import { confirmUnsavedChanges } from '@/shared/hooks/navigation';
 import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard';
 import { Button, Skeleton } from '@/shared/ui';
 import { AsyncState } from '@/shared/ui/AsyncState';
-import { ConfirmDiscardDialog } from '@/shared/ui/ConfirmDiscardDialog';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
 import type { SessionUser } from '@/entities/session';
 import { CompanyForm } from '@/features/company';
@@ -41,23 +41,21 @@ export const EmployerHomePage = ({
   );
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [showMatches, setShowMatches] = useState(true);
-  const unsaved = useUnsavedGuard(dirty, board.pending);
-  const guard = (action: () => void) =>
-    unsaved.guard(() => {
-      setDirty(false);
-      action();
-    });
+  const unsaved = useUnsavedGuard(dirty, board.pending, false);
+  const guard = unsaved.guard;
   const canWrite =
     board.company?.memberRole === 'owner' ||
     board.company?.memberRole === 'recruiter';
   const detail = !!board.selectedId || composer;
   const resources = board.resources;
-  const select = (id: string) =>
+  const select = (id: string) => {
+    if (id === board.selectedId && !composer) return;
     guard(() => {
       setComposer(false);
       setShowMatches(board.status === 'active');
       board.select(id);
     });
+  };
   const create = () =>
     guard(() => {
       setComposer(true);
@@ -95,18 +93,14 @@ export const EmployerHomePage = ({
           board.chooseCompany(id);
         })
       }
-      onSettings={() =>
-        guard(() => {
-          board.clearError();
-          setCompanyForm('edit');
-        })
-      }
-      onCreateCompany={() =>
-        guard(() => {
-          board.clearError();
-          setCompanyForm('create');
-        })
-      }
+      onSettings={() => {
+        board.clearError();
+        setCompanyForm('edit');
+      }}
+      onCreateCompany={() => {
+        board.clearError();
+        setCompanyForm('create');
+      }}
     >
       {banner}
       {board.error ? (
@@ -197,11 +191,6 @@ export const EmployerHomePage = ({
           />
         </div>
       )}
-      <ConfirmDiscardDialog
-        open={unsaved.open}
-        onCancel={unsaved.cancel}
-        onProceed={unsaved.proceed}
-      />
       {companyForm && (
         <CompanyForm
           key={`${companyForm}-${board.companyId}`}
@@ -213,7 +202,11 @@ export const EmployerHomePage = ({
           onOpenChange={(v) => {
             if (!v) setCompanyForm(null);
           }}
-          onSave={board.saveCompany}
+          onSave={async (input, create) => {
+            if (create && dirty && !confirmUnsavedChanges())
+              throw new Error('Создание компании отменено. Ввод сохранён.');
+            await board.saveCompany(input, create);
+          }}
         />
       )}
       <ArchiveNeedDialog

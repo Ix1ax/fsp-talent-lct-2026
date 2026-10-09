@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import { MOTION_LAYOUT_IDS } from '@/shared/contants';
-import { useDebounce } from '@/shared/hooks';
+import { confirmUnsavedChanges, useDebounce } from '@/shared/hooks';
 import {
   AnimatedIndicator,
   Button,
@@ -119,6 +119,7 @@ export const CatalogsPage = () => {
             className="relative isolate h-auto min-h-11 whitespace-normal"
             aria-pressed={kind === value}
             onClick={() => {
+              if (value === kind || !confirmUnsavedChanges()) return;
               cancel();
               setKind(value);
               setOffset(0);

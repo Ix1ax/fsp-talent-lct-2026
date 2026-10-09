@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { ApiError } from '@/shared/api';
 import { CANDIDATE_DATA_UPDATED_EVENT } from '@/shared/contants';
+import { useGuardedRouter } from '@/shared/hooks';
 import {
   type AvailableAssessment,
   getAvailableAssessments,
@@ -13,7 +13,7 @@ import {
 import { getAssessmentLoadError, getAssessmentStartError } from '../lib';
 
 export const useAssessments = () => {
-  const router = useRouter();
+  const router = useGuardedRouter();
 
   const [items, setItems] = useState<AvailableAssessment[]>([]);
   const [current, setCurrent] = useState<string>();

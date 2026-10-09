@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   Dialog,
@@ -49,6 +50,10 @@ export const ModerationEditor = ({
     resolver: zodResolver(moderationFormSchema),
     defaultValues: { reason: '', target_id: '' },
   });
+  const unsaved = useFormUnsavedChanges(form);
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const titles = {
     approve: 'Одобрить',
     reject: 'Отклонить',
@@ -79,6 +84,8 @@ export const ModerationEditor = ({
         moderationSchema,
         { method: 'POST', body },
       );
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success(
         `Готово. Связи кандидатов: ${result.candidate_links}, потребностей: ${result.need_links}. Переведено в черновики: ${result.drafted_needs}.`,
       );
@@ -90,7 +97,7 @@ export const ModerationEditor = ({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.busy) onClose();
+        if (!open) close();
       }}
     >
       <DialogContent
@@ -139,7 +146,7 @@ export const ModerationEditor = ({
               type="button"
               variant="outline"
               disabled={mutation.busy}
-              onClick={onClose}
+              onClick={close}
             >
               Отмена
             </Button>

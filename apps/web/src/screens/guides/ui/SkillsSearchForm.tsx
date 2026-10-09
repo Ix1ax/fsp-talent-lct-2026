@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useTransition } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
-import { useSearch } from '@/shared/hooks';
+import { useGuardedRouter, useSearch } from '@/shared/hooks';
 import { Button, Input } from '@/shared/ui';
 import type { SkillsSearchQuery } from '@/entities/catalog';
 
@@ -12,7 +12,7 @@ interface SkillsSearchFormProps {
 }
 
 export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();

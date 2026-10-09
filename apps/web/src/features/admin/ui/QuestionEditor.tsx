@@ -2,6 +2,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Checkbox, Input, Textarea } from '@/shared/ui';
 import {
   adminRequest,
@@ -59,6 +60,10 @@ export const QuestionEditor = ({
       case_sensitive: version?.grading_spec.case_sensitive ?? false,
     },
   });
+  const unsaved = useFormUnsavedChanges(form);
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const rows = useFieldArray({ control: form.control, name: 'options' });
   const kind = useWatch({ control: form.control, name: 'kind' });
   const grading = useWatch({ control: form.control, name: 'grading' });
@@ -90,6 +95,8 @@ export const QuestionEditor = ({
         );
         savedId = saved.id;
       }
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success('Черновик версии создан');
       onSaved(savedId!);
     });
@@ -302,7 +309,7 @@ export const QuestionEditor = ({
           <ErrorNotice error={options.error} />
           <ErrorNotice error={mutation.error} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={close}>
               Отмена
             </Button>
             <Button

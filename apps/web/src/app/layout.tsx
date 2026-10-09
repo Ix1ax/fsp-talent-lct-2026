@@ -8,6 +8,7 @@ import { Toaster, TooltipProvider } from '@/shared/ui';
 
 import { AuthBootstrap } from './AuthBootstrap';
 import { ThemeProvider } from './ThemeProvider';
+import { UnsavedChangesProvider } from './UnsavedChangesProvider';
 
 import './globals.css';
 
@@ -46,7 +47,9 @@ const RootLayout = ({ children }: Readonly<RootLayoutProps>) => {
       <body>
         <ThemeProvider>
           <TooltipProvider>
-            <AuthBootstrap>{children}</AuthBootstrap>
+            <UnsavedChangesProvider>
+              <AuthBootstrap>{children}</AuthBootstrap>
+            </UnsavedChangesProvider>
             <Toaster />
           </TooltipProvider>
         </ThemeProvider>

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
+import { useGuardedRouter } from '@/shared/hooks';
 import {
   Button,
   Card,
@@ -19,7 +19,7 @@ import {
 } from '@/entities/session';
 
 export const RoleChooser = () => {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const [pending, setPending] = useState<RegistrationRole | null>(null);
   const [error, setError] = useState<string | null>(null);
 

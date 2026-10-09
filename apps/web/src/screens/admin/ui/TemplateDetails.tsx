@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
+import { useGuardedRouter } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import {
   AdminApiError,
@@ -25,7 +25,7 @@ interface TemplateDetailsProps {
 }
 export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
   const { session } = useAdminSession();
-  const router = useRouter();
+  const router = useGuardedRouter();
   const detail = useAdminQuery(
     `/assessments/templates/${id}`,
     adminSchemas.template,

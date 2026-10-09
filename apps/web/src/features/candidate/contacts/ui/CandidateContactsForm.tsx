@@ -1,11 +1,13 @@
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
 import {
   type FormDraftBridge,
   useFormDraftImport,
-  useUnsavedChanges,
+  useFormUnsavedChanges,
 } from '@/shared/hooks';
 import { Button, toast } from '@/shared/ui';
 import type { CandidateContacts } from '@/entities/candidate';
 
+import { toContactsInput } from '../lib';
 import { type ContactsFormValues, useCandidateContactsForm } from '../model';
 import { ContactsTextFields } from './ContactsTextFields';
 
@@ -24,7 +26,10 @@ interface CandidateContactsFormProps extends FormDraftBridge<ContactsFormValues>
 export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
   const { form, message, dirty, save } = useCandidateContactsForm(props);
   useFormDraftImport(form, props);
-  useUnsavedChanges(form.formState.isDirty);
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    normalize: toContactsInput,
+  });
 
   return (
     <form
@@ -32,7 +37,10 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
       aria-busy={props.busy}
       onSubmit={form.handleSubmit(
         async (values) => {
-          if (!props.busy && (await save(values))) props.onSaved?.();
+          if (!props.busy && (await save(values))) {
+            unsaved.markSaved();
+            props.onSaved?.();
+          }
         },
         () => toast.error('Проверьте контактные данные перед сохранением.'),
       )}
