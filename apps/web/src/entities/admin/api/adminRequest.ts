@@ -30,11 +30,12 @@ export type AdminRequestOptions = {
   signal?: AbortSignal;
   timeoutMs?: number;
 };
-export const adminRequest = async <T>(
+const request = async <T>(
   token: string | null,
   path: string,
   schema: z.ZodType<T>,
   options: AdminRequestOptions = {},
+  binary = false,
 ): Promise<T> => {
   const headers = new Headers({
     Accept: 'application/json',
@@ -95,12 +96,15 @@ export const adminRequest = async <T>(
           options.body === undefined ? undefined : JSON.stringify(options.body),
       });
       receivedResponse = response;
+      if (binary && response.ok)
+        return { response, text: '', blob: await response.blob() };
       const text = response.status === 204 ? '' : await response.text();
-      return { response, text };
+      return { response, text, blob: undefined };
     };
-    const { response, text } = await Promise.race([read(), aborted]).catch(
-      transportError,
-    );
+    const { response, text, blob } = await Promise.race([
+      read(),
+      aborted,
+    ]).catch(transportError);
     let data: unknown;
     try {
       data = text ? JSON.parse(text) : undefined;
@@ -121,7 +125,7 @@ export const adminRequest = async <T>(
         payload?.shortages ?? [],
       );
     }
-    const parsed = schema.safeParse(data);
+    const parsed = schema.safeParse(binary ? blob : data);
     if (!parsed.success) {
       let message = 'API вернул неожиданный формат ответа';
       if (mutation)
@@ -136,3 +140,16 @@ export const adminRequest = async <T>(
     controller.signal.removeEventListener('abort', onAbort);
   }
 };
+
+export const adminRequest = <T>(
+  token: string | null,
+  path: string,
+  schema: z.ZodType<T>,
+  options: AdminRequestOptions = {},
+) => request(token, path, schema, options);
+
+export const adminDownloadFile = (
+  token: string,
+  path: string,
+  signal?: AbortSignal,
+) => request(token, path, z.instanceof(Blob), { signal }, true);

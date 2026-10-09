@@ -1,3 +1,4 @@
+export type * from './operations';
 export type { Preview, PreviewAnswer, PreviewQuestion } from './preview';
 export type {
   AdminAccount,

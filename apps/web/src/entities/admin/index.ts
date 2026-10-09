@@ -1,6 +1,7 @@
 export type { AdminRequestOptions } from './api';
 export {
   AdminApiError,
+  adminDownloadFile,
   adminLogin,
   adminLogout,
   adminMe,
@@ -40,6 +41,7 @@ export {
   templateSchema,
   versionSchema,
 } from './api';
+export * from './api/operationsSchemas';
 export {
   catalogKinds,
   catalogLabels,
@@ -60,3 +62,4 @@ export type {
   Shortage,
   Template,
 } from './model';
+export type * from './model/operations';
