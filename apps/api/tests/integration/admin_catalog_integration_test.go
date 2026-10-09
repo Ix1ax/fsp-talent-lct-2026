@@ -43,9 +43,9 @@ func TestAdminCatalogStore(t *testing.T) {
 		if _, err = svc.Create(ctx, actor, kind, in); !errors.Is(err, entity.ErrConflict) {
 			t.Fatalf("Дубликат %s: %v", kind, err)
 		}
-		items, err := svc.List(ctx, actor, kind, in.Name, 100, 0)
-		if err != nil || len(items) != 1 {
-			t.Fatalf("Список %s: %+v %v", kind, items, err)
+		items, total, err := svc.List(ctx, actor, kind, in.Name, 100, 0)
+		if err != nil || len(items) != 1 || total != 1 {
+			t.Fatalf("Список %s: %+v total %d %v", kind, items, total, err)
 		}
 		newName := "Новое название"
 		update := entity.UpdateInput{Name: &newName}
@@ -77,14 +77,14 @@ func TestAdminCatalogStore(t *testing.T) {
 			}
 		}
 	}
-	if _, err := svc.List(ctx, actor, "skills", "%", 100, 0); err != nil {
+	if _, _, err := svc.List(ctx, actor, "skills", "%", 100, 0); err != nil {
 		t.Fatal(err)
 	}
 	var staff string
 	if err := db.QueryRow(ctx, `INSERT INTO admin_accounts(email,password_hash,role) VALUES('catalog-admin@example.test','test-hash','admin') RETURNING id::text`).Scan(&staff); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := svc.List(ctx, staff, "grades", "", 100, 0); err != nil {
+	if _, _, err := svc.List(ctx, staff, "grades", "", 100, 0); err != nil {
 		t.Fatal("Обычному админу закрыт справочник", err)
 	}
 	if _, err := db.Exec(ctx, `UPDATE admin_accounts SET status='blocked' WHERE id=$1`, staff); err != nil {

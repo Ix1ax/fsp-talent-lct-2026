@@ -14,7 +14,7 @@ import (
 
 type Store interface {
 	UpdateStatus(context.Context, string, string, string) (entity.Account, error)
-	List(context.Context, string, int, int) ([]entity.Account, error)
+	List(context.Context, string, int, int) ([]entity.Account, int64, error)
 	Lookup(context.Context, string) (entity.Account, string, error)
 	AllowLogin(context.Context, []byte, int) error
 	IssueSession(context.Context, string, string, []byte, time.Time) error
@@ -116,9 +116,9 @@ func (s *Service) Bootstrap(ctx context.Context, email, password string) error {
 	return s.store.Bootstrap(ctx, email, string(hash))
 }
 
-func (s *Service) List(ctx context.Context, actor entity.Account, limit, offset int) ([]entity.Account, error) {
+func (s *Service) List(ctx context.Context, actor entity.Account, limit, offset int) ([]entity.Account, int64, error) {
 	if actor.Role != "superadmin" || actor.Status != "active" {
-		return nil, entity.ErrForbidden
+		return nil, 0, entity.ErrForbidden
 	}
 	return s.store.List(ctx, actor.ID, limit, offset)
 }

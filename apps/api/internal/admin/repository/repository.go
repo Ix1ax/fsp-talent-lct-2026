@@ -125,39 +125,44 @@ func (r *Repository) Bootstrap(ctx context.Context, email, hash string) error {
 }
 
 // List возвращает список только действующему суперадмину, без хешей паролей.
-func (r *Repository) List(ctx context.Context, actor string, limit, offset int) ([]entity.Account, error) {
+// List возвращает страницу аккаунтов администраторов и их общее число (только действующему суперадмину).
+func (r *Repository) List(ctx context.Context, actor string, limit, offset int) ([]entity.Account, int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	var ok bool
 	err = tx.QueryRow(ctx, `SELECT true FROM admin_accounts WHERE id=$1 AND role='superadmin' AND status='active' FOR SHARE`, actor).Scan(&ok)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, entity.ErrForbidden
+		return nil, 0, entity.ErrForbidden
 	}
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM admin_accounts`).Scan(&total); err != nil {
+		return nil, 0, err
 	}
 	rows, err := tx.Query(ctx, `SELECT `+columns+` FROM admin_accounts a ORDER BY a.created_at,a.id LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items := []entity.Account{}
 	for rows.Next() {
 		a, e := scan(rows)
 		if e != nil {
 			rows.Close()
-			return nil, e
+			return nil, 0, e
 		}
 		items = append(items, a)
 	}
 	err = rows.Err()
 	rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 
 // UpdateStatus блокирует аккаунт до смены статуса и отзыва всех сессий.

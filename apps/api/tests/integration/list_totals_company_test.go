@@ -28,6 +28,13 @@ type listPage struct {
 	Offset int               `json:"offset"`
 }
 
+// bodyRecorder оборачивает тело ответа, чтобы проверять его теми же помощниками, что и ответ рекордера.
+func bodyRecorder(body string) *httptest.ResponseRecorder {
+	w := httptest.NewRecorder()
+	_, _ = w.WriteString(body)
+	return w
+}
+
 func decodePage(t *testing.T, w *httptest.ResponseRecorder) listPage {
 	t.Helper()
 	var p listPage

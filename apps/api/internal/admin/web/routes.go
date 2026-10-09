@@ -89,12 +89,12 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *service.Service) {
 			fail(c, err)
 			return
 		}
-		items, err := admins.List(c.Request.Context(), a, limit, offset)
+		items, total, err := admins.List(c.Request.Context(), a, limit, offset)
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+		c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 	})
 	protected.POST("/admins", func(c *gin.Context) {
 		value, _ := c.Get("admin_account")

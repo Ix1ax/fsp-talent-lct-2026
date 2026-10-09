@@ -96,6 +96,10 @@ func TestAdminCatalogRoutes(t *testing.T) {
 	if err = db.QueryRow(ctx, `INSERT INTO skills(code,name,active,moderation_status) VALUES('pending_skill','Предложение',false,'pending') RETURNING id::text`).Scan(&pending); err != nil {
 		t.Fatal(err)
 	}
+	wantPage(t, "навыки на модерации", bodyRecorder(request("GET", base+"/skills/pending", login.AccessToken, "", 200)), 1, 1, 20, 0)
+	wantPage(t, "навыки на модерации, offset за пределами", bodyRecorder(request("GET", base+"/skills/pending?offset=5", login.AccessToken, "", 200)), 0, 1, 20, 5)
+	wantPage(t, "справочник навыков по запросу", bodyRecorder(request("GET", base+"/skills?q=pending_skill&limit=1", login.AccessToken, "", 200)), 1, 1, 1, 0)
+	wantPage(t, "справочник навыков без совпадений", bodyRecorder(request("GET", base+"/skills?q=zzzнетзатакого", login.AccessToken, "", 200)), 0, 0, 20, 0)
 	request("PATCH", base+"/skills/"+pending, login.AccessToken, `{"active":true}`, 409)
 	request("DELETE", base+"/skills/"+pending, login.AccessToken, "", 409)
 	if _, err = db.Exec(ctx, `UPDATE admin_accounts SET status='blocked' WHERE id=$1`, staff.ID); err != nil {

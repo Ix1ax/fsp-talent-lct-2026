@@ -85,7 +85,9 @@ func TestAdminAuthIsolationAndPermissions(t *testing.T) {
 	request("POST", "/api/v1/admin/admins", root.AccessToken, `{"email":"x@example.test","password":"Staff-Password-2026","role":"superadmin"}`, 400)
 	request("POST", "/api/v1/admin/admins", root.AccessToken, `{"email":"x@example.test","password":"short"}`, 400)
 	staff := login("staff@example.test", "Staff-Password-2026", 200)
-	request("GET", "/api/v1/admin/admins", root.AccessToken, "", 200)
+	wantPage(t, "администраторы", bodyRecorder(request("GET", "/api/v1/admin/admins", root.AccessToken, "", 200)), 2, 2, 20, 0)
+	wantPage(t, "администраторы, limit 1", bodyRecorder(request("GET", "/api/v1/admin/admins?limit=1", root.AccessToken, "", 200)), 1, 2, 1, 0)
+	wantPage(t, "администраторы, offset за пределами", bodyRecorder(request("GET", "/api/v1/admin/admins?offset=9", root.AccessToken, "", 200)), 0, 2, 20, 9)
 	request("GET", "/api/v1/admin/admins", staff.AccessToken, "", 403)
 	if staff.Admin.Role != "admin" {
 		t.Fatal("Создан второй суперадмин")

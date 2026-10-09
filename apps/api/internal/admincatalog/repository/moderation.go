@@ -8,32 +8,37 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 )
 
-func (r *Repository) Pending(ctx context.Context, actor string, limit, offset int) ([]entity.Item, error) {
+// Pending возвращает страницу навыков на модерации и их общее число.
+func (r *Repository) Pending(ctx context.Context, actor string, limit, offset int) ([]entity.Item, int64, error) {
 	tx, err := r.begin(ctx, actor)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	cols, _ := columns("skills")
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM skills WHERE moderation_status='pending'`).Scan(&total); err != nil {
+		return nil, 0, err
+	}
 	rows, err := tx.Query(ctx, `SELECT `+cols+` FROM skills WHERE moderation_status='pending' ORDER BY submitted_at NULLS LAST,id LIMIT $1 OFFSET $2`, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items := []entity.Item{}
 	for rows.Next() {
 		item, e := scan(rows)
 		if e != nil {
 			rows.Close()
-			return nil, e
+			return nil, 0, e
 		}
 		items = append(items, item)
 	}
 	err = rows.Err()
 	rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 
 func (r *Repository) Moderate(ctx context.Context, actor, id, action string, in entity.ModerationInput) (entity.ModerationResult, error) {
