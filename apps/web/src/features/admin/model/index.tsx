@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import { toast } from 'sonner';
@@ -17,6 +18,7 @@ import {
   adminMe,
   type AdminSession,
   loginSchema,
+  setAdminCatalogSession,
 } from '@/entities/admin';
 
 const storageKey = 'fsp.admin.session';
@@ -33,11 +35,14 @@ interface AdminProviderProps {
   children: ReactNode;
 }
 export const AdminProvider = ({ children }: AdminProviderProps) => {
+  const authRevision = useRef(0);
   const [session, setSession] = useState<AdminSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [revision, setRevision] = useState(0);
   const clear = useCallback(() => {
+    authRevision.current++;
+    setAdminCatalogSession(null);
     sessionStorage.removeItem(storageKey);
     setSession(null);
     setError(null);
@@ -49,6 +54,7 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
   }, [clear]);
   useEffect(() => {
     const controller = new AbortController();
+    const currentRevision = authRevision.current;
     const restore = async () => {
       setLoading(true);
       setError(null);
@@ -69,15 +75,26 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
           parsed.data.access_token,
           controller.signal,
         );
-        if (!controller.signal.aborted) setSession({ ...parsed.data, admin });
+        if (
+          !controller.signal.aborted &&
+          currentRevision === authRevision.current
+        ) {
+          setAdminCatalogSession(parsed.data.access_token);
+          setSession({ ...parsed.data, admin });
+        }
       } catch (err) {
         if (
           !controller.signal.aborted &&
+          currentRevision === authRevision.current &&
           !(err instanceof AdminApiError && err.status === 401)
         )
           setError(err);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if (
+          !controller.signal.aborted &&
+          currentRevision === authRevision.current
+        )
+          setLoading(false);
       }
     };
     void restore();
@@ -92,8 +109,12 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     return () => clearTimeout(timer);
   }, [clear, session]);
   const login = async (email: string, password: string) => {
+    const currentRevision = ++authRevision.current;
     const next = await adminLogin(email, password);
+    if (currentRevision !== authRevision.current)
+      throw new DOMException('Вход отменён', 'AbortError');
     sessionStorage.setItem(storageKey, JSON.stringify(next));
+    setAdminCatalogSession(next.access_token);
     setSession(next);
     setError(null);
   };
@@ -132,3 +153,4 @@ export const useAdminSession = () => {
 };
 
 export { useAdminMutation } from './useAdminMutation';
+export { useAdminSkillSearch } from './useAdminSkillSearch';

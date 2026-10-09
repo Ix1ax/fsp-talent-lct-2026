@@ -16,14 +16,17 @@ const pages = {
   templates: TemplatesPage,
   admins: AccountsPage,
 };
+type AdminSection = keyof typeof pages;
+const isAdminSection = (section: string): section is AdminSection =>
+  Object.prototype.hasOwnProperty.call(pages, section);
 const AdminSectionPage = async ({
   params,
 }: {
   params: Promise<{ section: string }>;
 }) => {
   const { section } = await params;
-  if (!(section in pages)) notFound();
-  const Page = pages[section as keyof typeof pages];
+  if (!isAdminSection(section)) notFound();
+  const Page = pages[section];
   return (
     <Suspense fallback={<p role="status">Загружаем раздел…</p>}>
       <Page />

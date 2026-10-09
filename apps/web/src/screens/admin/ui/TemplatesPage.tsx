@@ -29,7 +29,7 @@ export const TemplatesPage = () => {
     status: '',
   });
   const [offset, setOffset] = useState(0);
-  const options = useAdminOptions();
+  const options = useAdminOptions(['specializations', 'grades']);
   const list = useAdminQuery(
     `/assessments/templates?${queryString({ ...filters, limit: 20, offset })}`,
     adminSchemas.templates,
@@ -69,12 +69,12 @@ export const TemplatesPage = () => {
                 label="Основной навык"
                 value={filters.stack_skill_id}
                 onChange={(v) => filter('stack_skill_id', v)}
-                items={options.data.skills ?? []}
               />
               {(['specializations', 'grades'] as const).map((kind) => (
                 <AdminSelect
                   showLabel
                   key={kind}
+                  disabled={options.catalogs[kind]?.loading}
                   label={kind === 'grades' ? 'Грейд' : 'Специализация'}
                   value={
                     filters[
@@ -134,7 +134,13 @@ export const TemplatesPage = () => {
             </div>
           </div>
         </details>
-        <ErrorNotice error={options.error} onRetry={options.reload} />
+        {(['specializations', 'grades'] as const).map((kind) => (
+          <ErrorNotice
+            key={kind}
+            error={options.catalogs[kind]?.error}
+            onRetry={() => options.reload(kind)}
+          />
+        ))}
         <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем шаблоны…' : ''}

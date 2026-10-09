@@ -24,7 +24,7 @@ export const TemplateEditor = ({
   onSaved,
 }: TemplateEditorProps) => {
   const { session } = useAdminSession();
-  const options = useAdminOptions();
+  const options = useAdminOptions(['specializations', 'grades']);
   const mutation = useAdminMutation();
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
@@ -81,10 +81,10 @@ export const TemplateEditor = ({
               name="stack_skill_id"
               render={({ field }) => (
                 <SkillPicker
+                  approvedOnly
                   label="Основной навык (стек)"
                   value={field.value}
                   onChange={field.onChange}
-                  items={options.skills}
                 />
               )}
             />
@@ -108,6 +108,7 @@ export const TemplateEditor = ({
                     render={({ field }) => (
                       <AdminSelect
                         label={label}
+                        disabled={options.catalogs[kind]?.loading}
                         value={field.value ? String(field.value) : ''}
                         onChange={(v) => field.onChange(Number(v))}
                         options={[
@@ -125,6 +126,10 @@ export const TemplateEditor = ({
                         ]}
                       />
                     )}
+                  />
+                  <ErrorNotice
+                    error={options.catalogs[kind]?.error}
+                    onRetry={() => options.reload(kind)}
                   />
                 </Field>
               );
@@ -170,9 +175,9 @@ export const TemplateEditor = ({
                   name={`blueprint.${index}.skill_id`}
                   render={({ field }) => (
                     <SkillPicker
+                      approvedOnly
                       value={field.value}
                       onChange={field.onChange}
-                      items={options.skills}
                     />
                   )}
                 />
@@ -258,7 +263,6 @@ export const TemplateEditor = ({
               Добавить строку
             </Button>
           </section>
-          <ErrorNotice error={options.error} />
           <ErrorNotice error={mutation.error} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={close}>

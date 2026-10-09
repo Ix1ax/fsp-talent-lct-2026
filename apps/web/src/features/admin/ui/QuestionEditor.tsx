@@ -18,7 +18,6 @@ import {
 } from '../constants';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
-import { useAdminOptions } from '../model/useAdminOptions';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
@@ -33,7 +32,6 @@ export const QuestionEditor = ({
   onSaved,
 }: QuestionEditorProps) => {
   const { session } = useAdminSession();
-  const options = useAdminOptions();
   const mutation = useAdminMutation();
   const version = question?.versions?.find(
     (item) => item.version === question.latest_version,
@@ -118,10 +116,10 @@ export const QuestionEditor = ({
                 name="skill_id"
                 render={({ field }) => (
                   <SkillPicker
+                    approvedOnly
                     value={field.value}
                     onChange={field.onChange}
-                    items={options.skills}
-                    disabled={!!question || options.loading}
+                    disabled={!!question}
                   />
                 )}
               />
@@ -306,16 +304,12 @@ export const QuestionEditor = ({
               />
             </>
           )}
-          <ErrorNotice error={options.error} />
           <ErrorNotice error={mutation.error} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={close}>
               Отмена
             </Button>
-            <Button
-              className="min-w-44"
-              disabled={options.loading && !question}
-            >
+            <Button className="min-w-44">
               {mutation.busy ? 'Сохраняем…' : 'Сохранить черновик'}
             </Button>
           </div>

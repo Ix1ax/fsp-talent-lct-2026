@@ -31,6 +31,8 @@ interface ComboboxProps extends Pick<
   placeholder?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
+  onSearchChange?: (value: string) => void;
+  selectedLabel?: string;
 }
 
 export const Combobox = ({
@@ -40,6 +42,8 @@ export const Combobox = ({
   placeholder = 'Выберите значение',
   searchPlaceholder = 'Поиск…',
   emptyMessage = 'Ничего не найдено.',
+  onSearchChange,
+  selectedLabel,
   ...props
 }: ComboboxProps) => {
   const [open, setOpen] = useState(false);
@@ -47,7 +51,13 @@ export const Combobox = ({
   const selected = options.find((option) => option.value === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) onSearchChange?.('');
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -58,7 +68,9 @@ export const Combobox = ({
           className="min-h-11 w-full justify-between font-normal"
           {...props}
         >
-          <span className="truncate">{selected?.label ?? placeholder}</span>
+          <span className="truncate">
+            {selectedLabel ?? selected?.label ?? placeholder}
+          </span>
           <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </Button>
       </PopoverTrigger>
@@ -66,8 +78,12 @@ export const Combobox = ({
         align="start"
         className="w-(--radix-popover-trigger-width) p-0"
       >
-        <Command defaultValue={value || 'empty-value'}>
+        <Command
+          defaultValue={value || 'empty-value'}
+          shouldFilter={!onSearchChange}
+        >
           <CommandInput
+            onValueChange={onSearchChange}
             placeholder={searchPlaceholder}
             aria-label={searchPlaceholder}
           />
@@ -81,6 +97,7 @@ export const Combobox = ({
                 onSelect={() => {
                   onValueChange(option.value);
                   setOpen(false);
+                  onSearchChange?.('');
                 }}
               >
                 <CheckIcon
