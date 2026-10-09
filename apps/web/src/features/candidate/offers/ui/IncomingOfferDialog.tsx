@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { ApiError } from '@/shared/api/errors';
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
@@ -27,13 +27,15 @@ import { OfferStatusBadge } from './OfferStatusBadge';
 interface IncomingOfferDialogProps {
   id: string;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate: (offer: IncomingOffer) => void;
+  onCloseAutoFocus: (event: Event) => void;
 }
 
 export const IncomingOfferDialog = ({
   id,
   onClose,
   onUpdate,
+  onCloseAutoFocus,
 }: IncomingOfferDialogProps) => {
   const [saved, setSaved] = useState<IncomingOffer>();
   const [viewRevision, setViewRevision] = useState(0);
@@ -53,21 +55,30 @@ export const IncomingOfferDialog = ({
 
   const viewed = useRemoteData(viewLoad, viewRevision, !!detail.data);
   const offer = saved ?? viewed.data ?? detail.data;
+
+  useEffect(() => {
+    if (viewed.data) onUpdate(viewed.data);
+  }, [viewed.data, onUpdate]);
+
   const mutation = useAsyncMutation();
 
   const respond = (status: OfferDecision) => {
     void mutation
       .run(async () => {
         try {
-          setSaved(await respondToIncomingOffer(id, status));
-          onUpdate();
+          const updated = await respondToIncomingOffer(id, status);
+
+          setSaved(updated);
+          onUpdate(updated);
           onClose();
         } catch (error) {
           if (error instanceof ApiError && error.code === 'response_conflict') {
-            setSaved(await getIncomingOffer(id));
+            const current = await getIncomingOffer(id);
+            setSaved(current);
             setViewRevision((value) => value + 1);
-            onUpdate();
+            onUpdate(current);
           }
+
           throw error;
         }
       })
@@ -84,6 +95,7 @@ export const IncomingOfferDialog = ({
       }}
     >
       <DialogContent
+        onCloseAutoFocus={onCloseAutoFocus}
         className="max-h-[85dvh] overflow-y-auto sm:max-w-xl"
         showCloseButton={!mutation.pending}
       >

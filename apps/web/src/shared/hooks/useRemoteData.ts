@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 
@@ -81,8 +81,25 @@ export const useRemoteData = <T>(
       ? state
       : { loading: true, error: '', data: undefined };
 
+  const updateData = useCallback(
+    (update: (data: T) => T) => {
+      setState((previous) => {
+        if (
+          previous.load !== load ||
+          previous.revision !== revision ||
+          previous.externalRevision !== externalRevision ||
+          previous.data === undefined
+        )
+          return previous;
+        return { ...previous, data: update(previous.data) };
+      });
+    },
+    [load, revision, externalRevision],
+  );
+
   return {
     ...current,
+    updateData,
     loading: enabled && current.loading,
     retry: () => setRevision((v) => v + 1),
   };
