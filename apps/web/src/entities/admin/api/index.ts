@@ -43,11 +43,15 @@ const errorSchema = z.object({
     .optional(),
   shortages: z.array(shortageSchema).optional(),
 });
+export const ADMIN_REQUEST_TIMEOUT_MS = 30_000;
+const ADMIN_LOGOUT_TIMEOUT_MS = 5_000;
+
 export type AdminRequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
   signal?: AbortSignal;
+  timeoutMs?: number;
 };
 export const adminRequest = async <T>(
   token: string | null,
@@ -62,51 +66,98 @@ export const adminRequest = async <T>(
   if (token) headers.set('Authorization', `Bearer ${token}`);
   if (options.body !== undefined)
     headers.set('Content-Type', 'application/json');
+  const controller = new AbortController();
+  let receivedResponse: Response | undefined;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let timedOut = false;
+  const mutation =
+    options.method && options.method !== 'GET' && path !== '/auth/login';
   const transportError = (error: unknown): never => {
-    if (error instanceof Error && error.name === 'AbortError') throw error;
-    const mutation =
-      options.method && options.method !== 'GET' && path !== '/auth/login';
+    if (controller.signal.aborted && !timedOut) throw controller.signal.reason;
+    if (!timedOut && error instanceof Error && error.name === 'AbortError')
+      throw error;
+    let message = 'Не удалось связаться с сервером. Проверьте подключение.';
+    if (timedOut) message = 'Сервер не ответил вовремя. Попробуйте ещё раз.';
+    if (mutation)
+      message =
+        'Ответ сервера не получен. Перед повтором проверьте данные: изменение могло сохраниться.';
     throw new AdminApiError(
-      mutation
-        ? 'Ответ сервера не получен. Перед повтором проверьте список: изменение могло сохраниться.'
-        : 'Не удалось связаться с сервером. Проверьте подключение.',
+      message,
       0,
-      'network',
+      timedOut ? 'timeout' : 'network',
+      receivedResponse?.headers.get('X-Request-ID') ?? null,
+      receivedResponse?.headers.get('Retry-After') ?? null,
     );
   };
-  const response = await fetch(`/api/v1/admin${path}`, {
-    method: options.method ?? 'GET',
-    headers,
-    credentials: 'omit',
-    cache: 'no-store',
-    signal: options.signal,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-  }).catch(transportError);
-  const text =
-    response.status === 204 ? '' : await response.text().catch(transportError);
-  let data: unknown;
+  const cancel = () => controller.abort(options.signal?.reason);
+  let rejectAbort: (reason: unknown) => void = () => {};
+  const aborted = new Promise<never>((_, reject) => {
+    rejectAbort = reject;
+  });
+  const onAbort = () => rejectAbort(controller.signal.reason);
+  controller.signal.addEventListener('abort', onAbort, { once: true });
+  options.signal?.addEventListener('abort', cancel, { once: true });
+  if (options.signal?.aborted) cancel();
+  else
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort(new DOMException('Request timed out', 'TimeoutError'));
+    }, options.timeoutMs ?? ADMIN_REQUEST_TIMEOUT_MS);
+
   try {
-    data = text ? JSON.parse(text) : undefined;
-  } catch {
-    data = undefined;
-  }
-  if (!response.ok) {
-    const parsed = errorSchema.safeParse(data);
-    const payload = parsed.success ? parsed.data : undefined;
-    if (response.status === 401 && token)
-      window.dispatchEvent(new Event('admin:expired'));
-    throw new AdminApiError(
-      payload?.error?.message ?? `Ошибка HTTP ${response.status}`,
-      response.status,
-      payload?.error?.code ?? 'http_error',
-      response.headers.get('X-Request-ID'),
-      response.headers.get('Retry-After'),
-      payload?.shortages ?? [],
+    // The same deadline covers headers and the complete response body.
+    const read = async () => {
+      controller.signal.throwIfAborted();
+      const response = await fetch(`/api/v1/admin${path}`, {
+        method: options.method ?? 'GET',
+        headers,
+        credentials: 'omit',
+        cache: 'no-store',
+        signal: controller.signal,
+        body:
+          options.body === undefined ? undefined : JSON.stringify(options.body),
+      });
+      receivedResponse = response;
+      const text = response.status === 204 ? '' : await response.text();
+      return { response, text };
+    };
+    const { response, text } = await Promise.race([read(), aborted]).catch(
+      transportError,
     );
+    let data: unknown;
+    try {
+      data = text ? JSON.parse(text) : undefined;
+    } catch {
+      data = undefined;
+    }
+    if (!response.ok) {
+      const parsed = errorSchema.safeParse(data);
+      const payload = parsed.success ? parsed.data : undefined;
+      if (response.status === 401 && token)
+        window.dispatchEvent(new Event('admin:expired'));
+      throw new AdminApiError(
+        payload?.error?.message ?? `Ошибка HTTP ${response.status}`,
+        response.status,
+        payload?.error?.code ?? 'http_error',
+        response.headers.get('X-Request-ID'),
+        response.headers.get('Retry-After'),
+        payload?.shortages ?? [],
+      );
+    }
+    const parsed = schema.safeParse(data);
+    if (!parsed.success) {
+      let message = 'API вернул неожиданный формат ответа';
+      if (mutation)
+        message +=
+          '. Перед повтором проверьте данные: изменение могло сохраниться.';
+      throw new Error(message);
+    }
+    return parsed.data;
+  } finally {
+    clearTimeout(timer);
+    options.signal?.removeEventListener('abort', cancel);
+    controller.signal.removeEventListener('abort', onAbort);
   }
-  const parsed = schema.safeParse(data);
-  if (!parsed.success) throw new Error('API вернул неожиданный формат ответа');
-  return parsed.data;
 };
 export const adminLogin = (email: string, password: string) =>
   adminRequest(null, '/auth/login', loginSchema, {
@@ -116,7 +167,10 @@ export const adminLogin = (email: string, password: string) =>
 export const adminMe = (token: string, signal?: AbortSignal) =>
   adminRequest(token, '/auth/me', accountSchema, { signal });
 export const adminLogout = (token: string) =>
-  adminRequest(token, '/auth/logout', z.undefined(), { method: 'POST' });
+  adminRequest(token, '/auth/logout', z.undefined(), {
+    method: 'POST',
+    timeoutMs: ADMIN_LOGOUT_TIMEOUT_MS,
+  });
 export const adminSchemas = {
   accounts: pageSchema(accountSchema),
   catalogs: pageSchema(catalogSchema),

@@ -7,7 +7,7 @@ import {
   adminSchemas,
 } from '@/entities/admin';
 
-import { useAdminSession } from '../model';
+import { useAdminMutation, useAdminSession } from '../model';
 import { AdminConfirmDialog } from './AdminConfirmDialog';
 
 interface AccountStatusActionProps {
@@ -20,8 +20,7 @@ export const AccountStatusAction = ({
 }: AccountStatusActionProps) => {
   const { session } = useAdminSession();
   const [confirming, setConfirming] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<unknown>(null);
+  const { run, busy, error } = useAdminMutation();
   if (
     !session ||
     session.admin.role !== 'superadmin' ||
@@ -31,10 +30,7 @@ export const AccountStatusAction = ({
     return null;
   const blocking = account.status === 'active';
   const save = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
+    await run(async () => {
       await adminRequest(
         session.access_token,
         `/admins/${account.id}`,
@@ -43,12 +39,9 @@ export const AccountStatusAction = ({
       );
       setConfirming(false);
       onSaved();
-    } catch (err) {
-      setError(err);
-    } finally {
-      setBusy(false);
-    }
+    });
   };
+
   return (
     <>
       <Button

@@ -8,6 +8,7 @@ import {
   useEffect,
   useState,
 } from 'react';
+import { toast } from 'sonner';
 
 import {
   AdminApiError,
@@ -97,10 +98,16 @@ export const AdminProvider = ({ children }: AdminProviderProps) => {
     setError(null);
   };
   const logout = async () => {
-    try {
-      if (session) await adminLogout(session.access_token);
-    } finally {
-      clear();
+    const token = session?.access_token;
+    clear();
+    if (token) {
+      try {
+        await adminLogout(token);
+      } catch {
+        toast.warning(
+          'Вы вышли на этом устройстве. Сервер не подтвердил завершение сессии.',
+        );
+      }
     }
   };
   return (
@@ -123,3 +130,5 @@ export const useAdminSession = () => {
   if (!context) throw new Error('AdminProvider отсутствует');
   return context;
 };
+
+export { useAdminMutation } from './useAdminMutation';
