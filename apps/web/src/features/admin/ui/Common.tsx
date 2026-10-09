@@ -69,7 +69,7 @@ export const AdminSelect = ({
       >
         <SelectTrigger
           id={id}
-          className="w-full min-w-0 data-[size=default]:h-11 text-base sm:text-sm"
+          className="w-full min-w-0 px-3 py-2 data-[size=default]:h-11 text-base sm:text-sm"
           aria-label={label}
         >
           <SelectValue placeholder={label}>
@@ -80,9 +80,14 @@ export const AdminSelect = ({
           position="popper"
           align="start"
           className="w-(--radix-select-trigger-width)"
+          viewportClassName="p-1.5 data-[position=popper]:min-w-0"
         >
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value || 'all'}>
+            <SelectItem
+              key={option.value}
+              value={option.value || 'all'}
+              className="min-h-10 py-2 pr-8 pl-3"
+            >
               {option.label}
             </SelectItem>
           ))}
@@ -223,12 +228,10 @@ export const AdminListLoading = ({
   hasData: boolean;
 }) => (
   <>
-    {loading && (
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-primary"
-      />
-    )}
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-4 top-0 h-0.5 bg-primary transition-opacity duration-200 motion-reduce:transition-none sm:inset-x-6 ${loading ? 'opacity-100' : 'opacity-0'}`}
+    />
     {loading && !hasData && (
       <div aria-hidden="true" className="grid gap-2 py-4">
         <Skeleton className="h-5 w-1/3" />

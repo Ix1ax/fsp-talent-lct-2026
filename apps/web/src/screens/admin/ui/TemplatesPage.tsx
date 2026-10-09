@@ -9,6 +9,7 @@ import { adminSchemas, queryString } from '@/entities/admin';
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   AdminSelect,
   ErrorNotice,
   Pagination,
@@ -138,7 +139,7 @@ export const TemplatesPage = () => {
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем шаблоны…' : ''}
         </p>
-        <div className="border-t">
+        <AdminListViewport loading={list.loading} className="border-t">
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -176,7 +177,7 @@ export const TemplatesPage = () => {
               </StaggerItem>
             ))}
           </AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}

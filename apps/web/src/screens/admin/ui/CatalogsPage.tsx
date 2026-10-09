@@ -28,6 +28,7 @@ import {
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   CatalogEditor,
   ErrorNotice,
   Field,
@@ -155,7 +156,7 @@ export const CatalogsPage = () => {
         <p role="status" aria-live="polite" className="sr-only">
           {loading ? 'Загружаем справочник…' : ''}
         </p>
-        <div className="border-t">
+        <AdminListViewport loading={loading} className="border-t">
           <AdminListLoading loading={loading} hasData={!!catalogs} />
           {!loading && !loadError && !catalogs?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -212,7 +213,7 @@ export const CatalogsPage = () => {
               );
             })}
           </AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={catalogs?.items.length ?? 0}
