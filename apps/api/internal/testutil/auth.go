@@ -71,7 +71,9 @@ func NewAuthEnvWithOptions(t *testing.T, opts httpapi.Options) *AuthEnv {
 	verifier := oidc.NewVerifier(Issuer, &oidc.StaticKeySet{PublicKeys: []crypto.PublicKey{&key.PublicKey}}, &oidc.Config{ClientID: "fsp-api"})
 	store := &UserStore{Users: map[string]user.User{}}
 	opts.CORSOrigins = "*"
-	opts.Users = user.NewService(store)
+	if opts.Users == nil {
+		opts.Users = user.NewService(store)
+	}
 	router := httpapi.New(slog.New(slog.NewTextHandler(io.Discard, nil)), readyChecker{}, verifier, opts)
 	return &AuthEnv{Router: router, Store: store, signer: signer}
 }
