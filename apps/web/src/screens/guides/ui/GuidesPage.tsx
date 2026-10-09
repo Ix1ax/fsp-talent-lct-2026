@@ -1,4 +1,4 @@
-import { FadeIn } from '@/shared/ui';
+import { PageHeader } from '@/shared/ui';
 import type { Catalogs, Skill, SkillsSearchQuery } from '@/entities/catalog';
 
 import { CatalogsSection } from './CatalogsSection';
@@ -18,17 +18,12 @@ export const GuidesPage = ({
   skillsError,
 }: GuidesPageProps) => {
   return (
-    <main className="mx-auto flex w-full max-w-285 flex-1 flex-col gap-8 px-4 py-6 md:px-8 md:py-10">
-      <FadeIn className="flex flex-col gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Справочник
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          Здесь можно посмотреть специализации, грейды и форматы работы, которые
-          доступны при заполнении профиля и потребности команды, а также найти
-          нужный навык.
-        </p>
-      </FadeIn>
+    <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
+      <PageHeader
+        eyebrow="Для кандидатов и работодателей"
+        title="Справочник"
+        description="Специализации, грейды и форматы работы, которые доступны при заполнении профиля и потребности команды, а также поиск навыка."
+      />
       <CatalogsSection catalogs={catalogs} />
       <SkillsSection skills={skills} query={query} error={skillsError} />
     </main>

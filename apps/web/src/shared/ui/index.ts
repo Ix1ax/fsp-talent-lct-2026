@@ -13,6 +13,8 @@ export * from './ConfirmDiscardDialog';
 export * from './Dialog';
 export * from './DropdownMenu';
 export { FieldMessage } from './FieldMessage';
+export * from './HeaderBar';
+export * from './HeaderNavLink';
 export * from './Input';
 export * from './Label';
 export {
@@ -27,6 +29,7 @@ export {
   Stagger,
   StaggerItem,
 } from './motion';
+export * from './PageHeader';
 export * from './Popover';
 export * from './SalaryRangeInput';
 export * from './Select';

@@ -6,7 +6,7 @@ import { ArrowLeftIcon } from 'lucide-react';
 import {
   AsyncState,
   Button,
-  FadeIn,
+  PageHeader,
   Skeleton,
   Stagger,
   StaggerItem,
@@ -37,18 +37,19 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
   } = useAssessments();
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
-      <Button asChild variant="outline" className="min-h-11 self-start">
-        <Link href="/candidate">
-          <ArrowLeftIcon aria-hidden="true" />В кабинет
-        </Link>
-      </Button>
-      <FadeIn className="flex flex-col gap-2">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Тестирование</h1>
-        <p className="text-muted-foreground">
-          Подтвердите навыки и грейд. Результаты проверяются автоматически.
-        </p>
-      </FadeIn>
+    <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
+      <PageHeader
+        eyebrow="Кандидат · тестирование"
+        title="Тестирование"
+        description="Подтвердите навыки и грейд. Результаты проверяются автоматически."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/candidate">
+              <ArrowLeftIcon aria-hidden="true" />В кабинет
+            </Link>
+          </Button>
+        }
+      />
       {current && (
         <Button asChild className="h-auto min-h-11 whitespace-normal">
           <Link href={`/candidate/assessments/${current}`}>

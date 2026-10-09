@@ -1,3 +1,4 @@
+import { briefTokenClassName } from '@/shared/ui';
 import { formatSalaryRange } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
@@ -8,6 +9,15 @@ interface NeedSummaryProps {
   skills: Skill[];
 }
 
+interface SummaryTokenProps {
+  value: string | undefined;
+  fallback: string;
+}
+
+const SummaryToken = ({ value, fallback }: SummaryTokenProps) => (
+  <span className={briefTokenClassName(!value)}>{value || fallback}</span>
+);
+
 export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
   const skillNames = (required: boolean) =>
     value.skills
@@ -15,35 +25,46 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
       .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
       .filter(Boolean)
       .join(', ');
-  const fields = [
-    [
-      'Специализация',
-      catalogs.specializations.find(
-        (item) => item.id === value.specializationId,
-      )?.name,
-    ],
-    ['Грейд', catalogs.grades.find((item) => item.id === value.gradeId)?.name],
-    [
-      'Формат работы',
-      catalogs.workFormats
-        .filter((item) => value.workFormatIds.includes(item.id))
-        .map((item) => item.name)
-        .join(', '),
-    ],
-    ['Зарплата', formatSalaryRange(value.salaryFromRub, value.salaryToRub)],
-    ['Обязательные навыки', skillNames(true)],
-    ['Желательные навыки', skillNames(false)],
-  ];
+  const salaryEmpty =
+    value.salaryFromRub === null && value.salaryToRub === null;
+
   return (
-    <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-      {fields.map(([label, content]) => (
-        <div key={label} className="min-w-0">
-          <dt className="text-xs text-muted-foreground">{label}</dt>
-          <dd className="mt-1 text-sm leading-relaxed wrap-anywhere">
-            {content || 'Не указано'}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <p className="text-xl leading-[2.6rem] text-pretty">
+      Ищем специалиста{' '}
+      <SummaryToken
+        value={
+          catalogs.specializations.find(
+            (item) => item.id === value.specializationId,
+          )?.name
+        }
+        fallback="специализация"
+      />{' '}
+      уровня{' '}
+      <SummaryToken
+        value={catalogs.grades.find((item) => item.id === value.gradeId)?.name}
+        fallback="любой грейд"
+      />
+      , формат —{' '}
+      <SummaryToken
+        value={catalogs.workFormats
+          .filter((item) => value.workFormatIds.includes(item.id))
+          .map((item) => item.name.toLowerCase())
+          .join(', ')}
+        fallback="не указан"
+      />
+      , вилка{' '}
+      <SummaryToken
+        value={
+          salaryEmpty
+            ? undefined
+            : formatSalaryRange(value.salaryFromRub, value.salaryToRub)
+        }
+        fallback="не указана"
+      />
+      . Обязательно —{' '}
+      <SummaryToken value={skillNames(true)} fallback="не указано" />,
+      желательно —{' '}
+      <SummaryToken value={skillNames(false)} fallback="не указано" />.
+    </p>
   );
 };

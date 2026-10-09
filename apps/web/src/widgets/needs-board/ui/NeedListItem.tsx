@@ -38,9 +38,9 @@ export const NeedListItem = ({
       aria-current={selected ? 'true' : undefined}
       onClick={onSelect}
       className={cn(
-        'h-auto w-full justify-start rounded-none border-0 bg-transparent p-4 text-left whitespace-normal hover:bg-muted',
-        'flex-col items-stretch gap-2 border-b border-border xl:px-5',
-        selected && 'bg-muted shadow-[inset_3px_0_0_var(--primary)]',
+        'h-auto w-full justify-start rounded-lg border-0 bg-transparent px-3 py-3.5 text-left font-normal whitespace-normal hover:bg-hover',
+        'flex-col items-stretch gap-2',
+        selected && 'bg-accent hover:bg-accent',
       )}
     >
       <span className="text-base font-semibold leading-snug">{need.title}</span>

@@ -164,13 +164,12 @@ export const EducationForm = ({
         </p>
       )}
       <div className="grid gap-3 sm:flex sm:flex-wrap">
-        <Button type="submit" size="lg" disabled={disabled}>
+        <Button type="submit" disabled={disabled}>
           {busy ? 'Сохранение…' : 'Сохранить образование'}
         </Button>
         <Button
           type="button"
           variant="outline"
-          size="lg"
           disabled={busy}
           onClick={onClose}
         >

@@ -85,7 +85,6 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
       </div>
       <Button
         type="button"
-        size="lg"
         variant="outline"
         onClick={clearSearch}
         disabled={!value && !query.q && !isPending}

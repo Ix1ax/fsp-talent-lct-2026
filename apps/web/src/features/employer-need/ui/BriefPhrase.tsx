@@ -76,7 +76,7 @@ export const BriefPhrase = ({
         {...token(required ? 'requiredSkills' : 'optionalSkills')}
         title={required ? 'Обязательные навыки' : 'Желательные навыки'}
         empty={!selected.length}
-        label={selected.map((s) => s.name).join(', ') || 'добавить навыки'}
+        label={selected.map((s) => s.name).join(', ') || '+ навык'}
       >
         <Input
           aria-label="Поиск навыка"
@@ -84,7 +84,7 @@ export const BriefPhrase = ({
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <div className="mt-3 grid max-h-64 gap-3 overflow-auto">
+        <div className="grid max-h-64 gap-3 overflow-auto">
           {skills
             .filter((s) =>
               [s.name, ...s.aliases]
@@ -134,112 +134,135 @@ export const BriefPhrase = ({
               </label>
             ))}
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Выбрано {value.skills.length} из {MAX_NEED_SKILLS} навыков. Лимит
           общий для обязательных и желательных.
         </p>
       </BriefToken>
     );
   };
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <BriefToken
-        {...token('specialization')}
-        title="Специализация"
-        label={
-          catalogs.specializations.find((s) => s.id === value.specializationId)
-            ?.name ?? 'специализация'
-        }
-        empty={!value.specializationId}
-      >
-        <div className="max-h-64 overflow-y-auto">
-          {catalogs.specializations.map((s) =>
-            option(
-              s.id,
-              s.name,
-              () => change({ specializationId: s.id }),
-              s.id === value.specializationId,
-            ),
-          )}
-        </div>
-      </BriefToken>
-      <BriefToken
-        {...token('grade')}
-        title="Грейд"
-        label={
-          catalogs.grades.find((g) => g.id === value.gradeId)?.name ??
-          'любой грейд'
-        }
-        empty={!value.gradeId}
-      >
-        {option(
-          null,
-          'Не указывать',
-          () => change({ gradeId: null }),
-          value.gradeId === null,
-        )}
-        {catalogs.grades.map((g) =>
+  const specialization = (
+    <BriefToken
+      {...token('specialization')}
+      title="Специализация"
+      label={
+        catalogs.specializations.find((s) => s.id === value.specializationId)
+          ?.name ?? 'специализация'
+      }
+      empty={!value.specializationId}
+    >
+      <div className="max-h-64 overflow-y-auto">
+        {catalogs.specializations.map((s) =>
           option(
-            g.id,
-            g.name,
-            () => change({ gradeId: g.id }),
-            value.gradeId === g.id,
+            s.id,
+            s.name,
+            () => change({ specializationId: s.id }),
+            s.id === value.specializationId,
           ),
         )}
-      </BriefToken>
-      <BriefToken
-        {...token('formats')}
-        title="Форматы работы"
-        empty={!value.workFormatIds.length}
-        label={
-          catalogs.workFormats
-            .filter((f) => value.workFormatIds.includes(f.id))
-            .map((f) => f.name)
-            .join(', ') || 'формат'
+      </div>
+    </BriefToken>
+  );
+  const grade = (
+    <BriefToken
+      {...token('grade')}
+      title="Грейд"
+      label={
+        catalogs.grades.find((g) => g.id === value.gradeId)?.name ??
+        'любой грейд'
+      }
+      empty={!value.gradeId}
+    >
+      {option(
+        null,
+        'Не указывать',
+        () => change({ gradeId: null }),
+        value.gradeId === null,
+      )}
+      {catalogs.grades.map((g) =>
+        option(
+          g.id,
+          g.name,
+          () => change({ gradeId: g.id }),
+          value.gradeId === g.id,
+        ),
+      )}
+    </BriefToken>
+  );
+  const formats = (
+    <BriefToken
+      {...token('formats')}
+      title="Форматы работы"
+      empty={!value.workFormatIds.length}
+      label={
+        catalogs.workFormats
+          .filter((f) => value.workFormatIds.includes(f.id))
+          .map((f) => f.name.toLowerCase())
+          .join(', ') || 'формат'
+      }
+    >
+      <div className="grid gap-3">
+        {catalogs.workFormats.map((f) => (
+          <label
+            key={f.id}
+            className="flex min-h-11 items-center gap-3 text-base"
+          >
+            <Checkbox
+              checked={value.workFormatIds.includes(f.id)}
+              onCheckedChange={(checked) =>
+                change({
+                  workFormatIds: checked
+                    ? [...value.workFormatIds, f.id]
+                    : value.workFormatIds.filter((id) => id !== f.id),
+                })
+              }
+            />
+            {f.name}
+          </label>
+        ))}
+      </div>
+    </BriefToken>
+  );
+  const salaryEmpty =
+    value.salaryFromRub === null && value.salaryToRub === null;
+  const salary = (
+    <BriefToken
+      {...token('salary')}
+      title="Зарплатная вилка"
+      empty={salaryEmpty}
+      label={
+        salaryEmpty
+          ? 'не указана'
+          : formatSalaryRange(value.salaryFromRub, value.salaryToRub)
+      }
+    >
+      <SalaryRangeInput
+        from={value.salaryFromRub}
+        to={value.salaryToRub}
+        errors={{ from: errors.salaryFromRub, to: errors.salaryToRub }}
+        onChange={(range) =>
+          change({ salaryFromRub: range.from, salaryToRub: range.to })
         }
-      >
-        <div className="grid gap-3">
-          {catalogs.workFormats.map((f) => (
-            <label
-              key={f.id}
-              className="flex min-h-11 items-center gap-3 text-base"
-            >
-              <Checkbox
-                checked={value.workFormatIds.includes(f.id)}
-                onCheckedChange={(checked) =>
-                  change({
-                    workFormatIds: checked
-                      ? [...value.workFormatIds, f.id]
-                      : value.workFormatIds.filter((id) => id !== f.id),
-                  })
-                }
-              />
-              {f.name}
-            </label>
-          ))}
-        </div>
-      </BriefToken>
-      <BriefToken
-        {...token('salary')}
-        title="Зарплатная вилка"
-        empty={value.salaryFromRub === null && value.salaryToRub === null}
-        label={formatSalaryRange(value.salaryFromRub, value.salaryToRub)}
-      >
-        <SalaryRangeInput
-          from={value.salaryFromRub}
-          to={value.salaryToRub}
-          errors={{ from: errors.salaryFromRub, to: errors.salaryToRub }}
-          onChange={(range) =>
-            change({ salaryFromRub: range.from, salaryToRub: range.to })
-          }
-        />
-        <p className="mt-3 text-xs text-muted-foreground">
-          Можно оставить обе границы пустыми. Вилка обязательна в предложении
-          кандидату.
+      />
+      <p className="text-xs text-muted-foreground">
+        Можно оставить обе границы пустыми. Вилка обязательна в предложении
+        кандидату.
+      </p>
+    </BriefToken>
+  );
+
+  return (
+    <div className="flex flex-col gap-2">
+      <p className="text-xl leading-[2.6rem] text-pretty">
+        Ищем специалиста {specialization} уровня {grade}, формат — {formats},
+        вилка {salary}. Обязательно — {skillToken(true)}, желательно —{' '}
+        {skillToken(false)}.
+      </p>
+      {!disabled && (
+        <p className="text-sm text-muted-foreground">
+          Подсвеченные слова — значения справочника. Нажмите, чтобы изменить.
         </p>
-      </BriefToken>
-      {skillToken(true)}
-      {skillToken(false)}
+      )}
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { Button, FadeIn, Stagger, StaggerItem } from '@/shared/ui';
 
 export const HomePage = () => {
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-8 sm:py-20">
+    <main className="container-page py-10 md:py-20">
       <FadeIn className="max-w-3xl space-y-6">
         <p className="text-sm font-medium text-brand-text">ФСП Скаут</p>
         <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">
@@ -31,7 +31,6 @@ export const HomePage = () => {
           </p>
           <Button
             asChild
-            size="lg"
             className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
           >
             <Link href="/candidate">
@@ -52,7 +51,6 @@ export const HomePage = () => {
           </p>
           <Button
             asChild
-            size="lg"
             variant="outline"
             className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
           >

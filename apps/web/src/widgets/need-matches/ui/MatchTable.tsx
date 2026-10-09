@@ -28,7 +28,7 @@ export const MatchTable = ({
 
   return (
     <section
-      className="border border-border bg-card"
+      className="overflow-hidden rounded-xl border border-border bg-card"
       aria-label="Подборка кандидатов"
     >
       <div className="border-b border-border px-5 py-4">
@@ -55,7 +55,7 @@ export const MatchTable = ({
           aria-label="Загрузка подборки"
         >
           {[1, 2, 3].map((n) => (
-            <Skeleton key={n} className="h-12 w-full rounded-none" />
+            <Skeleton key={n} className="h-12 w-full rounded-lg" />
           ))}
         </div>
       ) : data.items.length ? (

@@ -18,7 +18,7 @@ export const AssessmentAttemptPage = ({
   const { attempt, error, loading } = useAssessmentAttempt(attemptId);
 
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
+    <main className="container-page page-rhythm flex flex-1 flex-col gap-6">
       <Button asChild variant="outline" className="min-h-11 self-start">
         <Link href="/candidate/assessments">
           <ArrowLeftIcon aria-hidden="true" />К списку тестов

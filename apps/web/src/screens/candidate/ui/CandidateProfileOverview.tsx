@@ -6,7 +6,7 @@ import { ArrowRightIcon } from 'lucide-react';
 
 import { DYNAMIC_ROUTES } from '@/shared/contants';
 import { useMotionSettings } from '@/shared/hooks';
-import { Button, Stagger, StaggerItem } from '@/shared/ui';
+import { Button, PageHeader, Stagger, StaggerItem } from '@/shared/ui';
 
 import { PROFILE_STEP_DESCRIPTIONS, PROFILE_STEPS } from '../constants';
 
@@ -15,14 +15,12 @@ const MotionLink = motion.create(Link);
 export const CandidateProfileOverview = () => {
   const { reducedMotion, transition } = useMotionSettings();
   return (
-    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-10">
-      <header className="flex max-w-2xl flex-col gap-3">
-        <h1 className="text-2xl font-semibold sm:text-3xl">Мой кабинет</h1>
-        <p className="text-base text-muted-foreground">
-          Заполните профиль по разделам. Вы можете начать с любого шага и
-          вернуться к остальным позже. Публикацией профиля управляете вы.
-        </p>
-      </header>
+    <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
+      <PageHeader
+        eyebrow="Кандидат"
+        title="Мой кабинет"
+        description="Заполните профиль по разделам. Вы можете начать с любого шага и вернуться к остальным позже. Публикацией профиля управляете вы."
+      />
       <nav aria-label="Разделы профиля">
         <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PROFILE_STEPS.map((step, index) => (
@@ -59,7 +57,7 @@ export const CandidateProfileOverview = () => {
             Пройдите тесты по выбранному стеку и уровню.
           </p>
         </div>
-        <Button asChild variant="outline" size="lg">
+        <Button asChild variant="outline">
           <Link href={DYNAMIC_ROUTES.CANDIDATE('assessments')}>
             Перейти к тестам
             <ArrowRightIcon />

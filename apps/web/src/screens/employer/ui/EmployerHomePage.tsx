@@ -1,9 +1,10 @@
 'use client';
 
 import { type ReactNode, useCallback, useState } from 'react';
+import { PlusIcon } from 'lucide-react';
 
 import { useUnsavedGuard } from '@/shared/hooks/useUnsavedGuard';
-import { Button, Skeleton } from '@/shared/ui';
+import { Button, PageHeader, Skeleton } from '@/shared/ui';
 import { AsyncState } from '@/shared/ui/AsyncState';
 import { ConfirmDiscardDialog } from '@/shared/ui/ConfirmDiscardDialog';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
@@ -13,6 +14,7 @@ import { ArchiveNeedDialog } from '@/features/employer-need';
 import { EmployerSearch } from '@/features/employer-search';
 import { EmployerShell } from '@/widgets/employer-shell';
 import { NeedList } from '@/widgets/needs-board';
+import { SiteFooter } from '@/widgets/site-footer';
 
 import { type EmployerGateway, employerGateway } from '../lib/gateway';
 import { useEmployerBoard } from '../model/useEmployerBoard';
@@ -64,9 +66,16 @@ export const EmployerHomePage = ({
       setShowMatches(false);
       board.clearError();
     });
+  const listEmpty =
+    !board.loading &&
+    !board.listError &&
+    board.items.length === 0 &&
+    board.status === 'active' &&
+    !composer;
   return (
     <EmployerShell
       accountMenu={accountMenu}
+      footer={<SiteFooter />}
       homeHref={homeHref}
       search={
         <EmployerSearch
@@ -110,7 +119,7 @@ export const EmployerHomePage = ({
     >
       {banner}
       {board.error ? (
-        <main className="p-6">
+        <main className="container-page page-rhythm">
           <AsyncState
             error
             title="Не удалось открыть кабинет"
@@ -120,7 +129,7 @@ export const EmployerHomePage = ({
         </main>
       ) : !resources ? (
         <main
-          className="grid gap-5 p-6"
+          className="container-page page-rhythm grid gap-5"
           role="status"
           aria-label="Загрузка кабинета"
         >
@@ -128,73 +137,93 @@ export const EmployerHomePage = ({
           <Skeleton className="h-64 w-full" />
         </main>
       ) : !board.company ? (
-        <main className="mx-auto grid min-h-[70vh] max-w-xl content-center gap-5 p-6">
-          <MetaLabel className="text-xs text-brand-text">
-            Рабочее пространство
-          </MetaLabel>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Начнём с компании
-          </h1>
-          <p className="text-muted-foreground">
-            Добавьте компанию, чтобы описать потребности команды и подобрать
-            специалистов.
-          </p>
-          <Button size="lg" onClick={() => setCompanyForm('create')}>
-            Создать компанию
-          </Button>
+        <main className="container-page page-rhythm grid min-h-[60vh] content-center">
+          <div className="grid max-w-xl gap-5">
+            <MetaLabel className="text-xs text-brand-text">
+              Рабочее пространство
+            </MetaLabel>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Начнём с компании
+            </h1>
+            <p className="text-muted-foreground">
+              Добавьте компанию, чтобы описать потребности команды и подобрать
+              специалистов.
+            </p>
+            <Button
+              className="justify-self-start"
+              onClick={() => setCompanyForm('create')}
+            >
+              Создать компанию
+            </Button>
+          </div>
         </main>
       ) : (
-        <div className="mx-auto grid min-h-[calc(100dvh-56px)] max-w-[1600px] grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
-          <NeedList
-            list={board}
-            catalogs={resources.catalogs}
-            canWrite={canWrite}
-            detail={detail}
-            composer={composer}
-            onCreate={create}
-            onSelect={select}
-            onPage={(offset) => guard(() => board.page(offset))}
-            onStatus={(status) =>
-              guard(() => {
-                setComposer(false);
-                setShowMatches(false);
-                board.chooseStatus(status);
-              })
+        <div className="container-page page-rhythm flex flex-col gap-8">
+          <PageHeader
+            eyebrow={`Работодатель · ${board.company.name}`}
+            title="Потребности"
+            description="Кого ищет команда. Выберите потребность — откроются бриф и подборка."
+            actions={
+              canWrite && !listEmpty ? (
+                <Button disabled={board.pending} onClick={create}>
+                  <PlusIcon />
+                  Новая потребность
+                </Button>
+              ) : undefined
             }
           />
-          <EmployerNeedPane
-            board={board}
-            catalogs={resources.catalogs}
-            skills={resources.skills}
-            canWrite={canWrite}
-            composer={composer}
-            detail={detail}
-            dirty={dirty}
-            showMatches={showMatches}
-            loadRecommendations={gateway?.recommendations}
-            onDirtyChange={dirtyChanged}
-            onStartCreate={create}
-            onCreated={(active) => {
-              setDirty(false);
-              setComposer(false);
-              setShowMatches(active);
-            }}
-            onSaved={() => setDirty(false)}
-            onCancelCreate={() => setComposer(false)}
-            onBack={() =>
-              guard(() => {
+          <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+            <NeedList
+              list={board}
+              catalogs={resources.catalogs}
+              canWrite={canWrite}
+              detail={detail}
+              composer={composer}
+              onSelect={select}
+              onPage={(offset) => guard(() => board.page(offset))}
+              onStatus={(status) =>
+                guard(() => {
+                  setComposer(false);
+                  setShowMatches(false);
+                  board.chooseStatus(status);
+                })
+              }
+            />
+            <EmployerNeedPane
+              board={board}
+              catalogs={resources.catalogs}
+              skills={resources.skills}
+              canWrite={canWrite}
+              composer={composer}
+              detail={detail}
+              dirty={dirty}
+              showMatches={showMatches}
+              listEmpty={listEmpty}
+              loadRecommendations={gateway?.recommendations}
+              onDirtyChange={dirtyChanged}
+              onStartCreate={create}
+              onCreated={(active) => {
+                setDirty(false);
                 setComposer(false);
-                board.select('');
-              })
-            }
-            onFind={() => setShowMatches(true)}
-            onArchive={() => guard(() => setArchiveConfirm(true))}
-            onDuplicate={() =>
-              guard(() => {
-                void board.duplicate().catch(() => {});
-              })
-            }
-          />
+                setShowMatches(active);
+              }}
+              onSaved={() => setDirty(false)}
+              onCancelCreate={() => setComposer(false)}
+              onBack={() =>
+                guard(() => {
+                  setComposer(false);
+                  board.select('');
+                })
+              }
+              onFind={() => setShowMatches(true)}
+              onArchive={() => guard(() => setArchiveConfirm(true))}
+              onDuplicate={() =>
+                guard(() => {
+                  void board.duplicate().catch(() => {});
+                })
+              }
+            />
+          </div>
         </div>
       )}
       <ConfirmDiscardDialog

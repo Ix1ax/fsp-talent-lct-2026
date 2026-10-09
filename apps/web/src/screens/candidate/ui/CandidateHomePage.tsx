@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { Button } from '@/shared/ui';
+import { Button, PageHeader } from '@/shared/ui';
 import type { CandidateFullProfile } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
@@ -50,25 +50,24 @@ export const CandidateHomePage = ({
     <main
       ref={profileContainerRef}
       hidden={pathname === STATIC_ROUTES.CANDIDATE}
-      className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 [overflow-anchor:none] sm:px-6 sm:py-10"
+      className="container-page page-rhythm flex-1 [overflow-anchor:none]"
     >
-      <div className="flex flex-col gap-6">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold sm:text-3xl">Мой профиль</h1>
-          <p className="text-sm text-muted-foreground [overflow-wrap:anywhere]">
-            {user.email}
-          </p>
-          <p className="text-base text-muted-foreground">
-            Расскажите об опыте и условиях работы. Публикацией профиля
-            управляете вы.
-          </p>
-        </header>
+      <div className="flex flex-col gap-8">
+        <PageHeader
+          eyebrow={
+            <span className="normal-case [overflow-wrap:anywhere]">
+              Кандидат · {user.email}
+            </span>
+          }
+          title="Мой профиль"
+          description="Расскажите об опыте и условиях работы. Публикацией профиля управляете вы."
+        />
         {loadError ? (
           <CandidateProfileLoadError error={loadError} />
         ) : (
           <>
             <CandidateResumeImport workspace={workspace} />
-            <div className="grid items-start gap-6 lg:grid-cols-[230px_minmax(0,1fr)]">
+            <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
               <div
                 ref={navigationRef}
                 className="scroll-mt-24 lg:sticky lg:top-24"

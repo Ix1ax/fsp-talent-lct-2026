@@ -37,7 +37,6 @@ export const NeedActions = ({
     {status === 'active' && (
       <Button
         type="button"
-        size="lg"
         onClick={onFind}
         disabled={pending || dirty}
         title={dirty ? 'Сохраните изменения перед поиском' : undefined}
@@ -49,7 +48,6 @@ export const NeedActions = ({
       <Button
         type="button"
         variant="outline"
-        size="lg"
         disabled={pending}
         onClick={onRestore}
       >
@@ -63,7 +61,6 @@ export const NeedActions = ({
           <Button
             type="button"
             variant="outline"
-            size="lg"
             className="w-12 px-0"
             disabled={pending}
             aria-label="Ещё действия с потребностью"

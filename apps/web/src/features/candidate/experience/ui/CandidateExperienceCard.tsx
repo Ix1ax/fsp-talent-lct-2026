@@ -112,7 +112,6 @@ export const CandidateExperienceCard = (
               ref={addButton}
               type="button"
               variant="outline"
-              size="lg"
               className="self-start"
               disabled={disabled || actions.atLimit || !!editor}
               onClick={openNew}

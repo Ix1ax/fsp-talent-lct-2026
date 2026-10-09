@@ -31,7 +31,7 @@ export const CandidateSkillsSection = ({
         <p className="text-sm text-muted-foreground">
           Подтвердите навыки с помощью тестов.
         </p>
-        <Button asChild variant="outline" size="lg">
+        <Button asChild variant="outline">
           <Link href={DYNAMIC_ROUTES.CANDIDATE('assessments')}>
             Тестирование навыков
           </Link>

@@ -15,21 +15,21 @@ export const SpecializationBadge = ({
   active,
 }: SpecializationBadgeProps) => (
   <span
-    className="inline-flex shrink-0"
+    className="inline-flex shrink-0 overflow-hidden rounded-sm"
     aria-label={`${specialization?.name ?? 'Специализация не выбрана'}, ${grade?.name ?? 'любой грейд'}`}
   >
     <Badge
       className={
         active
-          ? 'h-6 font-mono text-[11px]'
-          : 'h-6 bg-caption font-mono text-[11px] text-primary-foreground'
+          ? 'h-6 rounded-none font-mono text-[11px]'
+          : 'h-6 rounded-none bg-caption font-mono text-[11px] text-primary-foreground'
       }
     >
       {specialization
         ? (SPECIALIZATIONS[specialization.code] ?? specialization.name)
         : '—'}
     </Badge>
-    <Badge className="h-6 bg-foreground text-sm text-background">
+    <Badge className="h-6 rounded-none bg-foreground font-mono text-xs text-background">
       {grade?.name ?? 'любой'}
     </Badge>
   </span>

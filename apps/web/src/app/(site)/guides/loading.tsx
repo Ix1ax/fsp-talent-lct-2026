@@ -3,7 +3,7 @@ import { Skeleton } from '@/shared/ui';
 export default function Loading() {
   return (
     <main
-      className="mx-auto flex w-full max-w-285 flex-1 flex-col gap-8 px-4 py-6 md:px-8 md:py-10"
+      className="container-page page-rhythm flex flex-1 flex-col gap-8"
       aria-label="Загрузка справочника"
       aria-busy="true"
     >

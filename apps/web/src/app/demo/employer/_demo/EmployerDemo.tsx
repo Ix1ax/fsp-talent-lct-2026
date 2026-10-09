@@ -26,10 +26,12 @@ export const EmployerDemo = ({ scenario }: EmployerDemoProps) => {
       homeHref="/demo/employer"
       gateway={gateway}
       banner={
-        <p className="border-b border-border bg-accent px-4 py-2 text-xs text-muted-foreground">
-          Демо кабинета работодателя · данные вымышленные · изменения
-          сбрасываются при перезагрузке
-        </p>
+        <div className="border-b border-border bg-accent">
+          <p className="container-page py-2 text-xs text-muted-foreground">
+            Демо кабинета работодателя · данные вымышленные · изменения
+            сбрасываются при перезагрузке
+          </p>
+        </div>
       }
       accountMenu={
         <DropdownMenu>
