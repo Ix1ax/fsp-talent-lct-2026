@@ -16,6 +16,8 @@ interface ConfirmDeleteDialogProps {
   description: string;
   error?: string;
   busy: boolean;
+  confirmLabel?: string;
+  busyLabel?: string;
   onConfirm: () => Promise<boolean>;
   onClose: () => void;
 }
@@ -25,6 +27,8 @@ export const ConfirmDeleteDialog = ({
   description,
   error,
   busy,
+  confirmLabel = 'Удалить',
+  busyLabel = 'Удаление…',
   onConfirm,
   onClose,
 }: ConfirmDeleteDialogProps) => {
@@ -65,7 +69,7 @@ export const ConfirmDeleteDialog = ({
             disabled={busy}
             onClick={() => void confirm()}
           >
-            {busy ? 'Удаление…' : 'Удалить'}
+            {busy ? busyLabel : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

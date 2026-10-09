@@ -15,7 +15,7 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
       .map(
         (item) =>
           skills.find((skill) => skill.id === item.skillId)?.name ??
-          `Навык ${item.skillId}`,
+          `Сохранённый навык ${item.skillId}`,
       )
       .filter(Boolean)
       .join(', ');
@@ -27,13 +27,13 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
         (item) => item.id === value.specializationId,
       )?.name ??
         (value.specializationId
-          ? `Специализация №${value.specializationId}`
-          : undefined),
+          ? `Сохранённая специализация #${value.specializationId}`
+          : null),
     ],
     [
       'Грейд',
       catalogs.grades.find((item) => item.id === value.gradeId)?.name ??
-        (value.gradeId ? `Грейд №${value.gradeId}` : undefined),
+        (value.gradeId ? `Сохранённый грейд #${value.gradeId}` : 'Любой грейд'),
     ],
     [
       'Формат работы',
@@ -41,10 +41,12 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
         .map(
           (id) =>
             catalogs.workFormats.find((item) => item.id === id)?.name ??
-            `Формат №${id}`,
+            `Сохранённый формат #${id}`,
         )
         .join(', '),
     ],
+    ['Город', value.city ?? 'Любой город'],
+    ['Часовой пояс', value.timezone],
     ['Зарплата', formatSalaryRange(value.salaryFromRub, value.salaryToRub)],
     ['Обязательные навыки', skillNames(true)],
     ['Желательные навыки', skillNames(false)],

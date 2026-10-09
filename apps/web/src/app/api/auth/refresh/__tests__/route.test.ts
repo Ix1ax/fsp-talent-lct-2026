@@ -58,7 +58,7 @@ describe('refresh route', () => {
         'https://app.test/api/auth/refresh?next=%2F%0A%2Fevil.test',
       ),
     );
-    expect(response.headers.get('location')).toBe('https://app.test/');
+    expect(response.headers.get('location')).toBe('/');
     expect(setAuthTokens).toHaveBeenCalledWith({
       accessToken: 'new',
       refreshToken: 'refresh',
@@ -89,9 +89,7 @@ describe('refresh route', () => {
         'http://web:3000/api/auth/refresh?next=/candidate/profile',
       ),
     );
-    expect(response.headers.get('location')).toBe(
-      'https://app.test/candidate/profile',
-    );
+    expect(response.headers.get('location')).toBe('/candidate/profile');
     expect(setAuthTokens).toHaveBeenCalledWith({
       accessToken: 'new',
       refreshToken: 'rotated',
@@ -104,7 +102,23 @@ describe('refresh route', () => {
     const response = await GET(
       new NextRequest('https://app.test/api/auth/refresh?next=%2Fcandidate'),
     );
-    expect(response.headers.get('location')).toBe('https://app.test/candidate');
+    expect(response.headers.get('location')).toBe('/candidate');
+  });
+
+  it('preserves an invitation destination on the login redirect', async () => {
+    vi.mocked(getRefreshToken).mockResolvedValue(undefined);
+    const path = '/employer/invitation?token=invite-token';
+    const response = await GET(
+      new NextRequest(
+        `https://app.test/api/auth/refresh?next=${encodeURIComponent(path)}`,
+      ),
+    );
+    const destination = new URL(
+      response.headers.get('location')!,
+      'https://app.test',
+    );
+    expect(destination.pathname).toBe('/login');
+    expect(destination.searchParams.get('next')).toBe(path);
   });
 
   it('returns a recoverable error on server-side refresh failure', async () => {
@@ -116,6 +130,16 @@ describe('refresh route', () => {
     expect(clearAuthTokens).not.toHaveBeenCalled();
   });
 
+  it('keeps the browser origin when Next runs on a wildcard bind address', async () => {
+    vi.mocked(getRefreshToken).mockResolvedValue(undefined);
+    const response = await GET(
+      new NextRequest('http://0.0.0.0:5173/api/auth/refresh?next=%2Femployer', {
+        headers: { host: 'localhost:5173' },
+      }),
+    );
+    expect(response.headers.get('location')).toBe('/login?next=%2Femployer');
+  });
+
   it('redirects to /login preserving next when refresh token is invalid', async () => {
     vi.mocked(refreshAuthTokens).mockResolvedValue(null);
     const response = await GET(
@@ -124,7 +148,7 @@ describe('refresh route', () => {
       ),
     );
     expect(response.headers.get('location')).toBe(
-      'https://app.test/login?next=%2Fcandidate%2Fprofile',
+      '/login?next=%2Fcandidate%2Fprofile',
     );
     expect(clearAuthTokens).toHaveBeenCalledOnce();
   });

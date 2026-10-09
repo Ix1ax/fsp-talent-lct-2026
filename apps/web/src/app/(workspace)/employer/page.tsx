@@ -1,10 +1,19 @@
-import { STATIC_ROUTES } from '@/shared/contants';
 import { USER_ROLES } from '@/entities/session';
 import { requireRole } from '@/entities/session/api/server';
-import { EmployerHomePage } from '@/screens/employer';
+import {
+  type EmployerSearchParams,
+  getEmployerReturnPath,
+} from '@/screens/employer';
 
-export default async function Page() {
-  const user = await requireRole(USER_ROLES.EMPLOYER, STATIC_ROUTES.EMPLOYER);
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<EmployerSearchParams>;
+}) {
+  await requireRole(
+    USER_ROLES.EMPLOYER,
+    getEmployerReturnPath('overview', await searchParams),
+  );
 
-  return <EmployerHomePage user={user} />;
+  return null;
 }

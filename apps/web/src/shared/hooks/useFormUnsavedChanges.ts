@@ -9,6 +9,7 @@ import { useUnsavedChanges } from './useUnsavedChanges';
 
 type FormUnsavedChangesOptions<T> = {
   preserveWithin?: readonly string[];
+  scopeSearchParams?: readonly string[];
   initialDraft?: boolean;
   normalize?: (values: T) => unknown;
 };
@@ -25,7 +26,10 @@ export const useFormUnsavedChanges = <T extends FieldValues>(
       serializeDraftValues(normalize(values)) !==
         serializeDraftValues(normalize(defaults)));
   return {
-    ...useUnsavedChanges(dirty, { preserveWithin: options.preserveWithin }),
+    ...useUnsavedChanges(dirty, {
+      preserveWithin: options.preserveWithin,
+      scopeSearchParams: options.scopeSearchParams,
+    }),
     dirty,
   };
 };

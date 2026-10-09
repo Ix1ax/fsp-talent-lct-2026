@@ -44,7 +44,9 @@ export const requireRole = async (
   const user = await requireSessionUser(nextPath);
 
   if (!user.role) {
-    redirect(STATIC_ROUTES.LOGIN);
+    redirect(
+      `${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(sanitizeRedirectPath(nextPath))}`,
+    );
   }
 
   if (user.role !== role) {

@@ -81,6 +81,36 @@ const createBrowser = () => {
 };
 
 describe('unsaved changes navigation', () => {
+  it('retains company drafts between sections but guards a different company', () => {
+    const { browser, history, click } = createBrowser();
+    history.replaceState({}, '', '/employer/profile?company=A');
+    const guard = createUnsavedChangesGuard(browser);
+    guard.register({
+      preserveWithin: ['/employer/profile', '/employer/documents'],
+      scopeSearchParams: ['company'],
+    });
+    expect(click('/employer/documents?company=A').defaultPrevented).toBe(false);
+    expect(browser.confirm).not.toHaveBeenCalled();
+    expect(click('/employer/documents?company=B').defaultPrevented).toBe(true);
+    expect(browser.confirm).toHaveBeenCalledOnce();
+    guard.dispose();
+  });
+  it('rejects Back to another need without losing the current route', () => {
+    const { browser, history } = createBrowser();
+    history.replaceState({}, '', '/employer/vacancies?company=A&need=first');
+    const guard = createUnsavedChangesGuard(browser);
+    history.pushState({}, '', '/employer/vacancies?company=A&need=second');
+    guard.register({
+      preserveWithin: ['/employer/vacancies', '/employer/profile'],
+      scopeSearchParams: ['company', 'need'],
+    });
+    history.go(-1);
+    expect(browser.confirm).toHaveBeenCalledOnce();
+    expect(browser.location.href).toBe(
+      'https://app.test/employer/vacancies?company=A&need=second',
+    );
+    guard.dispose();
+  });
   it('distinguishes page changes from hash links and retained profile steps', () => {
     expect(
       leavesCurrentPage('#field', 'https://app.test/candidate/profile'),

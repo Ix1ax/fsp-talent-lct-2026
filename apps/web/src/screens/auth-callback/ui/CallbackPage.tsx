@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { takeLoginReturnPath } from '@/shared/auth/loginReturnPath';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { sanitizeRedirectPath } from '@/shared/utils';
 import { getRoleHomeRoute } from '@/entities/session';
@@ -45,20 +46,28 @@ export const CallbackPage = () => {
 
         if (result.next) {
           const safeNext = sanitizeRedirectPath(result.next);
+          const nextPathname = new URL(safeNext, 'https://app.invalid')
+            .pathname;
           const isAllowedForRole =
             (result.user.role === 'candidate' &&
-              (safeNext.startsWith('/candidate') || safeNext === '/cabinet')) ||
+              (nextPathname === '/candidate' ||
+                nextPathname.startsWith('/candidate/') ||
+                safeNext === '/cabinet')) ||
             (result.user.role === 'employer' &&
-              (safeNext.startsWith('/employer') || safeNext === '/cabinet')) ||
+              (nextPathname === '/employer' ||
+                nextPathname.startsWith('/employer/') ||
+                safeNext === '/cabinet')) ||
             (result.user.role === 'admin' &&
-              (safeNext.startsWith('/admin') || safeNext === '/cabinet'));
+              (nextPathname === '/admin' ||
+                nextPathname.startsWith('/admin/') ||
+                safeNext === '/cabinet'));
 
           if (isAllowedForRole) {
             destination = safeNext;
           }
         }
 
-        router.replace(destination);
+        router.replace(takeLoginReturnPath(destination));
         return;
       }
 

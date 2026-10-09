@@ -52,7 +52,7 @@ export const useNeedActions = ({
         status: 'draft',
       });
       onSaved(next);
-      toast.success('Потребность восстановлена в черновики');
+      toast.success('Потребность возвращена в черновики');
     });
   const duplicate = async () =>
     mutation.run(async () => {
