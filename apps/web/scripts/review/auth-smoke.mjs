@@ -64,6 +64,86 @@ const external = await fetch(
   { headers: { Cookie: cookie }, redirect: 'manual' },
 );
 assert.equal(external.headers.get('location'), `${base}/`);
+
+// Guest redirect preserves target route directly
+const guest = await fetch(`${base}/candidate/profile`, { redirect: 'manual' });
+const guestTarget = '/login?next=%2Fcandidate';
+if (guest.status === 307) {
+  assert.ok(
+    [guestTarget, `${base}${guestTarget}`].includes(
+      guest.headers.get('location'),
+    ),
+  );
+} else {
+  assert.equal(guest.status, 200);
+  const text = await guest.text();
+  assert.ok(
+    text.includes('NEXT_REDIRECT') && text.includes('/login?next=%2Fcandidate'),
+  );
+}
+
+// Cross-role redirect routes to appropriate home route
+const crossRole = await fetch(`${base}/employer`, {
+  headers: { Cookie: cookie },
+  redirect: 'manual',
+});
+if (crossRole.status === 307) {
+  assert.ok(
+    ['/candidate', `${base}/candidate`].includes(
+      crossRole.headers.get('location'),
+    ),
+  );
+} else {
+  assert.equal(crossRole.status, 200);
+  const text = await crossRole.text();
+  assert.ok(text.includes('NEXT_REDIRECT') && text.includes('/candidate'));
+}
+
+// Invalid refresh token redirects to login with next and clears cookies
+const invalidRefresh = await fetch(
+  `${base}/api/auth/refresh?next=/candidate/profile`,
+  {
+    headers: { Cookie: 'refresh_token=invalid' },
+    redirect: 'manual',
+  },
+);
+assert.equal(invalidRefresh.status, 307);
+assert.equal(
+  invalidRefresh.headers.get('location'),
+  `${base}/login?next=%2Fcandidate%2Fprofile`,
+);
+assert.ok(
+  invalidRefresh.headers.getSetCookie().some((c) => /max-age=0|1970/i.test(c)),
+);
+
+// 503 fault does not clear cookies or redirect to login, and recovery restores profile
+const api = process.env.REVIEW_API_URL ?? 'http://127.0.0.1:5191';
+await fetch(`${api}/__review/faults`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify([{ path: '/api/v1/me', status: 503, times: 1 }]),
+});
+const failed = await fetch(`${base}/candidate/profile`, {
+  headers: { Cookie: cookie },
+  redirect: 'manual',
+});
+assert.notEqual(failed.status, 307);
+assert.notEqual(failed.status, 302);
+assert.deepEqual(failed.headers.getSetCookie(), []);
+const failedText = await failed.text();
+assert.ok(
+  failedText.includes('недоступен') ||
+    failedText.includes('ошибка') ||
+    failedText.includes('Повторить'),
+);
+
+const recovered = await fetch(`${base}/candidate/profile`, {
+  headers: { Cookie: cookie },
+  redirect: 'manual',
+});
+assert.equal(recovered.status, 200);
+assert.ok((await recovered.text()).includes('Профиль'));
+
 const getLogout = await fetch(`${base}/api/auth/logout`, {
   headers: { Cookie: cookie },
   redirect: 'manual',
@@ -88,5 +168,5 @@ assert.ok(
     .every((value) => value.includes('1970') || /max-age=0/i.test(value)),
 );
 console.log(
-  'Auth HTTP smoke passed: origin/content type, cookies, page reload, POST refresh, GET recovery, safe redirect, POST logout and GET rejection.',
+  'Auth HTTP smoke passed: origin/content type, cookies, page reload, POST refresh, GET recovery, safe redirect, guest redirect, cross-role redirect, invalid refresh, 503 fault tolerance & recovery, POST logout and GET rejection.',
 );

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ApiError } from '@/shared/api/errors';
 import { getTokenDisplayName } from '@/shared/auth/server';
-import { getAccessToken } from '@/shared/auth/session.server';
+import { getAccessToken, getRefreshToken } from '@/shared/auth/session.server';
 
 import type { SessionUser } from '../model';
 import { getMe } from './getMe';
@@ -10,11 +10,34 @@ import { getMe } from './getMe';
 export type SessionState =
   | { kind: 'guest' }
   | { kind: 'user'; user: SessionUser }
-  | { kind: 'error'; message: string };
+  | {
+      kind: 'invalid';
+      reason: 'unauthorized' | 'forbidden' | 'token_expired';
+      message: string;
+      hasRefreshToken?: boolean;
+    }
+  | {
+      kind: 'unavailable';
+      message: string;
+      code: string;
+      status: number;
+      displayName?: string;
+      retryAfter?: string;
+    };
 
 export const loadSession = async (): Promise<SessionState> => {
   const token = await getAccessToken();
-  if (!token) return { kind: 'guest' };
+  const refreshToken = await getRefreshToken();
+
+  if (!token) {
+    if (!refreshToken) return { kind: 'guest' };
+    return {
+      kind: 'invalid',
+      reason: 'token_expired',
+      message: 'Сессия истекла',
+      hasRefreshToken: true,
+    };
+  }
 
   try {
     const user = await getMe();
@@ -23,12 +46,62 @@ export const loadSession = async (): Promise<SessionState> => {
       user: { ...user, name: getTokenDisplayName(token) },
     };
   } catch (error) {
-    if (!(error instanceof ApiError)) {
-      return { kind: 'error', message: 'Не удалось проверить сессию' };
+    const displayName = getTokenDisplayName(token);
+
+    if (error instanceof ApiError) {
+      if (error.status === 401 || error.code === 'unauthorized') {
+        return {
+          kind: 'invalid',
+          reason: 'unauthorized',
+          message: error.message || 'Сессия недействительна',
+          hasRefreshToken: Boolean(refreshToken),
+        };
+      }
+
+      if (error.status === 403 || error.code === 'forbidden') {
+        return {
+          kind: 'invalid',
+          reason: 'forbidden',
+          message: error.message || 'Доступ запрещён',
+          hasRefreshToken: Boolean(refreshToken),
+        };
+      }
+
+      if (
+        error.code === 'timeout' ||
+        error.code === 'network' ||
+        error.status >= 500
+      ) {
+        return {
+          kind: 'unavailable',
+          code: error.code,
+          status: error.status,
+          retryAfter: error.retryAfter,
+          message:
+            error.code === 'timeout'
+              ? 'Превышено время ожидания ответа сервиса. Попробуйте обновить страницу.'
+              : error.status === 503
+                ? 'Сервис временно недоступен. Ведутся технические работы.'
+                : 'Сервис авторизации временно недоступен. Попробуйте обновить страницу.',
+          displayName,
+        };
+      }
+
+      return {
+        kind: 'unavailable',
+        code: error.code,
+        status: error.status,
+        message: error.message || 'Ошибка сервиса',
+        displayName,
+      };
     }
-    if (error.code === 'unauthorized') {
-      return { kind: 'error', message: 'Сессия недействительна' };
-    }
-    return { kind: 'error', message: `${error.code}: ${error.message}` };
+
+    return {
+      kind: 'unavailable',
+      code: 'unknown',
+      status: 0,
+      message: 'Не удалось проверить сессию. Попробуйте обновить страницу.',
+      displayName,
+    };
   }
 };

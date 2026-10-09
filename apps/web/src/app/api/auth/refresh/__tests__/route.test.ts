@@ -115,4 +115,17 @@ describe('refresh route', () => {
     expect(response.status).toBe(503);
     expect(clearAuthTokens).not.toHaveBeenCalled();
   });
+
+  it('redirects to /login preserving next when refresh token is invalid', async () => {
+    vi.mocked(refreshAuthTokens).mockResolvedValue(null);
+    const response = await GET(
+      new NextRequest(
+        'https://app.test/api/auth/refresh?next=/candidate/profile',
+      ),
+    );
+    expect(response.headers.get('location')).toBe(
+      'https://app.test/login?next=%2Fcandidate%2Fprofile',
+    );
+    expect(clearAuthTokens).toHaveBeenCalledOnce();
+  });
 });

@@ -77,9 +77,11 @@ export const createReviewOidc = (appOrigin) => {
     if (url.pathname === '/oidc/token') {
       const params = new URLSearchParams(body);
       if (params.get('grant_type') === 'refresh_token') {
-        const role = params.get('refresh_token')?.includes('employer')
-          ? 'employer'
-          : 'candidate';
+        const token = params.get('refresh_token');
+        if (token === 'invalid' || !token?.startsWith('review-')) {
+          return json(res, 400, { error: 'invalid_grant' });
+        }
+        const role = token.includes('employer') ? 'employer' : 'candidate';
         return json(res, 200, {
           access_token: `review-${role}`,
           refresh_token: `review-${role}-refresh`,

@@ -77,7 +77,11 @@ export const GET = async (request: NextRequest): Promise<Response> => {
   } catch (error) {
     return refreshFailure(error);
   }
-  const destination = new URL(tokens ? next : '/login', origin);
+  const fallback =
+    next && next !== '/' && next !== '/login'
+      ? `/login?next=${encodeURIComponent(next)}`
+      : '/login';
+  const destination = new URL(tokens ? next : fallback, origin);
 
   return NextResponse.redirect(destination);
 };

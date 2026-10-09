@@ -8,7 +8,7 @@ import {
 import { getMeClient, type SessionUser } from '@/entities/session';
 
 export type CompleteOidcCallbackResult =
-  | { status: 'authenticated'; user: SessionUser }
+  | { status: 'authenticated'; user: SessionUser; next?: string }
   | { status: 'role_chooser' }
   | { status: 'inactive' }
   | { status: 'unauthorized' }
@@ -47,9 +47,14 @@ const runOidcCallback = async (
 
     setClientAccessToken(user.access_token);
 
+    const next =
+      user.state && typeof user.state === 'object' && 'next' in user.state
+        ? (user.state as { next?: string }).next
+        : undefined;
+
     try {
       const sessionUser = await getMeClient();
-      return { status: 'authenticated', user: sessionUser };
+      return { status: 'authenticated', user: sessionUser, next };
     } catch (err) {
       if (err instanceof ApiError) {
         if (err.status === 404 && err.code === 'not_registered') {
