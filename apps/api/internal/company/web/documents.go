@@ -23,12 +23,12 @@ func (h companiesHandler) listFiles(c *gin.Context) {
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.documents.ListFiles(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
+	items, total, err := h.documents.ListFiles(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) upload(c *gin.Context) {
 	// На небольшом сервере ограничиваем одновременное чтение и декодирование файлов.

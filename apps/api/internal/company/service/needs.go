@@ -10,7 +10,7 @@ import (
 type NeedsStore interface {
 	CreateNeed(context.Context, string, string, entity.NeedInput) (entity.Need, error)
 	GetNeed(context.Context, string, string, string) (entity.Need, error)
-	ListNeeds(context.Context, string, string, string, int, int) ([]entity.Need, error)
+	ListNeeds(context.Context, string, string, string, int, int) ([]entity.Need, int64, error)
 	UpdateNeed(context.Context, string, string, string, map[string]json.RawMessage) (entity.Need, error)
 	ArchiveNeed(context.Context, string, string, string) error
 }
@@ -26,9 +26,9 @@ func (s *NeedsService) Create(ctx context.Context, user, company string, in enti
 func (s *NeedsService) Get(ctx context.Context, user, company, id string) (entity.Need, error) {
 	return s.store.GetNeed(ctx, user, company, id)
 }
-func (s *NeedsService) List(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, error) {
+func (s *NeedsService) List(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, int64, error) {
 	if status != "" && status != "draft" && status != "active" && status != "archived" {
-		return nil, validationError("Неизвестный фильтр status")
+		return nil, 0, validationError("Неизвестный фильтр status")
 	}
 	return s.store.ListNeeds(ctx, user, company, status, limit, offset)
 }

@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -42,3 +43,8 @@ func dbError(err error) error {
 }
 
 func validationError(message string) error { return &entity.ValidationError{Message: message} }
+
+// readTx открывает согласованный снимок только для чтения: страница и общее число читаются из одного состояния данных.
+func (r *Repository) readTx(ctx context.Context) (pgx.Tx, error) {
+	return r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+}

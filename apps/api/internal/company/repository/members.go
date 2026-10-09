@@ -23,34 +23,38 @@ func scanInvitation(row pgx.Row) (entity.Invitation, error) {
 	return i, dbError(err)
 }
 
-func (r *Repository) ListMembers(ctx context.Context, user, company string, limit, offset int) ([]entity.Member, error) {
+func (r *Repository) ListMembers(ctx context.Context, user, company string, limit, offset int) ([]entity.Member, int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	// Общий порядок блокировок: компания, затем участники. Удаление доступа ждёт завершения чтения.
 	if _, err = scanCompany(tx.QueryRow(ctx, `SELECT `+companyColumns+memberJoin+` AND c.id=$2 FOR SHARE OF c,m,u`, user, company)); err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM company_members WHERE company_id=$1`, company).Scan(&total); err != nil {
+		return nil, 0, err
 	}
 	rows, err := tx.Query(ctx, `SELECT `+memberColumns+` FROM company_members WHERE company_id=$1 ORDER BY joined_at,user_id LIMIT $2 OFFSET $3`, company, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items := []entity.Member{}
 	for rows.Next() {
 		m, err := scanMember(rows)
 		if err != nil {
 			rows.Close()
-			return nil, err
+			return nil, 0, err
 		}
 		items = append(items, m)
 	}
 	rows.Close()
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 
 func (r *Repository) UpdateMember(ctx context.Context, user, company, target, role string) (entity.Member, error) {
@@ -121,33 +125,37 @@ func (r *Repository) CreateInvitation(ctx context.Context, user, company string,
 	}
 	return i, tx.Commit(ctx)
 }
-func (r *Repository) ListInvitations(ctx context.Context, user, company string, limit, offset int) ([]entity.Invitation, error) {
+func (r *Repository) ListInvitations(ctx context.Context, user, company string, limit, offset int) ([]entity.Invitation, int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	if _, err = owned(ctx, tx, user, company); err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM company_invitations WHERE company_id=$1`, company).Scan(&total); err != nil {
+		return nil, 0, err
 	}
 	rows, err := tx.Query(ctx, `SELECT `+invitationColumns+` FROM company_invitations WHERE company_id=$1 ORDER BY created_at DESC,id DESC LIMIT $2 OFFSET $3`, company, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items := []entity.Invitation{}
 	for rows.Next() {
 		i, err := scanInvitation(rows)
 		if err != nil {
 			rows.Close()
-			return nil, err
+			return nil, 0, err
 		}
 		items = append(items, i)
 	}
 	rows.Close()
 	if err = rows.Err(); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 func (r *Repository) RevokeInvitation(ctx context.Context, user, company, id string) error {
 	tx, err := r.db.Begin(ctx)

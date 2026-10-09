@@ -71,7 +71,7 @@ func TestAdminCatalogStore(t *testing.T) {
 				t.Fatal("Не очистились альтернативные названия")
 			}
 			public := catalog.NewService(catalog.NewRepository(db))
-			visible, err := public.Skills(ctx, "figma", 100, 0)
+			visible, _, err := public.Skills(ctx, "figma", 100, 0)
 			if err != nil || len(visible) != 0 {
 				t.Fatal("Отключённый навык остался доступен в публичном поиске", err)
 			}

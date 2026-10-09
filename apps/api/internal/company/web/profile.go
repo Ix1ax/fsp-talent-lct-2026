@@ -39,12 +39,12 @@ func (h companiesHandler) list(c *gin.Context) {
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.service.List(c.Request.Context(), u.ID, limit, offset)
+	items, total, err := h.service.List(c.Request.Context(), u.ID, limit, offset)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) update(c *gin.Context) {
 	var patch entity.Patch

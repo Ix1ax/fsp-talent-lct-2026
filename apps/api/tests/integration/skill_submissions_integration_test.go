@@ -49,7 +49,7 @@ func TestSkillSubmissions(t *testing.T) {
 	if err != nil || b.SkillID != a.SkillID {
 		t.Fatal("Появился дубликат", b, err)
 	}
-	list, err := catalog.NewService(catalog.NewRepository(db)).Skills(ctx, "Новый", 100, 0)
+	list, _, err := catalog.NewService(catalog.NewRepository(db)).Skills(ctx, "Новый", 100, 0)
 	if err != nil || len(list) != 0 {
 		t.Fatal("Предложение попало в публичный справочник", err)
 	}

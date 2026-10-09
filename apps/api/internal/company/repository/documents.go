@@ -47,24 +47,38 @@ func (r *Repository) CompleteFile(ctx context.Context, user, id, fileID string) 
 func (r *Repository) File(ctx context.Context, user, id, fileID string) (files.File, error) {
 	return scanFile(r.db.QueryRow(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND f.id=$3 AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status='ready'`, user, id, fileID))
 }
-func (r *Repository) ListFiles(ctx context.Context, user, id string, limit, offset int) ([]files.File, error) {
+
+// Документы компании, видимые участнику: без удалённых файлов. Общий фильтр для страницы и общего числа.
+const documentsListFrom = ` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status<>'deleted'`
+
+// ListFiles возвращает страницу документов компании и их общее число.
+func (r *Repository) ListFiles(ctx context.Context, user, id string, limit, offset int) ([]files.File, int64, error) {
 	if _, err := r.Get(ctx, user, id); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	rows, err := r.db.Query(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status<>'deleted' ORDER BY f.created_at DESC,f.id DESC LIMIT $3 OFFSET $4`, user, id, limit, offset)
+	tx, err := r.readTx(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+documentsListFrom, user, id).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+fileColumns+documentsListFrom+` ORDER BY f.created_at DESC,f.id DESC LIMIT $3 OFFSET $4`, user, id, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 	result := []files.File{}
 	for rows.Next() {
 		f, err := scanFile(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		result = append(result, f)
 	}
-	return result, rows.Err()
+	return result, total, rows.Err()
 }
 func (r *Repository) MarkDeleting(ctx context.Context, user, id, fileID string) (files.File, error) {
 	tx, err := r.db.Begin(ctx)
