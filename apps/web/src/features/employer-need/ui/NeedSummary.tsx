@@ -15,6 +15,7 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
       .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
       .filter(Boolean)
       .join(', ');
+
   const fields = [
     [
       'Специализация',
@@ -34,6 +35,7 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
     ['Обязательные навыки', skillNames(true)],
     ['Желательные навыки', skillNames(false)],
   ];
+
   return (
     <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
       {fields.map(([label, content]) => (

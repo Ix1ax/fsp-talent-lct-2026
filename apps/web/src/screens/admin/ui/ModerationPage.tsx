@@ -8,6 +8,7 @@ import { adminSchemas, type CatalogItem } from '@/entities/admin';
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   ErrorNotice,
   ModerationEditor,
   Pagination,
@@ -112,7 +113,7 @@ export const ModerationPage = () => {
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем очередь…' : ''}
         </p>
-        <div>
+        <AdminListViewport loading={list.loading}>
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -120,7 +121,7 @@ export const ModerationPage = () => {
             </p>
           )}
           <AdminAnimatedList>{list.data?.items.map(row)}</AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}

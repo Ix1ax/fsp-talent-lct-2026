@@ -15,7 +15,7 @@ export const AdminShellHeader = ({
   onLogout,
 }: AdminShellHeaderProps) => (
   <header className="sticky top-0 z-20 border-b bg-card">
-    <div className="flex h-16 w-full items-center justify-between gap-2 px-4 sm:gap-4 lg:px-8">
+    <div className="flex h-[63px] w-full items-center justify-between gap-2 px-4 sm:gap-4 lg:px-8">
       <div className="flex items-center gap-3">
         <Link
           href="/admin"

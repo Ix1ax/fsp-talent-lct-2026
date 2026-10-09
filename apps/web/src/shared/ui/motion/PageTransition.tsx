@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import {
   type HTMLMotionProps,
   motion,
@@ -22,7 +22,7 @@ export const PageTransition = ({
   const controls = useAnimationControls();
   const { reducedMotion, transition } = useMotionSettings();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (reducedMotion) {
       controls.set({ opacity: 1, y: 0 });
       return;
