@@ -205,7 +205,11 @@ func TestAdminOperationsAccessFiltersAndStatistics(t *testing.T) {
 		if strings.HasSuffix(path, "/file") {
 			continue
 		}
-		for _, secret := range []string{`"object_key"`, `"bucket"`, `"password_hash"`, `"subject"`, `"phone"`, "candidate@example.test"} {
+		secrets := []string{`"object_key"`, `"bucket"`, `"password_hash"`, `"subject"`, `"phone"`}
+		if !strings.Contains(path, "/users") && !strings.HasSuffix(path, "/members") && !strings.Contains(path, "/audit-events") {
+			secrets = append(secrets, "candidate@example.test")
+		}
+		for _, secret := range secrets {
 			if strings.Contains(w.Body.String(), secret) {
 				t.Fatalf("Секрет в административном ответе: %s", w.Body)
 			}

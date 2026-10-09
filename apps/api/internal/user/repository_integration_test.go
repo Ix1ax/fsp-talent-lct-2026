@@ -12,21 +12,53 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5/stdlib"
+	"github.com/pressly/goose/v3"
+
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/migrations"
 )
 
 func TestRepository(t *testing.T) {
-	dsn := os.Getenv("DATABASE_URL")
+	dsn := os.Getenv("TEST_DATABASE_URL")
 	if dsn == "" {
-		t.Fatal("Необходимо указать DATABASE_URL")
+		t.Skip("Необходимо указать TEST_DATABASE_URL")
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	db, err := pgxpool.New(ctx, dsn)
+	admin, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(admin.Close)
+	schema := fmt.Sprintf("user_repository_test_%d", time.Now().UnixNano())
+	if _, err = admin.Exec(ctx, `CREATE SCHEMA `+schema); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if _, err := admin.Exec(context.Background(), `DROP SCHEMA `+schema+` CASCADE`); err != nil {
+			t.Error(err)
+		}
+	})
+	cfg, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cfg.ConnConfig.RuntimeParams["search_path"] = schema
+	db, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 	// Cleanup выполняется в обратном порядке: сначала удаление данных, потом закрытие пула.
 	t.Cleanup(db.Close)
+	sqlDB := stdlib.OpenDB(*cfg.ConnConfig)
+	defer sqlDB.Close()
+	provider, err := goose.NewProvider(goose.DialectPostgres, sqlDB, migrations.Files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = provider.Up(ctx); err != nil {
+		t.Fatal(err)
+	}
 	repo := NewRepository(db)
 	issuer := "https://integration.test/realms/" + fmt.Sprint(time.Now().UnixNano())
 	t.Cleanup(func() {

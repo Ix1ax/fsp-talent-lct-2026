@@ -22,14 +22,18 @@ func (r *Repository) Audit(ctx context.Context, actor string, f entity.Filter) (
 		return p, err
 	}
 	defer tx.Rollback(ctx)
-	where := ` FROM ` + auditUnion + ` WHERE ($1='' OR e.source=$1) AND ($2='' OR e.action=$2) AND ($3='' OR e.entity_type=$3)
+	from := ` FROM ` + auditUnion
+	where := ` WHERE ($1='' OR e.source=$1) AND ($2='' OR e.action=$2) AND ($3='' OR e.entity_type=$3)
  AND ($4::text IS NULL OR e.entity_id=$4) AND ($5::uuid IS NULL OR e.actor_id=$5)
  AND ($6::timestamptz IS NULL OR e.created_at>=$6) AND ($7::timestamptz IS NULL OR e.created_at<=$7)`
 	a := []any{f.Source, f.Action, f.EntityType, f.EntityID, f.ActorID, f.From, f.To}
-	if err = tx.QueryRow(ctx, `SELECT count(*)`+where, a...).Scan(&p.Total); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+from+where, a...).Scan(&p.Total); err != nil {
 		return p, err
 	}
-	rows, err := tx.Query(ctx, `SELECT to_jsonb(e)`+where+` ORDER BY e.created_at DESC,e.source,e.id DESC LIMIT $8 OFFSET $9`, append(a, f.Limit, f.Offset)...)
+	actors := ` LEFT JOIN admin_accounts aa ON e.actor_kind='admin' AND aa.id=e.actor_id
+LEFT JOIN users u ON e.actor_kind='user' AND u.id=e.actor_id ` + userIdentityJoins
+	rows, err := tx.Query(ctx, `SELECT to_jsonb(e)||jsonb_build_object('actor_email',CASE WHEN e.actor_kind='admin' THEN aa.email ELSE i.email END,
+'actor_name',COALESCE(uc.full_name,i.display_name))`+from+actors+where+` ORDER BY e.created_at DESC,e.source,e.id DESC LIMIT $8 OFFSET $9`, append(a, f.Limit, f.Offset)...)
 	if err != nil {
 		return p, err
 	}

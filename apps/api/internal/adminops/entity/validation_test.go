@@ -1,10 +1,13 @@
 package entity
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestFilterAndDecisionValidation(t *testing.T) {
 	for _, tc := range []struct{ kind, query string }{
-		{"users", "q=anything"}, {"companies", "status=active"}, {"tasks", "status=open"},
+		{"users", "q=%00"}, {"companies", "status=active"}, {"tasks", "status=open"},
 		{"offers", "candidate_id=bad"}, {"audit", "source=secret"}, {"audit", "from=2026-10-10T00:00:00Z&to=2026-10-09T00:00:00Z"},
 		{"companies", "limit=1&limit=2"}, {"files", "status=ready"}, {"needs", "grade_id=-1"}, {"companies", "q=%00"},
 	} {
@@ -42,6 +45,15 @@ func TestFilterAndDecisionValidation(t *testing.T) {
 	for _, query := range []string{"access_status=deleted", "access_status=blocked&access_status=active", "access_status="} {
 		if _, err := ParseFilter(query, "companies"); err == nil {
 			t.Fatal("Принят неверный access_status", query)
+		}
+	}
+	f, err = ParseFilter("q=%20%D0%98%D0%B2%D0%B0%D0%BD%20&role=candidate&status=blocked", "users")
+	if err != nil || f.Query != "Иван" || f.Role != "candidate" || f.Status != "blocked" {
+		t.Fatal(f, err)
+	}
+	for _, query := range []string{"q=", "q=a&q=b", "q=%00", "q=" + strings.Repeat("я", 201)} {
+		if _, err := ParseFilter(query, "users"); err == nil {
+			t.Fatal("Некорректный поиск", query)
 		}
 	}
 }

@@ -256,7 +256,7 @@ func TestBlockMigrationPreservesExistingUserBlocks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = provider.Down(ctx); err != nil {
+	if _, err = provider.DownTo(ctx, 20261009213515); err != nil {
 		t.Fatal(err)
 	}
 	var legacy string

@@ -79,8 +79,20 @@ func NewAuthEnvWithOptions(t *testing.T, opts httpapi.Options) *AuthEnv {
 }
 
 func (e *AuthEnv) Token(t *testing.T, sub string) string {
+	return e.TokenClaims(t, sub, nil)
+}
+
+// TokenClaims меняет только claims синтетического JWT, подпись и проверка остаются настоящими.
+func (e *AuthEnv) TokenClaims(t *testing.T, sub string, overrides map[string]any) string {
 	t.Helper()
-	payload, _ := json.Marshal(map[string]any{"iss": Issuer, "aud": "fsp-api", "sub": sub, "exp": time.Now().Add(time.Hour).Unix(), "email": sub + "@example.test", "email_verified": true})
+	claims := map[string]any{"iss": Issuer, "aud": "fsp-api", "sub": sub, "iat": time.Now().Unix(), "exp": time.Now().Add(time.Hour).Unix(), "email": sub + "@example.test", "email_verified": true}
+	for key, value := range overrides {
+		claims[key] = value
+	}
+	payload, err := json.Marshal(claims)
+	if err != nil {
+		t.Fatal(err)
+	}
 	signed, err := e.signer.Sign(payload)
 	if err != nil {
 		t.Fatal(err)
