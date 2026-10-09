@@ -39,16 +39,16 @@ export const CompanySwitcher = ({
         aria-label={`Компания: ${company?.name ?? 'выбрать компанию'}`}
         variant="outline"
         disabled={pending}
-        className="min-w-0 gap-2.5 border-border pr-3 pl-1.5 max-md:flex-1"
+        className="min-w-0 gap-2.5 border-border pr-3 pl-1.5 max-sm:pr-2"
       >
-        <span className="hidden size-7 shrink-0 items-center justify-center rounded-md bg-primary font-mono text-[11px] text-primary-foreground sm:flex">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary font-mono text-[11px] text-primary-foreground">
           {company?.name
             .split(/\s+/)
             .slice(0, 2)
             .map((p) => p[0])
             .join('') || '+'}
         </span>
-        <span className="max-w-44 truncate md:max-xl:hidden">
+        <span className="max-w-44 truncate max-sm:hidden md:max-xl:hidden">
           {company?.name ?? 'Выбрать компанию'}
         </span>
         <ChevronDownIcon className="size-3" />

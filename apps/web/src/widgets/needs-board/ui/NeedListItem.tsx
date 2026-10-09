@@ -43,14 +43,13 @@ export const NeedListItem = ({
         selected && 'bg-accent hover:bg-accent',
       )}
     >
-      <span className="text-base font-semibold leading-snug">{need.title}</span>
-      <span className="flex w-full flex-wrap items-center gap-2">
+      <span className="flex w-full min-w-0 items-center gap-2.5">
         <SpecializationBadge
           specialization={spec}
           grade={grade}
           active={need.status === 'active'}
         />
-        <span className="w-full text-sm font-normal text-muted-foreground">
+        <span className="min-w-0 flex-1 truncate text-[0.8125rem] text-muted-foreground">
           {[formats, need.city].filter(Boolean).join(' · ')}
         </span>
         <span
@@ -58,12 +57,13 @@ export const NeedListItem = ({
             'shrink-0',
             need.salaryFromRub === null && need.salaryToRub === null
               ? 'text-xs text-caption'
-              : 'text-sm font-medium tabular-nums',
+              : 'font-mono text-sm font-medium tabular-nums',
           )}
         >
           {formatSalaryRange(need.salaryFromRub, need.salaryToRub, true)}
         </span>
       </span>
+      <span className="text-base leading-snug font-semibold">{need.title}</span>
       {need.status === 'draft' && (
         <span className="text-xs text-warning">
           {getMissingNeedFields(need).length

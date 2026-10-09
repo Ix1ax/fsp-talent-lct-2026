@@ -43,7 +43,7 @@ export const EmployerShell = ({
   onCreateCompany,
   children,
 }: EmployerShellProps) => (
-  <div className="flex min-h-dvh w-full min-w-0 flex-col self-stretch text-left pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-0">
+  <div className="flex min-h-dvh w-full min-w-0 flex-col self-stretch text-left pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
     <HeaderBar
       navLabel="Разделы работодателя"
       brand={

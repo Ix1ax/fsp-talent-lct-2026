@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 
+import { HeaderMobileSearch } from './HeaderMobileSearch';
+
 /** Пункт навигации шапки: активный — подчёркивание 2px цветом бренда. */
 export const headerNavItemClassName = cn(
   'inline-flex min-h-11 items-center border-y-2 border-transparent px-3 text-[0.9375rem] font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none',
@@ -54,11 +56,13 @@ export const HeaderBar = ({
       )}
       <div className="flex-1" />
       {search && <div className="hidden w-64 md:block lg:w-72">{search}</div>}
-      {actions && (
-        <div className="flex shrink-0 items-center gap-2">{actions}</div>
+      {(actions || search) && (
+        <div className="flex shrink-0 items-center gap-2">
+          {search && <HeaderMobileSearch>{search}</HeaderMobileSearch>}
+          {actions}
+        </div>
       )}
     </div>
-    {search && <div className="container-page pb-3 md:hidden">{search}</div>}
     {nav && mobileNav && (
       <nav
         aria-label={`${navLabel} (мобильная)`}

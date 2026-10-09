@@ -14,6 +14,7 @@ export * from './Dialog';
 export * from './DropdownMenu';
 export { FieldMessage } from './FieldMessage';
 export * from './HeaderBar';
+export * from './HeaderMobileSearch';
 export * from './HeaderNavLink';
 export * from './Input';
 export * from './Label';

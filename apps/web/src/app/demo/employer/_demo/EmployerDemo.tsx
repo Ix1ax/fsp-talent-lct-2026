@@ -27,9 +27,8 @@ export const EmployerDemo = ({ scenario }: EmployerDemoProps) => {
       gateway={gateway}
       banner={
         <div className="border-b border-border bg-accent">
-          <p className="container-page py-2 text-xs text-muted-foreground">
-            Демо кабинета работодателя · данные вымышленные · изменения
-            сбрасываются при перезагрузке
+          <p className="container-page truncate py-1.5 text-[0.6875rem] text-muted-foreground sm:py-2 sm:text-xs">
+            Демо · данные вымышленные · изменения сбрасываются при перезагрузке
           </p>
         </div>
       }
