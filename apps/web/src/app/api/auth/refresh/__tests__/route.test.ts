@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from '@/shared/api/errors';
 import {
@@ -11,6 +11,7 @@ import {
 
 import { GET, POST } from '../route';
 
+vi.mock('server-only', () => ({}));
 vi.mock('@/shared/auth/server', () => ({
   clearAuthTokens: vi.fn(),
   getRefreshToken: vi.fn(),
@@ -18,9 +19,17 @@ vi.mock('@/shared/auth/server', () => ({
   setAuthTokens: vi.fn(),
 }));
 
+const request = () =>
+  new Request('https://app.test/api/auth/refresh', {
+    method: 'POST',
+    headers: { Origin: 'https://app.test' },
+  });
+
 describe('refresh route', () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.stubEnv('APP_ORIGIN', 'https://app.test');
     vi.mocked(getRefreshToken).mockResolvedValue('refresh');
   });
 
@@ -28,14 +37,14 @@ describe('refresh route', () => {
     vi.mocked(refreshAuthTokens).mockRejectedValue(
       new ApiError(503, 'Недоступен', 'auth_unavailable'),
     );
-    expect((await POST()).status).toBe(503);
+    expect((await POST(request())).status).toBe(503);
     expect(clearAuthTokens).not.toHaveBeenCalled();
     expect(setAuthTokens).not.toHaveBeenCalled();
   });
 
   it('clears cookies when the refresh token is invalid', async () => {
     vi.mocked(refreshAuthTokens).mockResolvedValue(null);
-    expect((await POST()).status).toBe(401);
+    expect((await POST(request())).status).toBe(401);
     expect(clearAuthTokens).toHaveBeenCalledOnce();
   });
 
@@ -54,6 +63,39 @@ describe('refresh route', () => {
       accessToken: 'new',
       refreshToken: 'refresh',
       expiresIn: 300,
+    });
+  });
+
+  it('rejects a cross-origin POST before reading or rotating tokens', async () => {
+    const response = await POST(
+      new Request('https://app.test/api/auth/refresh', {
+        method: 'POST',
+        headers: { Origin: 'https://evil.test' },
+      }),
+    );
+    expect(response.status).toBe(403);
+    expect(getRefreshToken).not.toHaveBeenCalled();
+    expect(setAuthTokens).not.toHaveBeenCalled();
+    expect(clearAuthTokens).not.toHaveBeenCalled();
+  });
+
+  it('uses the public origin for proxy redirects and rotates the refresh token', async () => {
+    vi.mocked(refreshAuthTokens).mockResolvedValue({
+      accessToken: 'new',
+      refreshToken: 'rotated',
+    });
+    const response = await GET(
+      new NextRequest(
+        'http://web:3000/api/auth/refresh?next=/candidate/profile',
+      ),
+    );
+    expect(response.headers.get('location')).toBe(
+      'https://app.test/candidate/profile',
+    );
+    expect(setAuthTokens).toHaveBeenCalledWith({
+      accessToken: 'new',
+      refreshToken: 'rotated',
+      expiresIn: undefined,
     });
   });
 
