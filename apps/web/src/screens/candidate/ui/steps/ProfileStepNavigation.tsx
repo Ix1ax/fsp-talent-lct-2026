@@ -2,10 +2,15 @@ import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import { CheckIcon } from 'lucide-react';
 
-import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
+import {
+  DYNAMIC_ROUTES,
+  MOTION_LAYOUT_IDS,
+  STATIC_ROUTES,
+} from '@/shared/contants';
 import { useMotionSettings } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
 import {
+  AnimatedIndicator,
   Select,
   SelectContent,
   SelectItem,
@@ -83,11 +88,17 @@ export const ProfileStepNavigation = ({
               if (busy) event.preventDefault();
             }}
             className={cn(
-              'flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md px-3 py-3 text-sm whitespace-normal transition-colors hover:bg-accent/70 focus-visible:outline-2 focus-visible:outline-ring',
-              item.id === step && 'bg-accent text-brand-text',
+              'relative isolate flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md px-3 py-3 text-sm whitespace-normal transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+              item.id === step ? 'text-brand-text' : 'hover:bg-accent/70',
               busy && 'cursor-not-allowed opacity-60',
             )}
           >
+            {item.id === step && (
+              <AnimatedIndicator
+                layoutId={MOTION_LAYOUT_IDS.CANDIDATE_PROFILE_STEP}
+                className="absolute inset-0 -z-10 rounded-md bg-accent"
+              />
+            )}
             <span>
               {position + 1}. {item.title}
             </span>
