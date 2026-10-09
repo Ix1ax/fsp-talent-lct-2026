@@ -16,7 +16,6 @@ import {
   Pagination,
   SkillPicker,
   Status,
-  useAdminOptions,
   useAdminQuery,
 } from '@/features/admin';
 
@@ -33,7 +32,6 @@ export const QuestionsPage = () => {
   });
 
   const [offset, setOffset] = useState(0);
-  const options = useAdminOptions();
   const list = useAdminQuery(
     `/assessments/questions?${queryString({ ...filters, limit: 20, offset })}`,
     adminSchemas.questions,
@@ -72,7 +70,6 @@ export const QuestionsPage = () => {
                 label="Навык"
                 value={filters.skill_id}
                 onChange={(v) => filter('skill_id', v)}
-                items={options.data.skills ?? []}
               />
               <AdminSelect
                 showLabel
@@ -150,7 +147,6 @@ export const QuestionsPage = () => {
             </p>
           </div>
         </details>
-        <ErrorNotice error={options.error} onRetry={options.reload} />
         <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем задания…' : ''}

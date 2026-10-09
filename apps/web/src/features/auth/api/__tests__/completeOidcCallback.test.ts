@@ -58,6 +58,21 @@ describe('completeOidcCallback', () => {
     expect(mocks.clearOidcUser).toHaveBeenCalledOnce();
   });
 
+  it('preserves target next route from user state', async () => {
+    mocks.signinCallback.mockResolvedValue({
+      access_token: 'access',
+      refresh_token: 'refresh',
+      expires_in: 300,
+      state: { next: '/candidate/profile' },
+    });
+    const url = `https://app.test/auth/callback?state=${++attempt}`;
+    const res = await completeOidcCallback(url);
+    expect(res).toMatchObject({
+      status: 'authenticated',
+      next: '/candidate/profile',
+    });
+  });
+
   it('shows role selection for an unregistered user', async () => {
     mocks.getMeClient.mockRejectedValue(
       new ApiError(404, 'not registered', 'not_registered'),

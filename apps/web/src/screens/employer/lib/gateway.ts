@@ -1,5 +1,5 @@
 import { ensureClientAccessToken } from '@/shared/api/client';
-import { getClientCatalogs, getClientSkills } from '@/entities/catalog';
+import { getClientCatalogs, searchCatalogSkills } from '@/entities/catalog';
 import { createCompany, getCompanies, updateCompany } from '@/entities/company';
 import {
   archiveNeed,
@@ -12,7 +12,8 @@ import {
 export const employerGateway = {
   authorize: ensureClientAccessToken,
   catalogs: getClientCatalogs,
-  skills: getClientSkills,
+  skills: async (q: string, signal?: AbortSignal) =>
+    (await searchCatalogSkills(q, 50, 0, signal)).items,
   companies: getCompanies,
   createCompany,
   updateCompany,

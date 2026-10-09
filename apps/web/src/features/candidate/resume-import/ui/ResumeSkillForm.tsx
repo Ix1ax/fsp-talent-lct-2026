@@ -3,6 +3,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel, ResumeSkill } from '@/entities/candidate';
 
@@ -29,14 +31,21 @@ export const ResumeSkillForm = ({
     resolver: zodResolver(skillSchema),
     defaultValues: { name: skill.name, claimedLevel: 1 },
   });
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    initialDraft: true,
+  });
 
   return (
     <form
       noValidate
       className="flex flex-col gap-3 rounded-lg border border-border p-4"
-      onSubmit={form.handleSubmit((values) =>
-        onSave(values.name, values.claimedLevel),
-      )}
+      onSubmit={form.handleSubmit(async (values) => {
+        if (await onSave(values.name, values.claimedLevel)) {
+          form.reset(values);
+          unsaved.markSaved();
+        }
+      })}
     >
       <fieldset disabled={disabled} className="flex flex-col gap-3">
         <Label htmlFor={`${prefix}-name`}>Навык из резюме</Label>
@@ -77,7 +86,11 @@ export const ResumeSkillForm = ({
         )}
         <div className="flex flex-wrap gap-3">
           <Button type="submit">Сохранить навык</Button>
-          <Button type="button" variant="outline" onClick={onDismiss}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => unsaved.discard(onDismiss)}
+          >
             Убрать из черновика
           </Button>
         </div>

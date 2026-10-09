@@ -4,7 +4,10 @@ import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
-import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
+import {
+  CANDIDATE_DRAFT_ROUTES,
+  CANDIDATE_ELEMENT_IDS,
+} from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
 import {
@@ -55,7 +58,9 @@ export const CandidateAvatar = ({
   const [revision, setRevision] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const mutating = useRef(false);
-  useUnsavedChanges(!!selectedFile || !!editorFile);
+  useUnsavedChanges(!!selectedFile || !!editorFile, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+  });
 
   const disabled = formDisabled || checking || !!editorFile;
 

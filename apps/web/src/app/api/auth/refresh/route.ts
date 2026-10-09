@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ApiError } from '@/shared/api/errors';
 import {
+  getAuthOrigin,
+  validateAuthMutation,
+} from '@/shared/auth/request.server';
+import {
   clearAuthTokens,
   getRefreshToken,
   refreshAuthTokens,
@@ -36,9 +40,12 @@ const doRefresh = async (): Promise<{
   };
 };
 
-/** Client refresh: returns new access token as JSON. */
-export const POST = async (): Promise<Response> => {
+export const POST = async (request: Request): Promise<Response> => {
+  const rejected = validateAuthMutation(request);
+  if (rejected) return rejected;
+
   let tokens;
+
   try {
     tokens = await doRefresh();
   } catch (error) {
@@ -58,19 +65,23 @@ export const POST = async (): Promise<Response> => {
   });
 };
 
-/**
- * Server-side recovery for protected layouts: refresh cookies, then redirect.
- * Usage: redirect(`/api/auth/refresh?next=${encodeURIComponent(pathname)}`)
- */
 export const GET = async (request: NextRequest): Promise<Response> => {
+  const origin = getAuthOrigin(request);
+  if (!origin) return refreshFailure(new Error('Invalid APP_ORIGIN'));
+
   const next = sanitizeRedirectPath(request.nextUrl.searchParams.get('next'));
   let tokens;
+
   try {
     tokens = await doRefresh();
   } catch (error) {
     return refreshFailure(error);
   }
-  const destination = new URL(tokens ? next : '/login', request.url);
+  const fallback =
+    next && next !== '/' && next !== '/login'
+      ? `/login?next=${encodeURIComponent(next)}`
+      : '/login';
+  const destination = new URL(tokens ? next : fallback, origin);
 
   return NextResponse.redirect(destination);
 };

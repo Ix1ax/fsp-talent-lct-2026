@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { useUnsavedChanges } from '@/shared/hooks';
 import {
   AdminApiError,
   deleteAdminPreview,
@@ -120,14 +121,7 @@ export const useServerPreview = (templateId: string) => {
     data?.questions.filter(
       (q) => drafts[q.id] && !equalPreviewAnswers(q.answer, drafts[q.id]),
     ) ?? [];
-  useEffect(() => {
-    if (!dirty.length) return;
-    const warn = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-    };
-    window.addEventListener('beforeunload', warn);
-    return () => window.removeEventListener('beforeunload', warn);
-  }, [dirty.length]);
+  useUnsavedChanges(dirty.length > 0);
   const start = () =>
     run(async () => {
       if (!session) return;

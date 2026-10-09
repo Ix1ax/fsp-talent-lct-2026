@@ -2,8 +2,11 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
-import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
-import { useUnsavedChanges } from '@/shared/hooks';
+import {
+  CANDIDATE_DRAFT_ROUTES,
+  CANDIDATE_ELEMENT_IDS,
+} from '@/shared/contants';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel } from '@/entities/candidate';
 
@@ -42,7 +45,9 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
     items,
     selectSkill,
   } = autocomplete;
-  useUnsavedChanges(form.formState.isDirty);
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+  });
 
   return (
     <form
@@ -50,6 +55,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
       onSubmit={form.handleSubmit(async (values) => {
         if (disabled) return;
         if (await onAdd(values.name, values.claimedLevel, selectedId)) {
+          unsaved.markSaved();
           form.reset();
           autocomplete.reset();
         }

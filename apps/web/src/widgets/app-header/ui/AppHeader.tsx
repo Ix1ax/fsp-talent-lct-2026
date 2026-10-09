@@ -34,6 +34,20 @@ export const AppHeader = async () => {
           <ThemeToggle />
           {session.kind === 'user' ? (
             <UserMenu user={session.user} />
+          ) : session.kind === 'unavailable' ? (
+            <div className="flex items-center gap-2">
+              {session.displayName && (
+                <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
+                  {session.displayName}
+                </span>
+              )}
+              <span
+                className="inline-flex items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-400"
+                role="status"
+              >
+                Сервис недоступен
+              </span>
+            </div>
           ) : (
             <Button asChild className="min-h-11 px-3 sm:px-4">
               <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>

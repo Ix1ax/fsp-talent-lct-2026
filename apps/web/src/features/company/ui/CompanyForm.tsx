@@ -2,10 +2,9 @@
 
 import { useForm, useWatch } from 'react-hook-form';
 
-import { useUnsavedGuard } from '@/shared/hooks';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
-  ConfirmDiscardDialog,
   Input,
   Sheet,
   SheetContent,
@@ -45,26 +44,21 @@ export const CompanyForm = ({
     },
   });
   const value = useWatch({ control: form.control }) as CompanyInput;
-  const dirty = form.formState.isDirty;
+
   const readonly = !create && company?.memberRole !== 'owner';
   const change = (patch: Partial<CompanyInput>) => {
     for (const key of Object.keys(patch) as (keyof CompanyInput)[])
       form.setValue(key, patch[key], { shouldDirty: true });
   };
-  const unsaved = useUnsavedGuard(dirty, pending);
+  const unsaved = useFormUnsavedChanges(form);
   const close = (v: boolean) => {
     if (pending) return;
-    if (!v) unsaved.guard(() => onOpenChange(false));
+    if (!v) unsaved.discard(() => onOpenChange(false));
     else onOpenChange(v);
   };
 
   return (
     <>
-      <ConfirmDiscardDialog
-        open={unsaved.open}
-        onCancel={unsaved.cancel}
-        onProceed={unsaved.proceed}
-      />
       <Sheet open={open} onOpenChange={close}>
         <SheetContent className="w-full overflow-y-auto sm:max-w-115">
           <SheetHeader>
@@ -91,6 +85,7 @@ export const CompanyForm = ({
               )
                 .then(() => {
                   form.reset(value);
+                  unsaved.markSaved();
                   onOpenChange(false);
                 })
                 .catch(() => {});

@@ -14,7 +14,6 @@ import {
   Pagination,
   SkillPicker,
   Status,
-  useAdminOptions,
   useAdminQuery,
 } from '@/features/admin';
 
@@ -22,7 +21,6 @@ import { AdminPageHeader } from './AdminPageHeader';
 
 export const ModerationPage = () => {
   const params = useSearchParams();
-  const options = useAdminOptions();
   const [offset, setOffset] = useState(0);
   const [selection, setSelection] = useState<{
     item: CatalogItem;
@@ -99,7 +97,6 @@ export const ModerationPage = () => {
   const refresh = () => {
     list.reload();
     detail.reload();
-    options.reload();
   };
   return (
     <div className="grid min-w-0 gap-6">
@@ -138,12 +135,8 @@ export const ModerationPage = () => {
           label="Выберите навык"
           value={id}
           onChange={setId}
-          items={(options.data.skills ?? []).filter(
-            (s) => s.moderation_status === 'approved',
-          )}
-          disabled={options.loading}
+          approvedOnly
         />
-        <ErrorNotice error={options.error} onRetry={options.reload} />
         <ErrorNotice error={detail.error} onRetry={detail.reload} />
         {detail.loading && <p role="status">Открываем навык…</p>}
         {card && row(card)}

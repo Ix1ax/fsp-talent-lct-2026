@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import type { z } from 'zod';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   Dialog,
@@ -30,6 +31,15 @@ export const AccountEditor = ({ onClose, onSaved }: AccountEditorProps) => {
     resolver: zodResolver(accountFormSchema),
     defaultValues: { email: '', password: '' },
   });
+  const unsaved = useFormUnsavedChanges(form, {
+    normalize: (values) => ({
+      email: values.email.trim().toLowerCase(),
+      password: values.password,
+    }),
+  });
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const password = useWatch({ control: form.control, name: 'password' });
   const passwordIssue = getAdminPasswordIssue(password);
   const submit = form.handleSubmit(async ({ email, password }) => {
@@ -43,6 +53,8 @@ export const AccountEditor = ({ onClose, onSaved }: AccountEditorProps) => {
           body: { email: email.trim().toLowerCase(), password },
         },
       );
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success('Администратор создан');
       onSaved();
       onClose();
@@ -52,7 +64,7 @@ export const AccountEditor = ({ onClose, onSaved }: AccountEditorProps) => {
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.busy) onClose();
+        if (!open) close();
       }}
     >
       <DialogContent

@@ -3,7 +3,7 @@ import { ArrowLeftIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { Button, Skeleton } from '@/shared/ui';
 import { AsyncState } from '@/shared/ui/AsyncState';
-import type { Catalogs, Skill } from '@/entities/catalog';
+import type { Catalogs } from '@/entities/catalog';
 import { emptyNeed, NeedActions, NeedEditor } from '@/features/employer-need';
 import { MatchTable } from '@/widgets/need-matches';
 
@@ -12,7 +12,7 @@ import type { EmployerBoard } from '../model/useEmployerBoard';
 interface EmployerNeedPaneProps {
   board: EmployerBoard;
   catalogs: Catalogs;
-  skills: Skill[];
+  loadSkills: EmployerGateway['skills'];
   canWrite: boolean;
   composer: boolean;
   detail: boolean;
@@ -32,7 +32,7 @@ interface EmployerNeedPaneProps {
 export const EmployerNeedPane = ({
   board,
   catalogs,
-  skills,
+  loadSkills,
   canWrite,
   composer,
   detail,
@@ -70,8 +70,11 @@ export const EmployerNeedPane = ({
         key="new"
         initial={emptyNeed()}
         isNew
+        catalogsLoading={board.catalogsLoading}
+        catalogsError={board.catalogsError}
+        onRetryCatalogs={board.retryCatalogs}
         catalogs={catalogs}
-        skills={skills}
+        loadSkills={loadSkills}
         pending={board.pending}
         error={board.saveError}
         onSave={async (value) => {
@@ -102,8 +105,11 @@ export const EmployerNeedPane = ({
               onDuplicate={onDuplicate}
             />
           }
+          catalogsLoading={board.catalogsLoading}
+          catalogsError={board.catalogsError}
+          onRetryCatalogs={board.retryCatalogs}
           catalogs={catalogs}
-          skills={skills}
+          loadSkills={loadSkills}
           readonly={!canWrite || board.selected.status === 'archived'}
           pending={board.pending}
           error={board.saveError}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { Button } from '@/shared/ui';
 
@@ -11,6 +12,7 @@ interface LoginButtonProps {
 }
 
 export const LoginButton = ({ className }: LoginButtonProps) => {
+  const searchParams = useSearchParams();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,7 +21,7 @@ export const LoginButton = ({ className }: LoginButtonProps) => {
     setError(null);
 
     try {
-      await startOidcLogin();
+      await startOidcLogin(searchParams.get('next'));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка входа');
       setPending(false);

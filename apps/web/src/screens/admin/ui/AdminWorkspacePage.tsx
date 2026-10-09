@@ -1,9 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 
+import { useGuardedRouter } from '@/shared/hooks';
 import { Button, Card, Skeleton } from '@/shared/ui';
 import { adminSchemas } from '@/entities/admin';
 import {
@@ -27,7 +27,7 @@ export const AdminWorkspacePage = ({
   id,
   action,
 }: AdminWorkspacePageProps) => {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const base = `/admin/${section}`;
   const creating = id === 'new';
   const template = useAdminQuery(

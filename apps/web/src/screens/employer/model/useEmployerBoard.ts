@@ -1,70 +1,35 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 
-import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
-import type { Catalogs, Skill } from '@/entities/catalog';
-import type { Company } from '@/entities/company';
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { useCompanyActions } from '@/features/company';
 import { useNeedActions } from '@/features/employer-need';
 
 import { type EmployerGateway, employerGateway } from '../lib/gateway';
+import { getEmployerLocationState } from './getEmployerLocationState';
+import { useEmployerResources } from './useEmployerResources';
 import { useNeedsQuery } from './useNeedsQuery';
-interface Resources {
-  companies: Company[];
-  catalogs: Catalogs;
-  skills: Skill[];
-}
 export const useEmployerBoard = (
   gateway: EmployerGateway = employerGateway,
 ) => {
-  const [resources, setResources] = useState<Resources | null>(null);
-  const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
-  const [companyId, setCompanyId] = useState('');
-  const [status, setStatus] = useState<NeedStatus>('active');
-  const [offset, setOffset] = useState(0);
-  const [selectedId, setSelectedId] = useState('');
+  const resources = useEmployerResources(gateway);
+  const [initialLocation] = useState(() =>
+    getEmployerLocationState(
+      typeof window === 'undefined' ? '' : window.location.search,
+    ),
+  );
+  const [requestedCompanyId, setCompanyId] = useState(
+    initialLocation.companyId,
+  );
+  const companyId =
+    resources.companies?.find((company) => company.id === requestedCompanyId)
+      ?.id ??
+    resources.companies?.[0]?.id ??
+    '';
+  const [status, setStatus] = useState<NeedStatus>(initialLocation.status);
+  const [offset, setOffset] = useState(initialLocation.offset);
+  const [selectedId, setSelectedId] = useState(initialLocation.selectedId);
   const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    (async () => {
-      await gateway.authorize();
-      const [catalogs, skills] = await Promise.all([
-        gateway.catalogs(controller.signal),
-        gateway.skills('', controller.signal),
-      ]);
-      const companies: Company[] = [];
-      for (let skip = 0; skip <= 10000; skip += 100) {
-        const page = await gateway.companies(skip, controller.signal);
-        companies.push(...page.items);
-        if (page.items.length < 100) break;
-      }
-      if (controller.signal.aborted) return;
-      const query = new URLSearchParams(window.location.search);
-      setResources({ companies, catalogs, skills });
-      setCompanyId(
-        companies.find((c) => c.id === query.get('company'))?.id ??
-          companies[0]?.id ??
-          '',
-      );
-      const pageOffset = Number(query.get('offset') ?? 0);
-      setOffset(
-        Number.isInteger(pageOffset) && pageOffset >= 0 && pageOffset <= 10000
-          ? pageOffset
-          : 0,
-      );
-      const tab = query.get('tab');
-      setStatus(tab === 'draft' || tab === 'archived' ? tab : 'active');
-      const needId = query.get('need') ?? '';
-      setSelectedId(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(needId) ? needId : '');
-    })().catch((e) => {
-      if (!controller.signal.aborted) {
-        setError(getApiErrorMessage(e));
-      }
-    });
-    return () => controller.abort();
-  }, [gateway, retry]);
   const query = useNeedsQuery({
     api: gateway,
     companyId,
@@ -72,7 +37,7 @@ export const useEmployerBoard = (
     offset,
     selectedId,
     revision,
-    enabled: !!resources,
+    enabled: !!resources.companies,
   });
   const needActions = useNeedActions({
     api: gateway,
@@ -92,17 +57,14 @@ export const useEmployerBoard = (
   });
   const companyActions = useCompanyActions({
     api: gateway,
-    company: resources?.companies.find((c) => c.id === companyId) ?? null,
+    company: resources.companies?.find((c) => c.id === companyId) ?? null,
     onSaved: (company, created) => {
-      setResources((r) =>
-        r
-          ? {
-              ...r,
-              companies: created
-                ? [...r.companies, company]
-                : r.companies.map((c) => (c.id === company.id ? company : c)),
-            }
-          : r,
+      resources.updateCompanies((companies) =>
+        created
+          ? [...companies, company]
+          : companies.map((current) =>
+              current.id === company.id ? company : current,
+            ),
       );
       if (created) {
         setCompanyId(company.id);
@@ -116,7 +78,8 @@ export const useEmployerBoard = (
     companyActions.clearError();
   };
   useEffect(() => {
-    if (!resources) return;
+    if (!resources.companies || (resources.companies.length > 0 && !companyId))
+      return;
     const query = new URLSearchParams(window.location.search);
     if (companyId) query.set('company', companyId);
     else query.delete('company');
@@ -130,7 +93,7 @@ export const useEmployerBoard = (
       '',
       `${window.location.pathname}?${query}`,
     );
-  }, [resources, companyId, status, selectedId, offset]);
+  }, [resources.companies, companyId, status, selectedId, offset]);
   const chooseCompany = (id: string) => {
     setCompanyId(id);
     setSelectedId('');
@@ -149,15 +112,14 @@ export const useEmployerBoard = (
   };
   const reload = useCallback(() => setRevision((v) => v + 1), []);
   return {
-    resources,
-    error,
-    retry: () => {
-      setResources(null);
-      setError('');
-      setRetry((v) => v + 1);
-      setRevision((v) => v + 1);
-    },
-    company: resources?.companies.find((c) => c.id === companyId) ?? null,
+    resources: resources.companies ? { companies: resources.companies } : null,
+    catalogs: resources.catalogs,
+    catalogsLoading: resources.catalogsLoading,
+    catalogsError: resources.catalogsError,
+    retryCatalogs: resources.retryCatalogs,
+    error: resources.error,
+    retry: resources.retry,
+    company: resources.companies?.find((c) => c.id === companyId) ?? null,
     companyId,
     status,
     offset,

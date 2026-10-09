@@ -1,23 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { getUnsavedChangesGuard } from './unsavedChangesGuard';
+import { useUnsavedChanges } from './useUnsavedChanges';
 
-export const useUnsavedGuard = (dirty: boolean, pending = false) => {
-  const [next, setNext] = useState<(() => void) | null>(null);
+export const useUnsavedGuard = (
+  dirty: boolean,
+  pending = false,
+  protectPage = true,
+) => {
+  const { markSaved } = useUnsavedChanges(dirty && protectPage);
 
   const guard = (action: () => void) => {
-    if (pending) return;
-    if (dirty) setNext(() => action);
-    else action();
+    if (!pending)
+      getUnsavedChangesGuard().discard(dirty, () => {
+        markSaved();
+        action();
+      });
   };
 
-  const cancel = () => setNext(null);
-
-  const proceed = () => {
-    const action = next;
-    setNext(null);
-    action?.();
-  };
-
-  return { guard, cancel, proceed, open: next !== null };
+  return { guard };
 };

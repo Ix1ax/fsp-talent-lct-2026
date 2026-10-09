@@ -4,6 +4,7 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import { PageTransition } from '@/shared/ui';
 import { AdminProvider, useAdminSession } from '@/features/admin';
 
@@ -28,6 +29,7 @@ const Content = ({ children }: AdminShellProps) => {
   }, [pathname]);
 
   const exit = async () => {
+    if (exiting || !confirmUnsavedChanges()) return;
     setExiting(true);
     try {
       await logout();

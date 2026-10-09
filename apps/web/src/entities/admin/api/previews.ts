@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
-import { type PreviewAnswer, previewSchema } from '../model/preview';
-import { adminRequest } from './index';
+import type { PreviewAnswer } from '../model';
+import { adminRequest } from './adminRequest';
+import { previewSchema } from './previewSchemas';
 
 const path = (id: string) => `/assessments/previews/${encodeURIComponent(id)}`;
 export const startAdminPreview = (

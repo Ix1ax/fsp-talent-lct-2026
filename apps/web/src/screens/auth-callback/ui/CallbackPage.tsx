@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { STATIC_ROUTES } from '@/shared/contants';
+import { sanitizeRedirectPath } from '@/shared/utils';
 import { getRoleHomeRoute } from '@/entities/session';
 import {
   completeOidcCallback,
@@ -39,7 +40,25 @@ export const CallbackPage = () => {
           return;
         }
 
-        router.replace(getRoleHomeRoute(result.user.role));
+        const roleHome = getRoleHomeRoute(result.user.role);
+        let destination = roleHome;
+
+        if (result.next) {
+          const safeNext = sanitizeRedirectPath(result.next);
+          const isAllowedForRole =
+            (result.user.role === 'candidate' &&
+              (safeNext.startsWith('/candidate') || safeNext === '/cabinet')) ||
+            (result.user.role === 'employer' &&
+              (safeNext.startsWith('/employer') || safeNext === '/cabinet')) ||
+            (result.user.role === 'admin' &&
+              (safeNext.startsWith('/admin') || safeNext === '/cabinet'));
+
+          if (isAllowedForRole) {
+            destination = safeNext;
+          }
+        }
+
+        router.replace(destination);
         return;
       }
 
