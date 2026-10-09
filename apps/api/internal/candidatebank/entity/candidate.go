@@ -8,6 +8,7 @@ var ErrNotFound = errors.New("Кандидат или компания недо�
 // Card не содержит локальный ID пользователя, контакты и адреса файлов S3.
 // Свободный текст исключён: кандидат может случайно указать в нём телефон или почту.
 type Card struct {
+	Interaction
 	AchievementsCount int       `json:"achievements_count"`
 	FSPBonus          float64   `json:"fsp_bonus"`
 	Category          *Category `json:"category"`

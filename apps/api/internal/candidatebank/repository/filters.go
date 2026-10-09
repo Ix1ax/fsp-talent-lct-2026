@@ -7,6 +7,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// Срок и total вычисляются в одном снимке и относительно одного времени транзакции.
+func interactionConditions(companyParameter int) string {
+	return fmt.Sprintf(`
+ AND ($%d::boolean IS NULL OR (interaction.last_offered_at IS NOT NULL)=$%d)
+ AND ($%d::boolean IS NULL OR (interaction.last_viewed_at IS NOT NULL)=$%d)
+ AND (COALESCE(NULLIF($%d::text,''),'available')='all'
+ OR (COALESCE(NULLIF($%d::text,''),'available')='available' AND (%s IS NULL OR %s<=transaction_timestamp()))
+ OR ($%d='cooldown' AND %s>transaction_timestamp()))`,
+		companyParameter+1, companyParameter+1, companyParameter+2, companyParameter+2,
+		companyParameter+3, companyParameter+3, nextAvailable, nextAvailable, companyParameter+3, nextAvailable)
+}
+
 // Числовые фильтры сравнивают подтверждённую категорию, а при её отсутствии — выбор последней попытки.
 // Если специализация или грейд ещё не выбраны, они не считаются совпадением.
 func qualificationConditions(f entity.Filter, offset int) (string, []any) {

@@ -15,7 +15,7 @@ type Repository struct{ db *pgxpool.Pool }
 
 func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
-const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
+const candidateProfiles = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
  LEFT JOIN LATERAL (
  SELECT c.specialization_id,c.grade_id,a.score_percent,a.stack_skill_id,a.stack_name FROM candidate_categories c
  JOIN assessment_attempts a ON a.id=c.attempt_id AND a.candidate_id=c.candidate_id
@@ -25,10 +25,19 @@ const visible = ` FROM candidate_profiles p JOIN users u ON u.id=p.user_id
  SELECT choice.specialization_id,choice.grade_id,choice.stack_skill_id,(SELECT name FROM skills WHERE id=choice.stack_skill_id) AS stack_name FROM (
  SELECT o.specialization_id,o.grade_id,o.stack_skill_id,0 AS priority,o.updated_at AS chosen_at,o.candidate_id::text AS tie FROM candidate_onboarding o WHERE o.candidate_id=p.id
  UNION ALL SELECT a.specialization_id,a.grade_id,a.stack_skill_id,1,a.started_at,a.id::text FROM assessment_attempts a WHERE a.candidate_id=p.id
- ) choice ORDER BY choice.priority,choice.chosen_at DESC,choice.tie DESC LIMIT 1) declared ON true
- WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
+ ) choice ORDER BY choice.priority,choice.chosen_at DESC,choice.tie DESC LIMIT 1) declared ON true`
+
+const visibilityConditions = ` WHERE u.role='candidate' AND u.status='active' AND p.search_status IN ('open','passive')
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='processing' AND c.revoked_at IS NULL AND c.company_id IS NULL)
  AND EXISTS(SELECT 1 FROM candidate_consents c WHERE c.user_id=p.user_id AND c.kind='publication' AND c.revoked_at IS NULL AND c.company_id IS NULL)`
+
+const visible = candidateProfiles + visibilityConditions
+
+func companyVisible(companyParameter int) string {
+	return candidateProfiles + fmt.Sprintf(` LEFT JOIN company_candidate_interactions interaction
+ ON interaction.company_id=$%d::uuid AND interaction.candidate_id=p.id`, companyParameter) + visibilityConditions
+}
+
 const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_rub,p.search_status,
  ARRAY(SELECT work_format_id FROM candidate_work_formats WHERE candidate_id=p.id ORDER BY work_format_id) AS work_format_ids,
  CASE WHEN category.grade_id IS NOT NULL THEN jsonb_build_object('specialization_id',category.specialization_id,'grade_id',category.grade_id,'stack_skill_id',category.stack_skill_id,'stack_name',category.stack_name) END AS category,
@@ -39,7 +48,7 @@ const columns = `p.id::text,p.city,p.timezone,p.experience_months,p.salary_min_r
 
 func scan(row pgx.Row) (entity.Card, error) {
 	var c entity.Card
-	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category, &c.DeclaredCategory, &c.GradeStatus, &c.AchievementsCount, &c.FSPBonus)
+	err := row.Scan(&c.ID, &c.City, &c.Timezone, &c.ExperienceMonths, &c.SalaryMinRUB, &c.SearchStatus, &c.WorkFormatIDs, &c.Category, &c.DeclaredCategory, &c.GradeStatus, &c.AchievementsCount, &c.FSPBonus, &c.HasOffer, &c.Viewed, &c.LastViewedAt, &c.LastOfferedAt, &c.NextAvailableAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return c, entity.ErrNotFound
 	}
@@ -74,7 +83,6 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	if err = validateFilter(ctx, tx, filter); err != nil {
 		return page, err
 	}
-	conditions := visible + filterConditions
 	// При фильтре зарплаты неизвестные ожидания исключаются: соответствие бюджету не подтверждено.
 	formats := filter.WorkFormatIDs
 	if formats == nil {
@@ -82,17 +90,19 @@ func (r *Repository) List(ctx context.Context, userID, companyID string, filter 
 	}
 	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, formats}
 	extra, extraArgs := qualificationConditions(filter, len(args))
-	conditions += extra
 	args = append(args, extraArgs...)
+	companyParameter := len(args) + 1
+	args = append(args, companyID, filter.HasOffer, filter.Viewed, filter.InteractionStatus)
+	conditions := companyVisible(companyParameter) + filterConditions + extra + interactionConditions(companyParameter)
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
-	rows, err := tx.Query(ctx, `WITH ranked AS (SELECT `+columns+`,category.score_percent AS test_score`+conditions+`),
- positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY (grade_status='confirmed') DESC,test_score DESC NULLS LAST,id) AS base_position FROM ranked),
+	rows, err := tx.Query(ctx, `WITH ranked AS (SELECT `+columns+`,`+interactionColumns+`,p.created_at AS profile_created_at,`+lastInteraction+` AS last_interaction_at,category.score_percent AS test_score`+conditions+`),
+ positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY (grade_status='confirmed') DESC,test_score DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS base_position FROM ranked),
  slots AS (SELECT positioned.*,
  array_agg(base_position) OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
- row_number() OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY test_score+fsp_bonus DESC NULLS LAST,id) AS group_position FROM positioned)
- SELECT id,city,timezone,experience_months,salary_min_rub,search_status,work_format_ids,category,declared_category,grade_status,achievements_count,fsp_bonus
+ row_number() OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY test_score+fsp_bonus DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS group_position FROM positioned)
+ SELECT `+cardResultColumns+`
  FROM slots ORDER BY group_slots[group_position::int]`+fmt.Sprintf(` LIMIT $%d OFFSET $%d`, len(args)+1, len(args)+2), append(args, filter.Limit, filter.Offset)...)
 
 	if err != nil {
@@ -123,7 +133,7 @@ func (r *Repository) Get(ctx context.Context, userID, companyID, candidateID str
 	if err = authorize(ctx, tx, userID, companyID); err != nil {
 		return entity.Card{}, err
 	}
-	c, err := scan(tx.QueryRow(ctx, `SELECT `+columns+visible+` AND p.id=$1`, candidateID))
+	c, err := scan(tx.QueryRow(ctx, `SELECT `+columns+`,`+interactionColumns+companyVisible(2)+` AND p.id=$1`, candidateID, companyID))
 	if err != nil {
 		return c, err
 	}

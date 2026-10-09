@@ -10,6 +10,7 @@ type Store interface {
 	Recommend(context.Context, string, string, string, entity.Filter) (entity.RecommendationPage, error)
 	List(context.Context, string, string, entity.Filter) (entity.Page, error)
 	GetDetails(context.Context, string, string, string) (entity.Details, error)
+	View(context.Context, string, string, string) (entity.Interaction, error)
 }
 type Service struct{ store Store }
 
@@ -19,6 +20,10 @@ func (s *Service) List(ctx context.Context, user, company string, filter entity.
 }
 func (s *Service) Get(ctx context.Context, user, company, candidate string) (entity.Details, error) {
 	return s.store.GetDetails(ctx, user, company, candidate)
+}
+
+func (s *Service) View(ctx context.Context, user, company, candidate string) (entity.Interaction, error) {
+	return s.store.View(ctx, user, company, candidate)
 }
 
 func (s *Service) Recommend(ctx context.Context, user, company, need string, filter entity.Filter) (entity.RecommendationPage, error) {

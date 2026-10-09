@@ -2501,7 +2501,7 @@ paths:
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
-      description: "Активный employer с членством owner или recruiter. candidate_id — UUID candidate_profiles.id. Получатель должен быть активным кандидатом с search_status open или passive. need_id необязателен; привязать можно только активную потребность этой компании. Обе границы зарплаты обязательны, в рублях за месяц. Название компании берётся из БД, автор — из текущего пользователя. Условия сохраняются на момент отправки. Каждый успешный POST создаёт новое предложение; автоматический повтор отправки не предусмотрен. Контакты кандидата не возвращаются, письмо и чат не подключены."
+      description: "Активный employer с членством owner или recruiter. candidate_id — UUID candidate_profiles.id. Получатель должен быть активным кандидатом с search_status open или passive. need_id необязателен; привязать можно только активную потребность этой компании. Обе границы зарплаты обязательны, в рублях за месяц. Название компании берётся из БД, автор — из текущего пользователя. Условия сохраняются на момент отправки. Каждый успешный POST создаёт новое предложение; автоматический повтор отправки не предусмотрен. Контакты кандидата не возвращаются, письмо и чат не подключены. Успешная отправка атомарно записывает просмотр и историю отправки этой компании; кандидат исключается из её обычной выдачи на 30 дней. Отказ или принятие не сбрасывают срок."
       requestBody:
         required: true
         content:
@@ -2766,7 +2766,7 @@ paths:
       operationId: listCandidateBank
       summary: Банк кандидатов компании
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive и действующими согласиями processing и publication. Неподтверждённые профили доступны по умолчанию; category=null, grade_status=unconfirmed. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. Сначала подтверждённые категории, затем результат их теста по убыванию, затем UUID. Бонус ФСП переставляет кандидатов только внутри одной подтверждённой категории. Без потребности это каталог, а не рейтинг сходства. Профили, контакты и файлы не изменяются."
+      description: "Активные участники компании owner, recruiter, viewer с ролью employer. Только активные кандидаты с профилем open или passive и действующими согласиями processing и publication. Неподтверждённые профили доступны по умолчанию; category=null, grade_status=unconfirmed. Условия фильтров объединяются через И. Неизвестные, повторные и пустые параметры возвращают 400. По умолчанию просмотренные или приглашённые этой компанией кандидаты скрыты на 30 дней с последнего взаимодействия. interaction_status=all сохраняет доступ ко всей базе. Сначала подтверждённые категории, затем результат их теста по убыванию; при равенстве сначала новые, затем более давнее взаимодействие, более ранняя дата создания профиля, UUID. Бонус ФСП переставляет кандидатов только внутри одной подтверждённой категории. Без потребности это каталог, а не рейтинг сходства. Профили, контакты и файлы не изменяются."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2800,6 +2800,18 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: viewed
+          in: query
+          description: "История текущей компании: true — профиль уже открывали или отправляли оффер; false — ещё не взаимодействовали. Срок проверяется отдельно через interaction_status."
+          schema: {type: boolean}
+        - name: interaction_status
+          in: query
+          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации."
+          schema: {type: string, enum: [available, cooldown, all], default: available}
+        - name: has_offer
+          in: query
+          description: "true — этой компанией уже отправлено хотя бы одно приглашение кандидату; false — ещё не отправлялось. Учитываются все потребности и статусы предложений. Без параметра оба варианта."
+          schema: {type: boolean}
         - name: has_fsp_achievements
           in: query
           description: "true — есть достижения, false — нет; без параметра оба варианта."
@@ -2857,7 +2869,7 @@ paths:
       operationId: getCandidateBankCard
       summary: Подробная карточка доступного кандидата
       tags: [Банк кандидатов]
-      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Возвращает одобренные активные навыки, уровни самооценки и подтверждения, результат текущей подтверждённой категории, периоды работы и уровень образования. Контакты, локальный ID пользователя, аватар, названия организаций, должности и свободное описание не возвращаются: свободный текст может содержать контакты. Возвращает импортированные достижения ФСП без participant_id. Импортированные языки пока не включены."
+      description: "Активные участники компании owner, recruiter, viewer. candidate_id — UUID candidate_profiles.id. Скрытый, заблокированный или отсутствующий кандидат возвращает 404. Карточка доступна также в 30-дневном сроке; GET не записывает просмотр. При явном открытии профиля вызывайте POST /api/v1/companies/{company_id}/candidates/{candidate_id}/view. Возвращает одобренные активные навыки, уровни самооценки и подтверждения, результат текущей подтверждённой категории, периоды работы и уровень образования. Контакты, локальный ID пользователя, аватар, названия организаций, должности и свободное описание не возвращаются: свободный текст может содержать контакты. Возвращает импортированные достижения ФСП без participant_id. Импортированные языки пока не включены."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2868,6 +2880,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CandidateBankDetails'
+        '400':
+          $ref: '#/components/responses/CandidateBankBadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/CandidateBankForbidden'
+        '404':
+          $ref: '#/components/responses/CandidateBankNotFound'
+        '500':
+          $ref: '#/components/responses/CandidateBankInternal'
+        '503':
+          $ref: '#/components/responses/CandidateBankUnavailable'
+  /api/v1/companies/{company_id}/candidates/{candidate_id}/view:
+    parameters:
+      - name: company_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+      - name: candidate_id
+        in: path
+        required: true
+        schema: {type: string, format: uuid}
+    post:
+      operationId: viewCandidateProfile
+      summary: Зафиксировать открытие профиля кандидата
+      tags: [Банк кандидатов]
+      description: "Вызывать после явного открытия профиля пользователем. Тело запроса не требуется. Доступно активным owner, recruiter, viewer. Проверяются видимость кандидата и согласия processing/publication. Записывает просмотр от имени компании и исключает кандидата из её обычной выдачи на 30 дней. Повторный просмотр продлевает срок; история офферов сохраняется. Другая компания не затрагивается. Карточку можно открыть и в течение этого срока. Не вызывать для предзагрузки или фонового получения данных. Ответ не кешируется."
+      security:
+        - bearerAuth: []
+        - keycloakOAuth: [openid, email]
+      responses:
+        '200':
+          description: Просмотр сохранён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CandidateInteraction'
         '400':
           $ref: '#/components/responses/CandidateBankBadRequest'
         '401':
@@ -2894,7 +2943,7 @@ paths:
       operationId: recommendCandidatesForNeed
       summary: Подборка по степени соответствия потребности
       tags: [Банк кандидатов]
-      description: "Активная потребность этой компании. Все доступные публичные профили участвуют в ранжировании, включая неподтверждённые. Условия потребности оценивают сходство и не исключают кандидатов: другая категория, отсутствие обязательного навыка, превышение бюджета и несовпадение формата снижают match_score и объясняются. Исключают только явные query-фильтры и правила доступа/приватности. Порядок: сначала подтверждённые категории, затем внутри каждой группы match_score по убыванию, результат теста по убыванию с null в конце, UUID. Пагинация после сортировки. Не отправляйте критерии потребности повторно как жёсткие query-фильтры, если нужны близкие варианты."
+      description: "Активная потребность этой компании. Все доступные публичные профили участвуют в ранжировании, включая неподтверждённые. Условия потребности оценивают сходство и не исключают кандидатов: другая категория, отсутствие обязательного навыка, превышение бюджета и несовпадение формата снижают match_score и объясняются. По умолчанию исключаются также кандидаты, просмотренные или приглашённые этой компанией менее 30 дней назад; interaction_status=all возвращает их в выдачу. Порядок: match_score по убыванию, затем подтверждение категории и результат теста. При равном сходстве бонус ФСП переставляет кандидатов только внутри одной подтверждённой категории. При равной силе профиля сначала новые, затем более давнее взаимодействие, более ранняя дата создания профиля, UUID. Пагинация после сортировки. Не отправляйте критерии потребности повторно как жёсткие query-фильтры, если нужны близкие варианты."
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
@@ -2928,6 +2977,18 @@ paths:
           in: query
           description: "Максимальные зарплатные ожидания в рублях за месяц включительно. При явном фильтре профили без зарплатных ожиданий исключаются."
           schema: {type: integer, format: int64, minimum: 0, maximum: 1000000000}
+        - name: viewed
+          in: query
+          description: "История текущей компании: true — профиль уже открывали или отправляли оффер; false — ещё не взаимодействовали. Срок проверяется отдельно через interaction_status."
+          schema: {type: boolean}
+        - name: interaction_status
+          in: query
+          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации."
+          schema: {type: string, enum: [available, cooldown, all], default: available}
+        - name: has_offer
+          in: query
+          description: "true — этой компанией уже отправлено хотя бы одно приглашение кандидату; false — ещё не отправлялось. Учитываются все потребности и статусы предложений. Без параметра оба варианта."
+          schema: {type: boolean}
         - name: has_fsp_achievements
           in: query
           description: "true — есть достижения, false — нет; без параметра оба варианта."
@@ -6839,11 +6900,28 @@ components:
         total: {type: integer, format: int64, minimum: 0, description: "Сколько записей подходит под фильтры всего, без учёта limit и offset."}
         limit: {type: integer, minimum: 1, maximum: 100}
         offset: {type: integer, minimum: 0, maximum: 10000}
+    CandidateInteraction:
+      type: object
+      description: История текущей компании с кандидатом. Просмотр работодателем не меняет статус входящего приглашения у кандидата.
+      required: [has_offer, viewed, last_viewed_at, last_offered_at, next_available_at]
+      properties:
+        has_offer: {type: boolean, description: Эта компания хотя бы раз отправляла оффер}
+        viewed: {type: boolean, description: Эта компания открывала профиль или отправляла оффер}
+        last_viewed_at: {type: string, format: date-time, nullable: true}
+        last_offered_at: {type: string, format: date-time, nullable: true}
+        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее взаимодействие плюс ровно 720 часов}
     CandidateBankCard:
       type: object
       description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
-      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids, category, declared_category, grade_status, achievements_count, fsp_bonus]
+      required: [id, city, timezone, experience_months, salary_min_rub, search_status, work_format_ids, category, declared_category, grade_status, achievements_count, fsp_bonus, has_offer, viewed, last_viewed_at, last_offered_at, next_available_at]
       properties:
+        viewed: {type: boolean, description: Эта компания открывала профиль или отправляла оффер; сохраняется после истечения срока}
+        last_viewed_at: {type: string, format: date-time, nullable: true, description: Последнее открытие профиля или отправка оффера этой компанией}
+        last_offered_at: {type: string, format: date-time, nullable: true, description: Последняя отправка оффера этой компанией независимо от его статуса}
+        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее взаимодействие плюс ровно 720 часов; null при отсутствии истории. После этой даты кандидат снова участвует в обычной выдаче}
+        has_offer:
+          type: boolean
+          description: Эта компания уже отправляла кандидату предложение. Учитываются все потребности и статусы, включая accepted и rejected; предложения других компаний не влияют. Старые предложения также учитываются.
         achievements_count: {type: integer, minimum: 0, description: Число импортированных достижений}
         fsp_bonus: {type: number, minimum: 0, maximum: 5, description: Бонус только внутри одной подтверждённой категории; грейд и match_score не меняет}
         grade_status: {type: string, enum: [confirmed, unconfirmed]}
@@ -6877,6 +6955,11 @@ components:
           type: array
           items: {type: integer, minimum: 1}
       example:
+        has_offer: false
+        viewed: false
+        last_viewed_at: null
+        last_offered_at: null
+        next_available_at: null
         grade_status: confirmed
         declared_category: {specialization_id: 1, grade_id: 2}
         category: {specialization_id: 1, grade_id: 2}

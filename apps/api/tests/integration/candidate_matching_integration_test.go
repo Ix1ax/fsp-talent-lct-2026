@@ -58,21 +58,21 @@ func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
 	if p.Items[0].MatchScore != p.Items[1].MatchScore || p.Items[0].GradeStatus != "confirmed" {
 		t.Fatal("При равном сходстве не учтено подтверждение")
 	}
-	// Подтверждённая категория имеет основной приоритет даже при меньшем сходстве.
+	// Сходство с потребностью имеет основной приоритет; подтверждение учитывается при равенстве.
 	f.exec(t, `UPDATE candidate_profiles SET salary_min_rub=300000 WHERE id=$1`, f.profiles["candidate"])
 	f.exec(t, `UPDATE candidate_profiles SET salary_min_rub=150000 WHERE id=$1`, f.profiles["other_candidate"])
 	p = read(entity.Filter{}, 2)
-	if p.Items[0].ID != f.profiles["candidate"] || p.Items[0].MatchScore >= p.Items[1].MatchScore {
-		t.Fatal("Не сохранён основной приоритет подтверждённой категории")
+	if p.Items[0].ID != f.profiles["other_candidate"] || p.Items[0].MatchScore <= p.Items[1].MatchScore {
+		t.Fatal("Более подходящий кандидат должен идти выше")
 	}
-	if len(p.Items[0].MismatchedConditions) == 0 {
+	if len(p.Items[1].MismatchedConditions) == 0 {
 		t.Fatal("Не объяснено несовпадение бюджета")
 	}
 	read(entity.Filter{SalaryMaxRUB: int64Pointer(200000)}, 1)
 	// Недостающий обязательный навык снижает оценку, но не удаляет профиль.
 	f.exec(t, `DELETE FROM candidate_skills WHERE candidate_id=$1 AND skill_id=$2`, f.profiles["candidate"], goSkill)
 	p = read(entity.Filter{}, 2)
-	if len(p.Items[0].MissingRequiredSkills) != 1 {
+	if len(p.Items[1].MissingRequiredSkills) != 1 {
 		t.Fatal("Не отмечен недостающий обязательный навык")
 	}
 	strict := goSkill
@@ -87,7 +87,7 @@ func TestCandidateMatchingSkillsCategoryAndPrivacy(t *testing.T) {
 		t.Fatalf("Карточка: %+v, %v", card, err)
 	}
 	page := read(entity.Filter{Limit: 1, Offset: 1}, 2)
-	if len(page.Items) != 1 || page.Items[0].ID != f.profiles["other_candidate"] {
+	if len(page.Items) != 1 || page.Items[0].ID != f.profiles["candidate"] {
 		t.Fatal("Неверная пагинация рейтинга")
 	}
 	f.exec(t, `UPDATE candidate_consents SET revoked_at=clock_timestamp() WHERE user_id=$1 AND kind='publication'`, f.ids["other_candidate"])
