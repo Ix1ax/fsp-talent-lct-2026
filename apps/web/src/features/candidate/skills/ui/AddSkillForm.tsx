@@ -1,11 +1,9 @@
+import { useMemo } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
-import {
-  CANDIDATE_DRAFT_ROUTES,
-  CANDIDATE_ELEMENT_IDS,
-} from '@/shared/contants';
+import { CANDIDATE_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Input, Label } from '@/shared/ui';
 import type { ClaimedLevel } from '@/entities/candidate';
@@ -46,7 +44,19 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
     selectSkill,
   } = autocomplete;
   const unsaved = useFormUnsavedChanges(form, {
-    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.CANDIDATE,
+        STATIC_ROUTES.CANDIDATE_CONSENTS,
+        STATIC_ROUTES.CANDIDATE_PROFILE,
+        STATIC_ROUTES.CANDIDATE_CONTACTS,
+        STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+        STATIC_ROUTES.CANDIDATE_EDUCATION,
+        STATIC_ROUTES.CANDIDATE_SKILLS,
+        STATIC_ROUTES.CANDIDATE_READINESS,
+      ],
+      [],
+    ),
   });
 
   return (

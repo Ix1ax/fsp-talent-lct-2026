@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { BrandLogo, Button, FadeIn, Input, ThemeToggle } from '@/shared/ui';
 import { AdminApiError } from '@/entities/admin';
 
@@ -84,7 +85,7 @@ export const AdminLoginForm = () => {
           </Button>
         </form>
         <Link
-          href="/"
+          href={STATIC_ROUTES.HOME}
           className="mt-6 flex min-h-11 items-center text-sm text-muted-foreground"
         >
           ← На сайт

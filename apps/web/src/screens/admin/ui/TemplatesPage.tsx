@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, queryString } from '@/entities/admin';
 import {
@@ -48,7 +49,7 @@ export const TemplatesPage = () => {
         description="Стек, специализация, грейд и состав заданий."
         action={
           <Button asChild>
-            <Link href="/admin/templates/new">
+            <Link href={STATIC_ROUTES.ADMIN_TEMPLATE_NEW}>
               <Plus />
               Добавить шаблон
             </Link>
@@ -175,7 +176,7 @@ export const TemplatesPage = () => {
                   <Status value={template.status} />
                 </div>
                 <Button variant="outline" asChild>
-                  <Link href={`/admin/templates/${template.id}`}>
+                  <Link href={DYNAMIC_ROUTES.ADMIN_TEMPLATE(template.id)}>
                     {' '}
                     Открыть состав
                   </Link>

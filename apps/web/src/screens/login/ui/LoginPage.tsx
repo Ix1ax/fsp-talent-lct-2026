@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Card,
   CardContent,
@@ -13,7 +14,11 @@ import { LoginButton } from '@/features/auth';
 export const LoginPage = () => {
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-lg flex-col justify-center gap-6 px-5 py-10 sm:px-6">
-      <Link href="/" className="self-start" aria-label="ФСП Скаут — на главную">
+      <Link
+        href={STATIC_ROUTES.HOME}
+        className="self-start"
+        aria-label="ФСП Скаут — на главную"
+      >
         <BrandLogo />
       </Link>
       <Card className="w-full">
@@ -32,7 +37,7 @@ export const LoginPage = () => {
         </CardContent>
       </Card>
       <Link
-        href="/"
+        href={STATIC_ROUTES.HOME}
         className="self-start text-sm text-muted-foreground underline underline-offset-4"
       >
         Вернуться на главную

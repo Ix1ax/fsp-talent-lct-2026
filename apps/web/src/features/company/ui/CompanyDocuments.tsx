@@ -1,12 +1,19 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
 
 import {
-  EMPLOYER_DRAFT_ROUTES,
   EMPLOYER_DRAFT_SCOPE,
   FILE_STATUS,
+  STATIC_ROUTES,
 } from '@/shared/contants';
 import { useAsyncMutation, useUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks';
@@ -63,7 +70,18 @@ export const CompanyDocuments = ({
   const [file, setFile] = useState<File | null>(null);
 
   const { markSaved } = useUnsavedChanges(!!file, {
-    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.EMPLOYER,
+        STATIC_ROUTES.EMPLOYER_PROFILE,
+        STATIC_ROUTES.EMPLOYER_DOCUMENTS,
+        STATIC_ROUTES.EMPLOYER_TEAM,
+        STATIC_ROUTES.EMPLOYER_VACANCIES,
+        STATIC_ROUTES.EMPLOYER_CANDIDATES,
+        STATIC_ROUTES.EMPLOYER_OFFERS,
+      ],
+      [],
+    ),
     scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
   });
 

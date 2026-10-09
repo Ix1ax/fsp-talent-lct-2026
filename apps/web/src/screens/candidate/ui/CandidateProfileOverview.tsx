@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
 
-import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, Stagger } from '@/shared/ui';
 
 import { PROFILE_STEPS } from '../constants';
@@ -37,7 +37,7 @@ export const CandidateProfileOverview = () => {
           </p>
         </div>
         <Button asChild variant="outline" size="lg">
-          <Link href={DYNAMIC_ROUTES.CANDIDATE('assessments')}>
+          <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
             Перейти к тестам
             <ArrowRightIcon />
           </Link>

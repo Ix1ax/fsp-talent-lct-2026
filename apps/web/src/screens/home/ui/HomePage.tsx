@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRightIcon } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, FadeIn, Stagger, StaggerItem } from '@/shared/ui';
 
 export const HomePage = () => {
@@ -34,7 +35,7 @@ export const HomePage = () => {
             size="lg"
             className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
           >
-            <Link href="/candidate">
+            <Link href={STATIC_ROUTES.CANDIDATE}>
               Создать профиль <ArrowRightIcon />
             </Link>
           </Button>
@@ -56,7 +57,7 @@ export const HomePage = () => {
             variant="outline"
             className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
           >
-            <Link href="/employer">
+            <Link href={STATIC_ROUTES.EMPLOYER}>
               Подобрать специалистов <ArrowRightIcon />
             </Link>
           </Button>

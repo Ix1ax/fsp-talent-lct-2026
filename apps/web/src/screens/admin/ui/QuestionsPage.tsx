@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Plus } from 'lucide-react';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, kindLabels, queryString } from '@/entities/admin';
 import {
@@ -49,7 +50,7 @@ export const QuestionsPage = () => {
         description="Задания и версии для автоматических тестов."
         action={
           <Button asChild>
-            <Link href="/admin/questions/new">
+            <Link href={STATIC_ROUTES.ADMIN_QUESTION_NEW}>
               <Plus />
               Добавить задание
             </Link>
@@ -180,7 +181,10 @@ export const QuestionsPage = () => {
                   <Status value={question.active ? 'active' : 'archived'} />
                 </div>
                 <Button variant="outline" asChild>
-                  <Link href={`/admin/questions/${question.id}`}> Открыть</Link>
+                  <Link href={DYNAMIC_ROUTES.ADMIN_QUESTION(question.id)}>
+                    {' '}
+                    Открыть
+                  </Link>
                 </Button>
               </StaggerItem>
             ))}

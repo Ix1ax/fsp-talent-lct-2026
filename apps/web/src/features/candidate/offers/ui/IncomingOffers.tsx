@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
 import {
@@ -41,7 +42,7 @@ export const IncomingOffers = () => {
     <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-6 px-4 py-6 sm:px-6 sm:py-10">
       <header className="grid gap-3">
         <Link
-          href="/candidate"
+          href={STATIC_ROUTES.CANDIDATE}
           className="text-sm text-muted-foreground underline"
         >
           Мой кабинет

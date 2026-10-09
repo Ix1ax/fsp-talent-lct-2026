@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import {
   AsyncState,
   Button,
@@ -39,7 +40,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
       <Button asChild variant="outline" className="min-h-11 self-start">
-        <Link href="/candidate">
+        <Link href={STATIC_ROUTES.CANDIDATE}>
           <ArrowLeftIcon aria-hidden="true" />В кабинет
         </Link>
       </Button>
@@ -51,7 +52,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
       </FadeIn>
       {current && (
         <Button asChild className="h-auto min-h-11 whitespace-normal">
-          <Link href={`/candidate/assessments/${current}`}>
+          <Link href={DYNAMIC_ROUTES.CANDIDATE_ASSESSMENT(current)}>
             Продолжить активный тест
           </Link>
         </Button>

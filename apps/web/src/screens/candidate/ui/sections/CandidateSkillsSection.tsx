@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { DYNAMIC_ROUTES } from '@/shared/contants';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 import { CandidateSkillsCard, ResumeSkillDrafts } from '@/features/candidate';
 
@@ -32,7 +32,7 @@ export const CandidateSkillsSection = ({
           Подтвердите навыки с помощью тестов.
         </p>
         <Button asChild variant="outline" size="lg">
-          <Link href={DYNAMIC_ROUTES.CANDIDATE('assessments')}>
+          <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
             Тестирование навыков
           </Link>
         </Button>

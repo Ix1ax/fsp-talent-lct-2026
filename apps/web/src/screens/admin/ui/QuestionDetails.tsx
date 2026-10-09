@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { DYNAMIC_ROUTES } from '@/shared/contants';
 import { useGuardedRouter } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { adminRequest, adminSchemas, kindLabels } from '@/entities/admin';
@@ -56,7 +57,9 @@ export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
             <Button
               variant="outline"
               disabled={mutation.busy || !question.active}
-              onClick={() => router.push(`/admin/questions/${id}/edit`)}
+              onClick={() =>
+                router.push(DYNAMIC_ROUTES.ADMIN_QUESTION(id, 'edit'))
+              }
             >
               Создать новую версию
             </Button>

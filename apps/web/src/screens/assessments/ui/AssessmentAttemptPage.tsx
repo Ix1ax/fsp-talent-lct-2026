@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, FadeIn } from '@/shared/ui';
 import { AssessmentRunner } from '@/features/assessment-runner';
 
@@ -20,7 +21,7 @@ export const AssessmentAttemptPage = ({
   return (
     <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-6 sm:py-10">
       <Button asChild variant="outline" className="min-h-11 self-start">
-        <Link href="/candidate/assessments">
+        <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
           <ArrowLeftIcon aria-hidden="true" />К списку тестов
         </Link>
       </Button>

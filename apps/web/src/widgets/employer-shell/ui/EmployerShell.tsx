@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
@@ -30,7 +31,7 @@ interface EmployerShellProps {
 export const EmployerShell = ({
   user,
   accountMenu,
-  homeHref = '/employer',
+  homeHref = STATIC_ROUTES.EMPLOYER,
   search,
   companies,
   company,

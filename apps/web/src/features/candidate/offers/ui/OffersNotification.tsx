@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BellIcon } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
 
 import { useNewOffersCount } from '../model';
@@ -23,10 +24,10 @@ export const OffersNotification = () => {
       className="relative size-11 shrink-0 p-0 sm:w-auto sm:gap-2 sm:px-3"
     >
       <Link
-        href="/candidate/offers"
+        href={STATIC_ROUTES.OFFERS}
         aria-label={label}
         title={label}
-        aria-current={pathname === '/candidate/offers' ? 'page' : undefined}
+        aria-current={pathname === STATIC_ROUTES.OFFERS ? 'page' : undefined}
       >
         <BellIcon aria-hidden="true" />
         <span className="hidden sm:inline">Предложения</span>

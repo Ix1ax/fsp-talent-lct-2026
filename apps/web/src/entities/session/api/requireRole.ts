@@ -31,10 +31,10 @@ export const requireSessionUser = async (
       redirect(`/api/auth/refresh?next=${encodeURIComponent(safeNext)}`);
     }
     await clearAuthTokens();
-    redirect(`/login?next=${encodeURIComponent(safeNext)}`);
+    redirect(`${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(safeNext)}`);
   }
 
-  redirect(`/login?next=${encodeURIComponent(safeNext)}`);
+  redirect(`${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(safeNext)}`);
 };
 
 export const requireRole = async (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, PageTransition } from '@/shared/ui';
 import { AdminApiError, type Template } from '@/entities/admin';
 
@@ -50,7 +51,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
               {s.required}.{' '}
               <Link
                 className="underline"
-                href={`/admin/questions?skill_id=${s.skill_id}&difficulty=${s.difficulty}`}
+                href={`${STATIC_ROUTES.ADMIN_QUESTIONS}?skill_id=${s.skill_id}&difficulty=${s.difficulty}`}
               >
                 Открыть банк заданий
               </Link>

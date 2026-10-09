@@ -2,6 +2,7 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { sanitizeRedirectPath } from '@/shared/utils';
 
 import { getAccessToken, getRefreshToken } from './session.server';
@@ -16,5 +17,5 @@ export const requireAccessToken = async (nextPath: string): Promise<string> => {
     redirect(`/api/auth/refresh?next=${encodeURIComponent(next)}`);
   }
 
-  redirect(`/login?next=${encodeURIComponent(next)}`);
+  redirect(`${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(next)}`);
 };

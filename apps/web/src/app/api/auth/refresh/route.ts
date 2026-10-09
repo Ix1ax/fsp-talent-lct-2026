@@ -11,6 +11,7 @@ import {
   refreshAuthTokens,
   setAuthTokens,
 } from '@/shared/auth/server';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { sanitizeRedirectPath } from '@/shared/utils';
 
 const doRefresh = async (): Promise<{
@@ -79,7 +80,7 @@ export const GET = async (request: NextRequest): Promise<Response> => {
   }
   const destination = tokens
     ? next
-    : `/login${next !== '/' && next !== '/login' ? `?next=${encodeURIComponent(next)}` : ''}`;
+    : `${STATIC_ROUTES.LOGIN}${next !== STATIC_ROUTES.HOME && next !== STATIC_ROUTES.LOGIN ? `?next=${encodeURIComponent(next)}` : ''}`;
 
   // Keep the browser's origin: request.url can contain the server's bind address.
   return new NextResponse(null, {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
-import { MOTION_LAYOUT_IDS } from '@/shared/contants';
+import { MOTION_LAYOUT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import { confirmUnsavedChanges, useDebounce } from '@/shared/hooks';
 import {
   AnimatedIndicator,
@@ -212,7 +212,7 @@ export const CatalogsPage = () => {
                     />
                   ) : (
                     <Link
-                      href={`/admin/moderation?${queryString({ skill_id: item.id })}`}
+                      href={`${STATIC_ROUTES.ADMIN_MODERATION}?${queryString({ skill_id: item.id })}`}
                       className="flex min-h-11 items-center text-sm text-brand-text"
                     >
                       К модерации

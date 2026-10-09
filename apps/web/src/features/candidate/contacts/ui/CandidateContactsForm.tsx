@@ -1,4 +1,6 @@
-import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
+import { useMemo } from 'react';
+
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   type FormDraftBridge,
   useFormDraftImport,
@@ -27,7 +29,19 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
   const { form, message, dirty, save } = useCandidateContactsForm(props);
   useFormDraftImport(form, props);
   const unsaved = useFormUnsavedChanges(form, {
-    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.CANDIDATE,
+        STATIC_ROUTES.CANDIDATE_CONSENTS,
+        STATIC_ROUTES.CANDIDATE_PROFILE,
+        STATIC_ROUTES.CANDIDATE_CONTACTS,
+        STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+        STATIC_ROUTES.CANDIDATE_EDUCATION,
+        STATIC_ROUTES.CANDIDATE_SKILLS,
+        STATIC_ROUTES.CANDIDATE_READINESS,
+      ],
+      [],
+    ),
     normalize: toContactsInput,
   });
 

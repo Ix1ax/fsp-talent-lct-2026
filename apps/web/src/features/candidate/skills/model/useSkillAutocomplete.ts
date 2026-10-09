@@ -1,3 +1,5 @@
+'use client';
+
 import { type KeyboardEvent, useId, useState } from 'react';
 
 import type { Skill } from '@/entities/catalog';

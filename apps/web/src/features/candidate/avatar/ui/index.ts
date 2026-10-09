@@ -1,3 +1,5 @@
+'use client';
+
 export { AvatarAction } from './AvatarAction';
 export { AvatarCropDialog } from './AvatarCropDialog';
 export { CandidateAvatar } from './CandidateAvatar';

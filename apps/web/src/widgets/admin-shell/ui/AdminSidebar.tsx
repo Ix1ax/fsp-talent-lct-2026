@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
-import { MOTION_LAYOUT_IDS } from '@/shared/contants';
+import {
+  DYNAMIC_ROUTES,
+  MOTION_LAYOUT_IDS,
+  STATIC_ROUTES,
+} from '@/shared/contants';
 import { cn } from '@/shared/lib/utils';
 import {
   AnimatedIndicator,
@@ -42,7 +46,7 @@ export const AdminSidebar = ({
           )}
         >
           <Link
-            href="/admin"
+            href={STATIC_ROUTES.ADMIN}
             aria-label="ФСП Скаут — админка"
             className="inline-flex min-h-11 min-w-11 items-center justify-center"
           >
@@ -68,14 +72,14 @@ export const AdminSidebar = ({
             (l) => l.path !== 'admins' || admin.role === 'superadmin',
           ).map(({ path, label, mobileLabel, icon: Icon }) => {
             const active =
-              pathname === `/admin/${path}` ||
-              pathname.startsWith(`/admin/${path}/`) ||
-              (path === 'catalogs' && pathname === '/admin');
+              pathname === DYNAMIC_ROUTES.ADMIN(path) ||
+              pathname.startsWith(`${DYNAMIC_ROUTES.ADMIN(path)}/`) ||
+              (path === 'catalogs' && pathname === STATIC_ROUTES.ADMIN);
             return (
               <Tooltip key={path}>
                 <TooltipTrigger asChild>
                   <Link
-                    href={`/admin/${path}`}
+                    href={DYNAMIC_ROUTES.ADMIN(path)}
                     aria-label={label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
