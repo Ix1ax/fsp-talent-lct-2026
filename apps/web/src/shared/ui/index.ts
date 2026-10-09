@@ -27,6 +27,7 @@ export {
   Stagger,
   StaggerItem,
 } from './motion';
+export * from './OptionSelect';
 export * from './Popover';
 export * from './SalaryRangeInput';
 export * from './Select';

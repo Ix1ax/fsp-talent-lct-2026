@@ -29,7 +29,12 @@ export const createUnsavedChangesGuard = (browser: Window) => {
     )
       return;
     const anchor = (event.target as Element | null)?.closest?.('a[href]');
-    if (!anchor || anchor.hasAttribute('download')) return;
+    if (
+      !anchor ||
+      anchor.hasAttribute('download') ||
+      anchor.hasAttribute('data-preserve-draft')
+    )
+      return;
     const target = anchor.getAttribute('target');
     if (target && target !== '_self') return;
     const href = anchor.getAttribute('href');
