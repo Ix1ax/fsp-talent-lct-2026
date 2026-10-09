@@ -13,6 +13,7 @@ import type {
   AdminStats,
   AdminTaskFile,
   AdminUser,
+  AdminUserCompany,
 } from '../../model';
 import { adminDownloadFile } from '../adminRequest';
 import type {
@@ -26,6 +27,7 @@ import type {
   adminOfferSchema,
   adminStatsSchema,
   adminTaskFileSchema,
+  adminUserCompanySchema,
   adminUserSchema,
 } from '../operationsSchemas';
 
@@ -38,6 +40,9 @@ it('keeps operations domain models identical to the validated backend contracts'
     z.output<typeof adminCompanySchema>
   >();
   expectTypeOf<AdminUser>().toEqualTypeOf<z.output<typeof adminUserSchema>>();
+  expectTypeOf<AdminUserCompany>().toEqualTypeOf<
+    z.output<typeof adminUserCompanySchema>
+  >();
   expectTypeOf<AdminNeed>().toEqualTypeOf<z.output<typeof adminNeedSchema>>();
   expectTypeOf<AdminOffer>().toEqualTypeOf<z.output<typeof adminOfferSchema>>();
   expectTypeOf<AdminCompanyTask>().toEqualTypeOf<

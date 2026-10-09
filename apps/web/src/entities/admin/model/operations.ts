@@ -27,6 +27,9 @@ export type AdminTaskFile = {
 
 export type AdminCompany = {
   id: string;
+  status: 'active' | 'blocked';
+  blocked_reason: string | null;
+  blocked_at: string | null;
   name: string;
   description: string | null;
   inn: string | null;
@@ -44,9 +47,16 @@ export type AdminCompany = {
 };
 
 export type AdminUser = {
+  full_name: string | null;
+  full_name_source: 'candidate_contacts' | 'identity' | null;
+  email: string | null;
+  contact_email: string | null;
+  identity_updated_at: string | null;
   id: string;
   role: 'candidate' | 'employer' | 'admin';
   status: 'active' | 'blocked' | 'deleted';
+  blocked_reason: string | null;
+  blocked_at: string | null;
   created_at: string;
   updated_at: string;
   candidate_profile_id: string | null;
@@ -130,6 +140,14 @@ export type AdminAssessmentAttempt = {
 };
 
 export type AdminCompanyMember = {
+  full_name: string | null;
+  full_name_source: 'candidate_contacts' | 'identity' | null;
+  email: string | null;
+  contact_email: string | null;
+  identity_updated_at: string | null;
+  user_role: 'candidate' | 'employer' | 'admin';
+  user_blocked_reason: string | null;
+  user_blocked_at: string | null;
   company_id: string;
   user_id: string;
   role: 'owner' | 'recruiter' | 'viewer';
@@ -138,7 +156,19 @@ export type AdminCompanyMember = {
   user_status: 'active' | 'blocked' | 'deleted';
 };
 
+export type AdminUserCompany = {
+  company_id: string;
+  company_name: string;
+  company_status: 'active' | 'blocked';
+  verification_status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  role: 'owner' | 'recruiter' | 'viewer';
+  status: 'active' | 'inactive';
+  joined_at: string;
+};
+
 export type AdminAuditEvent = {
+  actor_email: string | null;
+  actor_name: string | null;
   source: 'operations' | 'catalogs' | 'assessments' | 'admins' | 'activity';
   id: string;
   actor_id: string | null;
@@ -164,6 +194,8 @@ export type AdminStats = {
   };
   companies: {
     total: number;
+    active: number;
+    blocked: number;
     pending: number;
     verified: number;
     rejected: number;

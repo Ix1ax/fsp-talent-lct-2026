@@ -30,6 +30,9 @@ export const adminTaskFileSchema = z.object({
 
 export const adminCompanySchema = z.object({
   id: z.string(),
+  status: z.enum(['active', 'blocked']),
+  blocked_reason: z.string().nullable(),
+  blocked_at: z.string().nullable(),
   name: z.string(),
   description: z.string().nullable(),
   inn: z.string().nullable(),
@@ -51,10 +54,21 @@ export const adminCompanySchema = z.object({
   created_at: z.string(),
 });
 
+const adminUserIdentityShape = {
+  full_name: z.string().nullable(),
+  full_name_source: z.enum(['candidate_contacts', 'identity']).nullable(),
+  email: z.string().nullable(),
+  contact_email: z.string().nullable(),
+  identity_updated_at: z.string().nullable(),
+};
+
 export const adminUserSchema = z.object({
+  ...adminUserIdentityShape,
   id: z.string(),
   role: z.enum(['candidate', 'employer', 'admin']),
   status: z.enum(['active', 'blocked', 'deleted']),
+  blocked_reason: z.string().nullable(),
+  blocked_at: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
   candidate_profile_id: z.string().nullable(),
@@ -140,6 +154,10 @@ export const adminAssessmentAttemptSchema = z.object({
 });
 
 export const adminCompanyMemberSchema = z.object({
+  ...adminUserIdentityShape,
+  user_role: z.enum(['candidate', 'employer', 'admin']),
+  user_blocked_reason: z.string().nullable(),
+  user_blocked_at: z.string().nullable(),
   company_id: z.string(),
   user_id: z.string(),
   role: z.enum(['owner', 'recruiter', 'viewer']),
@@ -148,7 +166,24 @@ export const adminCompanyMemberSchema = z.object({
   user_status: z.enum(['active', 'blocked', 'deleted']),
 });
 
+export const adminUserCompanySchema = z.object({
+  company_id: z.string(),
+  company_name: z.string(),
+  company_status: z.enum(['active', 'blocked']),
+  verification_status: z.enum([
+    'unverified',
+    'pending',
+    'verified',
+    'rejected',
+  ]),
+  role: z.enum(['owner', 'recruiter', 'viewer']),
+  status: z.enum(['active', 'inactive']),
+  joined_at: z.string(),
+});
+
 export const adminAuditEventSchema = z.object({
+  actor_email: z.string().nullable(),
+  actor_name: z.string().nullable(),
   source: z.enum([
     'operations',
     'catalogs',
@@ -180,6 +215,8 @@ export const adminStatsSchema = z.object({
   }),
   companies: z.object({
     total: z.number().int().min(0),
+    active: z.number().int().min(0),
+    blocked: z.number().int().min(0),
     pending: z.number().int().min(0),
     verified: z.number().int().min(0),
     rejected: z.number().int().min(0),
@@ -228,5 +265,6 @@ export const adminOperationsSchemas = {
   attempts: page(adminAssessmentAttemptSchema),
   audit: page(adminAuditEventSchema),
   members: page(adminCompanyMemberSchema),
+  userCompanies: page(adminUserCompanySchema),
   files: page(adminCompanyFileSchema),
 };
