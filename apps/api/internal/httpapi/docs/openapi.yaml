@@ -716,7 +716,7 @@ paths:
         возвращается 404 not_registered. Заблокированный пользователь получает 200 со status=blocked,
         blocked_reason и blocked_at для плашки; любые рабочие методы остаются закрыты (403 user_inactive).
         blocked_companies содержит заблокированные компании активного участника-работодателя.
-        Удалённый аккаунт получает 403. Ответ private, no-store.
+        Удалённый аккаунт получает 403. Ответ private, no-store. Подтверждённая почта и необязательное имя OIDC обновляются во внутреннем снимке идентичности для админки; в ответ /me эти данные не добавляются.
       security:
         - bearerAuth: []
         - keycloakOAuth:
@@ -749,7 +749,7 @@ paths:
     post:
       operationId: registerMe
       summary: Первичная регистрация пользователя с выбором роли
-      description: Вызывается один раз после первого входа через Keycloak. Роль выбирает пользователь; роль admin через API выдать нельзя.
+      description: Вызывается один раз после первого входа через Keycloak. Роль выбирает пользователь; роль admin через API выдать нельзя. Подтверждённая почта и необязательное имя аккаунта сохраняются только из проверенного OIDC-токена, а не из тела запроса.
       security:
         - bearerAuth: []
         - keycloakOAuth:
@@ -2731,7 +2731,7 @@ paths:
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
-      description: "Только кандидат-получатель. Передайте status: accepted или rejected. Можно ответить сразу из sent: viewed_at и responded_at выставляются вместе. Повтор того же решения успешен и не меняет даты; противоположное решение после ответа — 409 response_conflict. Одновременные противоположные ответы сохраняют только одно решение. Принятие не добавляет кандидата в сотрудники компании. Раскрытие контактов кандидата пока не подключено."
+      description: "Только кандидат-получатель. Передайте status: accepted или rejected. Можно ответить сразу из sent: viewed_at и responded_at выставляются вместе. Повтор того же решения успешен и не меняет даты; противоположное решение после ответа — 409 response_conflict. Одновременные противоположные ответы сохраняют только одно решение. Принятие не добавляет кандидата в сотрудники компании. Контакты доступны отдельным защищённым GET /companies/{company_id}/offers/{offer_id}/candidate-contacts после принятия, при действующем согласии кандидата, только owner/recruiter отправившей компании."
       requestBody:
         required: true
         content:
@@ -7692,10 +7692,17 @@ paths:
       tags:
         - Операции админки
       summary: 'Список: пользователей'
-      description: Admin и superadmin. created_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
+      description: Admin и superadmin. Имя и почта только для административного просмотра, включая скрытые и заблокированные профили. created_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
       security:
         - adminSession: []
       parameters:
+        - name: q
+          in: query
+          description: Подстрока без учёта регистра по ФИО профиля, имени OIDC, почте аккаунта, контактной почте, ID пользователя или профиля. Символы % и _ не являются шаблонами.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
         - name: limit
           in: query
           schema:
@@ -7757,7 +7764,7 @@ paths:
       tags:
         - Операции админки
       summary: 'Карточка: пользователей'
-      description: Admin и superadmin. Без контактов, внешней идентичности и токенов.
+      description: Admin и superadmin. Имя, подтверждённая почта аккаунта и отдельная контактная почта кандидата. Без телефона, Telegram, issuer/subject и токенов. Отсутствующие данные возвращаются как null.
       security:
         - adminSession: []
       parameters:
@@ -7790,6 +7797,53 @@ paths:
           $ref: '#/components/responses/AdminOperations500'
         '503':
           $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/users/{id}/companies:
+    get:
+      operationId: listAdminUserCompanies
+      tags:
+        - Операции админки
+      summary: Компании пользователя
+      description: Admin и superadmin. Все членства пользователя, включая inactive, с независимыми статусами компании и участника. joined_at DESC, company_id DESC. Только пагинация; неизвестные, повторные и пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        '200':
+          description: Компании и членства пользователя; пустой список допустим
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserCompanyPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
   /api/v1/admin/needs:
     get:
       operationId: listOperationalneeds
@@ -8256,7 +8310,7 @@ paths:
       tags:
         - Операции админки
       summary: Участники компании
-      description: Admin и superadmin. Документы без ключей S3; удалённые документы исключены, скачивание только ready.
+      description: Admin и superadmin. Участники с именем и почтой, ролью и статусом аккаунта, причиной его блокировки. Статус членства независим от статуса аккаунта. Без телефона, Telegram и внешних идентификаторов.
       security:
         - adminSession: []
       parameters:
@@ -8960,7 +9014,34 @@ components:
         - search_status
         - blocked_reason
         - blocked_at
+        - full_name
+        - full_name_source
+        - email
+        - contact_email
+        - identity_updated_at
       properties:
+        full_name:
+          type: string
+          nullable: true
+          description: ФИО из контактов кандидата; иначе имя OIDC. Самостоятельно указанное имя, не проверка юридической личности.
+        full_name_source:
+          type: string
+          nullable: true
+          enum: [candidate_contacts, identity]
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Подтверждённая почта аккаунта из проверенной идентичности; null до синхронизации старого аккаунта.
+        contact_email:
+          type: string
+          format: email
+          nullable: true
+          description: Отдельная почта из контактов кандидата; не считается подтверждённой почтой аккаунта.
+        identity_updated_at:
+          type: string
+          format: date-time
+          nullable: true
         blocked_reason:
           $ref: '#/components/schemas/BlockReason'
         blocked_at:
@@ -9374,7 +9455,44 @@ components:
         - status
         - joined_at
         - user_status
+        - full_name
+        - full_name_source
+        - email
+        - contact_email
+        - identity_updated_at
+        - user_role
+        - user_blocked_reason
+        - user_blocked_at
       properties:
+        user_role:
+          type: string
+          enum: [candidate, employer, admin]
+        user_blocked_reason:
+          $ref: '#/components/schemas/BlockReason'
+        user_blocked_at:
+          $ref: '#/components/schemas/BlockTime'
+        full_name:
+          type: string
+          nullable: true
+          description: ФИО из контактов кандидата; иначе имя OIDC. Самостоятельно указанное имя, не проверка юридической личности.
+        full_name_source:
+          type: string
+          nullable: true
+          enum: [candidate_contacts, identity]
+        email:
+          type: string
+          format: email
+          nullable: true
+          description: Подтверждённая почта аккаунта из проверенной идентичности; null до синхронизации старого аккаунта.
+        contact_email:
+          type: string
+          format: email
+          nullable: true
+          description: Отдельная почта из контактов кандидата; не считается подтверждённой почтой аккаунта.
+        identity_updated_at:
+          type: string
+          format: date-time
+          nullable: true
         company_id:
           type: string
           format: uuid
@@ -9416,7 +9534,18 @@ components:
         - new_status
         - reason
         - created_at
+        - actor_email
+        - actor_name
       properties:
+        actor_email:
+          type: string
+          format: email
+          nullable: true
+          description: Текущая почта администратора или подтверждённая почта аккаунта пользователя.
+        actor_name:
+          type: string
+          nullable: true
+          description: Текущее имя пользователя. Для администратора или системного события null. Добавляется при чтении, не является историческим снимком.
         source:
           type: string
           enum:
@@ -9752,6 +9881,51 @@ components:
         offset:
           type: integer
           minimum: 0
+    AdminUserCompany:
+      type: object
+      additionalProperties: false
+      required: [company_id, company_name, company_status, verification_status, role, status, joined_at]
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        company_status:
+          type: string
+          enum: [active, blocked]
+        verification_status:
+          type: string
+          enum: [unverified, pending, verified, rejected]
+        role:
+          type: string
+          enum: [owner, recruiter, viewer]
+        status:
+          type: string
+          enum: [active, inactive]
+        joined_at:
+          type: string
+          format: date-time
+    AdminUserCompanyPage:
+      type: object
+      required: [items, total, limit, offset]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUserCompany'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+          maximum: 10000
     AdminCompanyMemberPage:
       type: object
       required:
