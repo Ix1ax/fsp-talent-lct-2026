@@ -13,8 +13,8 @@ import (
 const needColumns = `n.id::text,n.company_id::text,n.created_by::text,n.specialization_id,n.grade_id,n.title,n.description,n.salary_from_rub,n.salary_to_rub,n.city,n.timezone,n.status,n.created_at,n.moderation_status,
  COALESCE((SELECT jsonb_agg(jsonb_build_object('skill_id',s.skill_id::text,'required',s.required,'weight',s.weight) ORDER BY s.skill_id) FROM need_skills s WHERE s.need_id=n.id),'[]'::jsonb),
  ARRAY(SELECT f.work_format_id FROM need_work_formats f WHERE f.need_id=n.id ORDER BY f.work_format_id)`
-const needAccess = ` FROM employer_needs n JOIN company_members m ON m.company_id=n.company_id JOIN users u ON u.id=m.user_id
- WHERE m.user_id=$1 AND n.company_id=$2 AND m.status='active' AND u.status='active' AND u.role='employer'`
+const needAccess = ` FROM employer_needs n JOIN companies c ON c.id=n.company_id JOIN company_members m ON m.company_id=n.company_id JOIN users u ON u.id=m.user_id
+ WHERE m.user_id=$1 AND n.company_id=$2 AND c.status='active' AND m.status='active' AND u.status='active' AND u.role='employer'`
 
 func scanNeed(row pgx.Row) (entity.Need, error) {
 	var n entity.Need

@@ -59,6 +59,16 @@ func (r *Repository) Grant(ctx context.Context, userID string, in entity.GrantIn
 		return entity.Consent{}, err
 	}
 	defer tx.Rollback(ctx)
+	if in.CompanyID != nil {
+		var company string
+		err = tx.QueryRow(ctx, `SELECT id::text FROM companies WHERE id=$1 AND status='active' FOR SHARE`, *in.CompanyID).Scan(&company)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return entity.Consent{}, entity.ErrCompanyNotFound
+		}
+		if err != nil {
+			return entity.Consent{}, err
+		}
+	}
 	if err = lockCandidate(ctx, tx, userID, "FOR SHARE"); err != nil {
 		return entity.Consent{}, err
 	}

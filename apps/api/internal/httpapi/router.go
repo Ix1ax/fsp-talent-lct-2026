@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/docs"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi/middleware"
 
 	"github.com/gin-gonic/gin"
 
@@ -149,7 +150,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		c.JSON(200, gin.H{"issuer": opts.OIDCIssuer, "client_id": "fsp-web"})
 	})
 	api.GET("/info", func(c *gin.Context) { c.JSON(200, gin.H{"name": "fsp-api", "version": "0.1.0"}) })
-	api.GET("/me", auth.Middleware(verifier), currentUser(log, opts.Users), getMe)
+	api.GET("/me", auth.Middleware(verifier), middleware.CurrentAccount(log, opts.Users), getMe)
 	api.POST("/me/register", auth.Middleware(verifier), registerUser(log, opts.Users))
 	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs, Members: opts.Members})
 	catalogweb.Register(api, log, opts.Catalogs)

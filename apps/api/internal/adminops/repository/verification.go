@@ -23,7 +23,7 @@ func companyAccess(ctx context.Context, tx pgx.Tx, user, company string, write b
 	if write {
 		lock = ` FOR UPDATE OF c,m FOR SHARE OF u`
 	}
-	err := tx.QueryRow(ctx, `SELECT m.role FROM company_members m JOIN companies c ON c.id=m.company_id JOIN users u ON u.id=m.user_id WHERE c.id=$1 AND m.user_id=$2 AND m.status='active' AND u.role='employer' AND u.status='active'`+lock, company, user).Scan(&role)
+	err := tx.QueryRow(ctx, `SELECT m.role FROM company_members m JOIN companies c ON c.id=m.company_id JOIN users u ON u.id=m.user_id WHERE c.id=$1 AND c.status='active' AND m.user_id=$2 AND m.status='active' AND u.role='employer' AND u.status='active'`+lock, company, user).Scan(&role)
 	if err != nil {
 		return dbError(err)
 	}

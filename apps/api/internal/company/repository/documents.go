@@ -45,11 +45,11 @@ func (r *Repository) CompleteFile(ctx context.Context, user, id, fileID string) 
 	return f, tx.Commit(ctx)
 }
 func (r *Repository) File(ctx context.Context, user, id, fileID string) (files.File, error) {
-	return scanFile(r.db.QueryRow(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND f.id=$3 AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status='ready'`, user, id, fileID))
+	return scanFile(r.db.QueryRow(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN companies c ON c.id=d.company_id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND f.id=$3 AND c.status='active' AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status='ready'`, user, id, fileID))
 }
 
 // Документы компании, видимые участнику: без удалённых файлов. Общий фильтр для страницы и общего числа.
-const documentsListFrom = ` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status<>'deleted'`
+const documentsListFrom = ` FROM files f JOIN company_documents d ON d.file_id=f.id JOIN companies c ON c.id=d.company_id JOIN company_members m ON m.company_id=d.company_id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND d.company_id=$2 AND c.status='active' AND m.status='active' AND u.status='active' AND u.role='employer' AND f.status<>'deleted'`
 
 // ListFiles возвращает страницу документов компании и их общее число.
 func (r *Repository) ListFiles(ctx context.Context, user, id string, limit, offset int) ([]files.File, int64, error) {

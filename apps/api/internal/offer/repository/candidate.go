@@ -55,10 +55,15 @@ func (r *Repository) action(ctx context.Context, user, id, status string) (entit
 		return entity.Offer{}, err
 	}
 	defer tx.Rollback(ctx)
+	// Для действий по предложению сначала компания, затем кандидат и само предложение.
+	var company string
+	if err = tx.QueryRow(ctx, `SELECT c.id::text`+candidateAccess+` AND o.id=$2 FOR SHARE OF c`, user, id).Scan(&company); err != nil {
+		return entity.Offer{}, dbError(err)
+	}
 	if err = lockCandidateUser(ctx, tx, user); err != nil {
 		return entity.Offer{}, err
 	}
-	o, err := scan(tx.QueryRow(ctx, `SELECT `+columns+candidateAccess+` AND o.id=$2 FOR UPDATE OF o FOR SHARE OF p,u`, user, id))
+	o, err := scan(tx.QueryRow(ctx, `SELECT `+columns+candidateAccess+` AND o.id=$2 FOR UPDATE OF o FOR SHARE OF c,p,u`, user, id))
 	if err != nil {
 		return o, err
 	}

@@ -24,6 +24,7 @@ func (h companiesHandler) create(c *gin.Context) {
 	c.JSON(201, result)
 }
 func (h companiesHandler) get(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
 	u, _ := middleware.UserFrom(c)
 	result, err := h.service.Get(c.Request.Context(), u.ID, c.Param("company_id"))
 	if err != nil {
@@ -33,6 +34,7 @@ func (h companiesHandler) get(c *gin.Context) {
 	c.JSON(200, result)
 }
 func (h companiesHandler) list(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
 	limit, offset, err := request.Page(c)
 	if err != nil {
 		h.fail(c, err)
