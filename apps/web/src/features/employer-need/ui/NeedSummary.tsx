@@ -12,7 +12,11 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
   const skillNames = (required: boolean) =>
     value.skills
       .filter((item) => item.required === required)
-      .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
+      .map(
+        (item) =>
+          skills.find((skill) => skill.id === item.skillId)?.name ??
+          `Сохранённый навык ${item.skillId}`,
+      )
       .filter(Boolean)
       .join(', ');
   const fields = [
@@ -20,16 +24,28 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
       'Специализация',
       catalogs.specializations.find(
         (item) => item.id === value.specializationId,
-      )?.name,
+      )?.name ??
+        (value.specializationId
+          ? `Сохранённая специализация #${value.specializationId}`
+          : null),
     ],
-    ['Грейд', catalogs.grades.find((item) => item.id === value.gradeId)?.name],
+    [
+      'Грейд',
+      catalogs.grades.find((item) => item.id === value.gradeId)?.name ??
+        (value.gradeId ? `Сохранённый грейд #${value.gradeId}` : 'Любой грейд'),
+    ],
     [
       'Формат работы',
-      catalogs.workFormats
-        .filter((item) => value.workFormatIds.includes(item.id))
-        .map((item) => item.name)
+      value.workFormatIds
+        .map(
+          (id) =>
+            catalogs.workFormats.find((item) => item.id === id)?.name ??
+            `Сохранённый формат #${id}`,
+        )
         .join(', '),
     ],
+    ['Город', value.city ?? 'Любой город'],
+    ['Часовой пояс', value.timezone],
     ['Зарплата', formatSalaryRange(value.salaryFromRub, value.salaryToRub)],
     ['Обязательные навыки', skillNames(true)],
     ['Желательные навыки', skillNames(false)],
