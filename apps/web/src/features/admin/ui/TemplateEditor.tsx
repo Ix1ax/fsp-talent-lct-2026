@@ -6,7 +6,8 @@ import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Input } from '@/shared/ui';
 import { adminRequest, adminSchemas, type Template } from '@/entities/admin';
 
-import { templateFormSchema, type TemplateFormValues } from '../constants';
+import { templateFormSchema } from '../constants';
+import type { TemplateFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { useAdminOptions } from '../model/useAdminOptions';

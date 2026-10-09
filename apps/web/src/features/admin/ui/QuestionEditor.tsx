@@ -11,11 +11,9 @@ import {
   type Question,
 } from '@/entities/admin';
 
-import {
-  questionContent,
-  questionFormSchema,
-  type QuestionFormValues,
-} from '../constants';
+import { questionFormSchema } from '../constants';
+import { questionContent } from '../lib';
+import type { QuestionFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { AdminPanel } from './AdminPanel';

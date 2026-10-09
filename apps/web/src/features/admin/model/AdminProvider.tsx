@@ -151,6 +151,3 @@ export const useAdminSession = () => {
   if (!context) throw new Error('AdminProvider отсутствует');
   return context;
 };
-
-export { useAdminMutation } from './useAdminMutation';
-export { useAdminSkillSearch } from './useAdminSkillSearch';

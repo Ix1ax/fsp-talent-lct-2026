@@ -23,6 +23,29 @@ export {
   subscribeAdminCatalogs,
   updateAdminCatalogItem,
 } from './api';
+export {
+  accountSchema,
+  blueprintSchema,
+  catalogSchema,
+  gradingSchema,
+  kindSchema,
+  loginSchema,
+  pageSchema,
+  previewAnswerSchema,
+  previewSchema,
+  promptSchema,
+  questionSchema,
+  shortageSchema,
+  statusSchema,
+  templateSchema,
+  versionSchema,
+} from './api';
+export {
+  catalogKinds,
+  catalogLabels,
+  kindLabels,
+  statusLabels,
+} from './constants';
 export type {
   AdminAccount,
   AdminSession,
@@ -36,25 +59,4 @@ export type {
   QuestionVersion,
   Shortage,
   Template,
-} from './model';
-export {
-  accountSchema,
-  blueprintSchema,
-  catalogKinds,
-  catalogLabels,
-  catalogSchema,
-  gradingSchema,
-  kindLabels,
-  kindSchema,
-  loginSchema,
-  pageSchema,
-  previewAnswerSchema,
-  previewSchema,
-  promptSchema,
-  questionSchema,
-  shortageSchema,
-  statusLabels,
-  statusSchema,
-  templateSchema,
-  versionSchema,
 } from './model';

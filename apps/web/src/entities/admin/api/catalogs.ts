@@ -1,12 +1,14 @@
 import { z } from 'zod';
 
 import type { CatalogItem, CatalogKind } from '../model';
+import { adminRequest } from './adminRequest';
 import {
   invalidateAdminCatalogs,
   primeAdminCatalogCache,
   readAdminCatalogCache,
 } from './catalogCache';
-import { adminRequest, adminSchemas, queryString } from './index';
+import { queryString } from './queryString';
+import { adminSchemas } from './schemas';
 
 type GetAdminCatalogsParams = {
   q?: string;
