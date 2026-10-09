@@ -21,6 +21,7 @@ import {
   AdminListLoading,
   AdminListViewport,
   AdminPanel,
+  adminUserLabel,
   ErrorNotice,
   getOperationFilters,
   getOperationOffset,
@@ -50,7 +51,7 @@ interface OperationsPageProps {
 const itemTitle = (item: OperationItem) => {
   if ('name' in item) return item.name;
   if ('title' in item) return item.title;
-  if ('role' in item) return userRoleLabels[item.role];
+  if ('role' in item) return adminUserLabel(item);
   return item.stack_name ?? 'Попытка тестирования';
 };
 const itemDate = (item: OperationItem) => {
@@ -133,10 +134,23 @@ export const OperationsPage = ({ section }: OperationsPageProps) => {
                     {itemTitle(item)}
                   </Link>
                   <p className="text-sm text-muted-foreground">
+                    {'role' in item && `${userRoleLabels[item.role]} · `}
                     {'company_name' in item && `${item.company_name} · `}
                     {'inn' in item && `ИНН: ${item.inn ?? 'не указан'} · `}
                     {adminDate(itemDate(item))}
                   </p>
+                  {'email' in item && (
+                    <div className="grid gap-1 text-sm text-muted-foreground">
+                      {item.email && <p>Почта аккаунта: {item.email}</p>}
+                      {item.contact_email &&
+                        item.contact_email !== item.email && (
+                          <p>Контактная почта: {item.contact_email}</p>
+                        )}
+                      {!item.full_name && (
+                        <p className="text-xs">Имя не указано</p>
+                      )}
+                    </div>
+                  )}
                   <p className="text-xs text-caption">
                     {'candidate_id' in item
                       ? `Профиль кандидата: ${item.candidate_id}`
@@ -155,8 +169,26 @@ export const OperationsPage = ({ section }: OperationsPageProps) => {
                         : `${item.score_percent}%`}
                     </p>
                   )}
+                  {'blocked_reason' in item && item.status === 'blocked' && (
+                    <div className="grid gap-1 text-sm">
+                      <p className="text-xs text-muted-foreground">
+                        Блокировка: {adminDate(item.blocked_at)}
+                      </p>
+                      <p className="line-clamp-2 whitespace-pre-wrap text-destructive">
+                        Причина: {item.blocked_reason ?? 'Не указана'}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex max-w-full flex-wrap items-center gap-2 sm:max-w-72 sm:justify-end">
+                  {'verification_status' in item && (
+                    <OperationStatus
+                      value={item.status}
+                      label={
+                        item.status === 'blocked' ? 'Заблокирована' : 'Активна'
+                      }
+                    />
+                  )}
                   <OperationStatus
                     value={
                       'verification_status' in item

@@ -2,8 +2,9 @@ import { operationStatusLabels } from '../constants';
 
 interface OperationStatusProps {
   value: string;
+  label?: string;
 }
-export const OperationStatus = ({ value }: OperationStatusProps) => {
+export const OperationStatus = ({ value, label }: OperationStatusProps) => {
   let colors = 'border-border bg-muted text-muted-foreground';
   if (
     [
@@ -25,7 +26,7 @@ export const OperationStatus = ({ value }: OperationStatusProps) => {
     <span
       className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center border px-2 py-1 text-center text-xs ${colors}`}
     >
-      {operationStatusLabels[value] ?? value}
+      {label ?? operationStatusLabels[value] ?? value}
     </span>
   );
 };

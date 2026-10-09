@@ -10,12 +10,14 @@ import {
 interface ContentModerationActionsProps {
   section: 'needs' | 'tasks';
   id: string;
+  title: string;
   hidden: boolean;
   onSaved: () => void;
 }
 export const ContentModerationActions = ({
   section,
   id,
+  title,
   hidden,
   onSaved,
 }: ContentModerationActionsProps) => {
@@ -24,6 +26,7 @@ export const ContentModerationActions = ({
     setDecision({
       kind: section,
       id,
+      subjectLabel: title,
       status: hidden ? 'published' : 'hidden',
       title: hidden ? 'Снять модерацию' : 'Скрыть публикацию',
       description:

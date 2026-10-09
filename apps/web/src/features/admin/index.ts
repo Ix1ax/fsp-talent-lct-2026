@@ -1,9 +1,10 @@
 export * from './constants';
-export { questionContent } from './lib';
+export { adminUserLabel, questionContent } from './lib';
 export * from './model';
 export * from './ui/AccountEditor';
 export * from './ui/AccountStatusAction';
 export { AdminAnimatedList } from './ui/AdminAnimatedList';
+export { AdminBlockNotice } from './ui/AdminBlockNotice';
 export { AdminConfirmDialog } from './ui/AdminConfirmDialog';
 export {
   type AdminChartSegment,
@@ -18,10 +19,7 @@ export { AuditFilters } from './ui/AuditFilters';
 export * from './ui/CatalogEditor';
 export * from './ui/Common';
 export * from './ui/ModerationEditor';
-export {
-  type OperationDecision,
-  OperationDecisionDialog,
-} from './ui/OperationDecisionDialog';
+export { OperationDecisionDialog } from './ui/OperationDecisionDialog';
 export { OperationFilters } from './ui/OperationFilters';
 export { OperationStatus } from './ui/OperationStatus';
 export * from './ui/QuestionEditor';

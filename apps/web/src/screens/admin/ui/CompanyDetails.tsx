@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/shared/ui';
 import { adminCompanySchema } from '@/entities/admin';
 import {
+  AdminBlockNotice,
   AdminPanel,
   type OperationDecision,
   OperationDecisionDialog,
@@ -36,6 +37,7 @@ export const CompanyDetails = ({ id }: { id: string }) => {
     if (company)
       setDecision({
         kind: 'companies',
+        subjectLabel: company.name,
         id,
         status,
         title,
@@ -54,6 +56,65 @@ export const CompanyDetails = ({ id }: { id: string }) => {
     >
       {company && (
         <>
+          <AdminPanel>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="font-medium">Доступ к платформе</h2>
+              <OperationStatus
+                value={company.status}
+                label={
+                  company.status === 'blocked' ? 'Заблокирована' : 'Активна'
+                }
+              />
+            </div>
+            {company.status === 'blocked' && (
+              <AdminBlockNotice
+                subject="company"
+                reason={company.blocked_reason}
+                date={adminDate(company.blocked_at)}
+              />
+            )}
+            <p className="text-sm text-muted-foreground">
+              Блокировка закрывает работу компании для всех участников, включая
+              поиск кандидатов, предложения, задания, документы и приглашения.
+              Данные и подтверждение сохраняются. Личные аккаунты участников и
+              другие компании блокируются отдельно.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={
+                  company.status === 'active' ? 'destructive' : 'default'
+                }
+                disabled={query.loading || !!query.error}
+                onClick={() =>
+                  setDecision({
+                    kind: 'companies',
+                    subjectLabel: company.name,
+                    id,
+                    status: company.status === 'active' ? 'blocked' : 'active',
+                    title:
+                      company.status === 'active'
+                        ? 'Заблокировать компанию'
+                        : 'Разблокировать компанию',
+                    description:
+                      company.status === 'active'
+                        ? `Компания «${company.name}» потеряет доступ к рабочим действиям. Её задания и предложения станут недоступны кандидатам. Укажите причину, которую увидят участники компании.`
+                        : `Доступ компании «${company.name}» будет восстановлен. Отдельные блокировки пользователей и модерация публикаций сохранятся. Укажите причину разблокировки.`,
+                  })
+                }
+              >
+                {company.status === 'active'
+                  ? 'Заблокировать компанию'
+                  : 'Разблокировать компанию'}
+              </Button>
+              <Button variant="outline" asChild>
+                <Link
+                  href={`/admin/audit?entity_type=company&entity_id=${id}&action=company.status_changed`}
+                >
+                  История доступа
+                </Link>
+              </Button>
+            </div>
+          </AdminPanel>
           <AdminPanel>
             <div className="flex flex-wrap items-center justify-between gap-4">
               <h2 className="font-medium">Проверка компании</h2>
@@ -96,6 +157,7 @@ export const CompanyDetails = ({ id }: { id: string }) => {
               {company.verification_status === 'pending' && (
                 <>
                   <Button
+                    disabled={query.loading || !!query.error}
                     onClick={() =>
                       choose(
                         'verified',
@@ -108,6 +170,7 @@ export const CompanyDetails = ({ id }: { id: string }) => {
                   </Button>
                   <Button
                     variant="destructive"
+                    disabled={query.loading || !!query.error}
                     onClick={() =>
                       choose(
                         'rejected',
@@ -123,6 +186,7 @@ export const CompanyDetails = ({ id }: { id: string }) => {
               {company.verification_status === 'verified' && (
                 <Button
                   variant="destructive"
+                  disabled={query.loading || !!query.error}
                   onClick={() =>
                     choose(
                       'unverified',
@@ -158,7 +222,7 @@ export const CompanyDetails = ({ id }: { id: string }) => {
               ))}
               <Button variant="outline" asChild>
                 <Link href={`/admin/audit?entity_id=${id}`}>
-                  История проверки
+                  Все действия с компанией
                 </Link>
               </Button>
             </div>

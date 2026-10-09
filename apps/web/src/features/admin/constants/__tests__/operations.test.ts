@@ -20,6 +20,7 @@ describe('operations filters', () => {
     ).toEqual({
       q: 'test',
       status: '',
+      access_status: '',
       role: '',
       company_id: '',
       candidate_id: '',
@@ -28,7 +29,30 @@ describe('operations filters', () => {
     });
     expect(
       operationFiltersSchema.parse(getOperationFilters('users', params)),
-    ).toMatchObject({ q: '', status: '', role: 'employer', company_id: '' });
+    ).toMatchObject({
+      q: 'test',
+      status: '',
+      role: 'employer',
+      company_id: '',
+    });
+  });
+  it('combines literal user search with role and access filters and validates its length', () => {
+    const params = new URLSearchParams({
+      q: '  Иван_%  ',
+      role: 'candidate',
+      status: 'blocked',
+    });
+    expect(
+      operationFiltersSchema.parse(getOperationFilters('users', params)),
+    ).toMatchObject({ q: 'Иван_%', role: 'candidate', status: 'blocked' });
+    expect(
+      operationFiltersSchema.safeParse(
+        getOperationFilters(
+          'users',
+          new URLSearchParams({ q: 'x'.repeat(201) }),
+        ),
+      ).success,
+    ).toBe(false);
   });
   it('validates profile UUIDs and catalog limits before requesting a list', () => {
     expect(
@@ -49,6 +73,25 @@ describe('operations filters', () => {
         ),
       ).success,
     ).toBe(true);
+  });
+  it('combines access and verification filters only for companies', () => {
+    const params = new URLSearchParams('status=verified&access_status=blocked');
+    expect(
+      operationFiltersSchema.parse(getOperationFilters('companies', params)),
+    ).toMatchObject({ status: 'verified', access_status: 'blocked' });
+    expect(getOperationFilters('users', params).access_status).toBe('');
+    expect(
+      getOperationFilters('companies', new URLSearchParams('access_status=all'))
+        .access_status,
+    ).toBe('');
+    expect(
+      operationFiltersSchema.safeParse(
+        getOperationFilters(
+          'companies',
+          new URLSearchParams('access_status=deleted'),
+        ),
+      ).success,
+    ).toBe(false);
   });
   it.each(['-20', '10020', 'NaN', '1.5', ''])(
     'keeps offset %s within the API boundaries',

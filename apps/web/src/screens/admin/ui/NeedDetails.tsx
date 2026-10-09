@@ -101,6 +101,7 @@ export const NeedDetails = ({ id }: { id: string }) => {
             <ContentModerationActions
               section="needs"
               id={id}
+              title={need.title}
               hidden={need.moderation_status === 'hidden'}
               onSaved={query.reload}
             />

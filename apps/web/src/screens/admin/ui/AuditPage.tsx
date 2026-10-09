@@ -132,17 +132,42 @@ export const AuditPage = () => {
                     {adminDate(event.created_at)}
                   </time>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  {auditSourceLabels[event.source]} ·{' '}
-                  {
+                <div className="grid min-w-0 gap-1 text-sm">
+                  <p className="text-xs text-muted-foreground">
+                    {auditSourceLabels[event.source]} ·{' '}
                     {
-                      admin: 'Администратор',
-                      user: 'Пользователь',
-                      system: 'Система',
-                    }[event.actor_kind]
-                  }
-                  {event.actor_id && `: ${event.actor_id}`}
-                </p>
+                      {
+                        admin: 'Администратор',
+                        user: 'Пользователь',
+                        system: 'Система',
+                      }[event.actor_kind]
+                    }
+                  </p>
+                  {event.actor_kind !== 'system' &&
+                    (event.actor_name || event.actor_email) && (
+                      <p className="font-medium">
+                        {event.actor_name ?? event.actor_email}
+                      </p>
+                    )}
+                  {event.actor_name && event.actor_email && (
+                    <p className="text-muted-foreground">{event.actor_email}</p>
+                  )}
+                  {event.actor_id && (
+                    <p className="text-xs text-muted-foreground">
+                      ID автора:{' '}
+                      <Link
+                        href={
+                          event.actor_kind === 'admin'
+                            ? '/admin/admins'
+                            : `/admin/users/${event.actor_id}`
+                        }
+                        className="font-mono text-brand-text underline-offset-4 hover:underline"
+                      >
+                        {event.actor_id}
+                      </Link>
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="text-muted-foreground">
                     {event.entity_type}

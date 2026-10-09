@@ -10,7 +10,7 @@ export type OperationSection = (typeof operationSections)[number];
 export const operationConfig = {
   companies: {
     title: 'Компании',
-    description: 'Заявки на подтверждение, документы и участники компаний.',
+    description: 'Подтверждение и доступ компаний, документы и участники.',
     endpoint: '/companies',
     statuses: ['unverified', 'pending', 'verified', 'rejected'],
     search: true,
@@ -21,10 +21,10 @@ export const operationConfig = {
   users: {
     title: 'Пользователи',
     description:
-      'Статусы кандидатов и работодателей, блокировка и восстановление доступа.',
+      'Поиск по имени, почте и ID; доступ кандидатов и работодателей.',
     endpoint: '/users',
     statuses: ['active', 'blocked', 'deleted'],
-    search: false,
+    search: true,
     company: false,
     candidate: false,
     category: false,

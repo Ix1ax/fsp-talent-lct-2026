@@ -21,6 +21,7 @@ const catalogId = z
 export const operationFiltersSchema = z.object({
   q: text(200),
   status: z.string(),
+  access_status: z.union([z.literal(''), z.enum(['active', 'blocked'])]),
   role: z.union([z.literal(''), z.enum(['candidate', 'employer', 'admin'])]),
   company_id: uuid,
   candidate_id: uuid,
@@ -39,6 +40,10 @@ export const getOperationFilters = (
   return {
     q: config.search ? (params.get('q') ?? '') : '',
     status: allowedStatus ? params.get('status')! : '',
+    access_status:
+      section === 'companies'
+        ? (params.get('access_status') ?? '').replace(/^all$/, '')
+        : '',
     role: section === 'users' ? (params.get('role') ?? '') : '',
     company_id: config.company ? (params.get('company_id') ?? '') : '',
     candidate_id: config.candidate ? (params.get('candidate_id') ?? '') : '',

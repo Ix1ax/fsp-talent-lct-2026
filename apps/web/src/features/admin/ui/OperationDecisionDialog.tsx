@@ -21,22 +21,14 @@ import {
 } from '@/entities/admin';
 
 import { operationDecisionSchema } from '../constants';
-import { useAdminMutation, useAdminSession } from '../model';
+import { isDecisionReasonRequired, operationDecisionRequest } from '../lib';
+import {
+  type OperationDecision,
+  useAdminMutation,
+  useAdminSession,
+} from '../model';
 import { ErrorNotice, Field } from './Common';
 
-export type OperationDecision = {
-  id: string;
-  title: string;
-  description: string;
-} & (
-  | {
-      kind: 'companies';
-      status: 'verified' | 'rejected' | 'unverified';
-      expectedVersion: number;
-    }
-  | { kind: 'users'; status: 'active' | 'blocked' }
-  | { kind: 'needs' | 'tasks'; status: 'published' | 'hidden' }
-);
 interface OperationDecisionDialogProps {
   decision: OperationDecision;
   onClose: () => void;
@@ -56,8 +48,7 @@ export const OperationDecisionDialog = ({
   });
   const unsaved = useFormUnsavedChanges(form);
   const mutation = useAdminMutation(onRefresh);
-  const reasonRequired =
-    decision.kind !== 'companies' || decision.status !== 'verified';
+  const reasonRequired = isDecisionReasonRequired(decision);
   const stale =
     mutation.error instanceof AdminApiError
       ? mutation.error.status === 409 || mutation.error.status === 0
@@ -71,12 +62,7 @@ export const OperationDecisionDialog = ({
       form.setError('reason', { message: 'Укажите причину решения' });
       return;
     }
-    const suffix = {
-      companies: 'verification',
-      users: 'status',
-      needs: 'moderation',
-      tasks: 'moderation',
-    }[decision.kind];
+    const request = operationDecisionRequest(decision, reason);
     const schemas = {
       companies: adminCompanySchema,
       users: adminUserSchema,
@@ -86,17 +72,11 @@ export const OperationDecisionDialog = ({
     const saved = await mutation.run(async () => {
       await adminRequest<unknown>(
         session.access_token,
-        `/${decision.kind}/${decision.id}/${suffix}`,
+        request.path,
         schemas[decision.kind],
         {
           method: 'PATCH',
-          body: {
-            status: decision.status,
-            ...(reason ? { reason } : {}),
-            ...(decision.kind === 'companies'
-              ? { expected_version: decision.expectedVersion }
-              : {}),
-          },
+          body: request.body,
         },
       );
       form.reset({ reason });
@@ -120,6 +100,17 @@ export const OperationDecisionDialog = ({
       >
         <DialogTitle className="pr-10">{decision.title}</DialogTitle>
         <DialogDescription>{decision.description}</DialogDescription>
+        <div className="grid min-w-0 gap-1 rounded-lg border bg-muted/30 p-3 text-sm">
+          {decision.subjectLabel && (
+            <p className="font-medium">{decision.subjectLabel}</p>
+          )}
+          {decision.subjectEmail && (
+            <p className="text-muted-foreground">{decision.subjectEmail}</p>
+          )}
+          <p className="text-xs text-muted-foreground">
+            ID: <span className="font-mono select-all">{decision.id}</span>
+          </p>
+        </div>
         <form onSubmit={submit} className="grid gap-4">
           <Field
             label={
@@ -135,6 +126,8 @@ export const OperationDecisionDialog = ({
           </Field>
           <p className="text-xs text-muted-foreground">
             До 2000 символов. Причина сохраняется в журнале действий.
+            {decision.status === 'blocked' &&
+              ' Пользователь увидит её в своём кабинете.'}
           </p>
           <ErrorNotice error={mutation.error} />
           {stale && (

@@ -35,8 +35,15 @@ export const OperationFilters = ({
     resolver: zodResolver(operationFiltersSchema),
     defaultValues: values,
   });
+  let statusLabel = 'Статус';
+  if (section === 'companies') statusLabel = 'Подтверждение компании';
+  if (section === 'tasks') statusLabel = 'Статус модерации';
+  let searchLabel = 'Название или описание';
+  if (section === 'companies') searchLabel = 'Название или ИНН';
+  if (section === 'users') searchLabel = 'ФИО, почта или ID';
   const select = (
-    name: 'status' | 'role' | 'specialization_id' | 'grade_id',
+    name:
+      'status' | 'access_status' | 'role' | 'specialization_id' | 'grade_id',
     label: string,
     choices: { value: string; label: string }[],
   ) => (
@@ -60,33 +67,38 @@ export const OperationFilters = ({
     <form onSubmit={form.handleSubmit(onApply)} className="grid gap-4">
       <AdminFieldGrid
         className={
-          config.search && !config.company ? 'xl:grid-cols-2' : 'xl:grid-cols-3'
+          config.search &&
+          !config.company &&
+          section !== 'companies' &&
+          section !== 'users'
+            ? 'xl:grid-cols-2'
+            : 'xl:grid-cols-3'
         }
       >
         {config.search && (
-          <Field
-            label={
-              section === 'companies'
-                ? 'Название или ИНН'
-                : 'Название или описание'
-            }
-            error={form.formState.errors.q?.message}
-          >
+          <Field label={searchLabel} error={form.formState.errors.q?.message}>
             <Input
               maxLength={200}
-              placeholder="Поиск"
+              placeholder={
+                section === 'users' ? 'Имя, email или UUID' : 'Поиск'
+              }
               {...form.register('q')}
             />
           </Field>
         )}
         {select(
           'status',
-          section === 'tasks' ? 'Статус модерации' : 'Статус',
+          statusLabel,
           config.statuses.map((value) => ({
             value,
             label: operationStatusLabels[value],
           })),
         )}
+        {section === 'companies' &&
+          select('access_status', 'Доступ к платформе', [
+            { value: 'active', label: 'Активные компании' },
+            { value: 'blocked', label: 'Заблокированные компании' },
+          ])}
         {section === 'users' &&
           select(
             'role',

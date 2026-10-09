@@ -8,11 +8,13 @@ import {
   AdminListLoading,
   AdminListViewport,
   AdminPanel,
+  adminUserLabel,
   ErrorNotice,
   memberRoleLabels,
   OperationStatus,
   Pagination,
   useAdminQuery,
+  userRoleLabels,
 } from '@/features/admin';
 
 import { adminDate, adminNumber } from '../lib';
@@ -105,9 +107,44 @@ export const CompanyRelatedLists = ({ company }: { company: AdminCompany }) => {
                 className="grid min-w-0 gap-3 py-4 sm:grid-cols-[minmax(0,1fr)_auto]"
               >
                 <div className="min-w-0 wrap-anywhere">
-                  <p className="font-medium">{memberRoleLabels[member.role]}</p>
+                  <p className="font-medium">
+                    <AdminEntityLink
+                      section="users"
+                      id={member.user_id}
+                      label={adminUserLabel({
+                        ...member,
+                        role: member.user_role,
+                      })}
+                    />
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {memberRoleLabels[member.role]} ·{' '}
+                    {userRoleLabels[member.user_role]}
+                  </p>
+                  {member.email && (
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Почта аккаунта: {member.email}
+                    </p>
+                  )}
+                  {member.contact_email &&
+                    member.contact_email !== member.email && (
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Контактная почта: {member.contact_email}
+                      </p>
+                    )}
+                  {member.user_status === 'blocked' && (
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-destructive">
+                      Причина блокировки:{' '}
+                      {member.user_blocked_reason ?? 'Не указана'}
+                    </p>
+                  )}
                   <p className="mt-2 text-sm">
-                    <AdminEntityLink section="users" id={member.user_id} />
+                    <span className="text-xs text-muted-foreground">
+                      ID:{' '}
+                      <span className="font-mono select-all">
+                        {member.user_id}
+                      </span>
+                    </span>
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     В команде с {adminDate(member.joined_at)}

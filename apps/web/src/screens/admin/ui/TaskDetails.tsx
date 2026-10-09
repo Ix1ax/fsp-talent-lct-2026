@@ -87,6 +87,7 @@ export const TaskDetails = ({ id }: { id: string }) => {
             <ContentModerationActions
               section="tasks"
               id={id}
+              title={task.title}
               hidden={task.moderation_status === 'hidden'}
               onSaved={query.reload}
             />
