@@ -91,7 +91,7 @@ func (r *Repository) Update(ctx context.Context, user, id string, patch entity.P
 	if err != nil {
 		return c, err
 	}
-	_, err = tx.Exec(ctx, `UPDATE companies SET name=$2,description=$3,inn=$4,contact_email=$5,contact_url=$6 WHERE id=$1`, id, in.Name, in.Description, in.INN, in.ContactEmail, in.ContactURL)
+	err = tx.QueryRow(ctx, `UPDATE companies SET name=$2,description=$3,inn=$4,contact_email=$5,contact_url=$6 WHERE id=$1 RETURNING verification_status`, id, in.Name, in.Description, in.INN, in.ContactEmail, in.ContactURL).Scan(&c.VerificationStatus)
 	if err != nil {
 		return c, dbError(err)
 	}

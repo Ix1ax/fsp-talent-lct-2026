@@ -19,6 +19,8 @@ import (
 	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
 	admincatalogrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/repository"
 	admincatalogservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/service"
+	opsrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/repository"
+	opsservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/service"
 	assessmentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/repository"
 	assessmentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
@@ -33,6 +35,8 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
 	consentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/repository"
 	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
+	taskrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/repository"
+	taskservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 	offerrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
@@ -84,6 +88,7 @@ func run(log *slog.Logger) error {
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
 			FSP:                fspservice.New(fsprepo.New(deps.DB), fspregistry.Mock{}),
 			Admins:             adminservice.New(adminrepository.New(deps.DB)),
+			AdminOperations:    opsservice.New(opsrepository.New(deps.DB), files.NewS3(deps.Objects), log),
 			AdminCatalogs:      admincatalogservice.New(admincatalogrepo.New(deps.DB)),
 			Assessments:        assessmentservice.New(assessmentrepository.New(deps.DB)),
 			AssessmentAttempts: assessmentservice.NewAttempts(assessmentrepository.New(deps.DB), c.AssessmentRetakeDays),
@@ -104,6 +109,7 @@ func run(log *slog.Logger) error {
 			Catalogs:           catalog.NewService(catalog.NewRepository(deps.DB)),
 			Offers:             offerservice.New(offerrepository.New(deps.DB)),
 			CandidateBank:      bankservice.New(bankrepository.New(deps.DB)),
+			DailyTasks:         taskservice.New(taskrepository.New(deps.DB), files.NewS3(deps.Objects), deps.Bucket, log),
 			Consents:           consentservice.NewService(consentrepository.NewRepository(deps.DB), c.PrivacyPolicyVersion),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,

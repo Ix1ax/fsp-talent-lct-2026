@@ -37,6 +37,9 @@ func (s *DocumentService) ListFiles(ctx context.Context, user, id string, limit,
 }
 
 func (s *DocumentService) Upload(ctx context.Context, user, id, name, purpose string, data []byte) (files.File, error) {
+	if purpose != "company_document" && purpose != "company_logo" {
+		return files.File{}, files.ErrInvalid
+	}
 	f, err := files.Prepare(name, purpose, data)
 	if err != nil {
 		return f, err
