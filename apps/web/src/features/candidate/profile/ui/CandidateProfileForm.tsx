@@ -1,7 +1,8 @@
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
 import {
   type FormDraftBridge,
   useFormDraftImport,
-  useUnsavedChanges,
+  useFormUnsavedChanges,
 } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
@@ -12,6 +13,7 @@ import {
 } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 
+import { toProfileInput } from '../lib';
 import { type ProfileFormValues, useCandidateProfileForm } from '../model';
 import { ProfileEmploymentFields } from './ProfileEmploymentFields';
 import { ProfileTextFields } from './ProfileTextFields';
@@ -48,7 +50,10 @@ export const CandidateProfileForm = ({
       onProfileChange,
     });
   useFormDraftImport(form, { importedDraft, onDraftReader });
-  useUnsavedChanges(form.formState.isDirty);
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    normalize: toProfileInput,
+  });
   let submitLabel = profile ? 'Сохранить изменения' : 'Создать профиль';
   if (onSaved) submitLabel = 'Сохранить и продолжить';
   return (
@@ -56,7 +61,10 @@ export const CandidateProfileForm = ({
       noValidate
       onSubmit={form.handleSubmit(
         async (values) => {
-          if (!busy && (await save(values))) onSaved?.();
+          if (!busy && (await save(values))) {
+            unsaved.markSaved();
+            onSaved?.();
+          }
         },
         () => toast.error('Проверьте поля профиля перед сохранением.'),
       )}

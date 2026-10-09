@@ -10,12 +10,12 @@ import { adminSchemas, kindLabels, queryString } from '@/entities/admin';
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   AdminSelect,
   ErrorNotice,
   Pagination,
   SkillPicker,
   Status,
-  useAdminOptions,
   useAdminQuery,
 } from '@/features/admin';
 
@@ -30,16 +30,18 @@ export const QuestionsPage = () => {
     status: params.get('status') ?? '',
     kind: '',
   });
+
   const [offset, setOffset] = useState(0);
-  const options = useAdminOptions();
   const list = useAdminQuery(
     `/assessments/questions?${queryString({ ...filters, limit: 20, offset })}`,
     adminSchemas.questions,
   );
+
   const filter = (key: keyof typeof filters, value: string) => {
     setFilters((v) => ({ ...v, [key]: value }));
     setOffset(0);
   };
+
   return (
     <div className="grid min-w-0 content-start gap-6">
       <AdminPageHeader
@@ -68,7 +70,6 @@ export const QuestionsPage = () => {
                 label="Навык"
                 value={filters.skill_id}
                 onChange={(v) => filter('skill_id', v)}
-                items={options.data.skills ?? []}
               />
               <AdminSelect
                 showLabel
@@ -146,12 +147,11 @@ export const QuestionsPage = () => {
             </p>
           </div>
         </details>
-        <ErrorNotice error={options.error} onRetry={options.reload} />
         <ErrorNotice error={list.error} onRetry={list.reload} />
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем задания…' : ''}
         </p>
-        <div className="border-t">
+        <AdminListViewport loading={list.loading} className="border-t">
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -185,7 +185,7 @@ export const QuestionsPage = () => {
               </StaggerItem>
             ))}
           </AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}

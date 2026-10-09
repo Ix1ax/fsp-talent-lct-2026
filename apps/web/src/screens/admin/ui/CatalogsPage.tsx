@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Plus } from 'lucide-react';
 
 import { MOTION_LAYOUT_IDS } from '@/shared/contants';
-import { useDebounce } from '@/shared/hooks';
+import { confirmUnsavedChanges, useDebounce } from '@/shared/hooks';
 import {
   AnimatedIndicator,
   Button,
@@ -22,12 +22,15 @@ import {
   catalogLabels,
   deleteAdminCatalogItem,
   getAdminCatalogs,
+  invalidateAdminCatalogs,
   queryString,
+  subscribeAdminCatalogs,
   updateAdminCatalogItem,
 } from '@/entities/admin';
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   CatalogEditor,
   ErrorNotice,
   Field,
@@ -58,7 +61,14 @@ export const CatalogsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<unknown>(null);
   const [revision, setRevision] = useState(0);
-  const reload = useCallback(() => setRevision((value) => value + 1), []);
+  const reload = useCallback(() => invalidateAdminCatalogs(kind), [kind]);
+  useEffect(
+    () =>
+      subscribeAdminCatalogs((changed) => {
+        if (!changed || changed === kind) setRevision((value) => value + 1);
+      }),
+    [kind],
+  );
   const mutation = useAdminMutation(reload);
 
   useEffect(() => {
@@ -91,7 +101,6 @@ export const CatalogsPage = () => {
       await updateAdminCatalogItem(session!.access_token, kind, item.id, {
         active: item.active === false,
       });
-      reload();
     });
 
   return (
@@ -118,6 +127,7 @@ export const CatalogsPage = () => {
             className="relative isolate h-auto min-h-11 whitespace-normal"
             aria-pressed={kind === value}
             onClick={() => {
+              if (value === kind || !confirmUnsavedChanges()) return;
               cancel();
               setKind(value);
               setOffset(0);
@@ -155,7 +165,7 @@ export const CatalogsPage = () => {
         <p role="status" aria-live="polite" className="sr-only">
           {loading ? 'Загружаем справочник…' : ''}
         </p>
-        <div className="border-t">
+        <AdminListViewport loading={loading} className="border-t">
           <AdminListLoading loading={loading} hasData={!!catalogs} />
           {!loading && !loadError && !catalogs?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -212,7 +222,7 @@ export const CatalogsPage = () => {
               );
             })}
           </AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={catalogs?.items.length ?? 0}
@@ -225,7 +235,7 @@ export const CatalogsPage = () => {
           kind={kind}
           item={editor === 'new' ? undefined : editor}
           onClose={() => setEditor(null)}
-          onSaved={reload}
+          onSaved={() => {}}
         />
       )}
       {deleting && (
@@ -241,7 +251,6 @@ export const CatalogsPage = () => {
                 kind,
                 deleting.id,
               );
-              reload();
             })
           }
         >
@@ -259,7 +268,6 @@ export const CatalogsPage = () => {
                       deleting.id,
                       { active: false },
                     );
-                    reload();
                     setDeleting(null);
                   })
                 }

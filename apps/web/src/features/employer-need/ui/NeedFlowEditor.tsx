@@ -23,6 +23,7 @@ import type { NeedInput, NeedStatus } from '@/entities/employer-need';
 import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
 
 import { toNeedInput, validateNeed } from '../lib';
+import { loadNeedSkills, useNeedSkills } from '../model/useNeedSkills';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedSummary } from './NeedSummary';
 
@@ -48,7 +49,7 @@ interface NeedFlowEditorProps {
 export const NeedFlowEditor = ({
   initial,
   catalogs,
-  skills,
+  skills: initialSkills,
   isNew,
   initialStep = 0,
   readonly,
@@ -68,6 +69,19 @@ export const NeedFlowEditor = ({
       navigation.scrollIntoView({ behavior: 'instant', block: 'start' });
   }, [step]);
   const [q, setQ] = useState('');
+  const skillSearch = useNeedSkills(
+    loadNeedSkills,
+    q,
+    value.skills.map((item) => item.skillId),
+  );
+  const skills = [
+    ...new Map(
+      [...initialSkills, ...skillSearch.skills].map((skill) => [
+        skill.id,
+        skill,
+      ]),
+    ).values(),
+  ];
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const dirty = form.formState.isDirty;
@@ -366,49 +380,55 @@ export const NeedFlowEditor = ({
                         placeholder="Название или синоним"
                       />
                     </label>
+                    {skillSearch.loading && (
+                      <p role="status">Загрузка навыков…</p>
+                    )}
+                    {skillSearch.error && (
+                      <div role="alert">
+                        <p>{skillSearch.error}</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={skillSearch.retry}
+                        >
+                          Повторить загрузку навыков
+                        </Button>
+                      </div>
+                    )}
                     <div className="grid max-h-72 gap-2 overflow-y-auto">
-                      {skills
-                        .filter((s) =>
-                          [s.name, ...s.aliases]
-                            .join(' ')
-                            .toLowerCase()
-                            .includes(q.toLowerCase()),
-                        )
-                        .map((skill) => (
-                          <label
-                            key={skill.id}
-                            className="flex min-h-11 items-center gap-3 text-sm"
-                          >
-                            <Checkbox
-                              checked={value.skills.some(
-                                (s) => s.skillId === skill.id,
-                              )}
-                              disabled={
-                                value.skills.length >= 50 &&
-                                !value.skills.some(
-                                  (s) => s.skillId === skill.id,
-                                )
-                              }
-                              onCheckedChange={(checked) =>
-                                change({
-                                  skills: checked
-                                    ? [
-                                        ...value.skills,
-                                        {
-                                          skillId: skill.id,
-                                          required: true,
-                                          weight: 1,
-                                        },
-                                      ]
-                                    : value.skills.filter(
-                                        (s) => s.skillId !== skill.id,
-                                      ),
-                                })
-                              }
-                            />
-                            {skill.name}
-                          </label>
-                        ))}
+                      {skillSearch.items.map((skill) => (
+                        <label
+                          key={skill.id}
+                          className="flex min-h-11 items-center gap-3 text-sm"
+                        >
+                          <Checkbox
+                            checked={value.skills.some(
+                              (s) => s.skillId === skill.id,
+                            )}
+                            disabled={
+                              value.skills.length >= 50 &&
+                              !value.skills.some((s) => s.skillId === skill.id)
+                            }
+                            onCheckedChange={(checked) =>
+                              change({
+                                skills: checked
+                                  ? [
+                                      ...value.skills,
+                                      {
+                                        skillId: skill.id,
+                                        required: true,
+                                        weight: 1,
+                                      },
+                                    ]
+                                  : value.skills.filter(
+                                      (s) => s.skillId !== skill.id,
+                                    ),
+                              })
+                            }
+                          />
+                          {skill.name}
+                        </label>
+                      ))}
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Выбрано {value.skills.length} из 50 навыков. Обязательные

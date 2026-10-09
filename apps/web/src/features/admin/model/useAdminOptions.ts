@@ -1,79 +1,99 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  type AdminSession,
   type CatalogItem,
   type CatalogKind,
-  getAdminCatalogs,
+  invalidateAdminCatalogs,
+  loadAdminCatalog,
+  subscribeAdminCatalogs,
 } from '@/entities/admin';
 
 import { useAdminSession } from './index';
 
-type OptionsResult = {
-  session: AdminSession;
+type CatalogState = {
+  token: string;
   revision: number;
-  data: Record<string, CatalogItem[]>;
+  data: CatalogItem[];
+  loading: boolean;
   error: unknown;
 };
-export const useAdminOptions = () => {
+// Skills use bounded server search in SkillPicker, never a complete download.
+type OptionKind = Exclude<CatalogKind, 'skills'>;
+export const useAdminOptions = (kinds: readonly OptionKind[]) => {
   const { session } = useAdminSession();
-  const [revision, setRevision] = useState(0);
-  const [result, setResult] = useState<OptionsResult | null>(null);
-  const reload = useCallback(() => setRevision((v) => v + 1), []);
-  useEffect(() => {
-    if (!session) return;
-    const controller = new AbortController();
-    const load = async (kind: CatalogKind) => {
-      const items: CatalogItem[] = [];
-      for (let offset = 0; offset <= 10000; offset += 100) {
-        const page = await getAdminCatalogs(
-          session.access_token,
-          kind,
-          { limit: 100, offset },
-          controller.signal,
-        );
-        items.push(...page.items);
-        if (page.items.length < 100) break;
-      }
-      return items;
-    };
-    void Promise.all(
-      ['skills', 'specializations', 'grades'].map(
-        async (kind) => [kind, await load(kind as CatalogKind)] as const,
-      ),
-    )
-      .then((entries) => {
-        if (!controller.signal.aborted)
-          setResult({
-            session,
-            revision,
-            data: Object.fromEntries(entries),
-            error: null,
+  const token = session?.access_token;
+  const key = [...new Set(kinds)].sort().join(',');
+  const [revisions, setRevisions] = useState<
+    Partial<Record<OptionKind, number>>
+  >({});
+  const [states, setStates] = useState<
+    Partial<Record<OptionKind, CatalogState>>
+  >({});
+  useEffect(
+    () =>
+      subscribeAdminCatalogs((kind) => {
+        if (!kind || key.split(',').includes(kind))
+          setRevisions((previous) => {
+            const next = { ...previous };
+            for (const requested of key
+              .split(',')
+              .filter(Boolean) as OptionKind[]) {
+              if (!kind || requested === kind)
+                next[requested] = (previous[requested] ?? 0) + 1;
+            }
+            return next;
           });
-      })
-      .catch((error: unknown) => {
-        if (!controller.signal.aborted)
-          setResult((previous) => ({
-            session,
-            revision,
-            data: previous?.session === session ? previous.data : {},
-            error,
-          }));
-      });
+      }),
+    [key],
+  );
+  const reload = useCallback(
+    (only?: OptionKind) => {
+      for (const kind of key.split(',').filter(Boolean))
+        if (!only || kind === only) invalidateAdminCatalogs(kind as OptionKind);
+    },
+    [key],
+  );
+  useEffect(() => {
+    if (!token || !key) return;
+    const controller = new AbortController();
+    for (const kind of key.split(',') as OptionKind[]) {
+      const revision = revisions[kind] ?? 0;
+      void loadAdminCatalog(token, kind, controller.signal).then(
+        (data) => {
+          if (!controller.signal.aborted)
+            setStates((previous) => ({
+              ...previous,
+              [kind]: { token, revision, data, loading: false, error: null },
+            }));
+        },
+        (error: unknown) => {
+          if (!controller.signal.aborted)
+            setStates((previous) => ({
+              ...previous,
+              [kind]: { token, revision, data: [], loading: false, error },
+            }));
+        },
+      );
+    }
     return () => controller.abort();
-  }, [revision, session]);
-  const current =
-    result?.session === session && result?.revision === revision
-      ? result
-      : null;
-  const data = result?.session === session ? result.data : {};
+  }, [key, token, revisions]);
+  const data: Record<string, CatalogItem[]> = {};
+  const catalogs: Partial<
+    Record<OptionKind, Omit<CatalogState, 'token' | 'revision'>>
+  > = {};
+  for (const kind of key.split(',').filter(Boolean) as OptionKind[]) {
+    const revision = revisions[kind] ?? 0;
+    const current =
+      states[kind]?.token === token && states[kind]?.revision === revision
+        ? states[kind]
+        : undefined;
+    catalogs[kind] = current ?? { data: [], loading: !!token, error: null };
+    data[kind] = catalogs[kind]!.data;
+  }
   return {
     data,
-    error: current?.error ?? null,
-    loading: !!session && !current,
+    catalogs,
+    loading: Object.values(catalogs).some((state) => state.loading),
     reload,
-    skills: (data.skills ?? []).filter(
-      (s) => s.active !== false && s.moderation_status === 'approved',
-    ),
   };
 };

@@ -1,9 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { AdminApiError, adminLogin, adminRequest, queryString } from '../index';
+import {
+  AdminApiError,
+  adminLogin,
+  adminLogout,
+  adminRequest,
+  queryString,
+} from '../index';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 describe('adminRequest', () => {
   it('handles a 204 without trying to parse JSON and isolates the admin token', async () => {
     const fetch = vi
@@ -121,6 +131,94 @@ describe('adminRequest', () => {
     await expect(adminRequest('token', '/admins', z.unknown())).rejects.toBe(
       aborted,
     );
+  });
+  it('bounds waiting for headers and never retries a timed out mutation', async () => {
+    vi.useFakeTimers();
+    const fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
+    vi.stubGlobal('fetch', fetch);
+    const request = adminRequest('token', '/admins', z.unknown(), {
+      method: 'POST',
+    });
+    const assertion = expect(request).rejects.toMatchObject({
+      code: 'timeout',
+      status: 0,
+      message: expect.stringContaining('Перед повтором проверьте данные'),
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    await assertion;
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('bounds body reading and retains response diagnostic headers', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        status: 200,
+        headers: new Headers({
+          'X-Request-ID': 'slow-body',
+          'Retry-After': '10',
+        }),
+        text: () => new Promise(() => {}),
+      }),
+    );
+    const request = adminRequest('token', '/admins', z.unknown());
+    const assertion = expect(request).rejects.toMatchObject({
+      code: 'timeout',
+      requestId: 'slow-body',
+      retryAfter: '10',
+    });
+    await vi.advanceTimersByTimeAsync(30_000);
+    await assertion;
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('preserves navigation cancellation and removes timers and listeners', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    const fetch = vi.fn().mockImplementation(() => new Promise(() => {}));
+    vi.stubGlobal('fetch', fetch);
+    const request = adminRequest('token', '/admins', z.unknown(), {
+      signal: controller.signal,
+    });
+    controller.abort();
+    // The rejection carries the caller's AbortError, not a timeout/API error.
+    await expect(request).rejects.toBe(controller.signal.reason);
+    expect(fetch.mock.calls[0][1].signal.aborted).toBe(true);
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it('does not send an already cancelled request', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    await expect(
+      adminRequest('token', '/admins', z.unknown(), {
+        signal: controller.signal,
+      }),
+    ).rejects.toBe(controller.signal.reason);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it('cleans up on success and bounds logout to five seconds', async () => {
+    vi.useFakeTimers();
+    const controller = new AbortController();
+    const remove = vi.spyOn(controller.signal, 'removeEventListener');
+    const fetch = vi.fn().mockResolvedValue(new Response('{}'));
+    vi.stubGlobal('fetch', fetch);
+    await adminRequest('token', '/admins', z.unknown(), {
+      signal: controller.signal,
+    });
+    expect(vi.getTimerCount()).toBe(0);
+    expect(remove).toHaveBeenCalledWith('abort', expect.any(Function));
+    fetch.mockImplementation(() => new Promise(() => {}));
+    const assertion = expect(adminLogout('token')).rejects.toMatchObject({
+      code: 'timeout',
+    });
+    await vi.advanceTimersByTimeAsync(5_000);
+    await assertion;
+    expect(vi.getTimerCount()).toBe(0);
   });
   it('encodes queries and skips empty optional filters', () => {
     expect(queryString({ q: 'C++ & Go', status: '', offset: 0 })).toBe(

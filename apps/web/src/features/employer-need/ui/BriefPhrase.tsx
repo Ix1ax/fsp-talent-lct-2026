@@ -20,6 +20,13 @@ interface BriefPhraseProps {
   onChange: (value: NeedInput) => void;
   catalogs: Catalogs;
   skills: Skill[];
+  searchItems: Skill[];
+  skillQuery: string;
+  onSkillQuery: (query: string) => void;
+  skillsLoading: boolean;
+  skillsError: string;
+  onRetrySkills: () => void;
+  catalogsUnavailable: boolean;
   disabled?: boolean;
   errors: Record<string, string>;
 }
@@ -29,20 +36,29 @@ export const BriefPhrase = ({
   onChange,
   catalogs,
   skills,
+  searchItems,
+  skillQuery,
+  onSkillQuery,
+  skillsLoading,
+  skillsError,
+  onRetrySkills,
+  catalogsUnavailable,
   disabled,
   errors,
 }: BriefPhraseProps) => {
   const [open, setOpen] = useState<string | null>(null);
-  const [q, setQ] = useState('');
   const change = (patch: Partial<NeedInput>) =>
     onChange({ ...value, ...patch });
   const token = (key: string) => ({
     open: open === key,
     onOpenChange: (v: boolean) => {
-      setQ('');
+      onSkillQuery('');
       setOpen(v ? key : null);
     },
-    disabled,
+    disabled:
+      disabled ||
+      (catalogsUnavailable &&
+        ['specialization', 'grade', 'formats'].includes(key)),
   });
 
   const option = (
@@ -78,65 +94,91 @@ export const BriefPhrase = ({
         empty={!selected.length}
         label={selected.map((s) => s.name).join(', ') || 'добавить навыки'}
       >
+        {selected.map((skill) => (
+          <Button
+            key={skill.id}
+            type="button"
+            variant="outline"
+            className="mb-2 min-h-11 w-full whitespace-normal"
+            onClick={() =>
+              change({
+                skills: value.skills.filter(
+                  (item) => item.skillId !== skill.id,
+                ),
+              })
+            }
+          >
+            Убрать {skill.name}
+          </Button>
+        ))}
         <Input
           aria-label="Поиск навыка"
           placeholder="Поиск по справочнику"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
+          maxLength={100}
+          value={skillQuery}
+          onChange={(e) => onSkillQuery(e.target.value)}
         />
+        {skillsLoading && (
+          <p role="status" className="mt-3 text-sm">
+            Ищем навыки…
+          </p>
+        )}
+        {skillsError && (
+          <div role="alert" className="mt-3 grid gap-2 text-sm">
+            <p>{skillsError}</p>
+            <Button type="button" variant="outline" onClick={onRetrySkills}>
+              Повторить поиск навыков
+            </Button>
+          </div>
+        )}
+        {!skillsLoading && !skillsError && !searchItems.length && (
+          <p className="mt-3 text-sm">Навыков не найдено. Уточните поиск.</p>
+        )}
         <div className="mt-3 grid max-h-64 gap-3 overflow-auto">
-          {skills
-            .filter((s) =>
-              [s.name, ...s.aliases]
-                .join(' ')
-                .toLowerCase()
-                .includes(q.toLowerCase()),
-            )
-            .map((s) => (
-              <label
-                key={s.id}
-                className="flex min-h-11 items-center gap-3 text-base"
-              >
-                <Checkbox
-                  disabled={
-                    disabled ||
-                    (value.skills.length >= MAX_NEED_SKILLS &&
-                      !value.skills.some((skill) => skill.skillId === s.id))
-                  }
-                  checked={value.skills.some(
-                    (v) => v.skillId === s.id && v.required === required,
-                  )}
-                  onCheckedChange={(checked) => {
-                    const previous = value.skills.find(
-                      (v) => v.skillId === s.id,
-                    );
-                    if (
-                      checked &&
-                      !previous &&
-                      value.skills.length >= MAX_NEED_SKILLS
-                    )
-                      return;
-                    change({
-                      skills: checked
-                        ? [
-                            ...value.skills.filter((v) => v.skillId !== s.id),
-                            {
-                              skillId: s.id,
-                              required,
-                              weight: previous?.weight ?? 1,
-                            },
-                          ]
-                        : value.skills.filter((v) => v.skillId !== s.id),
-                    });
-                  }}
-                />
-                {s.name}
-              </label>
-            ))}
+          {searchItems.map((s) => (
+            <label
+              key={s.id}
+              className="flex min-h-11 items-center gap-3 text-base"
+            >
+              <Checkbox
+                disabled={
+                  disabled ||
+                  (value.skills.length >= MAX_NEED_SKILLS &&
+                    !value.skills.some((skill) => skill.skillId === s.id))
+                }
+                checked={value.skills.some(
+                  (v) => v.skillId === s.id && v.required === required,
+                )}
+                onCheckedChange={(checked) => {
+                  const previous = value.skills.find((v) => v.skillId === s.id);
+                  if (
+                    checked &&
+                    !previous &&
+                    value.skills.length >= MAX_NEED_SKILLS
+                  )
+                    return;
+                  change({
+                    skills: checked
+                      ? [
+                          ...value.skills.filter((v) => v.skillId !== s.id),
+                          {
+                            skillId: s.id,
+                            required,
+                            weight: previous?.weight ?? 1,
+                          },
+                        ]
+                      : value.skills.filter((v) => v.skillId !== s.id),
+                  });
+                }}
+              />
+              {s.name}
+            </label>
+          ))}
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
-          Выбрано {value.skills.length} из {MAX_NEED_SKILLS} навыков. Лимит
-          общий для обязательных и желательных.
+          Показано до 50 результатов. Уточните поиск для других навыков. Выбрано{' '}
+          {value.skills.length} из {MAX_NEED_SKILLS} навыков. Лимит общий для
+          обязательных и желательных.
         </p>
       </BriefToken>
     );

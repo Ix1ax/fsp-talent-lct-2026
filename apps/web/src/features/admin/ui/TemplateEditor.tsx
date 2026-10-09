@@ -2,10 +2,12 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Input } from '@/shared/ui';
 import { adminRequest, adminSchemas, type Template } from '@/entities/admin';
 
-import { templateFormSchema, type TemplateFormValues } from '../constants';
+import { templateFormSchema } from '../constants';
+import type { TemplateFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { useAdminOptions } from '../model/useAdminOptions';
@@ -23,7 +25,7 @@ export const TemplateEditor = ({
   onSaved,
 }: TemplateEditorProps) => {
   const { session } = useAdminSession();
-  const options = useAdminOptions();
+  const options = useAdminOptions(['specializations', 'grades']);
   const mutation = useAdminMutation();
   const form = useForm<TemplateFormValues>({
     resolver: zodResolver(templateFormSchema),
@@ -43,6 +45,10 @@ export const TemplateEditor = ({
       ) ?? [{ skill_id: '', difficulty: 1, question_count: 5, weight: 1 }],
     },
   });
+  const unsaved = useFormUnsavedChanges(form);
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const rows = useFieldArray({ control: form.control, name: 'blueprint' });
   const blueprint = useWatch({ control: form.control, name: 'blueprint' });
   const submit = form.handleSubmit(async (values) => {
@@ -53,6 +59,8 @@ export const TemplateEditor = ({
         adminSchemas.template,
         { method: 'POST', body: values },
       );
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success('Черновик шаблона создан');
       onSaved(saved.id);
     });
@@ -74,10 +82,10 @@ export const TemplateEditor = ({
               name="stack_skill_id"
               render={({ field }) => (
                 <SkillPicker
+                  approvedOnly
                   label="Основной навык (стек)"
                   value={field.value}
                   onChange={field.onChange}
-                  items={options.skills}
                 />
               )}
             />
@@ -101,6 +109,7 @@ export const TemplateEditor = ({
                     render={({ field }) => (
                       <AdminSelect
                         label={label}
+                        disabled={options.catalogs[kind]?.loading}
                         value={field.value ? String(field.value) : ''}
                         onChange={(v) => field.onChange(Number(v))}
                         options={[
@@ -118,6 +127,10 @@ export const TemplateEditor = ({
                         ]}
                       />
                     )}
+                  />
+                  <ErrorNotice
+                    error={options.catalogs[kind]?.error}
+                    onRetry={() => options.reload(kind)}
                   />
                 </Field>
               );
@@ -163,9 +176,9 @@ export const TemplateEditor = ({
                   name={`blueprint.${index}.skill_id`}
                   render={({ field }) => (
                     <SkillPicker
+                      approvedOnly
                       value={field.value}
                       onChange={field.onChange}
-                      items={options.skills}
                     />
                   )}
                 />
@@ -251,10 +264,9 @@ export const TemplateEditor = ({
               Добавить строку
             </Button>
           </section>
-          <ErrorNotice error={options.error} />
           <ErrorNotice error={mutation.error} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={close}>
               Отмена
             </Button>
             <Button className="min-w-44" disabled={options.loading}>

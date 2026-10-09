@@ -4,6 +4,7 @@ import {
   clearOidcUser,
   createOidcManager,
 } from '@/shared/auth';
+import { approveUnsavedUnload } from '@/shared/hooks/navigation';
 
 export const logoutSession = async (): Promise<void> => {
   const config = await getAuthConfig();
@@ -18,5 +19,11 @@ export const logoutSession = async (): Promise<void> => {
 
   clearClientAccessToken();
   await clearOidcUser();
-  await manager.signoutRedirect();
+  const cancelApproval = approveUnsavedUnload();
+  try {
+    await manager.signoutRedirect();
+  } catch (error) {
+    cancelApproval();
+    throw error;
+  }
 };

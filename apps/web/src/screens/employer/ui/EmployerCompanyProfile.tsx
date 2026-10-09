@@ -3,7 +3,7 @@ import { ChevronRightIcon, PencilIcon } from 'lucide-react';
 
 import { useUnsavedGuard } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import { Button, ConfirmDiscardDialog } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { Company, CompanyInput } from '@/entities/company';
 import type { EmployerNeed } from '@/entities/employer-need';
@@ -171,11 +171,6 @@ export const EmployerCompanyProfile = ({
           </>
         )}
       </div>
-      <ConfirmDiscardDialog
-        open={unsaved.open}
-        onCancel={unsaved.cancel}
-        onProceed={unsaved.proceed}
-      />
     </div>
   );
 };

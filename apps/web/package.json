@@ -14,7 +14,11 @@
     "prepare": "cd ../.. && node apps/web/node_modules/husky/bin.js apps/web/.husky || node node_modules/husky/bin.js apps/web/.husky",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "review:api": "node scripts/review/mock-api.mjs",
+    "review:baseline": "node scripts/review/browser-baseline.mjs",
+    "review:auth": "node scripts/review/auth-smoke.mjs",
+    "review:mock-test": "node --test scripts/review/mock-api.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

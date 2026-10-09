@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDownIcon, LogOutIcon, UserIcon } from 'lucide-react';
 
 import { STATIC_ROUTES, USER_ROLE_LABELS } from '@/shared/contants';
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import {
   Avatar,
   AvatarFallback,
@@ -43,6 +44,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const onLogout = async () => {
+    if (pending || !confirmUnsavedChanges()) return;
     setPending(true);
     setError(null);
 

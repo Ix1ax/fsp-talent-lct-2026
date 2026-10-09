@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
+import { useGuardedRouter } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import { adminRequest, adminSchemas, kindLabels } from '@/entities/admin';
 import {
@@ -19,7 +19,7 @@ interface QuestionDetailsProps {
 }
 export const QuestionDetails = ({ id, onSaved }: QuestionDetailsProps) => {
   const { session } = useAdminSession();
-  const router = useRouter();
+  const router = useGuardedRouter();
   const detail = useAdminQuery(
     `/assessments/questions/${id}`,
     adminSchemas.question,

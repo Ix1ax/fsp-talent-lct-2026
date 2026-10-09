@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import { ApiError, ensureClientAccessToken } from '@/shared/api';
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
@@ -75,7 +76,9 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
   const input = useRef<HTMLInputElement>(null);
   const uploadButton = useRef<HTMLButtonElement>(null);
 
-  useUnsavedChanges(!!props.applied || !!pending);
+  useUnsavedChanges(!!file || !!pending, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+  });
 
   useEffect(() => () => request.current?.abort(), []);
 

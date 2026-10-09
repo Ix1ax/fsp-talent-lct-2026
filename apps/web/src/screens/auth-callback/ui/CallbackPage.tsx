@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { takeLoginReturnPath } from '@/shared/auth/loginReturnPath';
 import { STATIC_ROUTES } from '@/shared/contants';
+import { sanitizeRedirectPath } from '@/shared/utils';
 import { getRoleHomeRoute } from '@/entities/session';
 import {
   completeOidcCallback,
@@ -40,7 +41,33 @@ export const CallbackPage = () => {
           return;
         }
 
-        router.replace(takeLoginReturnPath(getRoleHomeRoute(result.user.role)));
+        const roleHome = getRoleHomeRoute(result.user.role);
+        let destination = roleHome;
+
+        if (result.next) {
+          const safeNext = sanitizeRedirectPath(result.next);
+          const nextPathname = new URL(safeNext, 'https://app.invalid')
+            .pathname;
+          const isAllowedForRole =
+            (result.user.role === 'candidate' &&
+              (nextPathname === '/candidate' ||
+                nextPathname.startsWith('/candidate/') ||
+                safeNext === '/cabinet')) ||
+            (result.user.role === 'employer' &&
+              (nextPathname === '/employer' ||
+                nextPathname.startsWith('/employer/') ||
+                safeNext === '/cabinet')) ||
+            (result.user.role === 'admin' &&
+              (nextPathname === '/admin' ||
+                nextPathname.startsWith('/admin/') ||
+                safeNext === '/cabinet'));
+
+          if (isAllowedForRole) {
+            destination = safeNext;
+          }
+        }
+
+        router.replace(takeLoginReturnPath(destination));
         return;
       }
 

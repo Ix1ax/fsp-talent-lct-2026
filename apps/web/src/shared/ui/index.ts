@@ -32,6 +32,7 @@ export * from './Popover';
 export * from './SalaryRangeInput';
 export * from './Select';
 export * from './Separator';
+export * from './ServiceUnavailableNotice';
 export * from './Sheet';
 export * from './Skeleton';
 export * from './Slider';

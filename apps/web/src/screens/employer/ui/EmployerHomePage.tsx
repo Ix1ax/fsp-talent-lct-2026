@@ -5,13 +5,9 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
 
 import { useUnsavedChanges, useUnsavedGuard } from '@/shared/hooks';
+import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import { cn } from '@/shared/lib/utils';
-import {
-  AsyncState,
-  Button,
-  ConfirmDiscardDialog,
-  Skeleton,
-} from '@/shared/ui';
+import { AsyncState, Button, Skeleton } from '@/shared/ui';
 import type { SessionUser } from '@/entities/session';
 import {
   AcceptInvitation,
@@ -48,6 +44,14 @@ interface EmployerHomePageProps {
 export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
   const api = employerGateway;
   const board = useEmployerBoard();
+  const canLoadSkills = !!board.resources;
+  const loadSkills = useCallback(
+    (signal: AbortSignal) =>
+      canLoadSkills ? api.skills('', signal) : Promise.resolve([]),
+    [api, canLoadSkills],
+  );
+  const skillCatalog = useRemoteData(loadSkills);
+  const skills = skillCatalog.data ?? [];
   const loadActiveNeeds = useCallback(
     (signal: AbortSignal) =>
       loadStatusVacancies(api, board.companyId, 'active', signal),
@@ -220,6 +224,22 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                 )}
             </header>
           )}
+          {board.resources && board.catalogsError && (
+            <AsyncState
+              error
+              title="Справочники условий недоступны"
+              description={board.catalogsError}
+              onRetry={board.retryCatalogs}
+            />
+          )}
+          {board.resources && skillCatalog.error && (
+            <AsyncState
+              error
+              title="Навыки недоступны"
+              description={skillCatalog.error}
+              onRetry={skillCatalog.retry}
+            />
+          )}
           {board.error ? (
             <AsyncState
               error
@@ -348,8 +368,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         <EmployerCompanyProfile
                           company={company}
                           api={api}
-                          catalogs={board.resources.catalogs}
-                          skills={board.resources.skills}
+                          catalogs={board.catalogs}
+                          skills={skills}
                           revision={board.revision}
                           visible={section === 'profile'}
                           busy={busy}
@@ -413,8 +433,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         <VacancyBank
                           board={board}
                           api={api}
-                          catalogs={board.resources.catalogs}
-                          skills={board.resources.skills}
+                          catalogs={board.catalogs}
+                          skills={skills}
                           composer={composer}
                           created={createdNeed}
                           dirty={drafts.vacancies ?? false}
@@ -460,8 +480,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         <CandidateBank
                           company={company}
                           api={api}
-                          catalogs={board.resources.catalogs}
-                          skills={board.resources.skills}
+                          catalogs={board.catalogs}
+                          skills={skills}
                           onBusyChange={busyChanged}
                           loadNeeds={loadActiveNeeds}
                           revision={board.revision}
@@ -508,20 +528,10 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           )}
         </div>
       </main>
-      <ConfirmDiscardDialog
-        open={needUnsaved.open}
-        onCancel={needUnsaved.cancel}
-        onProceed={needUnsaved.proceed}
-      />
-      <ConfirmDiscardDialog
-        open={unsaved.open}
-        onCancel={unsaved.cancel}
-        onProceed={unsaved.proceed}
-      />
       {company && board.resources && candidateId && !offer && (
         <CandidateDetails
           company={company}
-          catalogs={board.resources.catalogs}
+          catalogs={board.catalogs}
           candidateId={candidateId}
           api={api}
           busy={busy}

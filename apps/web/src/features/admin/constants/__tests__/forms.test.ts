@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
+import { questionContent } from '../../lib';
+import type { QuestionFormValues } from '../../model';
 import {
   accountFormSchema,
-  questionContent,
   questionFormSchema,
-  type QuestionFormValues,
   templateFormSchema,
 } from '../index';
 

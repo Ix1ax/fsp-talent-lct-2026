@@ -13,7 +13,7 @@ export default async function EmployerLayout({
     return (
       <>
         <EmployerSessionRecovery
-          message={session.kind === 'error' ? session.message : undefined}
+          message={session.kind === 'unavailable' ? session.message : undefined}
         />
         {children}
       </>

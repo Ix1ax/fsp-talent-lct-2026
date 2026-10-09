@@ -1,4 +1,4 @@
-import { type ReactNode, useId } from 'react';
+import { type ReactNode, useId, useState } from 'react';
 
 import {
   Button,
@@ -16,6 +16,8 @@ import {
   type CatalogItem,
   statusLabels,
 } from '@/entities/admin';
+
+import { useAdminSkillSearch } from '../model';
 
 interface FieldProps {
   label: string;
@@ -69,7 +71,7 @@ export const AdminSelect = ({
       >
         <SelectTrigger
           id={id}
-          className="w-full min-w-0 data-[size=default]:h-11 text-base sm:text-sm"
+          className="w-full min-w-0 px-3 py-2 data-[size=default]:h-11 text-base sm:text-sm"
           aria-label={label}
         >
           <SelectValue placeholder={label}>
@@ -80,9 +82,14 @@ export const AdminSelect = ({
           position="popper"
           align="start"
           className="w-(--radix-select-trigger-width)"
+          viewportClassName="p-1.5 data-[position=popper]:min-w-0"
         >
           {options.map((option) => (
-            <SelectItem key={option.value} value={option.value || 'all'}>
+            <SelectItem
+              key={option.value}
+              value={option.value || 'all'}
+              className="min-h-10 py-2 pr-8 pl-3"
+            >
               {option.label}
             </SelectItem>
           ))}
@@ -180,37 +187,65 @@ export const Pagination = ({
 interface SkillPickerProps {
   value: string;
   onChange: (value: string) => void;
-  items: CatalogItem[];
+  items?: CatalogItem[];
+  approvedOnly?: boolean;
+  excludeId?: string;
   label?: string;
   disabled?: boolean;
 }
 export const SkillPicker = ({
   value,
   onChange,
-  items,
+  items = [],
+  approvedOnly = false,
+  excludeId,
   label = 'Навык',
   disabled,
 }: SkillPickerProps) => {
   const id = useId();
+  const [query, setQuery] = useState('');
+  const search = useAdminSkillSearch(query.trim(), value);
+  const selected = search.selected ?? items.find((item) => item.id === value);
+  const unavailable =
+    selected &&
+    (selected.active === false ||
+      (approvedOnly && selected.moderation_status !== 'approved'));
+  let selectedLabel: string | undefined;
+  if (value) {
+    selectedLabel = selected?.name ?? `Навык ${value}`;
+    if (unavailable) selectedLabel += ' (недоступен)';
+  }
+  const choices = search.items.filter(
+    (item) =>
+      item.id !== excludeId &&
+      (!approvedOnly ||
+        (item.active !== false && item.moderation_status === 'approved')),
+  );
   return (
     <div className="grid min-w-0 gap-2">
       <Label htmlFor={id}>{label}</Label>
       <Combobox
         id={id}
-        options={items.map((s) => ({
-          value: s.id,
-          label: s.name,
-          keywords: [s.code, ...(s.aliases ?? [])],
+        options={choices.map((item) => ({
+          value: item.id,
+          label: `${item.name}${item.active === false ? ' (архив)' : ''}`,
+          keywords: [item.code, ...(item.aliases ?? [])],
         }))}
         value={value}
+        selectedLabel={selectedLabel}
         onValueChange={onChange}
+        onSearchChange={setQuery}
         disabled={disabled}
-        placeholder={
-          value
-            ? (items.find((s) => s.id === value)?.name ?? 'Недоступный навык')
-            : 'Выберите навык'
+        placeholder="Выберите навык"
+        searchPlaceholder="Поиск навыка на сервере…"
+        emptyMessage={
+          search.loading ? 'Ищем навыки…' : 'Ничего не найдено. Уточните поиск.'
         }
       />
+      <p className="text-xs text-muted-foreground">
+        Показано до 50 навыков. Для других значений уточните поиск.
+      </p>
+      <ErrorNotice error={search.error} onRetry={search.retry} />
     </div>
   );
 };
@@ -223,12 +258,10 @@ export const AdminListLoading = ({
   hasData: boolean;
 }) => (
   <>
-    {loading && (
-      <div
-        aria-hidden="true"
-        className="absolute inset-x-0 top-0 h-0.5 animate-pulse bg-primary"
-      />
-    )}
+    <div
+      aria-hidden="true"
+      className={`pointer-events-none absolute inset-x-4 top-0 h-0.5 bg-primary transition-opacity duration-200 motion-reduce:transition-none sm:inset-x-6 ${loading ? 'opacity-100' : 'opacity-0'}`}
+    />
     {loading && !hasData && (
       <div aria-hidden="true" className="grid gap-2 py-4">
         <Skeleton className="h-5 w-1/3" />

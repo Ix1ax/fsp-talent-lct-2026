@@ -11,7 +11,6 @@ import {
 } from '@/shared/hooks';
 import {
   Button,
-  ConfirmDiscardDialog,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -227,11 +226,6 @@ export const OfferComposer = ({
           </form>
         </DialogContent>
       </Dialog>
-      <ConfirmDiscardDialog
-        open={unsaved.open}
-        onCancel={unsaved.cancel}
-        onProceed={unsaved.proceed}
-      />
     </>
   );
 };

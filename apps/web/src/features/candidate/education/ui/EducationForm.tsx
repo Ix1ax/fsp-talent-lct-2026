@@ -2,6 +2,8 @@ import { useId } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   FieldMessage,
@@ -54,6 +56,19 @@ export const EducationForm = ({
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    initialDraft: !!initialValues,
+    normalize: (values) => ({
+      ...values,
+      institution: values.institution.trim(),
+      specialty: values.specialty.trim(),
+      graduationYear: Number(values.graduationYear),
+    }),
+  });
+  const close = () => {
+    if (!busy) unsaved.discard(onClose);
+  };
   const errors = form.formState.errors;
 
   return (
@@ -61,8 +76,11 @@ export const EducationForm = ({
       noValidate
       className="flex w-full min-w-0 flex-col gap-5 overflow-hidden rounded-lg border border-border p-4 sm:p-5"
       onSubmit={form.handleSubmit(async (values) => {
-        if (!disabled && (await onSave(toEducationInput(values), record?.id)))
+        if (!disabled && (await onSave(toEducationInput(values), record?.id))) {
+          form.reset(values);
+          unsaved.markSaved();
           onClose();
+        }
       })}
     >
       <h3 className="text-lg font-medium">
@@ -172,7 +190,7 @@ export const EducationForm = ({
           variant="outline"
           size="lg"
           disabled={busy}
-          onClick={onClose}
+          onClick={close}
         >
           Отменить изменения
         </Button>

@@ -2,6 +2,8 @@ import { useId } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
+import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, FieldMessage, Input, Switch, Textarea } from '@/shared/ui';
 import type {
   CandidateExperience,
@@ -44,6 +46,14 @@ export const ExperienceForm = ({
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
+  const unsaved = useFormUnsavedChanges(form, {
+    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    initialDraft: !!initialValues,
+    normalize: toExperienceInput,
+  });
+  const close = () => {
+    if (!busy) unsaved.discard(onClose);
+  };
   const current = useWatch({ control: form.control, name: 'current' });
   const errors = form.formState.errors;
 
@@ -52,8 +62,14 @@ export const ExperienceForm = ({
       noValidate
       className="flex w-full min-w-0 flex-col gap-5 overflow-hidden rounded-lg border border-border p-4 sm:p-5"
       onSubmit={form.handleSubmit(async (values) => {
-        if (!disabled && (await onSave(toExperienceInput(values), record?.id)))
+        if (
+          !disabled &&
+          (await onSave(toExperienceInput(values), record?.id))
+        ) {
+          form.reset(values);
+          unsaved.markSaved();
           onClose();
+        }
       })}
     >
       <h3 className="text-lg font-medium">
@@ -151,7 +167,7 @@ export const ExperienceForm = ({
           variant="outline"
           size="lg"
           disabled={busy}
-          onClick={onClose}
+          onClick={close}
         >
           Отменить изменения
         </Button>

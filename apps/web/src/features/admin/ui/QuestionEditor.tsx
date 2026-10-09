@@ -2,6 +2,7 @@ import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Checkbox, Input, Textarea } from '@/shared/ui';
 import {
   adminRequest,
@@ -10,14 +11,11 @@ import {
   type Question,
 } from '@/entities/admin';
 
-import {
-  questionContent,
-  questionFormSchema,
-  type QuestionFormValues,
-} from '../constants';
+import { questionFormSchema } from '../constants';
+import { questionContent } from '../lib';
+import type { QuestionFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
-import { useAdminOptions } from '../model/useAdminOptions';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
@@ -32,7 +30,6 @@ export const QuestionEditor = ({
   onSaved,
 }: QuestionEditorProps) => {
   const { session } = useAdminSession();
-  const options = useAdminOptions();
   const mutation = useAdminMutation();
   const version = question?.versions?.find(
     (item) => item.version === question.latest_version,
@@ -59,6 +56,10 @@ export const QuestionEditor = ({
       case_sensitive: version?.grading_spec.case_sensitive ?? false,
     },
   });
+  const unsaved = useFormUnsavedChanges(form);
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const rows = useFieldArray({ control: form.control, name: 'options' });
   const kind = useWatch({ control: form.control, name: 'kind' });
   const grading = useWatch({ control: form.control, name: 'grading' });
@@ -90,6 +91,8 @@ export const QuestionEditor = ({
         );
         savedId = saved.id;
       }
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success('Черновик версии создан');
       onSaved(savedId!);
     });
@@ -111,10 +114,10 @@ export const QuestionEditor = ({
                 name="skill_id"
                 render={({ field }) => (
                   <SkillPicker
+                    approvedOnly
                     value={field.value}
                     onChange={field.onChange}
-                    items={options.skills}
-                    disabled={!!question || options.loading}
+                    disabled={!!question}
                   />
                 )}
               />
@@ -299,16 +302,12 @@ export const QuestionEditor = ({
               />
             </>
           )}
-          <ErrorNotice error={options.error} />
           <ErrorNotice error={mutation.error} />
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={close}>
               Отмена
             </Button>
-            <Button
-              className="min-w-44"
-              disabled={options.loading && !question}
-            >
+            <Button className="min-w-44">
               {mutation.busy ? 'Сохраняем…' : 'Сохранить черновик'}
             </Button>
           </div>
