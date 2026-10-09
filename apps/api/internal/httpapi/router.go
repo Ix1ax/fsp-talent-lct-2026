@@ -20,6 +20,8 @@ import (
 	adminweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/web"
 	admincatalogservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/service"
 	admincatalogweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/web"
+	opsservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/service"
+	opsweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/web"
 	assessmentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/service"
 	assessmentweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
@@ -33,6 +35,8 @@ import (
 	companyweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/web"
 	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
 	consentweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/web"
+	taskservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/service"
+	taskweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/web"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	offerservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
 	offerweb "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/web"
@@ -44,6 +48,7 @@ type Checker interface{ Check(context.Context) error }
 type Options struct {
 	FSP                     *fspservice.Service
 	Admins                  *adminservice.Service
+	AdminOperations         *opsservice.Service
 	AdminCatalogs           *admincatalogservice.Service
 	Assessments             *assessmentservice.Service
 	AssessmentAttempts      *assessmentservice.AttemptService
@@ -63,6 +68,7 @@ type Options struct {
 	Catalogs                *catalog.Service
 	Offers                  *offerservice.Service
 	CandidateBank           *bankservice.Service
+	DailyTasks              *taskservice.Service
 	Consents                *consentservice.Service
 }
 
@@ -81,7 +87,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 		c.Header("X-Request-ID", id)
 		c.Header("X-Content-Type-Options", "nosniff")
 		limit := int64(2 << 20)
-		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/companies/:company_id/files" {
+		if c.Request.Method == http.MethodPost && (c.FullPath() == "/api/v1/companies/:company_id/files" || c.FullPath() == "/api/v1/companies/:company_id/tasks" || c.FullPath() == "/api/v1/tasks/:task_id/submissions") {
 			limit = files.MaxSize + (64 << 10)
 		}
 		if c.Request.Method == http.MethodPost && c.FullPath() == "/api/v1/me/profile/import/resume" {
@@ -131,6 +137,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	})
 	api := r.Group("/api/v1")
 	adminweb.Register(api, log, opts.Admins)
+	opsweb.Register(api, log, opts.Admins, opts.AdminOperations, verifier, opts.Users)
 	admincatalogweb.Register(api, log, opts.Admins, opts.AdminCatalogs)
 	assessmentweb.Register(api, log, opts.Admins, opts.Assessments)
 	assessmentweb.RegisterAttempts(api, log, verifier, opts.Users, opts.AssessmentAttempts)
@@ -147,6 +154,7 @@ func New(log *slog.Logger, deps Checker, verifier auth.Verifier, options ...Opti
 	companyweb.Register(api, log, verifier, companyweb.Options{Users: opts.Users, Companies: opts.Companies, Documents: opts.Documents, Needs: opts.Needs, Members: opts.Members})
 	catalogweb.Register(api, log, opts.Catalogs)
 	bankweb.Register(api, log, verifier, opts.Users, opts.CandidateBank)
+	taskweb.Register(api, log, verifier, opts.Users, opts.DailyTasks)
 	offerweb.Register(api, log, verifier, opts.Users, opts.Offers)
 	consentweb.Register(api, log, verifier, opts.Users, opts.Consents)
 	fspweb.Register(api, log, verifier, opts.Users, opts.FSP)

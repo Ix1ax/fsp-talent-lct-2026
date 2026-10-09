@@ -2,6 +2,7 @@
 package files
 
 import (
+	"archive/zip"
 	"bytes"
 	"context"
 	"crypto/rand"
@@ -17,6 +18,7 @@ import (
 	"strings"
 	"time"
 	"unicode"
+	"unicode/utf8"
 )
 
 const MaxSize = 10 << 20
@@ -24,9 +26,12 @@ const MaxLogoSize = 2 << 20
 
 // PurposeCandidateAvatar — аватар кандидата: только JPEG и PNG, лимит как у логотипа.
 const PurposeCandidateAvatar = "candidate_avatar"
+const PurposeCompanyTask = "company_task"
+const PurposeTaskSolution = "task_solution"
 
 var ErrSize = errors.New("размер файла превышает допустимый")
 var ErrType = errors.New("допустимы PDF, JPEG и PNG; для логотипа и аватара — только JPEG и PNG")
+var ErrTaskType = errors.New("для задания и решения допустимы PDF, JPEG, PNG, ZIP, TXT и Markdown")
 var ErrInvalid = errors.New("файл пустой, повреждён или содержит неверные параметры")
 
 type File struct {
@@ -51,7 +56,8 @@ type Objects interface {
 
 // Prepare не доверяет Content-Type браузера. SVG и HTML не принимаем.
 func Prepare(name, purpose string, data []byte) (File, error) {
-	if purpose != "company_document" && purpose != "company_logo" && purpose != PurposeCandidateAvatar {
+	taskFile := purpose == PurposeCompanyTask || purpose == PurposeTaskSolution
+	if purpose != "company_document" && purpose != "company_logo" && purpose != PurposeCandidateAvatar && !taskFile {
 		return File{}, ErrInvalid
 	}
 	imageOnly := purpose == "company_logo" || purpose == PurposeCandidateAvatar
@@ -75,7 +81,31 @@ func Prepare(name, purpose string, data []byte) (File, error) {
 		if imageOnly {
 			return File{}, ErrType
 		}
+	case "application/zip":
+		if !taskFile {
+			return File{}, ErrType
+		}
+		// Архив сохраняем для скачивания; не распаковываем и не исполняем решения.
+		archive, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+		if err != nil || len(archive.File) == 0 || len(archive.File) > 1000 {
+			return File{}, ErrInvalid
+		}
+		var total uint64
+		for _, entry := range archive.File {
+			if entry.UncompressedSize64 > 100<<20 || total > (100<<20)-entry.UncompressedSize64 {
+				return File{}, ErrInvalid
+			}
+			total += entry.UncompressedSize64
+		}
 	default:
+		if taskFile {
+			ext := strings.ToLower(path.Ext(name))
+			if (ext == ".txt" || ext == ".md") && strings.HasPrefix(media, "text/plain") && utf8.Valid(data) && !bytes.ContainsRune(data, 0) {
+				media = "text/plain; charset=utf-8"
+				break
+			}
+			return File{}, ErrTaskType
+		}
 		return File{}, ErrType
 	}
 	name = path.Base(strings.ReplaceAll(name, "\\", "/"))
@@ -97,6 +127,9 @@ func Prepare(name, purpose string, data []byte) (File, error) {
 	prefix := "companies/"
 	if purpose == PurposeCandidateAvatar {
 		prefix = "candidates/"
+	}
+	if taskFile {
+		prefix = "tasks/"
 	}
 	return File{ObjectKey: prefix + hex.EncodeToString(key), Purpose: purpose, OriginalName: name, MediaType: media, SizeBytes: int64(len(data)), ChecksumSHA256: hex.EncodeToString(hash[:]), Status: "pending"}, nil
 }

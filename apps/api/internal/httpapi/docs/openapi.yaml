@@ -6464,6 +6464,2254 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/v1/companies/{company_id}/tasks:
+    post:
+      operationId: publishCompanyDailyTask
+      tags:
+        - Задания компаний
+      summary: Опубликовать ежедневное задание с файлом
+      description: >-
+        Владелец или рекрутер. Одна успешная публикация на компанию за календарный день Europe/Moscow; квота общая для
+        сотрудников, другая компания независима. Закрытие задания квоту не освобождает; сбой загрузки не расходует квоту.
+        Специализация и грейд — активные ID из /catalogs; deadline_at опционален и должен быть в будущем. Один непустой
+        файл file до 10 МиБ: PDF, JPEG/PNG до 4 Мп, ZIP до 1000 записей и 100 МиБ суммарного заявленного размера, UTF-8
+        TXT/MD без NUL. Тип проверяется по содержимому. Архив сохраняется без распаковки или исполнения; multipart до 10
+        МиБ + 64 КиБ. Неизвестные и повторные поля запрещены.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTask'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyDailyTaskUpload'
+    get:
+      operationId: listCompanyDailyTasks
+      tags:
+        - Задания компаний
+      summary: Список заданий своей компании
+      description: >-
+        Все активные участники компании, включая viewer. Новые публикации выше; при одинаковой дате ID DESC. status=all по
+        умолчанию; истёкший deadline считается closed. company_id в фильтре только сужает область URL.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: specialization_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: grade_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Поиск подстроки в названии и описании без учёта регистра.
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - open
+              - closed
+            default: all
+        - name: published_from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Включительно, по дате МСК.
+        - name: published_to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Включительно, по дате МСК.
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTaskPage'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}:
+    get:
+      operationId: getCompanyDailyTask
+      tags:
+        - Задания компаний
+      summary: Карточка задания своей компании
+      description: 'Любой активный участник компании. Чужое задание: 404.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTask'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/file:
+    get:
+      operationId: downloadCompanyDailyTask
+      tags:
+        - Задания компаний
+      summary: Скачать файл задания своей компании
+      description: Любой активный участник компании; приватное хранилище.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл; всегда attachment, Cache-Control: private, no-store; X-Content-Type-Options: nosniff.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/close:
+    post:
+      operationId: closeCompanyDailyTask
+      tags:
+        - Задания компаний
+      summary: Закрыть приём решений
+      description: >-
+        Владелец или рекрутер. Повторное закрытие идемпотентно; файл и прежние ответы остаются доступны. Закрытие не
+        освобождает квоту публикации.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTask'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/submissions:
+    get:
+      operationId: listCompanyTaskSubmissions
+      tags:
+        - Задания компаний
+      summary: Список решений задания
+      description: >-
+        Все участники компании. Только решения своего задания от активных кандидатов с действующими глобальными
+        processing/publication. Без контактов, user_id и ключа S3; candidate_id — ID профиля. Фильтры только сужают
+        область URL.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - submitted
+              - reviewed
+            default: all
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - newest
+              - score
+            default: newest
+          description: 'newest: дата отправки DESC, ID DESC; score: оценка DESC NULLS LAST, затем дата отправки DESC и ID DESC.'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmissionPage'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/submissions/{submission_id}:
+    get:
+      operationId: getCompanyTaskSubmission
+      tags:
+        - Задания компаний
+      summary: Посмотреть решение кандидата
+      description: >-
+        Все участники компании; только своё задание и кандидат с действующими согласиями. Чужое решение или отозванная
+        публикация: 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmission'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/submissions/{submission_id}/file:
+    get:
+      operationId: downloadCompanyTaskSolution
+      tags:
+        - Задания компаний
+      summary: Скачать файл решения
+      description: Все участники компании; те же права и согласия, что при чтении решения.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл; всегда attachment, Cache-Control: private, no-store; X-Content-Type-Options: nosniff.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/companies/{company_id}/tasks/{task_id}/submissions/{submission_id}/review:
+    patch:
+      operationId: reviewCompanyTaskSubmission
+      tags:
+        - Задания компаний
+      summary: Оценить решение и оставить комментарий
+      description: >-
+        Владелец или рекрутер. Укажите score (0–100) и/или непустой feedback. Повторная проверка заменяет оба поля и дату
+        проверки; неуказанное поле очищается. Результат видит кандидат. Грейд, категория и подтверждённые навыки
+        автоматически не меняются.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmission'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyTaskReviewInput'
+  /api/v1/tasks:
+    get:
+      operationId: listPublicCompanyTasks
+      tags:
+        - Задания компаний
+      summary: Все задания компаний для соискателя
+      description: >-
+        Активный соискатель; профиль и согласия не нужны для просмотра. Новые публикации выше, при равной дате ID DESC. По
+        умолчанию открытые и закрытые задания; my_submission показывает ID и статус своего ответа.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: specialization_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: grade_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Поиск подстроки в названии и описании без учёта регистра.
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - open
+              - closed
+            default: all
+        - name: published_from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Включительно, по дате МСК.
+        - name: published_to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Включительно, по дате МСК.
+        - name: submitted
+          in: query
+          schema:
+            type: boolean
+          description: Есть ли уже мой ответ на задание.
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTaskPage'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/tasks/{task_id}:
+    get:
+      operationId: getPublicCompanyTask
+      tags:
+        - Задания компаний
+      summary: Карточка задания для соискателя
+      description: Активный соискатель, включая пользователя без профиля. Просмотр не считается отправкой ответа. Скрытое администратором задание — 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyDailyTask'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/tasks/{task_id}/file:
+    get:
+      operationId: downloadPublicCompanyTask
+      tags:
+        - Задания компаний
+      summary: Скачать файл задания
+      description: Активный соискатель; закрытые задания тоже доступны. Скрытое администратором задание — 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл; всегда attachment, Cache-Control: private, no-store; X-Content-Type-Options: nosniff.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/tasks/{task_id}/submissions:
+    post:
+      operationId: submitCompanyTaskSolution
+      tags:
+        - Задания компаний
+      summary: Отправить файл решения
+      description: >-
+        Активный соискатель с профилем и действующими глобальными согласиями processing/publication. Статус поиска open не
+        обязателен. Один окончательный ответ на задание, без замены; чужой candidate_id передавать нельзя. До deadline и
+        пока задание open. Права, согласия и приём повторно проверяются после загрузки. Отправка не раскрывает
+        структурированные контакты и не меняет историю приглашений. Один непустой файл file до 10 МиБ: PDF, JPEG/PNG до 4
+        Мп, ZIP до 1000 записей и 100 МиБ суммарного заявленного размера, UTF-8 TXT/MD без NUL. Тип проверяется по
+        содержимому. Архив сохраняется без распаковки или исполнения; multipart до 10 МиБ + 64 КиБ. Неизвестные и
+        повторные поля запрещены.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmission'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/CompanyTaskSolutionUpload'
+  /api/v1/me/task-submissions:
+    get:
+      operationId: listMyCompanyTaskSubmissions
+      tags:
+        - Задания компаний
+      summary: Мои решения и результаты проверки
+      description: >-
+        Активный соискатель. Только свои решения; история остаётся доступной после отзыва согласий. Пользователь без
+        профиля получает пустой список. candidate_id в фильтре запрещён.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: task_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - submitted
+              - reviewed
+            default: all
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum:
+              - newest
+              - score
+            default: newest
+          description: 'newest: дата отправки DESC, ID DESC; score: оценка DESC NULLS LAST, затем дата отправки DESC и ID DESC.'
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmissionPage'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/me/task-submissions/{submission_id}:
+    get:
+      operationId: getMyCompanyTaskSubmission
+      tags:
+        - Задания компаний
+      summary: Моё решение с оценкой компании
+      description: 'Активный автор решения; чужой UUID: 404. Без требования действующих согласий.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyTaskSubmission'
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/me/task-submissions/{submission_id}/file:
+    get:
+      operationId: downloadMyCompanyTaskSolution
+      tags:
+        - Задания компаний
+      summary: Скачать свой файл решения
+      description: 'Активный автор решения; чужой UUID: 404.'
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл; всегда attachment, Cache-Control: private, no-store; X-Content-Type-Options: nosniff.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/DailyTasks400'
+        '401':
+          $ref: '#/components/responses/DailyTasks401'
+        '403':
+          $ref: '#/components/responses/DailyTasks403'
+        '404':
+          $ref: '#/components/responses/DailyTasks404'
+        '409':
+          $ref: '#/components/responses/DailyTasks409'
+        '413':
+          $ref: '#/components/responses/DailyTasks413'
+        '415':
+          $ref: '#/components/responses/DailyTasks415'
+        '500':
+          $ref: '#/components/responses/DailyTasks500'
+        '503':
+          $ref: '#/components/responses/DailyTasks503'
+  /api/v1/admin/stats:
+    get:
+      operationId: getAdminOperationalStats
+      tags:
+        - Операции админки
+      summary: Сводная статистика платформы
+      description: Admin и superadmin. Счётчики одной согласованной транзакции; без персональных данных.
+      security:
+        - adminSession: []
+      parameters: []
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/audit-events:
+    get:
+      operationId: listAdminAuditEvents
+      tags:
+        - Операции админки
+      summary: Общий журнал административных действий
+      description: >-
+        Admin и superadmin. Источники operations/catalogs/assessments/admins/activity. created_at DESC, source ASC, id
+        DESC; тексты резюме, ответы тестов, токены и технические ключи исключены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: source
+          in: query
+          schema:
+            type: string
+            enum:
+              - operations
+              - catalogs
+              - assessments
+              - admins
+              - activity
+        - name: actor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: entity_type
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+        - name: entity_id
+          in: query
+          schema:
+            type: string
+            maxLength: 128
+          description: UUID или числовой ID справочника, строкой.
+        - name: action
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Включительно.
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Включительно.
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAuditEventPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies:
+    get:
+      operationId: listOperationalcompanies
+      tags:
+        - Операции админки
+      summary: 'Список: компании'
+      description: >-
+        Admin и superadmin. Сначала pending, старые заявки выше; затем created_at DESC и ID DESC. Неизвестные, повторные и
+        пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - unverified
+              - pending
+              - verified
+              - rejected
+            default: all
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Подстрока без учёта регистра; компании — название/ИНН, потребности и задания — название/описание.
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies/{company_id}:
+    get:
+      operationId: getOperationalcompanies
+      tags:
+        - Операции админки
+      summary: 'Карточка: компании'
+      description: 'Admin и superadmin. '
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompany'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/users:
+    get:
+      operationId: listOperationalusers
+      tags:
+        - Операции админки
+      summary: 'Список: пользователей'
+      description: Admin и superadmin. created_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - active
+              - blocked
+              - deleted
+            default: all
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - candidate
+              - employer
+              - admin
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUserPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/users/{id}:
+    get:
+      operationId: getOperationalusers
+      tags:
+        - Операции админки
+      summary: 'Карточка: пользователей'
+      description: Admin и superadmin. Без контактов, внешней идентичности и токенов.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/needs:
+    get:
+      operationId: listOperationalneeds
+      tags:
+        - Операции админки
+      summary: 'Список: потребности'
+      description: Admin и superadmin. created_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - draft
+              - active
+              - archived
+            default: all
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Подстрока без учёта регистра; компании — название/ИНН, потребности и задания — название/описание.
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: specialization_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: grade_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNeedPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/needs/{id}:
+    get:
+      operationId: getOperationalneeds
+      tags:
+        - Операции админки
+      summary: 'Карточка: потребности'
+      description: 'Admin и superadmin. '
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNeed'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/offers:
+    get:
+      operationId: listOperationaloffers
+      tags:
+        - Операции админки
+      summary: 'Список: приглашения'
+      description: Admin и superadmin. created_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - sent
+              - viewed
+              - accepted
+              - rejected
+            default: all
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOfferPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/offers/{id}:
+    get:
+      operationId: getOperationaloffers
+      tags:
+        - Операции админки
+      summary: 'Карточка: приглашения'
+      description: Admin и superadmin. Без контактных полей и возможности изменить ответ кандидата.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminOffer'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/tasks:
+    get:
+      operationId: listOperationaltasks
+      tags:
+        - Операции админки
+      summary: 'Список: ежедневные задания'
+      description: Admin и superadmin. published_at DESC, ID DESC. Неизвестные, повторные и пустые параметры запрещены.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - published
+              - hidden
+            default: all
+        - name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 200
+          description: Подстрока без учёта регистра; компании — название/ИНН, потребности и задания — название/описание.
+        - name: company_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: specialization_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: grade_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyTaskPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/tasks/{id}:
+    get:
+      operationId: getOperationaltasks
+      tags:
+        - Операции админки
+      summary: 'Карточка: ежедневные задания'
+      description: 'Admin и superadmin. '
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyTask'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/assessments/attempts:
+    get:
+      operationId: listAdminCandidateAttempts
+      tags:
+        - Операции админки
+      summary: Попытки тестирования кандидатов
+      description: >-
+        Admin и superadmin; метаданные и общий результат без ответов, снимков вопросов и правил оценки. started_at DESC,
+        ID DESC.
+      security:
+        - adminSession: []
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - all
+              - active
+              - passed
+              - failed
+              - expired
+            default: all
+        - name: candidate_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: specialization_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+        - name: grade_id
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 32767
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAssessmentAttemptPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/assessments/attempts/{id}:
+    get:
+      operationId: getAdminCandidateAttempt
+      tags:
+        - Операции админки
+      summary: Метаданные попытки кандидата
+      description: Admin и superadmin; категория и результат кандидата не редактируются.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminAssessmentAttempt'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies/{company_id}/members:
+    get:
+      operationId: listAdminCompanymembers
+      tags:
+        - Операции админки
+      summary: Участники компании
+      description: Admin и superadmin. Документы без ключей S3; удалённые документы исключены, скачивание только ready.
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyMemberPage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies/{company_id}/files:
+    get:
+      operationId: listAdminCompanyfiles
+      tags:
+        - Операции админки
+      summary: Документы компании
+      description: Admin и superadmin. Документы без ключей S3; удалённые документы исключены, скачивание только ready.
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 10000
+            default: 0
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyFilePage'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies/{company_id}/files/{file_id}/download:
+    get:
+      operationId: downloadAdminCompanyDocument
+      tags:
+        - Операции админки
+      summary: Скачать документ для проверки компании
+      description: Admin и superadmin. Файл должен принадлежать указанной компании и быть ready; чужой UUID возвращает 404.
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: file_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл, attachment, nosniff; Cache-Control: private, no-store.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/admin/companies/{company_id}/verification:
+    patch:
+      operationId: decideCompanyVerification
+      tags:
+        - Операции админки
+      summary: Подтвердить компанию, отклонить заявку или отозвать подтверждение
+      description: >-
+        Admin и superadmin. verified/rejected принимаются только для pending; unverified отзывает verified. ИНН и готовые
+        документы обязательны для подтверждения. expected_version берётся из карточки. После перехода версия
+        увеличивается; старый запрос получает 409. Повтор актуального состояния не меняет дату и журнал. Причина нужна для
+        rejected/unverified. Изменение названия/ИНН или удаление документа заявки сбрасывают подтверждение.
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompany'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminVerificationDecision'
+  /api/v1/admin/users/{id}/status:
+    patch:
+      operationId: changeApplicationUserStatus
+      tags:
+        - Операции админки
+      summary: Блокировать или включить пользователя
+      description: >-
+        Admin и superadmin. Нужна причина. Изменение users.role=admin доступно только superadmin; deleted не
+        восстанавливается. Блокировка действует для API немедленно; роли, профиль и Keycloak не изменяются. Повтор того же
+        статуса не создаёт события.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminUser'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserStatusInput'
+  /api/v1/admin/needs/{id}/moderation:
+    patch:
+      operationId: moderateEmployerNeed
+      tags:
+        - Операции админки
+      summary: Скрыть потребность или снять модерацию
+      description: >-
+        Admin и superadmin. hidden архивирует потребность и блокирует редактирование работодателем. published снимает
+        запрет, сохраняя archived; работодатель может актуализировать потребность обычным API. Нужна причина; повтор не
+        создаёт событие.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminNeed'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminContentModerationInput'
+  /api/v1/admin/tasks/{id}/moderation:
+    patch:
+      operationId: moderateCompanyDailyTask
+      tags:
+        - Операции админки
+      summary: Скрыть ежедневное задание или восстановить видимость
+      description: >-
+        Admin и superadmin. hidden закрывает приём и скрывает карточку/файл от кандидатов; история их собственных ответов
+        сохраняется. Компания видит своё задание. published восстанавливает видимость, сохраняя closed. Квота дня не
+        освобождается. Нужна причина.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompanyTask'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminContentModerationInput'
+  /api/v1/admin/tasks/{id}/file:
+    get:
+      operationId: downloadAdminDailyTaskFile
+      tags:
+        - Операции админки
+      summary: Скачать файл ежедневного задания
+      description: Admin и superadmin. Скачивается файл задания; доступ к приватным файлам решений кандидатов не добавляется.
+      security:
+        - adminSession: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: 'Приватный файл, attachment, nosniff; Cache-Control: private, no-store.'
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/companies/{company_id}/verification:
+    get:
+      operationId: getMyCompanyVerification
+      tags:
+        - Проверка компаний
+      summary: Статус заявки компании на подтверждение
+      description: Любой активный участник компании с employer JWT. Причина отказа и ID документов заявки доступны компании.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyVerification'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
+  /api/v1/companies/{company_id}/verification/request:
+    post:
+      operationId: requestMyCompanyVerification
+      tags:
+        - Проверка компаний
+      summary: Подать компанию на подтверждение
+      description: >-
+        Только активный владелец компании. Нужен ИНН и хотя бы один ready company_document; отсутствие — 409. Фиксируются
+        документы, время и новая версия заявки. Повтор pending/verified возвращает текущее состояние без нового события.
+        Подтверждение не является обязательным условием работы MVP по ТЗ.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompanyVerification'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '409':
+          $ref: '#/components/responses/AdminOperations409'
+        '413':
+          $ref: '#/components/responses/AdminOperations413'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
+        '503':
+          $ref: '#/components/responses/AdminOperations503'
 components:
   parameters:
     AdminCatalogKind:
@@ -6494,6 +8742,1278 @@ components:
             profile: Профиль
             email: Подтверждённый email
   schemas:
+    AdminCompany:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - name
+        - description
+        - inn
+        - contact_email
+        - contact_url
+        - logo_file_id
+        - verification_status
+        - verification_version
+        - verification_requested_at
+        - verification_reviewed_at
+        - verification_reviewed_by
+        - verification_reason
+        - verification_document_ids
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        inn:
+          type: string
+          nullable: true
+        contact_email:
+          type: string
+          format: email
+        contact_url:
+          type: string
+          nullable: true
+        logo_file_id:
+          type: string
+          format: uuid
+          nullable: true
+        verification_status:
+          type: string
+          enum:
+            - unverified
+            - pending
+            - verified
+            - rejected
+        verification_version:
+          type: integer
+          minimum: 0
+        verification_requested_at:
+          type: string
+          format: date-time
+          nullable: true
+        verification_reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        verification_reviewed_by:
+          type: string
+          format: uuid
+          nullable: true
+        verification_reason:
+          type: string
+          nullable: true
+        verification_document_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        created_at:
+          type: string
+          format: date-time
+    CompanyVerification:
+      type: object
+      additionalProperties: false
+      required:
+        - company_id
+        - status
+        - version
+        - requested_at
+        - reviewed_at
+        - reason
+        - document_ids
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum:
+            - unverified
+            - pending
+            - verified
+            - rejected
+        version:
+          type: integer
+          minimum: 0
+        requested_at:
+          type: string
+          format: date-time
+          nullable: true
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        document_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    AdminVerificationDecision:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - expected_version
+      properties:
+        status:
+          type: string
+          enum:
+            - verified
+            - rejected
+            - unverified
+        expected_version:
+          type: integer
+          minimum: 0
+        reason:
+          type: string
+          maxLength: 2000
+      description: >-
+        verified/rejected только для pending. unverified отзывает verified. Причина обязательна для отказа/отзыва.
+        expected_version берётся из verification_version; устаревшая версия — 409.
+    AdminUser:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - role
+        - status
+        - created_at
+        - updated_at
+        - candidate_profile_id
+        - search_status
+      properties:
+        id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - candidate
+            - employer
+            - admin
+        status:
+          type: string
+          enum:
+            - active
+            - blocked
+            - deleted
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        candidate_profile_id:
+          type: string
+          format: uuid
+          nullable: true
+        search_status:
+          type: string
+          enum:
+            - open
+            - passive
+            - hidden
+          nullable: true
+    AdminUserStatusInput:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - reason
+      properties:
+        status:
+          type: string
+          enum:
+            - active
+            - blocked
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+    AdminContentModerationInput:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+        - reason
+      properties:
+        status:
+          type: string
+          enum:
+            - published
+            - hidden
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 2000
+      description: >-
+        hidden скрывает задание и закрывает приём / архивирует потребность. published снимает модерацию; статус
+        closed/archived сохраняется.
+    AdminNeed:
+      type: object
+      required:
+        - id
+        - company_id
+        - created_by
+        - specialization_id
+        - grade_id
+        - title
+        - description
+        - salary_from_rub
+        - salary_to_rub
+        - city
+        - timezone
+        - status
+        - skills
+        - work_format_ids
+        - created_at
+        - moderation_status
+        - company_name
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        created_by:
+          type: string
+          format: uuid
+        specialization_id:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 32767
+        grade_id:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 32767
+          nullable: true
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: Go-разработчик в платформенную команду
+        description:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: Кого ищем, задачи, условия и описание команды.
+        salary_from_rub:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          maximum: 1000000000
+          description: Рубли в месяц. Не больше salary_to_rub.
+        salary_to_rub:
+          type: integer
+          format: int64
+          nullable: true
+          minimum: 0
+          maximum: 1000000000
+        city:
+          type: string
+          nullable: true
+          maxLength: 200
+        timezone:
+          type: string
+          nullable: true
+          maxLength: 64
+          example: Europe/Moscow
+          description: Часовой пояс IANA; Local не принимается.
+        status:
+          type: string
+          enum:
+            - draft
+            - active
+            - archived
+          default: draft
+        skills:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - skill_id
+              - weight
+            properties:
+              skill_id:
+                type: string
+                format: uuid
+              required:
+                type: boolean
+                default: false
+                description: Обязателен ли навык для подбора.
+              weight:
+                type: number
+                minimum: 0.01
+                maximum: 100
+                multipleOf: 0.01
+                example: 1
+          description: Не допускаются повторные skill_id. Для active нужен хотя бы один навык.
+        work_format_ids:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items:
+            type: integer
+            format: int32
+            minimum: 1
+            maximum: 32767
+          description: ID форматов из GET /api/v1/catalogs. Для active нужен хотя бы один формат.
+        created_at:
+          type: string
+          format: date-time
+        moderation_status:
+          type: string
+          enum:
+            - published
+            - hidden
+        company_name:
+          type: string
+    AdminOffer:
+      type: object
+      required:
+        - id
+        - company_id
+        - candidate_id
+        - created_by
+        - need_id
+        - company_name
+        - title
+        - description
+        - salary_from_rub
+        - salary_to_rub
+        - status
+        - created_at
+        - viewed_at
+        - responded_at
+      description: Сохранённые условия предложения. Контактов кандидата нет, включая принятые предложения.
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        candidate_id:
+          type: string
+          format: uuid
+          description: UUID профиля кандидата.
+        created_by:
+          type: string
+          format: uuid
+          description: Локальный UUID работодателя, отправившего предложение.
+        need_id:
+          type: string
+          format: uuid
+          nullable: true
+        company_name:
+          type: string
+          description: Название компании на момент отправки.
+        title:
+          type: string
+        description:
+          type: string
+        salary_from_rub:
+          type: integer
+          format: int64
+        salary_to_rub:
+          type: integer
+          format: int64
+        status:
+          type: string
+          enum:
+            - sent
+            - viewed
+            - accepted
+            - rejected
+        created_at:
+          type: string
+          format: date-time
+        viewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          nullable: true
+    AdminCompanyTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - company_id
+        - company_name
+        - title
+        - description
+        - specialization_id
+        - grade_id
+        - deadline_at
+        - file
+        - status
+        - published_at
+        - published_on
+        - moderation_status
+        - created_by
+        - submissions_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        specialization_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+          nullable: true
+        grade_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+          nullable: true
+        deadline_at:
+          type: string
+          format: date-time
+          nullable: true
+        file:
+          $ref: '#/components/schemas/CompanyTaskFile'
+        status:
+          type: string
+          enum:
+            - open
+            - closed
+        published_at:
+          type: string
+          format: date-time
+        published_on:
+          type: string
+          format: date
+          description: Дата публикации в Europe/Moscow.
+        moderation_status:
+          type: string
+          enum:
+            - published
+            - hidden
+        created_by:
+          type: string
+          format: uuid
+        submissions_count:
+          type: integer
+          minimum: 0
+      description: >-
+        Административная карточка: status учитывает закрытие и истечение deadline. status фильтра списка означает moderation_status.
+    AdminAssessmentAttempt:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - candidate_id
+        - template_id
+        - specialization_id
+        - grade_id
+        - stack_skill_id
+        - stack_name
+        - status
+        - started_at
+        - deadline_at
+        - finished_at
+        - time_limit_sec
+        - pass_score
+        - score_percent
+      properties:
+        id:
+          type: string
+          format: uuid
+        candidate_id:
+          type: string
+          format: uuid
+        template_id:
+          type: string
+          format: uuid
+        specialization_id:
+          type: integer
+        grade_id:
+          type: integer
+        stack_skill_id:
+          type: string
+          format: uuid
+          nullable: true
+        stack_name:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum:
+            - active
+            - passed
+            - failed
+            - expired
+        started_at:
+          type: string
+          format: date-time
+        deadline_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        time_limit_sec:
+          type: integer
+        pass_score:
+          type: number
+        score_percent:
+          type: number
+          nullable: true
+      description: >-
+        Метаданные попытки без ответов и правил оценки. Статус хранится в БД; active с прошедшим deadline ожидает завершения
+        обычным механизмом тестирования.
+    AdminCompanyMember:
+      type: object
+      additionalProperties: false
+      required:
+        - company_id
+        - user_id
+        - role
+        - status
+        - joined_at
+        - user_status
+      properties:
+        company_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum:
+            - owner
+            - recruiter
+            - viewer
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+        joined_at:
+          type: string
+          format: date-time
+        user_status:
+          type: string
+          enum:
+            - active
+            - blocked
+            - deleted
+    AdminAuditEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - source
+        - id
+        - actor_id
+        - actor_kind
+        - action
+        - entity_type
+        - entity_id
+        - old_status
+        - new_status
+        - reason
+        - created_at
+      properties:
+        source:
+          type: string
+          enum:
+            - operations
+            - catalogs
+            - assessments
+            - admins
+            - activity
+        id:
+          type: string
+          format: uuid
+        actor_id:
+          type: string
+          format: uuid
+          nullable: true
+        actor_kind:
+          type: string
+          enum:
+            - admin
+            - user
+            - system
+        action:
+          type: string
+        entity_type:
+          type: string
+        entity_id:
+          type: string
+          nullable: true
+        old_status:
+          type: string
+          nullable: true
+        new_status:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+    AdminStats:
+      type: object
+      additionalProperties: false
+      required:
+        - generated_at
+        - users
+        - companies
+        - needs
+        - offers
+        - tasks
+        - submissions
+        - attempts
+        - skills_pending
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        users:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - active
+            - blocked
+            - deleted
+            - candidates
+            - employers
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            active:
+              type: integer
+              minimum: 0
+            blocked:
+              type: integer
+              minimum: 0
+            deleted:
+              type: integer
+              minimum: 0
+            candidates:
+              type: integer
+              minimum: 0
+            employers:
+              type: integer
+              minimum: 0
+        companies:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - pending
+            - verified
+            - rejected
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            pending:
+              type: integer
+              minimum: 0
+            verified:
+              type: integer
+              minimum: 0
+            rejected:
+              type: integer
+              minimum: 0
+        needs:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - active
+            - hidden
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            active:
+              type: integer
+              minimum: 0
+            hidden:
+              type: integer
+              minimum: 0
+        offers:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - accepted
+            - rejected
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            accepted:
+              type: integer
+              minimum: 0
+            rejected:
+              type: integer
+              minimum: 0
+        tasks:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - hidden
+            - open
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            hidden:
+              type: integer
+              minimum: 0
+            open:
+              type: integer
+              minimum: 0
+        submissions:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - reviewed
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            reviewed:
+              type: integer
+              minimum: 0
+        attempts:
+          type: object
+          additionalProperties: false
+          required:
+            - total
+            - passed
+            - failed
+            - active
+          properties:
+            total:
+              type: integer
+              minimum: 0
+            passed:
+              type: integer
+              minimum: 0
+            failed:
+              type: integer
+              minimum: 0
+            active:
+              type: integer
+              minimum: 0
+        skills_pending:
+          type: integer
+          minimum: 0
+    AdminCompanyPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompany'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminUserPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminUser'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminNeedPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminNeed'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminOfferPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminOffer'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminCompanyTaskPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyTask'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminAssessmentAttemptPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminAssessmentAttempt'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminCompanyMemberPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminCompanyMember'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    CompanyFilePage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyFile'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    AdminAuditEventPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdminAuditEvent'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+        limit:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+    CompanyTaskFile:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - purpose
+        - original_name
+        - media_type
+        - size_bytes
+        - checksum_sha256
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        purpose:
+          type: string
+          enum:
+            - company_task
+            - task_solution
+        original_name:
+          type: string
+        media_type:
+          type: string
+          enum:
+            - application/pdf
+            - image/jpeg
+            - image/png
+            - application/zip
+            - text/plain; charset=utf-8
+        size_bytes:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        checksum_sha256:
+          type: string
+          pattern: ^[a-f0-9]{64}$
+        status:
+          type: string
+          enum:
+            - ready
+        created_at:
+          type: string
+          format: date-time
+    CompanyDailyTaskUpload:
+      type: object
+      additionalProperties: false
+      required:
+        - title
+        - file
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 10000
+          default: ''
+        specialization_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+        grade_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+        deadline_at:
+          type: string
+          format: date-time
+        file:
+          type: string
+          format: binary
+    CompanyTaskSolutionUpload:
+      type: object
+      additionalProperties: false
+      required:
+        - file
+      properties:
+        file:
+          type: string
+          format: binary
+    CompanyTaskReviewInput:
+      type: object
+      additionalProperties: false
+      anyOf:
+        - required:
+            - score
+        - required:
+            - feedback
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+        feedback:
+          type: string
+          minLength: 1
+          maxLength: 5000
+      description: Нужна оценка или комментарий; пробелы обрезаются. Неуказанное поле очищается при повторной проверке.
+    CompanyDailyTask:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - company_id
+        - company_name
+        - title
+        - description
+        - specialization_id
+        - grade_id
+        - deadline_at
+        - file
+        - status
+        - published_at
+        - published_on
+        - my_submission
+        - moderation_status
+      properties:
+        id:
+          type: string
+          format: uuid
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        specialization_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+          nullable: true
+        grade_id:
+          type: integer
+          minimum: 1
+          maximum: 32767
+          nullable: true
+        deadline_at:
+          type: string
+          format: date-time
+          nullable: true
+        file:
+          $ref: '#/components/schemas/CompanyTaskFile'
+        status:
+          type: string
+          enum:
+            - open
+            - closed
+        published_at:
+          type: string
+          format: date-time
+        published_on:
+          type: string
+          format: date
+          description: Дата публикации в Europe/Moscow.
+        my_submission:
+          type: object
+          nullable: true
+          required:
+            - id
+            - status
+          properties:
+            id:
+              type: string
+              format: uuid
+            status:
+              type: string
+              enum:
+                - submitted
+                - reviewed
+        moderation_status:
+          type: string
+          enum:
+            - published
+            - hidden
+    CompanyTaskSubmission:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - task_id
+        - task_title
+        - company_id
+        - company_name
+        - candidate_id
+        - file
+        - status
+        - submitted_at
+        - score
+        - feedback
+        - reviewed_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        task_id:
+          type: string
+          format: uuid
+        task_title:
+          type: string
+        company_id:
+          type: string
+          format: uuid
+        company_name:
+          type: string
+        candidate_id:
+          type: string
+          format: uuid
+        file:
+          $ref: '#/components/schemas/CompanyTaskFile'
+        status:
+          type: string
+          enum:
+            - submitted
+            - reviewed
+        submitted_at:
+          type: string
+          format: date-time
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+        feedback:
+          type: string
+          maxLength: 5000
+          nullable: true
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+    CompanyDailyTaskPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyDailyTask'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Всего записей по фильтрам до пагинации.
+        limit:
+          type: integer
+        offset:
+          type: integer
+    CompanyTaskSubmissionPage:
+      type: object
+      required:
+        - items
+        - total
+        - limit
+        - offset
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CompanyTaskSubmission'
+        total:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Всего записей по фильтрам до пагинации.
+        limit:
+          type: integer
+        offset:
+          type: integer
     AdminStatusInput:
       type: object
       additionalProperties: false
@@ -7491,6 +11011,7 @@ components:
         - skills
         - work_format_ids
         - created_at
+        - moderation_status
       properties:
         id:
           type: string
@@ -7589,6 +11110,11 @@ components:
         created_at:
           type: string
           format: date-time
+        moderation_status:
+          type: string
+          enum:
+            - published
+            - hidden
     EmployerNeedList:
       type: object
       required:
@@ -8911,6 +12437,117 @@ components:
               type: string
               description: Понятное сообщение об ошибке на русском языке
   responses:
+    AdminOperations400:
+      description: 'validation_error: неизвестный, повторный или некорректный параметр, UUID или тело.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations401:
+      description: 'unauthorized: требуется действующая отдельная сессия админки; для employer-маршрутов нужен Keycloak JWT.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations403:
+      description: 'forbidden: недостаточно полномочий.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations404:
+      description: 'not_found: запись или готовый файл недоступны.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations409:
+      description: >-
+        state_conflict / verification_evidence_required: устаревшая версия, запрещённый переход или нет подтверждающих
+        документов.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations413:
+      description: 'request_too_large: тело больше 2 МиБ.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations500:
+      description: 'internal_error: внутренняя ошибка.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    AdminOperations503:
+      description: >-
+        admin_unavailable / admin_operations_unavailable / storage_unavailable: сервис или хранилище не
+        настроены/недоступны.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks400:
+      description: 'validation_error / invalid_file: неверное тело, фильтр, UUID, отключённый справочник, пустой или повреждённый файл.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks401:
+      description: 'unauthorized: требуется вход в систему.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks403:
+      description: 'forbidden / consent_required / user_inactive: неверная роль, недостаточно прав или отсутствуют согласия.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks404:
+      description: 'not_found / not_registered: задание, решение, компания, профиль или автор недоступны.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks409:
+      description: 'daily_task_limit / already_submitted / task_closed: квота дня, повторный ответ или закрытый приём.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks413:
+      description: 'file_too_large: файл больше 10 МиБ или multipart больше 10 МиБ + 64 КиБ.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks415:
+      description: 'unsupported_file_type: допустимы PDF, JPEG, PNG, ZIP, TXT и Markdown.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks500:
+      description: 'internal_error: внутренняя ошибка сервера.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DailyTasks503:
+      description: 'daily_tasks_unavailable / storage_unavailable / upload_busy: повторите запрос позже.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+      headers:
+        Retry-After:
+          description: 'При upload_busy: 2 секунды.'
+          schema:
+            type: string
     AdminUnauthorized:
       description: "Неверная почта, пароль или сессия"
       content:

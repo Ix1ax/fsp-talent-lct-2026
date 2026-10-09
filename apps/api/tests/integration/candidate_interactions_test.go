@@ -228,7 +228,8 @@ func TestCandidateInteractionMigrationBackfillsOffers(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	if _, err = provider.Down(ctx); err != nil {
+	// Откатываем именно миграцию взаимодействий, даже если после неё добавлены новые.
+	if _, err = provider.DownTo(ctx, 20261009193931); err != nil {
 		t.Fatal(err)
 	}
 	if _, err = provider.Up(ctx); err != nil {
