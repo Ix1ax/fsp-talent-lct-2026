@@ -1,4 +1,4 @@
-import { Button } from '../Button';
+import { Button } from './Button';
 
 interface PageControlsProps {
   offset: number;
@@ -8,6 +8,7 @@ interface PageControlsProps {
   pending?: boolean;
   onPage: (offset: number) => void;
 }
+
 export const PageControls = ({
   offset,
   count,
@@ -19,6 +20,7 @@ export const PageControls = ({
   const hasMore =
     total === undefined ? count === limit : offset + limit < total;
   if (!offset && !hasMore) return null;
+
   return (
     <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5">
       <Button

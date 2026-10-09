@@ -1,11 +1,15 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 
-import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import {
+  EMPLOYER_DRAFT_ROUTES,
+  EMPLOYER_DRAFT_SCOPE,
+  FILE_STATUS,
+} from '@/shared/contants';
 import { useAsyncMutation, useUnsavedChanges } from '@/shared/hooks';
-import { useRemoteData } from '@/shared/hooks/useRemoteData';
+import { useRemoteData } from '@/shared/hooks';
 import {
   AsyncState,
   Button,
@@ -17,10 +21,10 @@ import {
   ConfirmDeleteDialog,
   Input,
   OptionSelect,
+  PageControls,
+  RemoteState,
   toast,
 } from '@/shared/ui';
-import { PageControls } from '@/shared/ui/workspace/PageControls';
-import { RemoteState } from '@/shared/ui/workspace/RemoteState';
 import type {
   Company,
   CompanyFile,
@@ -38,12 +42,7 @@ interface CompanyDocumentsProps {
   onCompanyChange: () => Promise<void>;
   onBusyChange: (value: boolean) => void;
 }
-const FILE_STATUS = {
-  pending: 'Загружается',
-  ready: 'Готов',
-  deleting: 'Удаляется',
-  deleted: 'Удалён',
-};
+
 export const CompanyDocuments = ({
   company,
   active = true,
@@ -107,6 +106,52 @@ export const CompanyDocuments = ({
     await onCompanyChange();
   };
 
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!file) return;
+    void mutation.run(async () => {
+      await validateCompanyFile(file, purpose);
+      try {
+        await api.uploadCompanyFile(company.id, file, purpose);
+      } catch (error) {
+        remote.retry();
+        throw error;
+      }
+      setFile(null);
+      markSaved();
+      if (input.current) input.current.value = '';
+      await refresh();
+      toast.success('Файл загружен');
+    });
+  };
+
+  const handleSubmit = async (): Promise<boolean> => {
+    if (!remove) return false;
+
+    try {
+      await mutation.run(async () => {
+        await api.deleteCompanyFile(company.id, remove.id);
+        await refresh();
+        toast.success('Файл удалён');
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleDownload = (item: CompanyFile) => {
+    void mutation.run(async () => {
+      const blob = await api.downloadCompanyFile(company.id, item.id);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = item.originalName;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -134,24 +179,7 @@ export const CompanyDocuments = ({
         {!readonly && (
           <form
             className="grid gap-4 rounded-lg border p-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!file) return;
-              void mutation.run(async () => {
-                await validateCompanyFile(file, purpose);
-                try {
-                  await api.uploadCompanyFile(company.id, file, purpose);
-                } catch (error) {
-                  remote.retry();
-                  throw error;
-                }
-                setFile(null);
-                markSaved();
-                if (input.current) input.current.value = '';
-                await refresh();
-                toast.success('Файл загружен');
-              });
-            }}
+            onSubmit={handleFormSubmit}
           >
             <fieldset disabled={mutation.pending} className="grid gap-4">
               <label className="grid gap-2 text-sm">
@@ -231,20 +259,7 @@ export const CompanyDocuments = ({
                 <Button
                   variant="outline"
                   disabled={mutation.pending || item.status !== 'ready'}
-                  onClick={() =>
-                    void mutation.run(async () => {
-                      const blob = await api.downloadCompanyFile(
-                        company.id,
-                        item.id,
-                      );
-                      const url = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = url;
-                      link.download = item.originalName;
-                      link.click();
-                      setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    })
-                  }
+                  onClick={() => handleDownload(item)}
                 >
                   Скачать
                 </Button>
@@ -277,18 +292,7 @@ export const CompanyDocuments = ({
             busy={mutation.pending}
             error={mutation.error}
             onClose={() => setRemove(null)}
-            onConfirm={async () => {
-              try {
-                await mutation.run(async () => {
-                  await api.deleteCompanyFile(company.id, remove.id);
-                  await refresh();
-                  toast.success('Файл удалён');
-                });
-                return true;
-              } catch {
-                return false;
-              }
-            }}
+            onConfirm={handleSubmit}
           />
         )}
       </CardContent>

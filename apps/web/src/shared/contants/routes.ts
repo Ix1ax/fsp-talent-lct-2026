@@ -5,6 +5,7 @@ export const STATIC_ROUTES = {
   CANDIDATE: '/candidate',
   EMPLOYER: '/employer',
   GUIDES: '/guides',
+  OFFERS: '/candidate/offers',
 } as const;
 
 export const DYNAMIC_ROUTES = {

@@ -3,16 +3,22 @@
 import { useCallback, useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
 
-import { useRemoteData } from '@/shared/hooks/useRemoteData';
+import { useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import { AsyncState, Badge, Button } from '@/shared/ui';
-import { PageControls } from '@/shared/ui/workspace/PageControls';
-import { RemoteState } from '@/shared/ui/workspace/RemoteState';
+import {
+  AsyncState,
+  Badge,
+  Button,
+  PageControls,
+  RemoteState,
+} from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
-import type { BankFilters } from '@/entities/employer-bank';
-import type { EmployerBankApi } from '@/entities/employer-bank';
-import { validateBankFilters } from '@/entities/employer-bank';
+import {
+  type BankFilters,
+  type EmployerBankApi,
+  validateBankFilters,
+} from '@/entities/employer-bank';
 import type {
   EmployerNeed,
   RecommendationPage,

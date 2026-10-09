@@ -1,5 +1,6 @@
 export { CANDIDATE_ELEMENT_IDS } from './candidateElementIds';
 export { CANDIDATE_DATA_UPDATED_EVENT } from './events';
+export { FILE_STATUS } from './fileStatus';
 export { MOTION_LAYOUT_IDS, MOTION_SPRING, MOTION_TRANSITION } from './motion';
 export {
   CANDIDATE_DRAFT_ROUTES,
