@@ -10,6 +10,7 @@ node_modules/
 dist/
 .next/
 .next-dev/
+.next-preview/
 coverage/
 *.out
 bin/
