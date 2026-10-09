@@ -103,6 +103,14 @@ export const EmployerHomePage = ({
       }}
     >
       {banner}
+      {resources && !detail && board.catalogsError && (
+        <div role="alert" className="grid gap-2 border-b p-4 text-sm">
+          <p>Справочники условий недоступны: {board.catalogsError}</p>
+          <Button variant="outline" onClick={board.retryCatalogs}>
+            Повторить загрузку условий
+          </Button>
+        </div>
+      )}
       {board.error ? (
         <main className="p-6">
           <AsyncState
@@ -141,7 +149,7 @@ export const EmployerHomePage = ({
         <div className="mx-auto grid min-h-[calc(100dvh-56px)] max-w-[1600px] grid-cols-1 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
           <NeedList
             list={board}
-            catalogs={resources.catalogs}
+            catalogs={board.catalogs}
             canWrite={canWrite}
             detail={detail}
             composer={composer}
@@ -158,8 +166,8 @@ export const EmployerHomePage = ({
           />
           <EmployerNeedPane
             board={board}
-            catalogs={resources.catalogs}
-            skills={resources.skills}
+            catalogs={board.catalogs}
+            loadSkills={(gateway ?? employerGateway).skills}
             canWrite={canWrite}
             composer={composer}
             detail={detail}

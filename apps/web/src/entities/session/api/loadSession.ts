@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { cache } from 'react';
+
 import { ApiError } from '@/shared/api/errors';
 import { getTokenDisplayName } from '@/shared/auth/server';
 import { getAccessToken, getRefreshToken } from '@/shared/auth/session.server';
@@ -25,7 +27,7 @@ export type SessionState =
       retryAfter?: string;
     };
 
-export const loadSession = async (): Promise<SessionState> => {
+export const loadSession = cache(async (): Promise<SessionState> => {
   const token = await getAccessToken();
   const refreshToken = await getRefreshToken();
 
@@ -104,4 +106,4 @@ export const loadSession = async (): Promise<SessionState> => {
       displayName,
     };
   }
-};
+});

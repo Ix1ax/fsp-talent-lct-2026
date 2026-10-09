@@ -149,7 +149,15 @@ export const createEmployerDemoGateway = (
   return {
     authorize: async () => null,
     catalogs: async () => catalogs,
-    skills: async () => skills,
+    skills: async (q) =>
+      skills
+        .filter((skill) =>
+          [skill.name, skill.code, ...skill.aliases]
+            .join(' ')
+            .toLowerCase()
+            .includes(q.trim().toLowerCase()),
+        )
+        .slice(0, 50),
     companies: async (offset = 0) => {
       if (scenario === 'error') throw new Error('Демонстрация ошибки загрузки');
       return {
