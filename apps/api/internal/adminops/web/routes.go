@@ -113,6 +113,7 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 		h.respond(c, v, err)
 	})
 	g.PATCH("/users/:id/status", h.setStatus("user"))
+	g.PATCH("/companies/:company_id/status", h.setStatus("company"))
 	g.PATCH("/needs/:id/moderation", h.setStatus("need"))
 	g.PATCH("/tasks/:id/moderation", h.setStatus("task"))
 	g.GET("/tasks/:id/file", h.download("task"))
@@ -159,7 +160,11 @@ func (h handler) setStatus(kind string) gin.HandlerFunc {
 			h.respond(c, nil, err)
 			return
 		}
-		v, err := h.ops.SetStatus(c.Request.Context(), actor(c), kind, c.Param("id"), in)
+		id := c.Param("id")
+		if kind == "company" {
+			id = c.Param("company_id")
+		}
+		v, err := h.ops.SetStatus(c.Request.Context(), actor(c), kind, id, in)
 		h.respond(c, v, err)
 	}
 }

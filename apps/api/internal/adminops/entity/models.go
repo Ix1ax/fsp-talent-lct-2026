@@ -61,7 +61,7 @@ type StatusInput struct {
 func (in *StatusInput) Validate(kind string) error {
 	valid := false
 	switch kind {
-	case "user":
+	case "user", "company":
 		valid = in.Status == "active" || in.Status == "blocked"
 	case "need":
 		valid = in.Status == "published" || in.Status == "hidden"

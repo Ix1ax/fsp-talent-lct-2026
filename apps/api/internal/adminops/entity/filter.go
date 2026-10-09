@@ -12,13 +12,14 @@ import (
 type Filter struct {
 	Limit, Offset                                   int
 	Query, Status, Role, Source, Action, EntityType string
+	AccessStatus                                    string
 	CompanyID, CandidateID, ActorID, EntityID       *string
 	SpecializationID, GradeID                       *int16
 	From, To                                        *time.Time
 }
 
 func ParseFilter(raw, kind string) (Filter, error) {
-	f := Filter{Limit: 20, Status: "all"}
+	f := Filter{Limit: 20, Status: "all", AccessStatus: "all"}
 	q, err := url.ParseQuery(raw)
 	if err != nil {
 		return f, &ValidationError{"Некорректные параметры запроса"}
@@ -29,6 +30,7 @@ func ParseFilter(raw, kind string) (Filter, error) {
 	case "companies":
 		statuses = []string{"all", "unverified", "pending", "verified", "rejected"}
 		allowed["q"] = true
+		allowed["access_status"] = true
 	case "users":
 		statuses = []string{"all", "active", "blocked", "deleted"}
 		allowed["role"] = true
@@ -96,6 +98,12 @@ func ParseFilter(raw, kind string) (Filter, error) {
 		f.Status = value
 	}
 	f.Query = strings.TrimSpace(q.Get("q"))
+	if value := q.Get("access_status"); value != "" {
+		if value != "all" && value != "active" && value != "blocked" {
+			return f, &ValidationError{"Некорректный access_status"}
+		}
+		f.AccessStatus = value
+	}
 	if !utf8.ValidString(f.Query) || strings.ContainsRune(f.Query, 0) || utf8.RuneCountInString(f.Query) > 200 {
 		return f, &ValidationError{"q должен содержать до 200 символов"}
 	}
