@@ -18,7 +18,11 @@ func abortError(c *gin.Context, status int, code, message string) {
 }
 
 func meResponse(identity auth.Claims, u user.User) gin.H {
-	return gin.H{"id": u.ID, "sub": identity.Subject, "email": identity.Email, "email_verified": identity.EmailVerified, "role": u.Role, "status": u.Status}
+	blocks := u.BlockedCompanies
+	if blocks == nil {
+		blocks = []user.CompanyBlock{}
+	}
+	return gin.H{"id": u.ID, "sub": identity.Subject, "email": identity.Email, "email_verified": identity.EmailVerified, "role": u.Role, "status": u.Status, "blocked_reason": u.BlockedReason, "blocked_at": u.BlockedAt, "blocked_companies": blocks}
 }
 
 func currentUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
@@ -26,6 +30,7 @@ func currentUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
 }
 func requireRole(roles ...string) gin.HandlerFunc { return middleware.RequireRole(roles...) }
 func getMe(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
 	identity, _ := auth.IdentityFrom(c)
 	v, _ := c.Get(userKey)
 	u, _ := v.(user.User)

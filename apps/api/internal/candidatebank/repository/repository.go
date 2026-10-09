@@ -60,7 +60,7 @@ func authorize(ctx context.Context, tx pgx.Tx, userID, companyID string) error {
 	// Проверяем членство в БД, даже если middleware уже разрешил роль работодателя.
 	err := tx.QueryRow(ctx, `SELECT true FROM companies c
  JOIN company_members m ON m.company_id=c.id JOIN users u ON u.id=m.user_id
- WHERE c.id=$2 AND m.user_id=$1 AND m.status='active'
+ WHERE c.id=$2 AND c.status='active' AND m.user_id=$1 AND m.status='active'
  AND m.role IN ('owner','recruiter','viewer') AND u.role='employer' AND u.status='active'
  FOR SHARE OF c,m,u`, userID, companyID).Scan(&ok)
 	if errors.Is(err, pgx.ErrNoRows) {

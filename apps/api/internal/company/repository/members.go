@@ -192,7 +192,7 @@ func (r *Repository) AcceptInvitation(ctx context.Context, user, email, hash str
 	}
 	// Та же блокировка компании, что в смене ролей и записи потребностей: принятие и отзыв не расходятся.
 	var exists bool
-	if err = tx.QueryRow(ctx, `SELECT true FROM companies WHERE id=$1 FOR UPDATE`, company).Scan(&exists); err != nil {
+	if err = tx.QueryRow(ctx, `SELECT true FROM companies WHERE id=$1 AND status='active' FOR UPDATE`, company).Scan(&exists); err != nil {
 		return entity.Member{}, dbError(err)
 	}
 	var role, status, recipient string

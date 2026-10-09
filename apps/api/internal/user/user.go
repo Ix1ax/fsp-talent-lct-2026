@@ -4,6 +4,7 @@ package user
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 const (
@@ -11,7 +12,8 @@ const (
 	RoleEmployer  = "employer"
 	RoleAdmin     = "admin"
 
-	StatusActive = "active"
+	StatusActive  = "active"
+	StatusBlocked = "blocked"
 )
 
 var (
@@ -22,9 +24,19 @@ var (
 )
 
 type User struct {
-	ID     string `json:"id"`
-	Role   string `json:"role"`
-	Status string `json:"status"`
+	ID               string         `json:"id"`
+	Role             string         `json:"role"`
+	Status           string         `json:"status"`
+	BlockedReason    *string        `json:"blocked_reason"`
+	BlockedAt        *time.Time     `json:"blocked_at"`
+	BlockedCompanies []CompanyBlock `json:"blocked_companies"`
+}
+
+type CompanyBlock struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Reason    string    `json:"blocked_reason"`
+	BlockedAt time.Time `json:"blocked_at"`
 }
 
 // Store хранит пользователей. Реализация для Postgres — в repository.go.
@@ -44,9 +56,18 @@ func (s *Service) Resolve(ctx context.Context, issuer, subject string) (User, er
 		return User{}, err
 	}
 	if u.Status != StatusActive {
-		return User{}, ErrInactive
+		return u, ErrInactive
 	}
 	return u, nil
+}
+
+// Account позволяет прочитать только собственный статус, в том числе после блокировки.
+func (s *Service) Account(ctx context.Context, issuer, subject string) (User, error) {
+	u, err := s.Resolve(ctx, issuer, subject)
+	if errors.Is(err, ErrInactive) && u.Status == StatusBlocked {
+		return u, nil
+	}
+	return u, err
 }
 
 // Register создаёт пользователя при первом входе. Роль admin через API выдать нельзя.

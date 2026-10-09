@@ -20,6 +20,9 @@ func (r *Repository) CandidateContacts(ctx context.Context, user, company, offer
 		return c, err
 	}
 	defer tx.Rollback(ctx)
+	if _, err = companyPermission(ctx, tx, user, company, false); err != nil {
+		return c, err
+	}
 	var candidateUser string
 	err = tx.QueryRow(ctx, `SELECT p.user_id::text FROM candidate_offers o
  JOIN company_members m ON m.company_id=o.company_id JOIN users u ON u.id=m.user_id JOIN candidate_profiles p ON p.id=o.candidate_id

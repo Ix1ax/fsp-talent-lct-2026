@@ -11,16 +11,19 @@ import (
 )
 
 type Company struct {
-	ID                 string    `json:"id"`
-	Name               string    `json:"name"`
-	Description        *string   `json:"description"`
-	INN                *string   `json:"inn"`
-	ContactEmail       string    `json:"contact_email"`
-	ContactURL         *string   `json:"contact_url"`
-	LogoFileID         *string   `json:"logo_file_id"`
-	VerificationStatus string    `json:"verification_status"`
-	CreatedAt          time.Time `json:"created_at"`
-	MemberRole         string    `json:"member_role"`
+	ID                 string     `json:"id"`
+	Name               string     `json:"name"`
+	Description        *string    `json:"description"`
+	INN                *string    `json:"inn"`
+	ContactEmail       string     `json:"contact_email"`
+	ContactURL         *string    `json:"contact_url"`
+	LogoFileID         *string    `json:"logo_file_id"`
+	VerificationStatus string     `json:"verification_status"`
+	CreatedAt          time.Time  `json:"created_at"`
+	MemberRole         string     `json:"member_role"`
+	Status             string     `json:"status"`
+	BlockedReason      *string    `json:"blocked_reason"`
+	BlockedAt          *time.Time `json:"blocked_at"`
 }
 
 type Input struct {

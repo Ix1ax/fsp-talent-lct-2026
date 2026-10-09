@@ -37,6 +37,11 @@ func submissionAccess(ctx context.Context, tx pgx.Tx, user, company, task string
 }
 
 func canSubmit(ctx context.Context, tx pgx.Tx, user, task string) (string, error) {
+	// Компания блокируется первой: бан ждёт завершения уже допущенной записи ответа.
+	var company string
+	if err := tx.QueryRow(ctx, `SELECT c.id::text FROM companies c JOIN company_daily_tasks t ON t.company_id=c.id WHERE t.id=$1 AND c.status='active' AND t.moderation_status='published' FOR SHARE OF c`, task).Scan(&company); err != nil {
+		return "", dbError(err)
+	}
 	candidate, err := candidateProfile(ctx, tx, user, true)
 	if err != nil {
 		return "", err

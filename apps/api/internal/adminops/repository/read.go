@@ -8,14 +8,14 @@ import (
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 )
 
-const companyJSON = `jsonb_build_object('id',c.id,'name',c.name,'description',c.description,'inn',c.inn,'contact_email',c.contact_email,'contact_url',c.contact_url,'logo_file_id',c.logo_file_id,'verification_status',c.verification_status,'verification_version',c.verification_version,'verification_requested_at',c.verification_requested_at,'verification_reviewed_at',c.verification_reviewed_at,'verification_reviewed_by',c.verification_reviewed_by,'verification_reason',c.verification_reason,'verification_document_ids',c.verification_file_ids,'created_at',c.created_at)`
-const userJSON = `jsonb_build_object('id',u.id,'role',u.role,'status',u.status,'created_at',u.created_at,'updated_at',u.updated_at,'candidate_profile_id',p.id,'search_status',p.search_status)`
+const companyJSON = `jsonb_build_object('id',c.id,'name',c.name,'description',c.description,'inn',c.inn,'contact_email',c.contact_email,'contact_url',c.contact_url,'logo_file_id',c.logo_file_id,'verification_status',c.verification_status,'verification_version',c.verification_version,'verification_requested_at',c.verification_requested_at,'verification_reviewed_at',c.verification_reviewed_at,'verification_reviewed_by',c.verification_reviewed_by,'verification_reason',c.verification_reason,'verification_document_ids',c.verification_file_ids,'created_at',c.created_at,'status',c.status,'blocked_reason',c.blocked_reason,'blocked_at',c.blocked_at)`
+const userJSON = `jsonb_build_object('id',u.id,'role',u.role,'status',u.status,'created_at',u.created_at,'updated_at',u.updated_at,'candidate_profile_id',p.id,'search_status',p.search_status,'blocked_reason',u.blocked_reason,'blocked_at',u.blocked_at)`
 
 // plan использует закрытый набор SQL-фрагментов; значения фильтров всегда параметры.
 func plan(kind string) (value, from, where, id, order string) {
 	switch kind {
 	case "companies":
-		return companyJSON, ` FROM companies c `, `WHERE ($1='all' OR c.verification_status=$1) AND ($2='' OR strpos(lower(c.name),lower($2))>0 OR strpos(COALESCE(c.inn,''),$2)>0)`, `c.id`, `CASE WHEN c.verification_status='pending' THEN 0 ELSE 1 END,c.verification_requested_at ASC NULLS LAST,c.created_at DESC,c.id DESC`
+		return companyJSON, ` FROM companies c `, `WHERE ($1='all' OR c.verification_status=$1) AND ($2='' OR strpos(lower(c.name),lower($2))>0 OR strpos(COALESCE(c.inn,''),$2)>0) AND ($3='all' OR c.status=$3)`, `c.id`, `CASE WHEN c.verification_status='pending' THEN 0 ELSE 1 END,c.verification_requested_at ASC NULLS LAST,c.created_at DESC,c.id DESC`
 	case "users":
 		return userJSON, ` FROM users u LEFT JOIN candidate_profiles p ON p.user_id=u.id `, `WHERE ($1='all' OR u.status=$1) AND ($2='' OR u.role=$2)`, `u.id`, `u.created_at DESC,u.id DESC`
 	case "needs":
@@ -32,7 +32,11 @@ func plan(kind string) (value, from, where, id, order string) {
 func args(kind string, f entity.Filter) []any {
 	switch kind {
 	case "companies":
-		return []any{f.Status, f.Query}
+		accessStatus := f.AccessStatus
+		if accessStatus == "" {
+			accessStatus = "all"
+		}
+		return []any{f.Status, f.Query, accessStatus}
 	case "users":
 		return []any{f.Status, f.Role}
 	case "needs", "tasks":

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 
@@ -43,7 +44,7 @@ func TestRepository(t *testing.T) {
 		t.Fatalf("неверный пользователь: %+v", created)
 	}
 	found, err := repo.FindByIdentity(ctx, issuer, "sub-1")
-	if err != nil || found != created {
+	if err != nil || !reflect.DeepEqual(found, created) {
 		t.Fatalf("ожидали %+v, получили %+v, %v", created, found, err)
 	}
 	if _, err := repo.Create(ctx, issuer, "sub-1", RoleCandidate); !errors.Is(err, ErrExists) {

@@ -13,7 +13,7 @@ const taskColumns = `t.id::text,t.company_id::text,c.name,t.title,t.description,
  CASE WHEN mine.id IS NOT NULL THEN jsonb_build_object('id',mine.id::text,'status',mine.status) END`
 const taskFrom = ` FROM company_daily_tasks t JOIN companies c ON c.id=t.company_id JOIN files f ON f.id=t.file_id
  LEFT JOIN company_task_submissions mine ON mine.task_id=t.id AND mine.candidate_id=(SELECT id FROM candidate_profiles WHERE user_id=$1)
- WHERE f.status='ready' AND (t.moderation_status='published' OR EXISTS(SELECT 1 FROM company_members cm JOIN users cu ON cu.id=cm.user_id WHERE cm.company_id=t.company_id AND cm.user_id=$1 AND cm.status='active' AND cu.role='employer' AND cu.status='active'))`
+ WHERE c.status='active' AND f.status='ready' AND (t.moderation_status='published' OR EXISTS(SELECT 1 FROM company_members cm JOIN users cu ON cu.id=cm.user_id WHERE cm.company_id=t.company_id AND cm.user_id=$1 AND cm.status='active' AND cu.role='employer' AND cu.status='active'))`
 
 func scanTask(row pgx.Row) (entity.Task, error) {
 	var t entity.Task
@@ -208,7 +208,7 @@ func (r *Repository) TaskFile(ctx context.Context, user, company, id string) (fi
 	if company != "" {
 		scope = &company
 	}
-	file, err = scanFile(tx.QueryRow(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_daily_tasks t ON t.file_id=f.id WHERE t.id=$1 AND f.status='ready' AND ($2::uuid IS NULL OR t.company_id=$2) AND (t.moderation_status='published' OR $2::uuid IS NOT NULL)`, id, scope))
+	file, err = scanFile(tx.QueryRow(ctx, `SELECT `+fileColumns+` FROM files f JOIN company_daily_tasks t ON t.file_id=f.id JOIN companies c ON c.id=t.company_id WHERE t.id=$1 AND c.status='active' AND f.status='ready' AND ($2::uuid IS NULL OR t.company_id=$2) AND (t.moderation_status='published' OR $2::uuid IS NOT NULL) FOR SHARE OF c,t,f`, id, scope))
 	if err != nil {
 		return file, err
 	}

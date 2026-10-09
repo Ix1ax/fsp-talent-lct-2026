@@ -711,7 +711,12 @@ paths:
     get:
       operationId: getMe
       summary: Текущий пользователь приложения
-      description: Требуется JWT access token с audience API и подтверждённым email. Если пользователь ещё не выбрал роль, возвращается 404 not_registered, и нужно вызвать POST /api/v1/me/register.
+      description: >-
+        Требуется JWT access token с audience API и подтверждённым email. Если пользователь ещё не выбрал роль,
+        возвращается 404 not_registered. Заблокированный пользователь получает 200 со status=blocked,
+        blocked_reason и blocked_at для плашки; любые рабочие методы остаются закрыты (403 user_inactive).
+        blocked_companies содержит заблокированные компании активного участника-работодателя.
+        Удалённый аккаунт получает 403. Ответ private, no-store.
       security:
         - bearerAuth: []
         - keycloakOAuth:
@@ -727,7 +732,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          description: Учётная запись заблокирована или удалена (user_inactive)
+          description: Учётная запись удалена (user_inactive)
           content:
             application/json:
               schema:
@@ -7606,6 +7611,13 @@ paths:
               - verified
               - rejected
             default: all
+        - name: access_status
+          in: query
+          description: Статус доступа компании, независимо от подтверждения.
+          schema:
+            type: string
+            enum: [all, active, blocked]
+            default: all
         - name: q
           in: query
           schema:
@@ -8443,6 +8455,50 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AdminVerificationDecision'
+  /api/v1/admin/companies/{company_id}/status:
+    patch:
+      operationId: changeCompanyAccessStatus
+      tags:
+        - Операции админки
+      summary: Заблокировать или разблокировать компанию
+      description: >-
+        Admin и superadmin. active/blocked, обязательная причина до 2000 символов.
+        Блокировка закрывает все рабочие методы компании каждому участнику, включая документы,
+        приглашения, поиск кандидатов, предложения, потребности, задания, решения и запрос подтверждения.
+        Компания сохраняется в списке и собственной карточке с причиной блокировки.
+        Её задания и офферы недоступны кандидатам; принятие оффера и отправка решения запрещены.
+        Данные, подтверждение и членство сохраняются. Разблокировка не снимает отдельные блокировки пользователей.
+        Повтор текущего статуса не меняет причину/дату и не создаёт событие аудита.
+      security:
+        - adminSession: []
+      parameters:
+        - name: company_id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminUserStatusInput'
+      responses:
+        '200':
+          description: Актуальная карточка компании.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminCompany'
+        '400':
+          $ref: '#/components/responses/AdminOperations400'
+        '401':
+          $ref: '#/components/responses/AdminOperations401'
+        '403':
+          $ref: '#/components/responses/AdminOperations403'
+        '404':
+          $ref: '#/components/responses/AdminOperations404'
+        '500':
+          $ref: '#/components/responses/AdminOperations500'
   /api/v1/admin/users/{id}/status:
     patch:
       operationId: changeApplicationUserStatus
@@ -8452,7 +8508,8 @@ paths:
       description: >-
         Admin и superadmin. Нужна причина. Изменение users.role=admin доступно только superadmin; deleted не
         восстанавливается. Блокировка действует для API немедленно; роли, профиль и Keycloak не изменяются. Повтор того же
-        статуса не создаёт события.
+        статуса не создаёт события. Причина и дата текущей блокировки возвращаются в карточке администратора и GET /me.
+        При active эти поля очищаются; прежние причины остаются в аудите.
       security:
         - adminSession: []
       parameters:
@@ -8761,7 +8818,18 @@ components:
         - verification_reason
         - verification_document_ids
         - created_at
+        - status
+        - blocked_reason
+        - blocked_at
       properties:
+        status:
+          type: string
+          enum: [active, blocked]
+          description: Статус доступа, независимый от verification_status.
+        blocked_reason:
+          $ref: '#/components/schemas/BlockReason'
+        blocked_at:
+          $ref: '#/components/schemas/BlockTime'
         id:
           type: string
           format: uuid
@@ -8890,7 +8958,13 @@ components:
         - updated_at
         - candidate_profile_id
         - search_status
+        - blocked_reason
+        - blocked_at
       properties:
+        blocked_reason:
+          $ref: '#/components/schemas/BlockReason'
+        blocked_at:
+          $ref: '#/components/schemas/BlockTime'
         id:
           type: string
           format: uuid
@@ -9437,7 +9511,15 @@ components:
             - pending
             - verified
             - rejected
+            - active
+            - blocked
           properties:
+            active:
+              type: integer
+              minimum: 0
+            blocked:
+              type: integer
+              minimum: 0
             total:
               type: integer
               minimum: 0
@@ -11305,7 +11387,17 @@ components:
         - verification_status
         - created_at
         - member_role
+        - status
+        - blocked_reason
+        - blocked_at
       properties:
+        status:
+          type: string
+          enum: [active, blocked]
+        blocked_reason:
+          $ref: '#/components/schemas/BlockReason'
+        blocked_at:
+          $ref: '#/components/schemas/BlockTime'
         id:
           type: string
           format: uuid
@@ -12396,7 +12488,18 @@ components:
         - email_verified
         - role
         - status
+        - blocked_reason
+        - blocked_at
+        - blocked_companies
       properties:
+        blocked_reason:
+          $ref: '#/components/schemas/BlockReason'
+        blocked_at:
+          $ref: '#/components/schemas/BlockTime'
+        blocked_companies:
+          type: array
+          items:
+            $ref: '#/components/schemas/BlockedCompany'
         id:
           type: string
           format: uuid
@@ -12420,6 +12523,25 @@ components:
             - active
             - blocked
             - deleted
+    BlockReason:
+      type: string
+      nullable: true
+      minLength: 1
+      maxLength: 2000
+      description: Причина действующей блокировки; null после разблокировки.
+    BlockTime:
+      type: string
+      nullable: true
+      format: date-time
+      description: Дата действующей блокировки; null после разблокировки.
+    BlockedCompany:
+      type: object
+      required: [id, name, blocked_reason, blocked_at]
+      properties:
+        id: {type: string, format: uuid}
+        name: {type: string}
+        blocked_reason: {type: string, minLength: 1, maxLength: 2000}
+        blocked_at: {type: string, format: date-time}
     Error:
       type: object
       required:
@@ -12436,6 +12558,20 @@ components:
             message:
               type: string
               description: Понятное сообщение об ошибке на русском языке
+            status:
+              type: string
+              enum: [blocked]
+              description: Дополнительное поле user_inactive при блокировке аккаунта.
+            entity_type:
+              type: string
+              enum: [user, company]
+            entity_id:
+              type: string
+              format: uuid
+            reason:
+              $ref: '#/components/schemas/BlockReason'
+            blocked_at:
+              $ref: '#/components/schemas/BlockTime'
   responses:
     AdminOperations400:
       description: 'validation_error: неизвестный, повторный или некорректный параметр, UUID или тело.'

@@ -33,4 +33,15 @@ func TestFilterAndDecisionValidation(t *testing.T) {
 	if err := block.Validate("task"); err == nil {
 		t.Fatal("Статус пользователя принят для задания")
 	}
+	if err := block.Validate("company"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ParseFilter("status=verified&access_status=blocked", "companies"); err != nil {
+		t.Fatal(err)
+	}
+	for _, query := range []string{"access_status=deleted", "access_status=blocked&access_status=active", "access_status="} {
+		if _, err := ParseFilter(query, "companies"); err == nil {
+			t.Fatal("Принят неверный access_status", query)
+		}
+	}
 }

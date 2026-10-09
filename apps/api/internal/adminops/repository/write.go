@@ -14,6 +14,8 @@ func (r *Repository) SetStatus(ctx context.Context, actor, kind, id string, in e
 	defer tx.Rollback(ctx)
 	table, column, entityType, action := "users", "status", "user", "user.status_changed"
 	switch kind {
+	case "company":
+		table, column, entityType, action = "companies", "status", "company", "company.status_changed"
 	case "need":
 		table, column, entityType, action = "employer_needs", "moderation_status", "need", "need.moderated"
 	case "task":
@@ -43,6 +45,9 @@ func (r *Repository) SetStatus(ctx context.Context, actor, kind, id string, in e
 		if kind == "user" {
 			set += `,updated_at=clock_timestamp()`
 		}
+		if kind == "user" || kind == "company" {
+			set += `,blocked_reason=CASE WHEN $2::varchar='blocked' THEN $3::text END,blocked_at=CASE WHEN $2::varchar='blocked' THEN clock_timestamp() END`
+		}
 		// Скрытие останавливает приём; восстановление публикации не открывает его автоматически.
 		if in.Status == "hidden" {
 			if kind == "task" {
@@ -52,14 +57,18 @@ func (r *Repository) SetStatus(ctx context.Context, actor, kind, id string, in e
 				set += `,status='archived'`
 			}
 		}
-		if _, err = tx.Exec(ctx, `UPDATE `+table+` SET `+set+` WHERE id=$1`, id, in.Status); err != nil {
+		args := []any{id, in.Status}
+		if kind == "user" || kind == "company" {
+			args = append(args, in.Reason)
+		}
+		if _, err = tx.Exec(ctx, `UPDATE `+table+` SET `+set+` WHERE id=$1`, args...); err != nil {
 			return nil, err
 		}
 		if err = event(ctx, tx, actor, "", action, entityType, id, old, in.Status, in.Reason); err != nil {
 			return nil, err
 		}
 	}
-	value, from, _, idColumn, _ := plan(map[string]string{"user": "users", "need": "needs", "task": "tasks"}[kind])
+	value, from, _, idColumn, _ := plan(map[string]string{"user": "users", "company": "companies", "need": "needs", "task": "tasks"}[kind])
 	var result map[string]any
 	if err = tx.QueryRow(ctx, `SELECT `+value+from+` WHERE `+idColumn+`=$1`, id).Scan(&result); err != nil {
 		return nil, err
