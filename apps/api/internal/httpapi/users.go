@@ -52,7 +52,7 @@ func registerUser(log *slog.Logger, users *user.Service) gin.HandlerFunc {
 			abortError(c, 400, "validation_error", "Некорректное тело запроса: ожидается JSON с полем role")
 			return
 		}
-		u, err := users.Register(c.Request.Context(), identity.Issuer, identity.Subject, body.Role)
+		u, err := users.RegisterWithIdentityProfile(c.Request.Context(), identity.Issuer, identity.Subject, body.Role, user.IdentityProfile{Email: identity.Email, DisplayName: identity.DisplayName(), IssuedAt: identity.IssuedAt})
 		switch {
 		case errors.Is(err, user.ErrInvalidRole):
 			abortError(c, 400, "invalid_role", "Роль должна быть candidate или employer")

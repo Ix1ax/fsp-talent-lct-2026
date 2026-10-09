@@ -37,6 +37,11 @@ func currentUser(log *slog.Logger, users *user.Service, accountOnly bool) gin.Ha
 		resolve := users.Resolve
 		if accountOnly {
 			resolve = users.Account
+			if err := users.SyncIdentityProfile(c.Request.Context(), identity.Issuer, identity.Subject, user.IdentityProfile{Email: identity.Email, DisplayName: identity.DisplayName(), IssuedAt: identity.IssuedAt}); err != nil {
+				log.Error("Не удалось обновить сведения идентичности", "error", err)
+				abortError(c, 500, "internal_error", "Внутренняя ошибка сервера")
+				return
+			}
 		}
 		u, err := resolve(c.Request.Context(), identity.Issuer, identity.Subject)
 		switch {
