@@ -1,4 +1,7 @@
 let accessToken: string | null = null;
+let sessionRevision = 0;
+
+export const getClientSessionRevision = (): number => sessionRevision;
 
 type SessionExpiredListener = () => void;
 
@@ -10,10 +13,12 @@ export const getClientAccessToken = (): string | null => {
 };
 
 export const setClientAccessToken = (token: string | null): void => {
+  sessionRevision += 1;
   accessToken = token;
 };
 
 export const clearClientAccessToken = (): void => {
+  sessionRevision += 1;
   accessToken = null;
 };
 

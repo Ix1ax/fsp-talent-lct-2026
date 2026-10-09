@@ -3,6 +3,7 @@ export {
   clearClientAccessToken,
   emitSessionExpired,
   getClientAccessToken,
+  getClientSessionRevision,
   onSessionExpired,
   setClientAccessToken,
 } from './session.client';
