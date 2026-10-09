@@ -37,6 +37,7 @@ export const useCompanyActions = ({
 
       onSaved(result, create);
       toast.success(create ? 'Компания создана' : 'Компания сохранена');
+      return result;
     });
   return { ...mutation, save };
 };
