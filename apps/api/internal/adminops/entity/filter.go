@@ -34,6 +34,7 @@ func ParseFilter(raw, kind string) (Filter, error) {
 	case "users":
 		statuses = []string{"all", "active", "blocked", "deleted"}
 		allowed["role"] = true
+		allowed["q"] = true
 	case "needs":
 		statuses = []string{"all", "draft", "active", "archived"}
 		for _, key := range []string{"q", "company_id", "specialization_id", "grade_id"} {
@@ -56,7 +57,7 @@ func ParseFilter(raw, kind string) (Filter, error) {
 		for _, key := range []string{"source", "action", "entity_type", "entity_id", "actor_id", "from", "to"} {
 			allowed[key] = true
 		}
-	case "members", "files":
+	case "members", "files", "user-companies":
 	default:
 		return f, &ValidationError{"Неизвестный тип списка"}
 	}

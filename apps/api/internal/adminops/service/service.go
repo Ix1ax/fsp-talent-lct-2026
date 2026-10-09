@@ -16,6 +16,7 @@ type Store interface {
 	List(context.Context, string, string, entity.Filter) (entity.Page, error)
 	Get(context.Context, string, string, string) (map[string]any, error)
 	CompanyRelated(context.Context, string, string, string, entity.Filter) (entity.Page, error)
+	UserCompanies(context.Context, string, string, entity.Filter) (entity.Page, error)
 	File(context.Context, string, string, string, string) (files.File, error)
 	SetStatus(context.Context, string, string, string, entity.StatusInput) (map[string]any, error)
 	Decide(context.Context, string, string, entity.Decision) (map[string]any, error)

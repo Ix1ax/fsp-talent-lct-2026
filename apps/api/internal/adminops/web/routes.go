@@ -98,6 +98,15 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 		g.GET("/"+kind+"/"+param, h.get(kind))
 	}
 	g.GET("/assessments/attempts", h.list("attempts"))
+	g.GET("/users/:id/companies", func(c *gin.Context) {
+		f, err := entity.ParseFilter(c.Request.URL.RawQuery, "user-companies")
+		if err != nil {
+			h.respond(c, nil, err)
+			return
+		}
+		v, err := ops.UserCompanies(c.Request.Context(), actor(c), c.Param("id"), f)
+		h.respond(c, v, err)
+	})
 	g.GET("/assessments/attempts/:id", h.get("attempts"))
 	for _, kind := range []string{"members", "files"} {
 		g.GET("/companies/:company_id/"+kind, h.related(kind))

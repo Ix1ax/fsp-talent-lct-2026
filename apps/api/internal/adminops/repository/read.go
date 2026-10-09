@@ -9,7 +9,13 @@ import (
 )
 
 const companyJSON = `jsonb_build_object('id',c.id,'name',c.name,'description',c.description,'inn',c.inn,'contact_email',c.contact_email,'contact_url',c.contact_url,'logo_file_id',c.logo_file_id,'verification_status',c.verification_status,'verification_version',c.verification_version,'verification_requested_at',c.verification_requested_at,'verification_reviewed_at',c.verification_reviewed_at,'verification_reviewed_by',c.verification_reviewed_by,'verification_reason',c.verification_reason,'verification_document_ids',c.verification_file_ids,'created_at',c.created_at,'status',c.status,'blocked_reason',c.blocked_reason,'blocked_at',c.blocked_at)`
-const userJSON = `jsonb_build_object('id',u.id,'role',u.role,'status',u.status,'created_at',u.created_at,'updated_at',u.updated_at,'candidate_profile_id',p.id,'search_status',p.search_status,'blocked_reason',u.blocked_reason,'blocked_at',u.blocked_at)`
+const userIdentityJoins = ` LEFT JOIN candidate_contacts uc ON uc.user_id=u.id
+LEFT JOIN LATERAL (SELECT email,display_name,profile_updated_at FROM external_identities
+ WHERE user_id=u.id ORDER BY profile_updated_at DESC NULLS LAST,linked_at DESC,id DESC LIMIT 1) i ON true `
+const userIdentityFields = `'full_name',COALESCE(uc.full_name,i.display_name),
+'full_name_source',CASE WHEN uc.full_name IS NOT NULL THEN 'candidate_contacts' WHEN i.display_name IS NOT NULL THEN 'identity' END,
+'email',i.email,'contact_email',uc.email,'identity_updated_at',i.profile_updated_at`
+const userJSON = `jsonb_build_object('id',u.id,'role',u.role,'status',u.status,'created_at',u.created_at,'updated_at',u.updated_at,'candidate_profile_id',p.id,'search_status',p.search_status,'blocked_reason',u.blocked_reason,'blocked_at',u.blocked_at,` + userIdentityFields + `)`
 
 // plan использует закрытый набор SQL-фрагментов; значения фильтров всегда параметры.
 func plan(kind string) (value, from, where, id, order string) {
@@ -17,7 +23,13 @@ func plan(kind string) (value, from, where, id, order string) {
 	case "companies":
 		return companyJSON, ` FROM companies c `, `WHERE ($1='all' OR c.verification_status=$1) AND ($2='' OR strpos(lower(c.name),lower($2))>0 OR strpos(COALESCE(c.inn,''),$2)>0) AND ($3='all' OR c.status=$3)`, `c.id`, `CASE WHEN c.verification_status='pending' THEN 0 ELSE 1 END,c.verification_requested_at ASC NULLS LAST,c.created_at DESC,c.id DESC`
 	case "users":
-		return userJSON, ` FROM users u LEFT JOIN candidate_profiles p ON p.user_id=u.id `, `WHERE ($1='all' OR u.status=$1) AND ($2='' OR u.role=$2)`, `u.id`, `u.created_at DESC,u.id DESC`
+		return userJSON, ` FROM users u LEFT JOIN candidate_profiles p ON p.user_id=u.id ` + userIdentityJoins,
+			`WHERE ($1='all' OR u.status=$1) AND ($2='' OR u.role=$2)
+AND ($3='' OR strpos(lower(COALESCE(uc.full_name,'')),lower($3))>0
+OR strpos(lower(COALESCE(i.display_name,'')),lower($3))>0
+OR strpos(lower(COALESCE(i.email,'')),lower($3))>0
+OR strpos(lower(COALESCE(uc.email,'')),lower($3))>0
+OR strpos(lower(u.id::text),lower($3))>0 OR strpos(lower(COALESCE(p.id::text,'')),lower($3))>0)`, `u.id`, `u.created_at DESC,u.id DESC`
 	case "needs":
 		return `to_jsonb(n)||jsonb_build_object('company_name',c.name,'skills',COALESCE((SELECT jsonb_agg(jsonb_build_object('skill_id',s.skill_id,'required',s.required,'weight',s.weight) ORDER BY s.skill_id) FROM need_skills s WHERE s.need_id=n.id),'[]'::jsonb),'work_format_ids',COALESCE((SELECT jsonb_agg(w.work_format_id ORDER BY w.work_format_id) FROM need_work_formats w WHERE w.need_id=n.id),'[]'::jsonb))`, ` FROM employer_needs n JOIN companies c ON c.id=n.company_id `, `WHERE ($1='all' OR n.status=$1) AND ($2='' OR strpos(lower(n.title||' '||n.description),lower($2))>0) AND ($3::uuid IS NULL OR n.company_id=$3) AND ($4::smallint IS NULL OR n.specialization_id=$4) AND ($5::smallint IS NULL OR n.grade_id=$5)`, `n.id`, `n.created_at DESC,n.id DESC`
 	case "offers":
@@ -38,7 +50,7 @@ func args(kind string, f entity.Filter) []any {
 		}
 		return []any{f.Status, f.Query, accessStatus}
 	case "users":
-		return []any{f.Status, f.Role}
+		return []any{f.Status, f.Role, f.Query}
 	case "needs", "tasks":
 		return []any{f.Status, f.Query, f.CompanyID, f.SpecializationID, f.GradeID}
 	case "offers":
@@ -111,7 +123,7 @@ func (r *Repository) CompanyRelated(ctx context.Context, actor, company, kind st
 	if err = tx.QueryRow(ctx, `SELECT id::text FROM companies WHERE id=$1 FOR SHARE`, company).Scan(&id); err != nil {
 		return p, dbError(err)
 	}
-	from, value, order := ` FROM company_members m JOIN users u ON u.id=m.user_id WHERE m.company_id=$1`, `to_jsonb(m)||jsonb_build_object('user_status',u.status)`, `m.joined_at,m.user_id`
+	from, value, order := ` FROM company_members m JOIN users u ON u.id=m.user_id `+userIdentityJoins+` WHERE m.company_id=$1`, `to_jsonb(m)||jsonb_build_object('user_status',u.status,'user_role',u.role,'user_blocked_reason',u.blocked_reason,'user_blocked_at',u.blocked_at,`+userIdentityFields+`)`, `m.joined_at,m.user_id`
 	if kind == "files" {
 		from = ` FROM company_documents d JOIN files f ON f.id=d.file_id WHERE d.company_id=$1 AND f.status<>'deleted'`
 		value = fileJSON
