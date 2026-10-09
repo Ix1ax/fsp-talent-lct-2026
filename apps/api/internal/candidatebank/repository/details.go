@@ -20,7 +20,7 @@ func (r *Repository) GetDetails(ctx context.Context, userID, companyID, candidat
 	if err = authorize(ctx, tx, userID, companyID); err != nil {
 		return d, err
 	}
-	if d.Card, err = scan(tx.QueryRow(ctx, `SELECT `+columns+visible+` AND p.id=$1`, candidateID)); err != nil {
+	if d.Card, err = scan(tx.QueryRow(ctx, `SELECT `+columns+`,`+interactionColumns+companyVisible(2)+` AND p.id=$1`, candidateID, companyID)); err != nil {
 		return d, err
 	}
 	rows, err := tx.Query(ctx, `SELECT s.id::text,s.code,s.name,cs.claimed_level,e.level,

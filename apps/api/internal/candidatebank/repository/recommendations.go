@@ -7,8 +7,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Recommend ранжирует по сходству с потребностью. Исключают только явные фильтры и приватность.
-// ФСП меняет порядок только внутри одной подтверждённой категории; её позиции среди других групп сохраняются.
+// Recommend ранжирует по сходству, подтверждённому профилю и давности взаимодействия. По умолчанию действует срок 30 дней.
+// ФСП меняет порядок только при равном сходстве внутри одной подтверждённой категории; затем учитывается давность.
 func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID string, filter entity.Filter) (entity.RecommendationPage, error) {
 	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "similarity", UnassessedCriteria: []string{}}
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
@@ -42,30 +42,32 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 	}
 	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, selected}
 	extra, extraArgs := qualificationConditions(filter, len(args))
-	conditions := visible + filterConditions + extra
 	args = append(args, extraArgs...)
+	companyParameter := len(args) + 1
+	args = append(args, companyID, filter.HasOffer, filter.Viewed, filter.InteractionStatus)
+	conditions := companyVisible(companyParameter) + filterConditions + extra + interactionConditions(companyParameter)
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
 		return page, err
 	}
 	// Параметры потребности участвуют только в оценке, а не в WHERE.
 	args = append(args, needID, formats, salary, specialization, grade, city, timezone, filter.Limit, filter.Offset)
-	signals := `CASE WHEN cardinality($11::smallint[])>0 AND EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id) THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($11::smallint[])) END AS format_match,
- CASE WHEN $12::bigint IS NOT NULL THEN p.salary_min_rub <= $12 END AS salary_match,
- CASE WHEN $15::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($15)) END AS city_match,
- CASE WHEN $16::text IS NOT NULL THEN p.timezone=$16 END AS timezone_match,
- COALESCE(category.specialization_id,declared.specialization_id)=$13::smallint AS specialization_match,
- CASE WHEN $14::smallint IS NOT NULL THEN COALESCE(category.grade_id,declared.grade_id)=$14 END AS grade_match`
-	query := `WITH matched AS (SELECT ` + columns + `,` + signals + `,category.score_percent::float8 AS test_score,` + skillMatches + ` AS skills ` + conditions + `),
+	signals := `CASE WHEN cardinality($15::smallint[])>0 AND EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id) THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($15::smallint[])) END AS format_match,
+ CASE WHEN $16::bigint IS NOT NULL THEN p.salary_min_rub <= $16 END AS salary_match,
+ CASE WHEN $19::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($19)) END AS city_match,
+ CASE WHEN $20::text IS NOT NULL THEN p.timezone=$20 END AS timezone_match,
+ COALESCE(category.specialization_id,declared.specialization_id)=$17::smallint AS specialization_match,
+ CASE WHEN $18::smallint IS NOT NULL THEN COALESCE(category.grade_id,declared.grade_id)=$18 END AS grade_match`
+	query := `WITH matched AS (SELECT ` + columns + `,` + interactionColumns + `,p.created_at AS profile_created_at,` + lastInteraction + ` AS last_interaction_at,` + signals + `,category.score_percent::float8 AS test_score,` + skillMatches + ` AS skills ` + conditions + `),
  scored AS (SELECT matched.*,` + weightedSkillScore + ` AS skill_score FROM matched),
  ranked AS (SELECT scored.*,` + similarityScore + ` AS match_score,` + similarityCriteria + ` AS criteria FROM scored)
-  , positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY (grade_status='confirmed') DESC,match_score DESC,test_score DESC NULLS LAST,id) AS base_position FROM ranked),
+  , positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY match_score DESC,(grade_status='confirmed') DESC,test_score DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS base_position FROM ranked),
  slots AS (SELECT positioned.*,
- array_agg(base_position) OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
- row_number() OVER(PARTITION BY CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY match_score+fsp_bonus DESC,test_score DESC NULLS LAST,id) AS group_position FROM positioned)
- SELECT id,city,timezone,experience_months,salary_min_rub,search_status,work_format_ids,category,declared_category,grade_status,achievements_count,fsp_bonus,
+ array_agg(base_position) OVER(PARTITION BY match_score,CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
+ row_number() OVER(PARTITION BY match_score,CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY test_score+fsp_bonus DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS group_position FROM positioned)
+ SELECT ` + cardResultColumns + `,
  format_match,salary_match,city_match,timezone_match,specialization_match,grade_match,test_score,skills,skill_score,match_score,criteria
  FROM slots ORDER BY group_slots[group_position::int]
- LIMIT $17 OFFSET $18`
+ LIMIT $21 OFFSET $22`
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
 		return page, err
@@ -77,7 +79,7 @@ func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID st
 		var score, testScore *float64
 		var matchScore float64
 		var criteria []entity.MatchCriterion
-		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus, &card.AchievementsCount, &card.FSPBonus,
+		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus, &card.AchievementsCount, &card.FSPBonus, &card.HasOffer, &card.Viewed, &card.LastViewedAt, &card.LastOfferedAt, &card.NextAvailableAt,
 			&fm, &sm, &cm, &tm, &specMatch, &gradeMatch, &testScore, &skills, &score, &matchScore, &criteria)
 		if err != nil {
 			rows.Close()

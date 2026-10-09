@@ -44,6 +44,14 @@ func (r *Repository) Create(ctx context.Context, user, company string, in entity
 	if err != nil {
 		return o, err
 	}
+	// Отправка считается просмотром и обновляет срок в той же транзакции, что и оффер.
+	_, err = tx.Exec(ctx, `INSERT INTO company_candidate_interactions AS interaction(company_id,candidate_id,last_viewed_at,last_offered_at)
+ VALUES($1,$2,$3,$3) ON CONFLICT(company_id,candidate_id) DO UPDATE
+ SET last_viewed_at=GREATEST(interaction.last_viewed_at,EXCLUDED.last_viewed_at),
+ last_offered_at=GREATEST(interaction.last_offered_at,EXCLUDED.last_offered_at)`, company, in.CandidateID, o.CreatedAt)
+	if err != nil {
+		return entity.Offer{}, err
+	}
 	return o, tx.Commit(ctx)
 }
 func (r *Repository) CompanyGet(ctx context.Context, user, company, id string) (entity.Offer, error) {

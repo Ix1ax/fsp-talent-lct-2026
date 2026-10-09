@@ -74,4 +74,9 @@ func Register(api *gin.RouterGroup, log *slog.Logger, verifier auth.Verifier, us
 		v, err := bank.Get(c.Request.Context(), u.ID, c.Param("company_id"), c.Param("candidate_id"))
 		respond(c, v, err)
 	})
+	g.POST("/candidates/:candidate_id/view", func(c *gin.Context) {
+		u, _ := middleware.UserFrom(c)
+		v, err := bank.View(c.Request.Context(), u.ID, c.Param("company_id"), c.Param("candidate_id"))
+		respond(c, v, err)
+	})
 }

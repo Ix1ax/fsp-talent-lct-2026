@@ -19,15 +19,18 @@ type Filter struct {
 	VerifiedSkillOnly                        bool
 	GradeStatus                              string
 	HasFSPAchievements                       *bool
+	HasOffer                                 *bool
+	Viewed                                   *bool
+	InteractionStatus                        string
 }
 
 func ParseFilter(raw string) (Filter, error) {
-	f := Filter{Limit: 20, GradeStatus: "all"}
+	f := Filter{Limit: 20, GradeStatus: "all", InteractionStatus: "available"}
 	q, err := url.ParseQuery(raw)
 	if err != nil {
 		return f, fmt.Errorf("Некорректная строка параметров")
 	}
-	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true, "grade_status": true, "has_fsp_achievements": true}
+	allowed := map[string]bool{"limit": true, "offset": true, "work_format_ids": true, "experience_min_months": true, "experience_max_months": true, "salary_max_rub": true, "specialization_id": true, "grade_id": true, "skill_id": true, "verified_skill_only": true, "grade_status": true, "has_fsp_achievements": true, "has_offer": true, "viewed": true, "interaction_status": true}
 	for key, values := range q {
 		if !allowed[key] {
 			return f, fmt.Errorf("Неизвестный параметр: %s", key)
@@ -116,12 +119,22 @@ func ParseFilter(raw string) (Filter, error) {
 		}
 		f.GradeStatus = v
 	}
-	if v, ok := q["has_fsp_achievements"]; ok {
+	if v := q.Get("interaction_status"); v != "" {
+		if v != "available" && v != "cooldown" && v != "all" {
+			return f, fmt.Errorf("interaction_status должен быть available, cooldown или all")
+		}
+		f.InteractionStatus = v
+	}
+	for name, target := range map[string]**bool{"has_fsp_achievements": &f.HasFSPAchievements, "has_offer": &f.HasOffer, "viewed": &f.Viewed} {
+		v, ok := q[name]
+		if !ok {
+			continue
+		}
 		if v[0] != "true" && v[0] != "false" {
-			return f, fmt.Errorf("has_fsp_achievements должен быть true или false")
+			return f, fmt.Errorf("%s должен быть true или false", name)
 		}
 		b := v[0] == "true"
-		f.HasFSPAchievements = &b
+		*target = &b
 	}
 
 	return f, nil
