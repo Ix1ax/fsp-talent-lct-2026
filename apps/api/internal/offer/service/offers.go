@@ -9,9 +9,9 @@ import (
 
 type Store interface {
 	Create(context.Context, string, string, entity.Input) (entity.Offer, error)
-	CompanyList(context.Context, string, string, string, int, int) ([]entity.Offer, error)
+	CompanyList(context.Context, string, string, string, int, int) ([]entity.Offer, int64, error)
 	CompanyGet(context.Context, string, string, string) (entity.Offer, error)
-	CandidateList(context.Context, string, string, int, int) ([]entity.Offer, error)
+	CandidateList(context.Context, string, string, int, int) ([]entity.Offer, int64, error)
 	CandidateGet(context.Context, string, string) (entity.Offer, error)
 	View(context.Context, string, string) (entity.Offer, error)
 	Respond(context.Context, string, string, string) (entity.Offer, error)
@@ -28,18 +28,18 @@ func (s *Service) Create(ctx context.Context, user, company string, in entity.In
 	}
 	return s.store.Create(ctx, user, company, in)
 }
-func (s *Service) CompanyList(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Offer, error) {
+func (s *Service) CompanyList(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Offer, int64, error) {
 	if err := filter(status); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	return s.store.CompanyList(ctx, user, company, status, limit, offset)
 }
 func (s *Service) CompanyGet(ctx context.Context, user, company, id string) (entity.Offer, error) {
 	return s.store.CompanyGet(ctx, user, company, id)
 }
-func (s *Service) CandidateList(ctx context.Context, user, status string, limit, offset int) ([]entity.Offer, error) {
+func (s *Service) CandidateList(ctx context.Context, user, status string, limit, offset int) ([]entity.Offer, int64, error) {
 	if err := filter(status); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	return s.store.CandidateList(ctx, user, status, limit, offset)
 }
