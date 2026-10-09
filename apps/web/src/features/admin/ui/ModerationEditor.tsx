@@ -119,53 +119,53 @@ export const ModerationEditor = ({
         </DialogTitle>
         <DialogDescription>{descriptions[action]}</DialogDescription>
         <form onSubmit={submit} className="grid gap-4">
-          {action === 'merge' && (
-            <>
-              <Controller
-                control={form.control}
-                name="target_id"
-                render={({ field }) => (
-                  <SkillPicker
-                    approvedOnly
-                    label="Объединить с навыком"
-                    excludeId={item.id}
-                    value={field.value}
-                    onChange={field.onChange}
-                  />
-                )}
-              />
-              <p className="text-sm text-destructive">
-                {form.formState.errors.target_id?.message}
-              </p>
-            </>
-          )}
-          <Field
-            label={
-              action === 'reject'
-                ? 'Причина отклонения'
-                : 'Комментарий (необязательно)'
-            }
-            error={form.formState.errors.reason?.message}
-          >
-            <Textarea {...form.register('reason')} />
-          </Field>
-          <ErrorNotice error={mutation.error} />
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={mutation.busy}
-              onClick={close}
+          <fieldset disabled={mutation.busy} className="grid min-w-0 gap-4">
+            {action === 'merge' && (
+              <>
+                <Controller
+                  control={form.control}
+                  name="target_id"
+                  render={({ field }) => (
+                    <SkillPicker
+                      approvedOnly
+                      label="Объединить с навыком"
+                      error={form.formState.errors.target_id?.message}
+                      excludeId={item.id}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              </>
+            )}
+            <Field
+              label={
+                action === 'reject'
+                  ? 'Причина отклонения'
+                  : 'Комментарий (необязательно)'
+              }
+              error={form.formState.errors.reason?.message}
             >
-              Отмена
-            </Button>
-            <Button
-              variant={action === 'approve' ? 'default' : 'destructive'}
-              disabled={mutation.busy}
-            >
-              {mutation.busy ? 'Выполняем…' : titles[action]}
-            </Button>
-          </div>
+              <Textarea {...form.register('reason')} />
+            </Field>
+            <ErrorNotice error={mutation.error} />
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={mutation.busy}
+                onClick={close}
+              >
+                Отмена
+              </Button>
+              <Button
+                variant={action === 'approve' ? 'default' : 'destructive'}
+                disabled={mutation.busy}
+              >
+                {mutation.busy ? 'Выполняем…' : titles[action]}
+              </Button>
+            </div>
+          </fieldset>
         </form>
       </DialogContent>
     </Dialog>

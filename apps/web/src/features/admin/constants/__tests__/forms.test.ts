@@ -56,6 +56,32 @@ describe('admin forms', () => {
         .success,
     ).toBe(true);
   });
+  it('attaches invalid choice errors to the exact option and field', () => {
+    const result = questionFormSchema.safeParse({
+      ...values,
+      options: [
+        { id: 'invalid code', text: 'Да', correct: true },
+        { id: 'b', text: ' ', correct: false },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success)
+      expect(result.error.issues.map((issue) => issue.path)).toEqual([
+        ['options', 0, 'id'],
+        ['options', 1, 'text'],
+      ]);
+  });
+  it('ignores hidden choice fields when grading a text answer', () => {
+    expect(
+      questionFormSchema.safeParse({
+        ...values,
+        kind: 'short_answer',
+        grading: 'text',
+        accepted: 'Ответ',
+        options: [{ id: '', text: '', correct: false }],
+      }).success,
+    ).toBe(true);
+  });
   it('omits stale choice and code fields after switching to short answer', () => {
     const input = questionFormSchema.parse({
       ...values,

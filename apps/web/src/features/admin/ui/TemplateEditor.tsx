@@ -11,6 +11,7 @@ import type { TemplateFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
 import { useAdminOptions } from '../model/useAdminOptions';
+import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
@@ -84,16 +85,14 @@ export const TemplateEditor = ({
                 <SkillPicker
                   approvedOnly
                   label="Основной навык (стек)"
+                  error={form.formState.errors.stack_skill_id?.message}
                   value={field.value}
                   onChange={field.onChange}
                 />
               )}
             />
-            <p className="min-h-5 text-sm text-destructive">
-              {form.formState.errors.stack_skill_id?.message}
-            </p>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <AdminFieldGrid>
             {(['specializations', 'grades'] as const).map((kind) => {
               const name = kind === 'grades' ? 'grade_id' : 'specialization_id';
               const label = kind === 'grades' ? 'Грейд' : 'Специализация';
@@ -128,10 +127,6 @@ export const TemplateEditor = ({
                       />
                     )}
                   />
-                  <ErrorNotice
-                    error={options.catalogs[kind]?.error}
-                    onRetry={() => options.reload(kind)}
-                  />
                 </Field>
               );
             })}
@@ -154,7 +149,14 @@ export const TemplateEditor = ({
                 {...form.register('pass_score', { valueAsNumber: true })}
               />
             </Field>
-          </div>
+          </AdminFieldGrid>
+          {(['specializations', 'grades'] as const).map((kind) => (
+            <ErrorNotice
+              key={kind}
+              error={options.catalogs[kind]?.error}
+              onRetry={() => options.reload(kind)}
+            />
+          ))}
           <section className="grid gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium">Состав теста</h3>
@@ -176,16 +178,18 @@ export const TemplateEditor = ({
                   name={`blueprint.${index}.skill_id`}
                   render={({ field }) => (
                     <SkillPicker
+                      error={
+                        form.formState.errors.blueprint?.[index]?.skill_id
+                          ?.message
+                      }
                       approvedOnly
                       value={field.value}
                       onChange={field.onChange}
                     />
                   )}
                 />
-                <p className="min-h-5 text-sm text-destructive">
-                  {form.formState.errors.blueprint?.[index]?.skill_id?.message}
-                </p>
-                <div className="grid gap-3 sm:grid-cols-3">
+
+                <AdminFieldGrid className="sm:grid-cols-3">
                   <Field
                     label="Сложность"
                     error={
@@ -232,7 +236,7 @@ export const TemplateEditor = ({
                       })}
                     />
                   </Field>
-                </div>
+                </AdminFieldGrid>
                 <Button
                   className="justify-self-end"
                   type="button"

@@ -121,46 +121,48 @@ export const CatalogEditor = ({
             : 'Запись станет активной сразу после создания.'}
         </DialogDescription>
         <form onSubmit={submit} className="grid gap-4">
-          <Field label="Код" error={form.formState.errors.code?.message}>
-            <Input readOnly={!!item} {...form.register('code')} />
-          </Field>
-          <Field label="Название" error={form.formState.errors.name?.message}>
-            <Input {...form.register('name')} />
-          </Field>
-          {kind === 'grades' && (
-            <Field
-              label="Порядок грейда"
-              error={form.formState.errors.rank?.message}
-            >
-              <Input
-                type="number"
-                readOnly={!!item}
-                {...form.register('rank', { valueAsNumber: true })}
-              />
+          <fieldset disabled={mutation.busy} className="grid min-w-0 gap-4">
+            <Field label="Код" error={form.formState.errors.code?.message}>
+              <Input readOnly={!!item} {...form.register('code')} />
             </Field>
-          )}
-          {kind === 'skills' && (
-            <Field
-              label="Другие названия — каждое с новой строки"
-              error={form.formState.errors.aliases?.message}
-            >
-              <Textarea {...form.register('aliases')} />
+            <Field label="Название" error={form.formState.errors.name?.message}>
+              <Input {...form.register('name')} />
             </Field>
-          )}
-          <ErrorNotice error={mutation.error} />
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={mutation.busy}
-              onClick={close}
-            >
-              Отмена
-            </Button>
-            <Button disabled={mutation.busy}>
-              {mutation.busy ? 'Сохраняем…' : 'Сохранить'}
-            </Button>
-          </div>
+            {kind === 'grades' && (
+              <Field
+                label="Порядок грейда"
+                error={form.formState.errors.rank?.message}
+              >
+                <Input
+                  type="number"
+                  readOnly={!!item}
+                  {...form.register('rank', { valueAsNumber: true })}
+                />
+              </Field>
+            )}
+            {kind === 'skills' && (
+              <Field
+                label="Другие названия — каждое с новой строки"
+                error={form.formState.errors.aliases?.message}
+              >
+                <Textarea {...form.register('aliases')} />
+              </Field>
+            )}
+            <ErrorNotice error={mutation.error} />
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={mutation.busy}
+                onClick={close}
+              >
+                Отмена
+              </Button>
+              <Button disabled={mutation.busy}>
+                {mutation.busy ? 'Сохраняем…' : 'Сохранить'}
+              </Button>
+            </div>
+          </fieldset>
         </form>
       </DialogContent>
     </Dialog>

@@ -75,26 +75,33 @@ export const questionFormSchema = z
     const issue = (path: string, message: string) =>
       ctx.addIssue({ code: 'custom', path: [path], message });
     if (v.kind === 'code_reading' && (!v.code.trim() || v.code.includes('\0')))
-      issue('code', 'Введите код без NUL');
+      issue('code', 'Введите код без недопустимых символов');
     if (
       (v.kind === 'choice' && v.grading !== 'choice') ||
       (v.kind === 'short_answer' && v.grading !== 'text')
     )
       issue('grading', 'Проверка не соответствует типу задания');
     if (v.grading === 'choice') {
-      if (
-        v.options.some(
-          (o) =>
-            !/^[A-Za-z0-9_-]{1,16}$/.test(o.id) ||
-            !o.text.trim() ||
-            o.text.trim().length > 500 ||
-            o.text.includes('\0'),
-        )
-      )
-        issue(
-          'options',
-          'Укажите уникальные ID (буквы, цифры, _ или -) и текст каждого варианта до 500 символов',
-        );
+      v.options.forEach((option, index) => {
+        if (!/^[A-Za-z0-9_-]{1,16}$/.test(option.id))
+          ctx.addIssue({
+            code: 'custom',
+            path: ['options', index, 'id'],
+            message: '1–16 букв, цифр, _ или -',
+          });
+        let textIssue: string | undefined;
+        if (!option.text.trim()) textIssue = 'Введите текст варианта';
+        else if (option.text.trim().length > 500)
+          textIssue = 'Максимум 500 символов';
+        else if (option.text.includes('\0'))
+          textIssue = 'Удалите недопустимые символы';
+        if (textIssue)
+          ctx.addIssue({
+            code: 'custom',
+            path: ['options', index, 'text'],
+            message: textIssue,
+          });
+      });
       if (v.options.length < 2) issue('options', 'Нужно 2–10 вариантов');
       if (new Set(v.options.map((o) => o.id)).size !== v.options.length)
         issue('options', 'ID вариантов должны быть уникальны');
