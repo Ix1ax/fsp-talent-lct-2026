@@ -125,24 +125,36 @@ func (r *Repository) CreateNeed(ctx context.Context, user, company string, in en
 func (r *Repository) GetNeed(ctx context.Context, user, company, id string) (entity.Need, error) {
 	return scanNeed(r.db.QueryRow(ctx, `SELECT `+needColumns+needAccess+` AND n.id=$3`, user, company, id))
 }
-func (r *Repository) ListNeeds(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, error) {
+
+// ListNeeds возвращает страницу потребностей компании и их общее число с учётом фильтра по статусу.
+func (r *Repository) ListNeeds(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, int64, error) {
 	if _, err := r.Get(ctx, user, company); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	rows, err := r.db.Query(ctx, `SELECT `+needColumns+needAccess+` AND ($3='' OR n.status=$3) ORDER BY n.created_at DESC,n.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
+	tx, err := r.readTx(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+	const filter = ` AND ($3='' OR n.status=$3)`
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+needAccess+filter, user, company, status).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+needColumns+needAccess+filter+` ORDER BY n.created_at DESC,n.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 	result := []entity.Need{}
 	for rows.Next() {
 		n, err := scanNeed(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		result = append(result, n)
 	}
-	return result, rows.Err()
+	return result, total, rows.Err()
 }
 func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, patch map[string]json.RawMessage) (entity.Need, error) {
 	tx, err := r.db.Begin(ctx)

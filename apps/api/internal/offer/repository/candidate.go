@@ -9,29 +9,36 @@ import (
 func (r *Repository) CandidateGet(ctx context.Context, user, id string) (entity.Offer, error) {
 	return scan(r.db.QueryRow(ctx, `SELECT `+columns+candidateAccess+` AND o.id=$2`, user, id))
 }
-func (r *Repository) CandidateList(ctx context.Context, user, status string, limit, offset int) ([]entity.Offer, error) {
+
+// CandidateList возвращает страницу предложений кандидата и их общее число с учётом фильтра по статусу.
+func (r *Repository) CandidateList(ctx context.Context, user, status string, limit, offset int) ([]entity.Offer, int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	if err = lockCandidateUser(ctx, tx, user); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var exists bool
 	err = tx.QueryRow(ctx, `SELECT true FROM candidate_profiles p JOIN users u ON u.id=p.user_id WHERE p.user_id=$1 AND u.role='candidate' AND u.status='active' FOR SHARE OF p,u`, user).Scan(&exists)
 	if err != nil {
-		return nil, dbError(err)
+		return nil, 0, dbError(err)
 	}
-	rows, err := tx.Query(ctx, `SELECT `+columns+candidateAccess+` AND ($2='' OR o.status=$2) ORDER BY o.created_at DESC,o.id DESC LIMIT $3 OFFSET $4`, user, status, limit, offset)
+	const filter = ` AND ($2='' OR o.status=$2)`
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+candidateAccess+filter, user, status).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+columns+candidateAccess+filter+` ORDER BY o.created_at DESC,o.id DESC LIMIT $3 OFFSET $4`, user, status, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items, err := collect(rows)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 
 func (r *Repository) View(ctx context.Context, user, id string) (entity.Offer, error) {

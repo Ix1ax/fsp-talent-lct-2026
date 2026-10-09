@@ -15,12 +15,12 @@ func (h companiesHandler) listMembers(c *gin.Context) {
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.members.List(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
+	items, total, err := h.members.List(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) updateMember(c *gin.Context) {
 	var in struct {
@@ -68,12 +68,12 @@ func (h companiesHandler) listInvitations(c *gin.Context) {
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.members.Invitations(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
+	items, total, err := h.members.Invitations(c.Request.Context(), u.ID, c.Param("company_id"), limit, offset)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) revokeInvitation(c *gin.Context) {
 	u, _ := middleware.UserFrom(c)

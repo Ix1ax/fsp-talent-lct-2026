@@ -67,12 +67,12 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 			fail(c, err)
 			return
 		}
-		items, err := catalogs.List(c.Request.Context(), actor(c), c.Param("kind"), c.Query("q"), limit, offset)
+		items, total, err := catalogs.List(c.Request.Context(), actor(c), c.Param("kind"), c.Query("q"), limit, offset)
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+		c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 	})
 	g.GET("/:kind/:id", func(c *gin.Context) {
 		item, err := catalogs.Get(c.Request.Context(), actor(c), c.Param("kind"), c.Param("id"))
@@ -121,12 +121,12 @@ func Register(api *gin.RouterGroup, log *slog.Logger, admins *adminservice.Servi
 			fail(c, err)
 			return
 		}
-		items, err := catalogs.Pending(c.Request.Context(), actor(c), limit, offset)
+		items, total, err := catalogs.Pending(c.Request.Context(), actor(c), limit, offset)
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+		c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 	})
 	for _, entry := range []struct{ path, action string }{{"approve", "approved"}, {"reject", "rejected"}, {"merge", "merged"}} {
 		g.POST("/skills/:id/"+entry.path, func(c *gin.Context) {

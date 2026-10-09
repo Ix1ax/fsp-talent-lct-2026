@@ -47,11 +47,11 @@ func Register(api *gin.RouterGroup, log *slog.Logger, service *catalog.Service) 
 			fail(c, err)
 			return
 		}
-		items, err := service.Skills(c.Request.Context(), c.Query("q"), limit, offset)
+		items, total, err := service.Skills(c.Request.Context(), c.Query("q"), limit, offset)
 		if err != nil {
 			fail(c, err)
 			return
 		}
-		c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+		c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 	})
 }

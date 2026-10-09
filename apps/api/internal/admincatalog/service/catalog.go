@@ -12,9 +12,9 @@ import (
 )
 
 type Store interface {
-	Pending(context.Context, string, int, int) ([]entity.Item, error)
+	Pending(context.Context, string, int, int) ([]entity.Item, int64, error)
 	Moderate(context.Context, string, string, string, entity.ModerationInput) (entity.ModerationResult, error)
-	List(context.Context, string, string, string, int, int) ([]entity.Item, error)
+	List(context.Context, string, string, string, int, int) ([]entity.Item, int64, error)
 	Create(context.Context, string, string, entity.CreateInput) (entity.Item, error)
 	Get(context.Context, string, string, string) (entity.Item, error)
 	Delete(context.Context, string, string, string) error
@@ -23,12 +23,12 @@ type Store interface {
 type Service struct{ store Store }
 
 func New(store Store) *Service { return &Service{store: store} }
-func (s *Service) List(ctx context.Context, actor, kind, q string, limit, offset int) ([]entity.Item, error) {
+func (s *Service) List(ctx context.Context, actor, kind, q string, limit, offset int) ([]entity.Item, int64, error) {
 	if !entity.Kind(kind) {
-		return nil, entity.ErrNotFound
+		return nil, 0, entity.ErrNotFound
 	}
 	if utf8.RuneCountInString(q) > 100 || strings.ContainsRune(q, 0) || limit < 1 || limit > 100 || offset < 0 {
-		return nil, &entity.ValidationError{Message: "Некорректные параметры списка"}
+		return nil, 0, &entity.ValidationError{Message: "Некорректные параметры списка"}
 	}
 	return s.store.List(ctx, actor, kind, strings.TrimSpace(q), limit, offset)
 }
@@ -85,9 +85,9 @@ func (s *Service) Delete(ctx context.Context, actor, kind, id string) error {
 	return s.store.Delete(ctx, actor, kind, id)
 }
 
-func (s *Service) Pending(ctx context.Context, actor string, limit, offset int) ([]entity.Item, error) {
+func (s *Service) Pending(ctx context.Context, actor string, limit, offset int) ([]entity.Item, int64, error) {
 	if limit < 1 || limit > 100 || offset < 0 {
-		return nil, &entity.ValidationError{Message: "Некорректные параметры списка"}
+		return nil, 0, &entity.ValidationError{Message: "Некорректные параметры списка"}
 	}
 	return s.store.Pending(ctx, actor, limit, offset)
 }

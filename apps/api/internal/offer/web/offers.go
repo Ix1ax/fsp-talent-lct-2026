@@ -32,16 +32,17 @@ func (h handler) list(c *gin.Context, company bool) {
 	}
 	u, _ := middleware.UserFrom(c)
 	var items []entity.Offer
+	var total int64
 	if company {
-		items, err = h.offers.CompanyList(c.Request.Context(), u.ID, c.Param("company_id"), c.Query("status"), limit, offset)
+		items, total, err = h.offers.CompanyList(c.Request.Context(), u.ID, c.Param("company_id"), c.Query("status"), limit, offset)
 	} else {
-		items, err = h.offers.CandidateList(c.Request.Context(), u.ID, c.Query("status"), limit, offset)
+		items, total, err = h.offers.CandidateList(c.Request.Context(), u.ID, c.Query("status"), limit, offset)
 	}
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h handler) companyGet(c *gin.Context) {
 	u, _ := middleware.UserFrom(c)

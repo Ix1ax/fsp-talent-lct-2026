@@ -62,14 +62,16 @@ func (r *Repository) begin(ctx context.Context, actor string) (pgx.Tx, error) {
 	}
 	return tx, nil
 }
-func (r *Repository) List(ctx context.Context, actor, kind, q string, limit, offset int) ([]entity.Item, error) {
+
+// List возвращает страницу справочника и общее число записей по тому же фильтру поиска.
+func (r *Repository) List(ctx context.Context, actor, kind, q string, limit, offset int) ([]entity.Item, int64, error) {
 	cols, err := columns(kind)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	tx, err := r.begin(ctx, actor)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	order := "name,id"
@@ -80,25 +82,29 @@ func (r *Repository) List(ctx context.Context, actor, kind, q string, limit, off
 	if kind == "skills" {
 		filter = `(` + filter + ` OR EXISTS(SELECT 1 FROM unnest(aliases) a WHERE strpos(lower(a),lower($1))>0))`
 	}
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*) FROM `+kind+` WHERE `+filter, q).Scan(&total); err != nil {
+		return nil, 0, err
+	}
 	rows, err := tx.Query(ctx, `SELECT `+cols+` FROM `+kind+` WHERE `+filter+` ORDER BY `+order+` LIMIT $2 OFFSET $3`, q, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items := []entity.Item{}
 	for rows.Next() {
 		item, e := scan(rows)
 		if e != nil {
 			rows.Close()
-			return nil, e
+			return nil, 0, e
 		}
 		items = append(items, item)
 	}
 	err = rows.Err()
 	rows.Close()
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }
 func (r *Repository) Create(ctx context.Context, actor, kind string, in entity.CreateInput) (entity.Item, error) {
 	cols, err := columns(kind)

@@ -38,21 +38,32 @@ func (r *Repository) Create(ctx context.Context, user string, in entity.Input) (
 func (r *Repository) Get(ctx context.Context, user, id string) (entity.Company, error) {
 	return scanCompany(r.db.QueryRow(ctx, `SELECT `+companyColumns+memberJoin+` AND c.id=$2`, user, id))
 }
-func (r *Repository) List(ctx context.Context, user string, limit, offset int) ([]entity.Company, error) {
-	rows, err := r.db.Query(ctx, `SELECT `+companyColumns+memberJoin+` ORDER BY c.created_at DESC,c.id DESC LIMIT $2 OFFSET $3`, user, limit, offset)
+
+// List возвращает компании пользователя и их общее число.
+func (r *Repository) List(ctx context.Context, user string, limit, offset int) ([]entity.Company, int64, error) {
+	tx, err := r.readTx(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+memberJoin, user).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+companyColumns+memberJoin+` ORDER BY c.created_at DESC,c.id DESC LIMIT $2 OFFSET $3`, user, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 	result := []entity.Company{}
 	for rows.Next() {
 		c, err := scanCompany(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		result = append(result, c)
 	}
-	return result, rows.Err()
+	return result, total, rows.Err()
 }
 
 // Изменения компании сериализуем: параллельные PATCH не затирают поля друг друга.

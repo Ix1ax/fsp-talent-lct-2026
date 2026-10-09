@@ -71,9 +71,10 @@ func TestOfferFlow(t *testing.T) {
 	if created.Header().Get("Location") != path {
 		t.Fatal("Некорректный Location")
 	}
-	request("GET", base, "owner", "", 200)
+	wantPage(t, "предложения компании", request("GET", base, "owner", "", 200), 1, 1, 20, 0)
 	request("GET", path, "owner", "", 200)
-	request("GET", "/api/v1/me/offers", "candidate", "", 200)
+	wantPage(t, "предложения кандидата", request("GET", "/api/v1/me/offers", "candidate", "", 200), 1, 1, 20, 0)
+	wantPage(t, "предложения кандидата, offset за пределами", request("GET", "/api/v1/me/offers?offset=5", "candidate", "", 200), 0, 1, 20, 5)
 	request("GET", incoming, "candidate", "", 200)
 	request("GET", incoming, "other", "", 404)
 	if w := request("GET", path, "owner", "", 200); !strings.Contains(w.Body.String(), `"status":"sent"`) {
@@ -105,6 +106,11 @@ func TestOfferFlow(t *testing.T) {
 	if w := request("GET", "/api/v1/me/offers?status=sent", "candidate", "", 200); strings.Contains(w.Body.String(), offer.ID) {
 		t.Fatal("Фильтр статуса не работает")
 	}
+	// Фильтр по статусу влияет и на total: принятое предложение одно, отправленных нет.
+	wantPage(t, "принятые предложения кандидата", request("GET", "/api/v1/me/offers?status=accepted&limit=1", "candidate", "", 200), 1, 1, 1, 0)
+	wantPage(t, "отправленные предложения кандидата", request("GET", "/api/v1/me/offers?status=sent", "candidate", "", 200), 0, 0, 20, 0)
+	wantPage(t, "принятые предложения компании", request("GET", base+"?status=accepted", "owner", "", 200), 1, 1, 20, 0)
+	wantPage(t, "отклонённые предложения компании", request("GET", base+"?status=rejected", "owner", "", 200), 0, 0, 20, 0)
 	request("GET", base+"?status=bad", "owner", "", 400)
 	// Отказ без отдельного просмотра выставляет обе даты и не требует лишнего запроса.
 	var second entity.Offer

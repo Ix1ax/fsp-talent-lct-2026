@@ -53,12 +53,12 @@ func (h companiesHandler) listNeeds(c *gin.Context) {
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.needs.List(c.Request.Context(), u.ID, c.Param("company_id"), c.Query("status"), limit, offset)
+	items, total, err := h.needs.List(c.Request.Context(), u.ID, c.Param("company_id"), c.Query("status"), limit, offset)
 	if err != nil {
 		h.needFail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) updateNeed(c *gin.Context) {
 	var patch map[string]json.RawMessage

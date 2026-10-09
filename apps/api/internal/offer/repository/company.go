@@ -49,22 +49,29 @@ func (r *Repository) Create(ctx context.Context, user, company string, in entity
 func (r *Repository) CompanyGet(ctx context.Context, user, company, id string) (entity.Offer, error) {
 	return scan(r.db.QueryRow(ctx, `SELECT `+columns+companyAccess+` AND o.id=$3`, user, company, id))
 }
-func (r *Repository) CompanyList(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Offer, error) {
+
+// CompanyList возвращает страницу предложений компании и их общее число с учётом фильтра по статусу.
+func (r *Repository) CompanyList(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Offer, int64, error) {
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer tx.Rollback(ctx)
 	if _, err = companyPermission(ctx, tx, user, company, false); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	rows, err := tx.Query(ctx, `SELECT `+columns+companyAccess+` AND ($3='' OR o.status=$3) ORDER BY o.created_at DESC,o.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
+	const filter = ` AND ($3='' OR o.status=$3)`
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+companyAccess+filter, user, company, status).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+columns+companyAccess+filter+` ORDER BY o.created_at DESC,o.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	items, err := collect(rows)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return items, tx.Commit(ctx)
+	return items, total, tx.Commit(ctx)
 }

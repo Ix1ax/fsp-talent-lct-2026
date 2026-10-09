@@ -86,7 +86,7 @@ func TestSkillModeration(t *testing.T) {
 	if approved.Skill.ModerationStatus == nil || *approved.Skill.ModerationStatus != "approved" || approved.Skill.ModeratedBy == nil {
 		t.Fatal("Не одобрено", approved)
 	}
-	visible, err := catalog.NewService(catalog.NewRepository(db)).Skills(ctx, "Go язык", 100, 0)
+	visible, _, err := catalog.NewService(catalog.NewRepository(db)).Skills(ctx, "Go язык", 100, 0)
 	if err != nil || len(visible) != 1 {
 		t.Fatal("Одобренное не опубликовано", err)
 	}
