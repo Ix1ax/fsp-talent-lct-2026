@@ -160,6 +160,30 @@ export const StatisticsPage = () => {
           <div className="grid min-w-0 gap-6 xl:grid-cols-2">
             <AdminPanel>
               <ChartTitle
+                title="Доступ компаний"
+                description="Блокировки компаний учитываются отдельно от подтверждения"
+              />
+              <AdminDistributionChart
+                title="Доступ компаний"
+                total={stats.companies.total}
+                segments={[
+                  {
+                    label: 'Активные',
+                    value: stats.companies.active,
+                    color: colors.success,
+                    href: '/admin/companies?access_status=active',
+                  },
+                  {
+                    label: 'Заблокированные',
+                    value: stats.companies.blocked,
+                    color: colors.danger,
+                    href: '/admin/companies?access_status=blocked',
+                  },
+                ]}
+              />
+            </AdminPanel>
+            <AdminPanel>
+              <ChartTitle
                 title="Пользователи"
                 description="Распределение по статусу доступа"
               />
