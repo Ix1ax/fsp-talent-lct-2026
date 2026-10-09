@@ -9,6 +9,7 @@ import { Button, Card, StaggerItem } from '@/shared/ui';
 import { adminSchemas, kindLabels, queryString } from '@/entities/admin';
 import {
   AdminAnimatedList,
+  AdminFieldGrid,
   AdminListLoading,
   AdminListViewport,
   AdminSelect,
@@ -65,7 +66,7 @@ export const QuestionsPage = () => {
               : ' · все записи'}
           </summary>
           <div className="mt-4 grid gap-3">
-            <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <AdminFieldGrid className="gap-x-3 xl:grid-cols-5">
               <SkillPicker
                 label="Навык"
                 value={filters.skill_id}
@@ -120,7 +121,7 @@ export const QuestionsPage = () => {
                   { value: 'false', label: 'Архивные' },
                 ]}
               />
-            </div>
+            </AdminFieldGrid>
             <div className="flex min-h-11 justify-end">
               <Button
                 disabled={!Object.values(filters).some(Boolean)}

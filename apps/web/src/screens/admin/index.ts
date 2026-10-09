@@ -1,6 +1,10 @@
 export * from './ui/AccountsPage';
 export * from './ui/AdminWorkspacePage';
+export { AuditPage } from './ui/AuditPage';
 export * from './ui/CatalogsPage';
 export * from './ui/ModerationPage';
+export { OperationDetailsPage } from './ui/OperationDetailsPage';
+export { OperationsPage } from './ui/OperationsPage';
 export * from './ui/QuestionsPage';
+export { StatisticsPage } from './ui/StatisticsPage';
 export * from './ui/TemplatesPage';

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
+import { z } from 'zod';
 
-import { AdminWorkspacePage } from '@/screens/admin';
+import { isOperationSection } from '@/features/admin/server';
+import { AdminWorkspacePage, OperationDetailsPage } from '@/screens/admin';
 
 const AdminItemPage = async ({
   params,
@@ -8,6 +10,10 @@ const AdminItemPage = async ({
   params: Promise<{ section: string; path: string[] }>;
 }) => {
   const { section, path } = await params;
+  if (isOperationSection(section)) {
+    if (path.length !== 1 || !z.uuid().safeParse(path[0]).success) notFound();
+    return <OperationDetailsPage section={section} id={path[0]} />;
+  }
   if (section !== 'templates' && section !== 'questions') notFound();
   const [id, action] = path;
   if (
