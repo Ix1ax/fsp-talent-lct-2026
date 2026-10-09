@@ -88,13 +88,25 @@ export const useNeedsQuery = ({
       });
     return () => controller.abort();
   }, [api, companyId, selectedId, revision, enabled, detailKey, fromList]);
+  const previousNeed = listResult?.key.startsWith(`${companyId}:`)
+    ? (listResult.items.find((need) => need.id === selectedId) ?? null)
+    : null;
+  const previousDetail = detailResult?.key.startsWith(
+    `${companyId}:${selectedId}:`,
+  )
+    ? detailResult.need
+    : null;
+  const selected =
+    fromList ??
+    detail?.need ??
+    (detail?.error ? null : (previousNeed ?? previousDetail));
   return {
     items: page?.items ?? [],
-    selected: fromList ?? detail?.need ?? null,
+    selected,
     hasMore: page?.hasMore ?? false,
     listError: page?.error ?? '',
     detailError: fromList ? '' : (detail?.error ?? ''),
     loading: enabled && !!companyId && !page,
-    detailLoading: enabled && !!selectedId && !fromList && !detail,
+    detailLoading: enabled && !!selectedId && !selected && !detail,
   };
 };

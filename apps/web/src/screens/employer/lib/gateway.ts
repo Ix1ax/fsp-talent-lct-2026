@@ -1,6 +1,16 @@
 import { ensureClientAccessToken } from '@/shared/api/client';
 import { getClientCatalogs, getClientSkills } from '@/entities/catalog';
 import { createCompany, getCompanies, updateCompany } from '@/entities/company';
+import { companyManagementApi as management } from '@/entities/company';
+import {
+  getBankCandidate,
+  getBankCandidates,
+  getCompanyOffer,
+  getCompanyOffers,
+  getNeedCandidates,
+  getOfferContacts,
+  sendCandidateOffer,
+} from '@/entities/employer-bank';
 import {
   archiveNeed,
   createNeed,
@@ -10,6 +20,14 @@ import {
   updateNeed,
 } from '@/entities/employer-need';
 export const employerGateway = {
+  ...management,
+  getBankCandidates,
+  getBankCandidate,
+  getCompanyOffers,
+  getCompanyOffer,
+  sendCandidateOffer,
+  getOfferContacts,
+  getNeedCandidates,
   authorize: ensureClientAccessToken,
   catalogs: getClientCatalogs,
   skills: getClientSkills,

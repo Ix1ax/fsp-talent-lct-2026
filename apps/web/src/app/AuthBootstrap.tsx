@@ -16,7 +16,7 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname === '/demo/employer' || pathname.startsWith('/admin')) return;
+    if (pathname.startsWith('/admin')) return;
     if (pathname !== '/auth/callback') {
       void clearOidcUser().then(() => ensureClientAccessToken());
     }

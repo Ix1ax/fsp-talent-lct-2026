@@ -67,7 +67,7 @@ export const EmployerSearch = ({
   return (
     <Command
       shouldFilter={false}
-      className="relative w-full max-w-[360px] overflow-visible rounded-none border border-input bg-background"
+      className="relative w-full min-w-0 overflow-visible rounded-lg border border-input bg-background transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 [&>div]:border-b-0"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
@@ -95,7 +95,7 @@ export const EmployerSearch = ({
         {requested && (
           <CommandList
             label="Результаты поиска потребностей"
-            className="absolute right-0 top-full z-40 mt-px max-h-80 w-[min(420px,calc(100vw-2rem))] rounded-none border border-input bg-popover p-0 shadow-popover"
+            className="absolute top-full right-0 z-40 mt-2 max-h-80 w-full overflow-x-hidden overflow-y-auto rounded-lg border border-input bg-popover p-0 shadow-popover"
           >
             <p
               className="border-b border-border px-3 py-2 text-xs text-muted-foreground"
@@ -123,7 +123,7 @@ export const EmployerSearch = ({
               <CommandItem
                 key={need.id}
                 value={need.id}
-                className="flex-col items-start gap-1 rounded-none border-b border-border px-3"
+                className="flex-col items-start gap-1 rounded-none border-b border-border px-3 [overflow-wrap:anywhere]"
                 onSelect={() => {
                   setOpen(false);
                   setQuery('');

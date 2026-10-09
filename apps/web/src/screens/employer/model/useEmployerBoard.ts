@@ -8,16 +8,15 @@ import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { useCompanyActions } from '@/features/company';
 import { useNeedActions } from '@/features/employer-need';
 
-import { type EmployerGateway, employerGateway } from '../lib/gateway';
+import { employerGateway } from '../lib/gateway';
 import { useNeedsQuery } from './useNeedsQuery';
 interface Resources {
   companies: Company[];
   catalogs: Catalogs;
   skills: Skill[];
 }
-export const useEmployerBoard = (
-  gateway: EmployerGateway = employerGateway,
-) => {
+export const useEmployerBoard = () => {
+  const gateway = employerGateway;
   const [resources, setResources] = useState<Resources | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -80,12 +79,18 @@ export const useEmployerBoard = (
     need: query.selected,
     onSaved: (next) => {
       if (next.status !== status || next.id !== selectedId) setOffset(0);
+      syncQuery({
+        status: next.status,
+        selectedId: next.id,
+        offset: next.status !== status || next.id !== selectedId ? 0 : offset,
+      });
       setStatus(next.status);
       setSelectedId(next.id);
       setRevision((v) => v + 1);
     },
     onArchived: () => {
       setOffset(0);
+      syncQuery({ status: 'archived', offset: 0 });
       setStatus('archived');
       setRevision((v) => v + 1);
     },
@@ -115,40 +120,69 @@ export const useEmployerBoard = (
     needActions.clearError();
     companyActions.clearError();
   };
-  useEffect(() => {
-    if (!resources) return;
+  const syncQuery = (next: {
+    companyId?: string;
+    status?: NeedStatus;
+    offset?: number;
+    selectedId?: string;
+  }) => {
     const query = new URLSearchParams(window.location.search);
-    if (companyId) query.set('company', companyId);
+    const selectedCompany = next.companyId ?? companyId;
+    if (selectedCompany) query.set('company', selectedCompany);
     else query.delete('company');
-    query.set('tab', status);
-    if (offset) query.set('offset', String(offset));
+    query.set('tab', next.status ?? status);
+    const pageOffset = next.offset ?? offset;
+    if (pageOffset) query.set('offset', String(pageOffset));
     else query.delete('offset');
-    if (selectedId) query.set('need', selectedId);
+    const needId = next.selectedId ?? selectedId;
+    if (needId) query.set('need', needId);
     else query.delete('need');
     window.history.replaceState(
       null,
       '',
       `${window.location.pathname}?${query}`,
     );
-  }, [resources, companyId, status, selectedId, offset]);
+  };
   const chooseCompany = (id: string) => {
+    syncQuery({ companyId: id, selectedId: '', offset: 0 });
     setCompanyId(id);
     setSelectedId('');
     setOffset(0);
     clearError();
   };
   const chooseStatus = (tab: NeedStatus) => {
+    syncQuery({ status: tab, selectedId: '', offset: 0 });
     setStatus(tab);
     setSelectedId('');
     setOffset(0);
     clearError();
   };
   const select = (id: string) => {
+    syncQuery({ selectedId: id });
     setSelectedId(id);
     clearError();
   };
   const reload = useCallback(() => setRevision((v) => v + 1), []);
   return {
+    refreshCompanies: async (preferredId = companyId) => {
+      const companies: Company[] = [];
+      for (let skip = 0; skip <= 10000; skip += 100) {
+        const page = await gateway.companies(skip);
+        companies.push(...page.items);
+        if (page.items.length < 100) break;
+      }
+      setResources((r) => (r ? { ...r, companies } : r));
+      const nextId =
+        companies.find((c) => c.id === preferredId)?.id ??
+        companies[0]?.id ??
+        '';
+      if (nextId !== companyId) {
+        setSelectedId('');
+        setOffset(0);
+      }
+      setCompanyId(nextId);
+      setRevision((v) => v + 1);
+    },
     resources,
     error,
     retry: () => {
@@ -176,6 +210,7 @@ export const useEmployerBoard = (
     chooseStatus,
     select,
     openNeed: (need: EmployerNeed) => {
+      syncQuery({ status: need.status, offset: 0, selectedId: need.id });
       setStatus(need.status);
       setOffset(0);
       setSelectedId(need.id);
@@ -183,6 +218,7 @@ export const useEmployerBoard = (
     },
     reload,
     page: (next: number) => {
+      syncQuery({ offset: next, selectedId: '' });
       setOffset(next);
       setSelectedId('');
     },

@@ -1,0 +1,42 @@
+export const EMPLOYER_SECTIONS = [
+  {
+    id: 'profile',
+    title: 'Профиль компании',
+    description: 'Название, описание, реквизиты и контакты компании.',
+  },
+  {
+    id: 'documents',
+    title: 'Документы и логотип',
+    description: 'Загрузите документы и добавьте логотип компании.',
+  },
+  {
+    id: 'team',
+    title: 'Сотрудники',
+    description: 'Приглашайте коллег и управляйте доступом к компании.',
+  },
+  {
+    id: 'vacancies',
+    title: 'Потребности',
+    description:
+      'Создавайте потребности, сохраняйте черновики и подбирайте кандидатов.',
+  },
+  {
+    id: 'candidates',
+    title: 'Банк соискателей',
+    description:
+      'Изучайте опыт, навыки и подтверждённую квалификацию соискателей.',
+  },
+  {
+    id: 'offers',
+    title: 'Предложения',
+    description: 'Следите за ответами и открывайте контакты после принятия.',
+  },
+] as const;
+export type EmployerSection =
+  (typeof EMPLOYER_SECTIONS)[number]['id'] | 'overview' | 'invitation';
+export const getEmployerSection = (value: string): EmployerSection => {
+  if (value === 'invitation') return value;
+  return (
+    EMPLOYER_SECTIONS.find((section) => section.id === value)?.id ?? 'overview'
+  );
+};

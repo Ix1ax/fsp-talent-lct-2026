@@ -39,16 +39,16 @@ export const CompanySwitcher = ({
         aria-label={`Компания: ${company?.name ?? 'выбрать компанию'}`}
         variant="ghost"
         disabled={pending}
-        className="h-auto min-h-14 min-w-0 gap-2 self-stretch rounded-none border-r border-border px-3 max-md:flex-1"
+        className="h-auto min-h-11 min-w-0 max-w-full gap-2 rounded-lg border border-border px-3 py-2 max-md:flex-1"
       >
-        <span className="hidden size-6 shrink-0 items-center justify-center bg-primary font-mono text-[10px] text-primary-foreground sm:flex">
+        <span className="hidden size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary sm:flex">
           {company?.name
             .split(/\s+/)
             .slice(0, 2)
             .map((p) => p[0])
             .join('') || '+'}
         </span>
-        <span className="max-w-44 truncate md:max-xl:hidden">
+        <span className="min-w-0 max-w-64 truncate">
           {company?.name ?? 'Выбрать компанию'}
         </span>
         <ChevronDownIcon className="size-3" />
@@ -56,7 +56,7 @@ export const CompanySwitcher = ({
     </DropdownMenuTrigger>
     <DropdownMenuContent
       align="start"
-      className="w-72 max-w-[calc(100vw-2rem)] rounded-none border-input shadow-popover"
+      className="w-72 max-w-[calc(100vw-2rem)] rounded-md border-input shadow-popover"
     >
       <DropdownMenuLabel>
         <MetaLabel>Компании</MetaLabel>
@@ -65,7 +65,7 @@ export const CompanySwitcher = ({
         <DropdownMenuItem
           key={c.id}
           className={cn(
-            'min-h-12 rounded-none',
+            'min-h-12 rounded-md',
             c.id === company?.id && 'bg-accent',
           )}
           onSelect={() => onCompany(c.id)}
