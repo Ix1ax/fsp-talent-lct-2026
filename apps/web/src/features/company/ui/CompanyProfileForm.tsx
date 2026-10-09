@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import { EMPLOYER_DRAFT_SCOPE, STATIC_ROUTES } from '@/shared/contants';
 import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
@@ -52,7 +52,18 @@ export const CompanyProfileForm = ({
     },
   });
   const { dirty, markSaved } = useFormUnsavedChanges(form, {
-    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.EMPLOYER,
+        STATIC_ROUTES.EMPLOYER_PROFILE,
+        STATIC_ROUTES.EMPLOYER_DOCUMENTS,
+        STATIC_ROUTES.EMPLOYER_TEAM,
+        STATIC_ROUTES.EMPLOYER_VACANCIES,
+        STATIC_ROUTES.EMPLOYER_CANDIDATES,
+        STATIC_ROUTES.EMPLOYER_OFFERS,
+      ],
+      [],
+    ),
     scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
   });
 

@@ -7,6 +7,7 @@ const hooks = vi.hoisted(() => ({
   effects: [] as (() => (() => void) | undefined)[],
 }));
 vi.mock('react', () => ({
+  useCallback: (callback: unknown) => callback,
   useState: (initial: unknown) => {
     const index = hooks.cursor++;
     if (!(index in hooks.slots)) hooks.slots[index] = initial;
@@ -95,4 +96,19 @@ it('retains an error while hidden and retries only on request', async () => {
   RenderRemote(load).effect();
   await flush();
   expect(load).toHaveBeenCalledTimes(2);
+});
+
+it('patches completed data without refetching and ignores updates from an old scope', async () => {
+  const loadA = vi.fn(async () => 'A');
+  RenderRemote(loadA).effect();
+  await flush();
+  const updateA = RenderRemote(loadA).result.updateData;
+  updateA((value) => value + ' patched');
+  expect(RenderRemote(loadA).result.data).toBe('A patched');
+  expect(loadA).toHaveBeenCalledOnce();
+  const loadB = vi.fn(async () => 'B');
+  RenderRemote(loadB).effect();
+  await flush();
+  updateA(() => 'stale A');
+  expect(RenderRemote(loadB).result.data).toBe('B');
 });

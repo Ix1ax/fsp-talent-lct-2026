@@ -5,6 +5,8 @@ import {
   WebStorageStateStore,
 } from 'oidc-client-ts';
 
+import { STATIC_ROUTES } from '@/shared/contants';
+
 export const getAppOrigin = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
@@ -12,7 +14,8 @@ export const getAppOrigin = (): string => {
   return '';
 };
 
-export const getCallbackUri = (): string => `${getAppOrigin()}/auth/callback`;
+export const getCallbackUri = (): string =>
+  `${getAppOrigin()}${STATIC_ROUTES.AUTH_CALLBACK}`;
 
 let manager: UserManager | null = null;
 let managerKey = '';

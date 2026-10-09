@@ -4,6 +4,7 @@ import { useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
 
 interface ServiceUnavailableNoticeProps {
@@ -52,7 +53,7 @@ export const ServiceUnavailableNotice = ({
               variant="outline"
               className="min-h-11 w-full sm:w-auto"
             >
-              <Link href="/">На главную</Link>
+              <Link href={STATIC_ROUTES.HOME}>На главную</Link>
             </Button>
           </div>
         </CardContent>

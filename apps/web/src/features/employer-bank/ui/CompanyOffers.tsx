@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import { useAsyncMutation } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
@@ -17,28 +18,31 @@ import {
   DialogHeader,
   DialogTitle,
   OptionSelect,
+  PageControls,
+  RemoteState,
+  toast,
 } from '@/shared/ui';
-import { PageControls } from '@/shared/ui/workspace/PageControls';
-import { RemoteState } from '@/shared/ui/workspace/RemoteState';
 import { formatDate, formatSalaryRange } from '@/shared/utils';
 import type { Company } from '@/entities/company';
 import type {
   CandidateOfferContacts,
+  EmployerBankApi,
   OfferStatus,
 } from '@/entities/employer-bank';
-import type { EmployerBankApi } from '@/entities/employer-bank';
 
 interface CompanyOffersProps {
   company: Company;
   api: EmployerBankApi;
   onBusyChange: (value: boolean) => void;
 }
+
 const STATUS = {
   sent: 'Отправлено',
   viewed: 'Просмотрено',
   accepted: 'Принято',
   rejected: 'Отклонено',
 };
+
 export const CompanyOffers = ({
   company,
   api,
@@ -49,23 +53,29 @@ export const CompanyOffers = ({
   const [id, setId] = useState('');
   const [contacts, setContacts] = useState<CandidateOfferContacts | null>(null);
   const mutation = useAsyncMutation();
+
   useEffect(() => {
     onBusyChange(mutation.pending);
     return () => onBusyChange(false);
   }, [mutation.pending, onBusyChange]);
+
   const load = useCallback(
     (signal: AbortSignal) =>
       api.getCompanyOffers(company.id, status, offset, signal),
     [api, company.id, status, offset],
   );
+
   const detailLoad = useCallback(
     (signal: AbortSignal) =>
       id ? api.getCompanyOffer(company.id, id, signal) : Promise.resolve(null),
     [api, company.id, id],
   );
+
   const remote = useRemoteData(load);
   const detail = useRemoteData(detailLoad);
+
   const offer = detail.data;
+
   return (
     <div className="grid gap-5">
       <Card>
@@ -201,7 +211,9 @@ export const CompanyOffers = ({
                                 ),
                               ),
                             )
-                            .catch(() => {});
+                            .catch((error: unknown) => {
+                              toast.error(getApiErrorMessage(error));
+                            });
                         }}
                       >
                         {mutation.pending

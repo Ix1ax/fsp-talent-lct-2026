@@ -14,8 +14,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  RemoteState,
 } from '@/shared/ui';
-import { RemoteState } from '@/shared/ui/workspace/RemoteState';
 import { formatDate } from '@/shared/utils';
 import type { Catalogs } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
@@ -32,6 +32,7 @@ interface CandidateDetailsProps {
   onClose: () => void;
   onOffer: () => void;
 }
+
 const EDUCATION: Record<string, string> = {
   secondary: 'Среднее',
   vocational: 'Среднее профессиональное',
@@ -42,6 +43,7 @@ const EDUCATION: Record<string, string> = {
   phd: 'Кандидат наук',
   doctor: 'Доктор наук',
 };
+
 export const CandidateDetails = ({
   company,
   catalogs,
@@ -57,7 +59,9 @@ export const CandidateDetails = ({
     [api, company.id, candidateId],
   );
   const remote = useRemoteData(load);
+
   const candidate = remote.data;
+
   return (
     <Dialog
       open

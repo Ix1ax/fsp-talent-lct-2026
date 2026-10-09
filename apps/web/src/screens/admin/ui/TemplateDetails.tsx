@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import { useGuardedRouter } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 import {
@@ -62,14 +63,18 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
           <div className="grid gap-2 sm:flex sm:flex-wrap">
             <Button
               disabled={mutation.busy || !template.blueprint?.length}
-              onClick={() => router.push(`/admin/templates/${id}/preview`)}
+              onClick={() =>
+                router.push(DYNAMIC_ROUTES.ADMIN_TEMPLATE(id, 'preview'))
+              }
             >
               Предпросмотр теста
             </Button>
             <Button
               variant="outline"
               disabled={mutation.busy}
-              onClick={() => router.push(`/admin/templates/${id}/edit`)}
+              onClick={() =>
+                router.push(DYNAMIC_ROUTES.ADMIN_TEMPLATE(id, 'edit'))
+              }
             >
               Создать новую версию
             </Button>
@@ -161,7 +166,7 @@ export const TemplateDetails = ({ id, onSaved }: TemplateDetailsProps) => {
                   {missing > 0 && ` · Не хватает ${missing}`}
                 </p>
                 <Link
-                  href={`/admin/questions?${queryString({ skill_id: row.skill_id, difficulty: row.difficulty, active: 'true', status: 'published' })}`}
+                  href={`${STATIC_ROUTES.ADMIN_QUESTIONS}?${queryString({ skill_id: row.skill_id, difficulty: row.difficulty, active: 'true', status: 'published' })}`}
                   className="flex min-h-11 items-center text-sm text-brand-text underline-offset-4 hover:underline"
                 >
                   Открыть подходящие задания →

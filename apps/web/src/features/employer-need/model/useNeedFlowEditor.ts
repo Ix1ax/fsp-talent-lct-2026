@@ -1,11 +1,8 @@
 'use client';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
-import {
-  EMPLOYER_DRAFT_ROUTES,
-  EMPLOYER_NEED_DRAFT_SCOPE,
-} from '@/shared/contants';
+import { EMPLOYER_NEED_DRAFT_SCOPE, STATIC_ROUTES } from '@/shared/contants';
 import { useFormUnsavedChanges } from '@/shared/hooks';
 import type { Skill } from '@/entities/catalog';
 import type { NeedInput, NeedStatus } from '@/entities/employer-need';
@@ -60,7 +57,18 @@ export const useNeedFlowEditor = ({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saved, setSaved] = useState(false);
   const { dirty, markSaved } = useFormUnsavedChanges(form, {
-    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.EMPLOYER,
+        STATIC_ROUTES.EMPLOYER_PROFILE,
+        STATIC_ROUTES.EMPLOYER_DOCUMENTS,
+        STATIC_ROUTES.EMPLOYER_TEAM,
+        STATIC_ROUTES.EMPLOYER_VACANCIES,
+        STATIC_ROUTES.EMPLOYER_CANDIDATES,
+        STATIC_ROUTES.EMPLOYER_OFFERS,
+      ],
+      [],
+    ),
     scopeSearchParams: EMPLOYER_NEED_DRAFT_SCOPE,
   });
   useEffect(() => {

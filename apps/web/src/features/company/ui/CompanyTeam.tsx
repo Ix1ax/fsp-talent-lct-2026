@@ -1,10 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { EMPLOYER_DRAFT_ROUTES, EMPLOYER_DRAFT_SCOPE } from '@/shared/contants';
+import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
+import { EMPLOYER_DRAFT_SCOPE, STATIC_ROUTES } from '@/shared/contants';
 import { useAsyncMutation, useFormUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
@@ -18,21 +19,22 @@ import {
   ConfirmDeleteDialog,
   Input,
   OptionSelect,
+  PageControls,
+  RemoteState,
   toast,
 } from '@/shared/ui';
-import { PageControls } from '@/shared/ui/workspace/PageControls';
-import { RemoteState } from '@/shared/ui/workspace/RemoteState';
 import { formatDate } from '@/shared/utils';
-import type {
-  Company,
-  CompanyInvitation,
-  CompanyMember,
-  TeamRole,
+import {
+  type Company,
+  type CompanyInvitation,
+  type CompanyMember,
+  MEMBER_ROLE_LABELS,
+  type TeamRole,
 } from '@/entities/company';
-import { MEMBER_ROLE_LABELS } from '@/entities/company';
 
 import { invitationSchema } from '../constants';
 import type { CompanyManagementApi } from '../model';
+import { MemberItem } from './MemberItem';
 
 interface CompanyTeamProps {
   active?: boolean;
@@ -43,6 +45,8 @@ interface CompanyTeamProps {
   onDirtyChange: (value: boolean) => void;
   onCompanyChange: () => Promise<void>;
 }
+
+type InvitationFormValues = { email: string; role: TeamRole };
 
 const STATUS = {
   pending: 'Ожидает принятия',
@@ -62,7 +66,9 @@ export const CompanyTeam = ({
 }: CompanyTeamProps) => {
   const [memberOffset, setMemberOffset] = useState(0);
   const [invitationOffset, setInvitationOffset] = useState(0);
+
   const owner = company.memberRole === 'owner';
+
   const membersLoad = useCallback(
     (signal: AbortSignal) =>
       api.getCompanyMembers(company.id, memberOffset, signal),
@@ -85,13 +91,24 @@ export const CompanyTeam = ({
     CompanyMember | CompanyInvitation | null
   >(null);
 
-  const form = useForm<{ email: string; role: TeamRole }>({
+  const form = useForm<InvitationFormValues>({
     resolver: zodResolver(invitationSchema),
     defaultValues: { email: '', role: 'recruiter' },
   });
 
   const { dirty, markSaved } = useFormUnsavedChanges(form, {
-    preserveWithin: EMPLOYER_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.EMPLOYER,
+        STATIC_ROUTES.EMPLOYER_PROFILE,
+        STATIC_ROUTES.EMPLOYER_DOCUMENTS,
+        STATIC_ROUTES.EMPLOYER_TEAM,
+        STATIC_ROUTES.EMPLOYER_VACANCIES,
+        STATIC_ROUTES.EMPLOYER_CANDIDATES,
+        STATIC_ROUTES.EMPLOYER_OFFERS,
+      ],
+      [],
+    ),
     scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
   });
 
@@ -110,14 +127,87 @@ export const CompanyTeam = ({
     invitations.retry();
   };
 
+  const handleOperationError = (error: unknown) => {
+    toast.error(getApiErrorMessage(error));
+  };
+
   const perform = (operation: () => Promise<unknown>) =>
-    void mutation.run(async () => {
-      try {
-        await operation();
-      } finally {
-        refresh();
-      }
+    void mutation
+      .run(async () => {
+        try {
+          await operation();
+        } finally {
+          refresh();
+        }
+      })
+      .catch(handleOperationError);
+
+  const handleRoleChange = (member: CompanyMember, value: string) => {
+    perform(async () => {
+      await api.updateCompanyMember(
+        company.id,
+        member.userId,
+        value as TeamRole,
+      );
+      await onCompanyChange();
+      toast.success('Роль изменена');
     });
+  };
+
+  const handleFormSubmit = (input: InvitationFormValues) => {
+    perform(async () => {
+      const invitation = await api.createCompanyInvitation(company.id, input);
+      setCreated(invitation);
+      form.reset({ email: '', role: 'recruiter' });
+      markSaved();
+      setInvitationOffset(0);
+      toast.success('Приглашение создано');
+    });
+  };
+
+  const handleCopyInvitation = () => {
+    const token = created?.token;
+    if (!token) return;
+
+    void mutation
+      .run(async () => {
+        await navigator.clipboard.writeText(
+          `${window.location.origin}${STATIC_ROUTES.EMPLOYER_INVITATION}?token=${encodeURIComponent(token)}`,
+        );
+        toast.success('Ссылка скопирована');
+      })
+      .catch(handleOperationError);
+  };
+
+  const handleRemove = (item: CompanyMember | CompanyInvitation) => {
+    mutation.clearError();
+    setRemove(item);
+  };
+
+  const handleCloseRemove = () => setRemove(null);
+
+  const handleConfirmRemove = async (): Promise<boolean> => {
+    if (!remove) return false;
+
+    try {
+      await mutation.run(async () => {
+        try {
+          if ('userId' in remove) {
+            await api.disableCompanyMember(company.id, remove.userId);
+          } else {
+            await api.revokeCompanyInvitation(company.id, remove.id);
+            if (created?.id === remove.id) setCreated(null);
+          }
+          await onCompanyChange();
+        } finally {
+          refresh();
+        }
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  };
 
   return (
     <div className="grid gap-5">
@@ -137,69 +227,15 @@ export const CompanyTeam = ({
                 <AsyncState title="Участников нет" />
               )}
               {members.data.items.map((member) => (
-                <article
+                <MemberItem
                   key={member.userId}
-                  className="grid gap-3 rounded-lg border p-4"
-                >
-                  <div>
-                    <p className="font-medium">
-                      {member.userId === userId ? 'Вы' : 'Сотрудник'}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-muted-foreground">
-                      ID: {member.userId}
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {MEMBER_ROLE_LABELS[member.role]} ·{' '}
-                    {member.status === 'active' ? 'Активен' : 'Отключён'} · В
-                    команде с {formatDate(member.joinedAt)}
-                  </p>
-                  {owner &&
-                    member.role !== 'owner' &&
-                    member.status === 'active' && (
-                      <div className="flex flex-wrap gap-3">
-                        <label className="flex items-center gap-2 text-sm">
-                          Роль
-                          <OptionSelect
-                            aria-label={`Роль сотрудника ${member.userId}`}
-                            className="w-auto"
-                            value={member.role}
-                            disabled={mutation.pending}
-                            onValueChange={(value) =>
-                              perform(async () => {
-                                await api.updateCompanyMember(
-                                  company.id,
-                                  member.userId,
-                                  value as TeamRole,
-                                );
-                                await onCompanyChange();
-                                toast.success('Роль изменена');
-                              })
-                            }
-                            options={[
-                              { value: 'recruiter', label: 'Рекрутер' },
-                              { value: 'viewer', label: 'Наблюдатель' },
-                            ]}
-                          />
-                        </label>
-                        <Button
-                          variant="ghost"
-                          disabled={mutation.pending}
-                          onClick={() => {
-                            mutation.clearError();
-                            setRemove(member);
-                          }}
-                        >
-                          Отключить
-                        </Button>
-                      </div>
-                    )}
-                  {member.status === 'inactive' && (
-                    <p className="text-sm text-muted-foreground">
-                      Для возвращения в команду потребуется новое приглашение.
-                    </p>
-                  )}
-                </article>
+                  member={member}
+                  userId={userId}
+                  owner={owner}
+                  pending={mutation.pending}
+                  onRoleChange={handleRoleChange}
+                  onRemove={handleRemove}
+                />
               ))}
               <PageControls
                 offset={memberOffset}
@@ -223,19 +259,7 @@ export const CompanyTeam = ({
           <CardContent className="grid gap-5">
             <form
               className="grid gap-4"
-              onSubmit={form.handleSubmit((input) =>
-                perform(async () => {
-                  const invitation = await api.createCompanyInvitation(
-                    company.id,
-                    input,
-                  );
-                  setCreated(invitation);
-                  form.reset({ email: '', role: 'recruiter' });
-                  markSaved();
-                  setInvitationOffset(0);
-                  toast.success('Приглашение создано');
-                }),
-              )}
+              onSubmit={form.handleSubmit(handleFormSubmit)}
             >
               <fieldset
                 disabled={mutation.pending}
@@ -305,16 +329,7 @@ export const CompanyTeam = ({
                 <Button
                   variant="outline"
                   disabled={mutation.pending}
-                  onClick={() =>
-                    void mutation
-                      .run(async () => {
-                        await navigator.clipboard.writeText(
-                          `${window.location.origin}/employer/invitation?token=${encodeURIComponent(created.token!)}`,
-                        );
-                        toast.success('Ссылка скопирована');
-                      })
-                      .catch(() => {})
-                  }
+                  onClick={handleCopyInvitation}
                 >
                   Скопировать ссылку
                 </Button>
@@ -345,10 +360,7 @@ export const CompanyTeam = ({
                       <Button
                         variant="outline"
                         disabled={mutation.pending}
-                        onClick={() => {
-                          mutation.clearError();
-                          setRemove(invitation);
-                        }}
+                        onClick={() => handleRemove(invitation)}
                       >
                         Отозвать
                       </Button>
@@ -387,27 +399,8 @@ export const CompanyTeam = ({
           }
           busy={mutation.pending}
           error={mutation.error}
-          onClose={() => setRemove(null)}
-          onConfirm={async () => {
-            try {
-              await mutation.run(async () => {
-                try {
-                  if ('userId' in remove)
-                    await api.disableCompanyMember(company.id, remove.userId);
-                  else {
-                    await api.revokeCompanyInvitation(company.id, remove.id);
-                    if (created?.id === remove.id) setCreated(null);
-                  }
-                  await onCompanyChange();
-                } finally {
-                  refresh();
-                }
-              });
-              return true;
-            } catch {
-              return false;
-            }
-          }}
+          onClose={handleCloseRemove}
+          onConfirm={handleConfirmRemove}
         />
       )}
     </div>

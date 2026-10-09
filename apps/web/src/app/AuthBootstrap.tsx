@@ -27,11 +27,12 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
   const pathname = usePathname();
   const attempt = useRef<BootstrapAttempt | null>(null);
   const enabled =
-    pathname !== '/demo/employer' &&
-    !pathname.startsWith('/admin') &&
-    pathname !== '/auth/callback';
+    pathname !== STATIC_ROUTES.DEMO_EMPLOYER &&
+    !pathname.startsWith(STATIC_ROUTES.ADMIN) &&
+    pathname !== STATIC_ROUTES.AUTH_CALLBACK;
   const subscribe =
-    pathname !== '/demo/employer' && !pathname.startsWith('/admin');
+    pathname !== STATIC_ROUTES.DEMO_EMPLOYER &&
+    !pathname.startsWith(STATIC_ROUTES.ADMIN);
 
   useEffect(() => {
     if (!subscribe) return;

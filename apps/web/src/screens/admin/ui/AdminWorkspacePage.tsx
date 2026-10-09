@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import { useGuardedRouter } from '@/shared/hooks';
 import { Button, Card, Skeleton } from '@/shared/ui';
 import { adminSchemas } from '@/entities/admin';
@@ -28,7 +29,14 @@ export const AdminWorkspacePage = ({
   action,
 }: AdminWorkspacePageProps) => {
   const router = useGuardedRouter();
-  const base = `/admin/${section}`;
+  const base =
+    section === 'templates'
+      ? STATIC_ROUTES.ADMIN_TEMPLATES
+      : STATIC_ROUTES.ADMIN_QUESTIONS;
+  const getItemHref = (itemId: string) =>
+    section === 'templates'
+      ? DYNAMIC_ROUTES.ADMIN_TEMPLATE(itemId)
+      : DYNAMIC_ROUTES.ADMIN_QUESTION(itemId);
   const creating = id === 'new';
   const template = useAdminQuery(
     section === 'templates' && !creating && !!action
@@ -42,8 +50,8 @@ export const AdminWorkspacePage = ({
       : null,
     adminSchemas.question,
   );
-  const back = () => router.push(creating ? base : `${base}/${id}`);
-  const saved = (savedId: string) => router.push(`${base}/${savedId}`);
+  const back = () => router.push(creating ? base : getItemHref(id));
+  const saved = (savedId: string) => router.push(getItemHref(savedId));
   const label = section === 'templates' ? 'Шаблоны тестов' : 'Банк заданий';
   let current = 'Карточка';
   if (creating) current = 'Создание';
@@ -57,7 +65,7 @@ export const AdminWorkspacePage = ({
         className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground"
       >
         <Link
-          href="/admin"
+          href={STATIC_ROUTES.ADMIN}
           className="inline-flex min-h-11 items-center hover:text-foreground"
         >
           Админка
@@ -73,7 +81,7 @@ export const AdminWorkspacePage = ({
         {action && (
           <>
             <Link
-              href={`${base}/${id}`}
+              href={getItemHref(id)}
               className="inline-flex min-h-11 items-center hover:text-foreground"
             >
               Карточка

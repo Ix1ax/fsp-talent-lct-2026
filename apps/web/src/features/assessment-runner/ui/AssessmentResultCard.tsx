@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Badge,
   Button,
@@ -87,14 +88,16 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
       )}
       <div className="grid gap-3 sm:flex sm:flex-wrap">
         <Button className="h-auto min-h-11 whitespace-normal" asChild>
-          <Link href="/candidate">Посмотреть профиль</Link>
+          <Link href={STATIC_ROUTES.CANDIDATE}>Посмотреть профиль</Link>
         </Button>
         <Button
           className="h-auto min-h-11 whitespace-normal"
           asChild
           variant="outline"
         >
-          <Link href="/candidate/assessments">К списку тестов</Link>
+          <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
+            К списку тестов
+          </Link>
         </Button>
       </div>
     </section>

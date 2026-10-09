@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ensureClientAccessToken } from '@/shared/api';
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import { clearClientAccessToken } from '@/shared/auth';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { AsyncState, Skeleton } from '@/shared/ui';
 
 interface EmployerSessionRecoveryProps {
@@ -28,7 +29,7 @@ export const EmployerSessionRecovery = ({
         if (token) window.location.reload();
         else
           router.replace(
-            `/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+            `${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(window.location.pathname + window.location.search)}`,
           );
       })
       .catch((failure: unknown) => {

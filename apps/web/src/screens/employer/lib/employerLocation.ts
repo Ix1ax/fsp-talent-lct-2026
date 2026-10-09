@@ -1,3 +1,5 @@
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
+
 import type { EmployerSection } from '../constants';
 
 export type EmployerSearchParams = Record<
@@ -15,7 +17,11 @@ export const getEmployerReturnPath = (
     const value = params[key];
     if (typeof value === 'string' && value) query.set(key, value);
   }
-  return `/employer${section === 'overview' ? '' : `/${section}`}${query.size ? `?${query}` : ''}`;
+  const pathname =
+    section === 'overview'
+      ? STATIC_ROUTES.EMPLOYER
+      : DYNAMIC_ROUTES.EMPLOYER(section);
+  return `${pathname}${query.size ? `?${query}` : ''}`;
 };
 
 export const getEmployerHref = (

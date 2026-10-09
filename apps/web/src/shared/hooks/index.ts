@@ -17,6 +17,7 @@ export { useMediaQuery } from './useMediaQuery';
 export { useMotionSettings } from './useMotionSettings';
 export { useMouseOffset } from './useMouseOffset';
 export { useParallax } from './useParallax';
+export { useRemoteData } from './useRemoteData';
 export { useScrollDirection } from './useScrollDirection';
 export { useSearch } from './useSearch';
 export { useSmoothScrollProgress } from './useSmoothScrollProgress';

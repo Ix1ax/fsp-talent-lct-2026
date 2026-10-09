@@ -6,11 +6,16 @@ import {
   SlidersHorizontalIcon,
 } from 'lucide-react';
 
-import { confirmUnsavedChanges } from '@/shared/hooks';
-import { useRemoteData } from '@/shared/hooks/useRemoteData';
+import { confirmUnsavedChanges, useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import { AsyncState, Button, Input, OptionSelect, Skeleton } from '@/shared/ui';
-import { PageControls } from '@/shared/ui/workspace/PageControls';
+import {
+  AsyncState,
+  Button,
+  Input,
+  OptionSelect,
+  PageControls,
+  Skeleton,
+} from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import { NEED_STATUS_LABELS } from '@/entities/employer-need';
 import {
@@ -28,8 +33,8 @@ import {
 } from '@/features/employer-search';
 import { MatchTable } from '@/widgets/need-matches';
 
-import type { EmployerGateway } from '../lib/gateway';
-import type { EmployerBoard } from '../model/useEmployerBoard';
+import type { EmployerGateway } from '../lib';
+import type { EmployerBoard } from '../model';
 import { VacancyCard } from './VacancyCard';
 import { VacancyFilters } from './VacancyFilters';
 
@@ -52,6 +57,7 @@ interface VacancyBankProps {
   onCandidate: (id: string) => void;
   guard: (action: () => void) => void;
 }
+
 export const VacancyBank = ({
   board,
   active = true,
@@ -75,6 +81,7 @@ export const VacancyBank = ({
   const [searchDraft, setSearchDraft] = useState('');
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filteredOffset, setFilteredOffset] = useState(0);
+
   const filtered = hasVacancyFilters(filters);
   const load = useCallback(
     (signal: AbortSignal) =>
@@ -83,26 +90,34 @@ export const VacancyBank = ({
         : Promise.resolve([]),
     [api, board.companyId, board.status, filtered],
   );
+
   const complete = useRemoteData(load, board.revision, active && filtered);
+
   const matches = filtered
     ? filterVacancyFeed(complete.data ?? [], filters)
     : [];
+
   const items = filtered
     ? matches.slice(filteredOffset, filteredOffset + 20)
     : board.items;
+
   const loading = filtered ? complete.loading : board.loading;
   const error = filtered ? complete.error : board.listError;
+
   const updateFilters = (patch: Partial<Filters>) => {
     setFilters((value) => ({ ...value, ...patch }));
     setFilteredOffset(0);
   };
+
   const reset = () => {
     setFilters(emptyVacancyFilters());
     setSearchDraft('');
     setFilteredOffset(0);
   };
+
   const canWrite = board.company?.memberRole !== 'viewer';
   const need = board.selected;
+
   if (composer || board.selectedId)
     return (
       <div className="mx-auto grid w-full min-w-0 max-w-5xl gap-5">
@@ -209,6 +224,7 @@ export const VacancyBank = ({
         />
       </div>
     );
+
   return (
     <div className="grid min-w-0 items-start gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
       <Button

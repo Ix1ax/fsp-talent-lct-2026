@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { MoreHorizontal } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Button,
   DropdownMenu,
@@ -60,7 +61,7 @@ export const CatalogItemActions = ({
         {kind === 'skills' && (
           <DropdownMenuItem asChild>
             <Link
-              href={`/admin/moderation?${queryString({ skill_id: item.id })}`}
+              href={`${STATIC_ROUTES.ADMIN_MODERATION}?${queryString({ skill_id: item.id })}`}
             >
               Открыть модерацию
             </Link>

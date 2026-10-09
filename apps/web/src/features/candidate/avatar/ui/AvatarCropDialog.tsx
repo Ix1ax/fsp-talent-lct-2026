@@ -1,10 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 
-import {
-  CANDIDATE_DRAFT_ROUTES,
-  CANDIDATE_ELEMENT_IDS,
-} from '@/shared/contants';
+import { CANDIDATE_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
@@ -43,7 +40,21 @@ export const AvatarCropDialog = ({
   const applying = useRef(false);
   const unsaved = useUnsavedChanges(
     crop.x !== 0 || crop.y !== 0 || zoom !== 1 || rotation !== 0,
-    { preserveWithin: CANDIDATE_DRAFT_ROUTES },
+    {
+      preserveWithin: useMemo(
+        () => [
+          STATIC_ROUTES.CANDIDATE,
+          STATIC_ROUTES.CANDIDATE_CONSENTS,
+          STATIC_ROUTES.CANDIDATE_PROFILE,
+          STATIC_ROUTES.CANDIDATE_CONTACTS,
+          STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+          STATIC_ROUTES.CANDIDATE_EDUCATION,
+          STATIC_ROUTES.CANDIDATE_SKILLS,
+          STATIC_ROUTES.CANDIDATE_READINESS,
+        ],
+        [],
+      ),
+    },
   );
   const cancel = () => {
     if (!processing) unsaved.discard(onCancel);

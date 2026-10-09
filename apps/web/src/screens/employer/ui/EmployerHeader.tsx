@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BriefcaseBusinessIcon, Building2Icon, SearchIcon } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { cn } from '@/shared/lib/utils';
 import { BrandLogo, Button, ThemeToggle } from '@/shared/ui';
 import type { SessionUser } from '@/entities/session';
@@ -48,7 +49,7 @@ export const EmployerHeader = ({
     <div className="mx-auto flex max-w-[1440px] flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-border/60 bg-muted/50 px-3 py-2 sm:px-4">
       <Link
         data-preserve-draft
-        href="/employer"
+        href={STATIC_ROUTES.EMPLOYER}
         className="flex min-h-11 shrink-0 items-center"
         aria-label="ФСП Скаут — главная кабинета"
         onNavigate={(e) => {
@@ -106,7 +107,7 @@ export const EmployerHeader = ({
       </nav>
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <Button asChild variant="ghost" className="min-h-11 px-2 sm:px-3">
-          <Link href="/guides">Справочник</Link>
+          <Link href={STATIC_ROUTES.GUIDES}>Справочник</Link>
         </Button>
         <ThemeToggle />
         <UserMenu user={user} />

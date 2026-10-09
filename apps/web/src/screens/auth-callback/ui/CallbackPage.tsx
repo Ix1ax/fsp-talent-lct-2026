@@ -41,8 +41,7 @@ export const CallbackPage = () => {
           return;
         }
 
-        const roleHome = getRoleHomeRoute(result.user.role);
-        let destination = roleHome;
+        let destination = getRoleHomeRoute(result.user.role);
 
         if (result.next) {
           const safeNext = sanitizeRedirectPath(result.next);
@@ -50,17 +49,17 @@ export const CallbackPage = () => {
             .pathname;
           const isAllowedForRole =
             (result.user.role === 'candidate' &&
-              (nextPathname === '/candidate' ||
-                nextPathname.startsWith('/candidate/') ||
-                safeNext === '/cabinet')) ||
+              (nextPathname === STATIC_ROUTES.CANDIDATE ||
+                nextPathname.startsWith(`${STATIC_ROUTES.CANDIDATE}/`) ||
+                safeNext === STATIC_ROUTES.CABINET)) ||
             (result.user.role === 'employer' &&
-              (nextPathname === '/employer' ||
-                nextPathname.startsWith('/employer/') ||
-                safeNext === '/cabinet')) ||
+              (nextPathname === STATIC_ROUTES.EMPLOYER ||
+                nextPathname.startsWith(`${STATIC_ROUTES.EMPLOYER}/`) ||
+                safeNext === STATIC_ROUTES.CABINET)) ||
             (result.user.role === 'admin' &&
-              (nextPathname === '/admin' ||
-                nextPathname.startsWith('/admin/') ||
-                safeNext === '/cabinet'));
+              (nextPathname === STATIC_ROUTES.ADMIN ||
+                nextPathname.startsWith(`${STATIC_ROUTES.ADMIN}/`) ||
+                safeNext === STATIC_ROUTES.CABINET));
 
           if (isAllowedForRole) {
             destination = safeNext;

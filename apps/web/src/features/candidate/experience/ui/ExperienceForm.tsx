@@ -1,8 +1,8 @@
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import { CANDIDATE_DRAFT_ROUTES } from '@/shared/contants';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, FieldMessage, Input, Switch, Textarea } from '@/shared/ui';
 import type {
@@ -47,7 +47,19 @@ export const ExperienceForm = ({
     reValidateMode: 'onChange',
   });
   const unsaved = useFormUnsavedChanges(form, {
-    preserveWithin: CANDIDATE_DRAFT_ROUTES,
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.CANDIDATE,
+        STATIC_ROUTES.CANDIDATE_CONSENTS,
+        STATIC_ROUTES.CANDIDATE_PROFILE,
+        STATIC_ROUTES.CANDIDATE_CONTACTS,
+        STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+        STATIC_ROUTES.CANDIDATE_EDUCATION,
+        STATIC_ROUTES.CANDIDATE_SKILLS,
+        STATIC_ROUTES.CANDIDATE_READINESS,
+      ],
+      [],
+    ),
     initialDraft: !!initialValues,
     normalize: toExperienceInput,
   });
