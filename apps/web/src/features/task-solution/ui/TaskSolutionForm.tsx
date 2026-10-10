@@ -1,0 +1,167 @@
+import { useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import Link from 'next/link';
+import { zodResolver } from '@hookform/resolvers/zod';
+
+import { STATIC_ROUTES } from '@/shared/contants';
+import { Button, Input, Label } from '@/shared/ui';
+import { getCandidateFullProfileClient } from '@/entities/candidate';
+import {
+  type CompanyTask,
+  submitTaskSolution,
+  type TaskSubmission,
+} from '@/entities/company-task';
+
+import { type SolutionFormValues, solutionSchema } from '../constants/schema';
+import { isTaskOpen, taskErrorMessage } from '../lib';
+
+interface TaskSolutionFormProps {
+  task: CompanyTask;
+  onSubmitted: (submission: TaskSubmission) => void;
+}
+export const TaskSolutionForm = ({
+  task,
+  onSubmitted,
+}: TaskSolutionFormProps) => {
+  const form = useForm<SolutionFormValues>({
+    resolver: zodResolver(solutionSchema),
+    defaultValues: { confirmed: false },
+  });
+  const [error, setError] = useState('');
+  const [prerequisite, setPrerequisite] = useState<
+    'profile' | 'consents' | null
+  >(null);
+
+  const locked = useRef(false);
+
+  const send = async ({ file }: SolutionFormValues) => {
+    if (locked.current) return;
+    locked.current = true;
+    setError('');
+    setPrerequisite(null);
+    try {
+      if (!isTaskOpen(task)) {
+        setError('Приём решений завершён.');
+        return;
+      }
+      const full = await getCandidateFullProfileClient();
+      if (!full.profile) {
+        setPrerequisite('profile');
+        return;
+      }
+      const active = full.consents.items.filter(
+        (consent) => !consent.revokedAt && !consent.companyId,
+      );
+      if (
+        !['processing', 'publication'].every((kind) =>
+          active.some((consent) => consent.kind === kind),
+        )
+      ) {
+        setPrerequisite('consents');
+        return;
+      }
+      onSubmitted(await submitTaskSolution(task.id, file));
+    } catch (cause) {
+      setError(taskErrorMessage(cause));
+    } finally {
+      locked.current = false;
+    }
+  };
+
+  return (
+    <form
+      onSubmit={(event) => void form.handleSubmit(send)(event)}
+      className="space-y-5 rounded-xl border bg-card p-5 sm:p-6"
+    >
+      <div>
+        <h2 className="text-lg font-semibold">Отправить решение</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Один окончательный ответ на задание. После отправки заменить файл
+          нельзя.
+        </p>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="solution-file">Файл решения</Label>
+        <Input
+          id="solution-file"
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,.zip,.txt,.md"
+          {...form.register('file')}
+          disabled={form.formState.isSubmitting}
+          aria-invalid={!!form.formState.errors.file}
+          aria-describedby="solution-file-help solution-file-error"
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            if (file) form.setValue('file', file, { shouldValidate: true });
+            else {
+              form.resetField('file');
+              void form.trigger('file');
+            }
+            form.setValue('confirmed', false);
+          }}
+        />
+        <p id="solution-file-help" className="text-sm text-muted-foreground">
+          До 10 МиБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
+          мегапикселей. ZIP — до 1000 файлов и 100 МиБ суммарного размера. Текст
+          — UTF-8.
+        </p>
+        <p
+          id="solution-file-error"
+          role="alert"
+          className="text-sm text-destructive"
+        >
+          {form.formState.errors.file?.message}
+        </p>
+      </div>
+      <div>
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1 size-4 accent-primary"
+            disabled={form.formState.isSubmitting}
+            {...form.register('confirmed')}
+            aria-describedby="solution-confirm-error"
+          />
+          Я проверил(а) файл и готов(а) отправить окончательное решение.
+        </label>
+        <p
+          id="solution-confirm-error"
+          role="alert"
+          className="mt-2 text-sm text-destructive"
+        >
+          {form.formState.errors.confirmed?.message}
+        </p>
+      </div>
+      {prerequisite && (
+        <div role="alert" className="space-y-2 text-sm">
+          <p>
+            {prerequisite === 'profile'
+              ? 'Сначала создайте профиль кандидата.'
+              : 'Для отправки нужны согласия на обработку данных и публикацию профиля. Открывать профиль для поиска не требуется.'}
+          </p>
+          <Button asChild variant="outline">
+            <Link
+              href={
+                prerequisite === 'profile'
+                  ? STATIC_ROUTES.CANDIDATE_PROFILE
+                  : STATIC_ROUTES.CANDIDATE_CONSENTS
+              }
+            >
+              {prerequisite === 'profile'
+                ? 'Создать профиль'
+                : 'Настроить согласия'}
+            </Link>
+          </Button>
+        </div>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      <Button type="submit" disabled={form.formState.isSubmitting}>
+        {form.formState.isSubmitting ? 'Отправляем…' : 'Отправить решение'}
+      </Button>
+    </form>
+  );
+};

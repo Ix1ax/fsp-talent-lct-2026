@@ -7,6 +7,7 @@ export {
   type LegalDocumentSlug,
 } from './legalDocuments';
 export { MOTION_LAYOUT_IDS, MOTION_SPRING, MOTION_TRANSITION } from './motion';
+export { REGEXPS } from './regexps';
 export {
   DYNAMIC_ROUTES,
   EMPLOYER_DRAFT_SCOPE,

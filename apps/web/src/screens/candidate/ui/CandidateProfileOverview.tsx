@@ -16,9 +16,14 @@ export const CandidateProfileOverview = () => {
         title="Мой кабинет"
         description="Заполните профиль по разделам. Вы можете начать с любого шага и вернуться к остальным позже. Публикацией профиля управляете вы."
         actions={
-          <Button asChild variant="outline">
-            <Link href={STATIC_ROUTES.OFFERS}>Входящие предложения</Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href={STATIC_ROUTES.OFFERS}>Входящие предложения</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={STATIC_ROUTES.CANDIDATE_TASKS}>Задания компаний</Link>
+            </Button>
+          </>
         }
       />
       <nav aria-label="Разделы профиля">
