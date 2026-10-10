@@ -85,6 +85,9 @@ jobs:
           fi
           mkdir -p deploy/keycloak
           cp infra/keycloak/fsp-realm.json deploy/keycloak/fsp-realm.json
+          mkdir -p deploy/keycloak-themes
+          cp -R infra/keycloak/themes/fsp-scout deploy/keycloak-themes/fsp-scout
+          cp scripts/keycloak-theme.sh deploy/keycloak-theme.sh
           cp scripts/deploy-server.sh deploy/deploy-server.sh
       - name: Деплой бека
         env:
@@ -95,9 +98,11 @@ jobs:
         run: >-
           ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" 'mkdir -p ~/fsp/keycloak && chmod 700 ~/fsp'
 
-          scp deploy/compose.yaml deploy/.env deploy/deploy-server.sh "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
+          scp deploy/compose.yaml deploy/.env deploy/deploy-server.sh deploy/keycloak-theme.sh "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
 
           scp deploy/keycloak/fsp-realm.json "$DEPLOY_USER@$DEPLOY_HOST:fsp/keycloak/"
+
+          scp -r deploy/keycloak-themes "$DEPLOY_USER@$DEPLOY_HOST:fsp/"
 
           printf '%s' "$GHCR_TOKEN" | ssh -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" "docker login ghcr.io -u
           '$GHCR_USER' --password-stdin"
