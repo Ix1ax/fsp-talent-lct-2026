@@ -382,6 +382,7 @@ export const VacancyBank = ({
             offset={filtered ? filteredOffset : board.offset}
             count={items.length}
             total={filtered ? matches.length : undefined}
+            hasMore={filtered ? undefined : board.hasMore}
             pending={board.pending}
             onPage={(offset) =>
               guard(() => {

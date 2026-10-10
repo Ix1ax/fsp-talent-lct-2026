@@ -409,6 +409,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                       {section === 'tasks' && (
                         <CompanyTaskSolutions
                           company={company}
+                          catalogs={board.catalogs}
+                          onOpenCandidate={setCandidateId}
                           onDirtyChange={tasksDirtyChanged}
                           onBusyChange={busyChanged}
                         />
@@ -430,6 +432,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           api={api}
           busy={busy}
           onClose={() => setCandidateId('')}
+          onViewed={board.reload}
           onOffer={() => setOffer(true)}
         />
       )}
@@ -438,7 +441,9 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           company={company}
           candidateId={candidateId}
           need={
-            board.selected?.status === 'active' ? board.selected : undefined
+            section === 'vacancies' && board.selected?.status === 'active'
+              ? board.selected
+              : undefined
           }
           api={api}
           onBusyChange={busyChanged}
@@ -446,6 +451,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           onSent={() => {
             setOffer(false);
             setCandidateId('');
+            board.reload();
           }}
         />
       )}

@@ -40,6 +40,7 @@ import type {
 
 import { validateCompanyFile } from '../lib';
 import type { CompanyManagementApi } from '../model';
+import { CompanyVerificationCard } from './CompanyVerificationCard';
 
 interface CompanyDocumentsProps {
   company: Company;
@@ -59,12 +60,15 @@ export const CompanyDocuments = ({
   onBusyChange,
 }: CompanyDocumentsProps) => {
   const [offset, setOffset] = useState(0);
+  const [documentRevision, setDocumentRevision] = useState(0);
+  const [verificationBusy, setVerificationBusy] = useState(false);
   const load = useCallback(
     (signal: AbortSignal) => api.getCompanyFiles(company.id, offset, signal),
     [api, company.id, offset],
   );
   const remote = useRemoteData(load, 0, active);
   const mutation = useAsyncMutation();
+  const busy = verificationBusy || mutation.pending;
   const [purpose, setPurpose] =
     useState<CompanyFilePurpose>('company_document');
   const [file, setFile] = useState<File | null>(null);
@@ -97,9 +101,9 @@ export const CompanyDocuments = ({
   const readonly = company.memberRole !== 'owner';
 
   useEffect(() => {
-    onBusyChange(mutation.pending);
+    onBusyChange(busy);
     return () => onBusyChange(false);
-  }, [mutation.pending, onBusyChange]);
+  }, [busy, onBusyChange]);
 
   useEffect(() => {
     if (!active || !company.logoFileId) return;
@@ -120,6 +124,7 @@ export const CompanyDocuments = ({
   }, [api, company.id, company.logoFileId, active]);
 
   const refresh = async () => {
+    setDocumentRevision((value) => value + 1);
     remote.retry();
     await onCompanyChange();
   };
@@ -171,150 +176,162 @@ export const CompanyDocuments = ({
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Документы и логотип</CardTitle>
-        <CardDescription>
-          PDF, JPEG или PNG до 10 МБ. Логотип — JPEG или PNG до 2 МБ.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-6">
-        {logo && (
-          <div className="flex items-center gap-4">
-            <Image
-              width={80}
-              height={80}
-              unoptimized
-              src={logo}
-              alt={`Логотип ${company.name}`}
-              className="size-20 rounded-xl border object-contain"
-            />
-            <span className="text-sm text-muted-foreground">
-              Текущий логотип
-            </span>
-          </div>
-        )}
-        {!readonly && (
-          <form
-            className="grid gap-4 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5"
-            onSubmit={handleFormSubmit}
-          >
-            <fieldset disabled={mutation.pending} className="grid gap-4">
-              <label className="grid gap-2 text-sm">
-                Назначение
-                <OptionSelect
-                  aria-label="Назначение файла"
-                  disabled={mutation.pending}
-                  value={purpose}
-                  onValueChange={(value) =>
-                    setPurpose(value as CompanyFilePurpose)
-                  }
-                  options={[
-                    { value: 'company_document', label: 'Документ компании' },
-                    { value: 'company_logo', label: 'Логотип компании' },
-                  ]}
-                />
-              </label>
-              <div className="grid gap-2 text-sm">
-                <span id={`${company.id}-file-label`}>Файл</span>
-                <FileInput
-                  ref={input}
-                  aria-labelledby={`${company.id}-file-label`}
-                  fileName={file?.name ?? null}
-                  required
-                  accept={
-                    purpose === 'company_logo'
-                      ? 'image/jpeg,image/png'
-                      : 'application/pdf,image/jpeg,image/png'
-                  }
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-              </div>
-              <Button
-                type="submit"
-                size="lg"
-                disabled={!file}
-                className="sm:justify-self-start"
-              >
-                {mutation.pending ? 'Загружаем…' : 'Загрузить'}
-              </Button>
-            </fieldset>
-          </form>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Загрузка документов не меняет статус проверки компании.
-        </p>
-        {mutation.error && (
-          <p role="alert" className="text-sm text-destructive">
-            {mutation.error}
-          </p>
-        )}
-        <RemoteState {...remote} />
-        {remote.data && (
-          <>
-            {!remote.data.items.length && (
-              <AsyncState
-                title="Документов пока нет"
-                description={
-                  readonly
-                    ? 'Владелец компании может загрузить документы и логотип.'
-                    : 'Загрузите документы компании или добавьте логотип.'
-                }
+    <div className="grid gap-5">
+      <CompanyVerificationCard
+        documentRevision={documentRevision}
+        company={company}
+        api={api}
+        active={active}
+        pending={mutation.pending}
+        onCompanyChange={onCompanyChange}
+        onBusyChange={setVerificationBusy}
+      />
+      <Card>
+        <CardHeader>
+          <CardTitle>Документы и логотип</CardTitle>
+          <CardDescription>
+            PDF, JPEG или PNG до 10 МБ. Логотип — JPEG или PNG до 2 МБ.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6">
+          {logo && (
+            <div className="flex items-center gap-4">
+              <Image
+                width={80}
+                height={80}
+                unoptimized
+                src={logo}
+                alt={`Логотип ${company.name}`}
+                className="size-20 rounded-xl border object-contain"
               />
-            )}
-            {remote.data.items.map((item) => (
-              <div
-                key={item.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg border p-4"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="break-all font-medium">{item.originalName}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {item.purpose === 'company_logo' ? 'Логотип' : 'Документ'} ·{' '}
-                    {(item.sizeBytes / 1024 / 1024).toFixed(1)} МБ ·{' '}
-                    {FILE_STATUS[item.status]}
-                  </p>
+              <span className="text-sm text-muted-foreground">
+                Текущий логотип
+              </span>
+            </div>
+          )}
+          {!readonly && (
+            <form
+              className="grid gap-4 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5"
+              onSubmit={handleFormSubmit}
+            >
+              <fieldset disabled={busy} className="grid gap-4">
+                <label className="grid gap-2 text-sm">
+                  Назначение
+                  <OptionSelect
+                    aria-label="Назначение файла"
+                    disabled={busy}
+                    value={purpose}
+                    onValueChange={(value) =>
+                      setPurpose(value as CompanyFilePurpose)
+                    }
+                    options={[
+                      { value: 'company_document', label: 'Документ компании' },
+                      { value: 'company_logo', label: 'Логотип компании' },
+                    ]}
+                  />
+                </label>
+                <div className="grid gap-2 text-sm">
+                  <span id={`${company.id}-file-label`}>Файл</span>
+                  <FileInput
+                    ref={input}
+                    aria-labelledby={`${company.id}-file-label`}
+                    fileName={file?.name ?? null}
+                    required
+                    accept={
+                      purpose === 'company_logo'
+                        ? 'image/jpeg,image/png'
+                        : 'application/pdf,image/jpeg,image/png'
+                    }
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                  />
                 </div>
                 <Button
-                  variant="outline"
-                  disabled={mutation.pending || item.status !== 'ready'}
-                  onClick={() => handleDownload(item)}
+                  type="submit"
+                  size="lg"
+                  disabled={!file}
+                  className="sm:justify-self-start"
                 >
-                  Скачать
+                  {mutation.pending ? 'Загружаем…' : 'Загрузить'}
                 </Button>
-                {!readonly && item.status !== 'deleted' && (
+              </fieldset>
+            </form>
+          )}
+          <p className="text-sm text-muted-foreground">
+            Загрузка документов не меняет статус проверки компании.
+          </p>
+          {mutation.error && (
+            <p role="alert" className="text-sm text-destructive">
+              {mutation.error}
+            </p>
+          )}
+          <RemoteState {...remote} />
+          {remote.data && (
+            <>
+              {!remote.data.items.length && (
+                <AsyncState
+                  title="Документов пока нет"
+                  description={
+                    readonly
+                      ? 'Владелец компании может загрузить документы и логотип.'
+                      : 'Загрузите документы компании или добавьте логотип.'
+                  }
+                />
+              )}
+              {remote.data.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center gap-3 rounded-lg border p-4"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="break-all font-medium">{item.originalName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {item.purpose === 'company_logo' ? 'Логотип' : 'Документ'}{' '}
+                      · {(item.sizeBytes / 1024 / 1024).toFixed(1)} МБ ·{' '}
+                      {FILE_STATUS[item.status]}
+                    </p>
+                  </div>
                   <Button
-                    variant="ghost"
-                    disabled={mutation.pending}
-                    onClick={() => {
-                      mutation.clearError();
-                      setRemove(item);
-                    }}
+                    variant="outline"
+                    disabled={busy || item.status !== 'ready'}
+                    onClick={() => handleDownload(item)}
                   >
-                    Удалить
+                    Скачать
                   </Button>
-                )}
-              </div>
-            ))}
-            <PageControls
-              offset={offset}
-              count={remote.data.items.length}
-              pending={mutation.pending}
-              onPage={setOffset}
+                  {!readonly && item.status !== 'deleted' && (
+                    <Button
+                      variant="ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        mutation.clearError();
+                        setRemove(item);
+                      }}
+                    >
+                      Удалить
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <PageControls
+                offset={offset}
+                count={remote.data.items.length}
+                hasMore={remote.data.hasMore}
+                pending={busy}
+                onPage={setOffset}
+              />
+            </>
+          )}
+          {remove && (
+            <ConfirmDeleteDialog
+              title="Удалить файл?"
+              description={`Файл «${remove.originalName}» будет удалён из компании.`}
+              busy={mutation.pending}
+              error={mutation.error}
+              onClose={() => setRemove(null)}
+              onConfirm={handleSubmit}
             />
-          </>
-        )}
-        {remove && (
-          <ConfirmDeleteDialog
-            title="Удалить файл?"
-            description={`Файл «${remove.originalName}» будет удалён из компании.`}
-            busy={mutation.pending}
-            error={mutation.error}
-            onClose={() => setRemove(null)}
-            onConfirm={handleSubmit}
-          />
-        )}
-      </CardContent>
-    </Card>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };

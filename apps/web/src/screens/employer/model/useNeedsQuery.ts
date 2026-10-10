@@ -62,7 +62,7 @@ export const useNeedsQuery = ({
             api,
             key: listKey,
             items: page.items,
-            hasMore: page.items.length === page.limit,
+            hasMore: page.hasMore ?? page.items.length === page.limit,
             error: '',
           });
       })

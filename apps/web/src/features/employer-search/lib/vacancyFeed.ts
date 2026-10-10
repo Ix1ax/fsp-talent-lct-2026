@@ -40,7 +40,7 @@ export const loadStatusVacancies = async (
     signal.throwIfAborted();
     const page = await api.needs(companyId, status, offset, signal);
     items.push(...page.items);
-    if (page.items.length < 20) {
+    if (page.hasMore === false || page.items.length < 20) {
       signal.throwIfAborted();
       return items;
     }

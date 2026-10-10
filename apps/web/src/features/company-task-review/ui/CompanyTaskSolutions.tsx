@@ -15,6 +15,7 @@ import {
   StaggerItem,
 } from '@/shared/ui';
 import { formatDate } from '@/shared/utils';
+import type { Catalogs } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 import {
   type CompanyTask,
@@ -24,17 +25,21 @@ import {
 
 import { canReviewTaskSubmission } from '../lib';
 import { CompanyTaskCreateForm } from './CompanyTaskCreateForm';
+import { CompanyTaskDetails } from './CompanyTaskDetails';
 import { CompanyTaskSkeleton } from './CompanyTaskSkeleton';
-import { CompanyTaskSubmissions } from './CompanyTaskSubmissions';
 
 interface CompanyTaskSolutionsProps {
   company: Company;
+  catalogs: Catalogs;
+  onOpenCandidate: (candidateId: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
 }
 
 export const CompanyTaskSolutions = ({
   company,
+  catalogs,
+  onOpenCandidate,
   onDirtyChange,
   onBusyChange,
 }: CompanyTaskSolutionsProps) => {
@@ -76,10 +81,16 @@ export const CompanyTaskSolutions = ({
   if (task) {
     return (
       <FadeIn key={task.id} distance={6}>
-        <CompanyTaskSubmissions
+        <CompanyTaskDetails
           key={task.id}
           company={company}
-          task={task}
+          taskId={task.id}
+          catalogs={catalogs}
+          onOpenCandidate={onOpenCandidate}
+          onTaskChange={(updated) => {
+            setTask(updated);
+            query.retry();
+          }}
           onBack={() => setTask(null)}
           onDirtyChange={onDirtyChange}
           onBusyChange={onBusyChange}
@@ -198,7 +209,7 @@ export const CompanyTaskSolutions = ({
                     onClick={() => setTask(item)}
                     className="self-start"
                   >
-                    Посмотреть решения
+                    Открыть задание
                   </Button>
                 </article>
               </StaggerItem>
