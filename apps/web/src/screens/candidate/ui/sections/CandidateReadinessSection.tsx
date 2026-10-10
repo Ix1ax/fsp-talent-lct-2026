@@ -26,6 +26,7 @@ export const CandidateReadinessSection = ({
     <div className="grid gap-5">
       <ProfileReadinessCard
         readiness={fullProfile.readiness}
+        searchStatus={fullProfile.profile?.searchStatus}
         busy={busy}
         refreshing={dataRefreshing}
         error={refreshError}

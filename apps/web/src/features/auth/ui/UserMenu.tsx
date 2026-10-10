@@ -27,6 +27,7 @@ import { useAccountAvatar } from '../model';
 interface UserMenuProps {
   user: SessionUser;
   compact?: boolean;
+  triggerId?: string;
 }
 
 const getInitials = (name: string): string =>
@@ -37,7 +38,11 @@ const getInitials = (name: string): string =>
     .join('')
     .toUpperCase();
 
-export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
+export const UserMenu = ({
+  user,
+  compact = false,
+  triggerId,
+}: UserMenuProps) => {
   const avatarUrl = useAccountAvatar(user);
   const displayName = user.name?.trim() || user.email;
   const [pending, setPending] = useState(false);
@@ -59,7 +64,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger asChild {...(triggerId ? { id: triggerId } : {})}>
         <Button
           type="button"
           variant={compact ? 'ghost' : 'outline'}
@@ -84,6 +89,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
+        {...(triggerId ? { 'aria-labelledby': triggerId } : {})}
         align="end"
         className="w-72 max-w-[calc(100vw-2rem)]"
       >

@@ -111,6 +111,22 @@ describe('candidate profile steps', () => {
     expect(html).toContain('aria-label="Разделы профиля"');
     expect(html).toContain('aria-label="Готовность профиля по данным сервера"');
   });
+  it.each([
+    ['open', 'Активно ищу'],
+    ['passive', 'Рассматриваю предложения'],
+    ['hidden', 'Профиль скрыт'],
+  ] as const)(
+    'shows the saved search status %s and an edit action',
+    (searchStatus, label) => {
+      const html = render({
+        ...full,
+        profile: { ...existingProfile, searchStatus },
+      });
+      expect(html).toContain(`<span class="block font-medium">${label}</span>`);
+      expect(html).toContain('Изменить статус поиска');
+      expect(html).not.toContain('Выберите статус поиска');
+    },
+  );
   it('shows profile creation links for both career sections before a profile exists', () => {
     const html = render();
     expect(html).toContain(
