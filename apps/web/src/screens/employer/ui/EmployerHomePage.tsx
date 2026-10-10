@@ -2,10 +2,10 @@
 
 import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { ArrowLeftIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
-import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import { AsyncState, Button, PageHeader, Skeleton } from '@/shared/ui';
 import type { Skill } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import {
@@ -22,6 +22,7 @@ import {
 } from '@/features/employer-bank';
 import { loadStatusVacancies } from '@/features/employer-search';
 import { CompanySwitcher } from '@/widgets/employer-shell';
+import { SiteFooter } from '@/widgets/site-footer';
 
 import { EMPLOYER_SECTIONS, getEmployerSection } from '../constants';
 import { employerGateway } from '../lib';
@@ -82,9 +83,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
   } = useEmployerWorkspace({ section, board });
 
   const selectedSection = EMPLOYER_SECTIONS.find((item) => item.id === section);
-  const index = EMPLOYER_SECTIONS.findIndex((item) => item.id === section);
-  const previous = EMPLOYER_SECTIONS[index - 1];
-  const next = EMPLOYER_SECTIONS[index + 1];
   const company = board.company;
   const centered =
     createCompany ||
@@ -120,47 +118,40 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
       />
       <main
         ref={mainRef}
-        className="mx-auto w-full max-w-[1440px] flex-1 scroll-mt-40 px-4 py-5 [overflow-anchor:none] sm:px-6 sm:py-6 lg:scroll-mt-24"
+        className="container-page page-rhythm flex-1 scroll-mt-40 [overflow-anchor:none] lg:scroll-mt-24"
       >
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-8">
           {!profileView && (
-            <header
-              className={cn(
-                'flex min-w-0 flex-col gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:p-6',
-                centered
-                  ? 'mx-auto w-full max-w-2xl text-center'
-                  : 'sm:flex-row sm:items-start sm:justify-between sm:gap-8',
-              )}
-            >
-              <div className="grid min-w-0 flex-1 gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
-                  {createCompany
-                    ? 'Создание компании'
-                    : section === 'overview'
-                      ? 'Компании'
-                      : section === 'invitation'
-                        ? 'Приглашение в компанию'
-                        : selectedSection?.title}
-                </h1>
-                <p
-                  className={cn(
-                    'text-base text-muted-foreground',
-                    centered && 'text-balance',
-                  )}
-                >
-                  {section === 'overview'
-                    ? 'Ваши компании и команды. Выберите компанию, чтобы работать с её профилем, сотрудниками и потребностями.'
-                    : selectedSection?.description}
-                </p>
-              </div>
-              {board.resources &&
+            <PageHeader
+              className={cn(centered && 'mx-auto w-full max-w-2xl')}
+              eyebrow={
+                company && !centered && section !== 'overview'
+                  ? `Работодатель · ${company.name}`
+                  : 'Работодатель'
+              }
+              title={
+                createCompany
+                  ? 'Создание компании'
+                  : section === 'overview'
+                    ? 'Компании'
+                    : section === 'invitation'
+                      ? 'Приглашение в компанию'
+                      : selectedSection?.title
+              }
+              description={
+                section === 'overview'
+                  ? 'Ваши компании и команды. Выберите компанию, чтобы работать с её профилем, сотрудниками и потребностями.'
+                  : selectedSection?.description
+              }
+              actions={
+                board.resources &&
                 board.resources.companies.length > 0 &&
                 !centered &&
-                section !== 'overview' && (
-                  <div className="flex min-w-0 shrink-0 flex-col items-start gap-2 sm:max-w-xs sm:items-end">
+                section !== 'overview' ? (
+                  <div className="flex min-w-0 flex-col items-start gap-1 sm:max-w-xs sm:items-end">
                     {companySwitcher}
                     {company && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {
                           {
                             owner: 'Владелец',
@@ -171,8 +162,9 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                       </p>
                     )}
                   </div>
-                )}
-            </header>
+                ) : undefined
+              }
+            />
           )}
           {board.resources && board.catalogsError && (
             <AsyncState
@@ -289,7 +281,12 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         </div>
                       </div>
                     )}
-                    <div className="min-w-0">
+                    <div
+                      className="min-w-0"
+                      hidden={
+                        !['profile', 'documents', 'team'].includes(section)
+                      }
+                    >
                       <EmployerNavigation
                         section={section}
                         busy={busy}
@@ -323,8 +320,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           onDirtyChange={profileDirtyChanged}
                           onEdit={board.clearError}
                           onCompanies={() => navigate('overview')}
-                          onTeam={() => navigate('team')}
-                          onDocuments={() => navigate('documents')}
                           onVacancies={() => {
                             guardNeed(() => {
                               setComposer(false);
@@ -436,31 +431,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           onBusyChange={busyChanged}
                         />
                       )}
-                      <div className="flex flex-wrap justify-between gap-3 border-t pt-5">
-                        {previous && (
-                          <Button
-                            variant="ghost"
-                            size="lg"
-                            disabled={busy}
-                            onClick={() => navigate(previous.id)}
-                          >
-                            <ArrowLeftIcon />
-                            Назад
-                          </Button>
-                        )}
-                        {next && (
-                          <Button
-                            variant="outline"
-                            size="lg"
-                            disabled={busy}
-                            className="ml-auto h-auto min-h-12 whitespace-normal"
-                            onClick={() => navigate(next.id)}
-                          >
-                            Перейти: {next.title}
-                            <ArrowRightIcon />
-                          </Button>
-                        )}
-                      </div>
                     </div>
                   </div>
                 </>
@@ -469,6 +439,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           )}
         </div>
       </main>
+      <SiteFooter />
       {company && board.resources && candidateId && !offer && (
         <CandidateDetails
           company={company}

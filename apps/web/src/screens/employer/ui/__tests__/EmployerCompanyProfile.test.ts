@@ -35,8 +35,6 @@ const render = (patch: Partial<Company> = {}) =>
       onDirtyChange: vi.fn(),
       onEdit: vi.fn(),
       onCompanies: vi.fn(),
-      onTeam: vi.fn(),
-      onDocuments: vi.fn(),
       onVacancies: vi.fn(),
       onOpenNeed: vi.fn(),
     }),

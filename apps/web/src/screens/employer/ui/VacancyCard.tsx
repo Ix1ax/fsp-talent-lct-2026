@@ -33,7 +33,7 @@ export const VacancyCard = ({
       `Навык #${item.skillId}`,
   );
   return (
-    <article className="group grid min-w-0 gap-4 rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/35 sm:p-6">
+    <article className="group grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/35 sm:p-6">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span
           className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted font-semibold"
@@ -45,13 +45,17 @@ export const VacancyCard = ({
           {company.name}
         </span>
         {need.workFormatIds.map((id) => (
-          <Badge key={id} variant="secondary" className="rounded-md">
+          <Badge
+            key={id}
+            variant="secondary"
+            className="bg-muted text-muted-foreground"
+          >
             {catalogs.workFormats.find((format) => format.id === id)?.name ??
               `Формат #${id}`}
           </Badge>
         ))}
         {grade && (
-          <Badge variant="secondary" className="rounded-md">
+          <Badge variant="secondary" className="bg-muted text-muted-foreground">
             {grade}
           </Badge>
         )}

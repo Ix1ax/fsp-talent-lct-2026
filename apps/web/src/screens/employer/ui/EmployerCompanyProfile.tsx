@@ -27,8 +27,6 @@ interface EmployerCompanyProfileProps {
   onSave: (input: CompanyInput, create: boolean) => Promise<Company>;
   onEdit: () => void;
   onCompanies: () => void;
-  onTeam: () => void;
-  onDocuments: () => void;
   onVacancies: () => void;
   onOpenNeed: (need: EmployerNeed) => void;
 }
@@ -46,8 +44,6 @@ export const EmployerCompanyProfile = ({
   onSave,
   onEdit,
   onCompanies,
-  onTeam,
-  onDocuments,
   onVacancies,
   onOpenNeed,
 }: EmployerCompanyProfileProps) => {
@@ -78,7 +74,7 @@ export const EmployerCompanyProfile = ({
       ref={contentRef}
       className="grid min-w-0 scroll-mt-40 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)] md:grid-rows-[auto_1fr] lg:scroll-mt-24 xl:grid-cols-[300px_minmax(0,1fr)]"
     >
-      <header className="grid min-w-0 gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:p-6 md:col-start-2">
+      <header className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 sm:p-6 md:col-start-2">
         <nav
           aria-label="Путь к компании"
           className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"
@@ -130,13 +126,7 @@ export const EmployerCompanyProfile = ({
           editing && canEdit && 'hidden md:block',
         )}
       >
-        <CompanyProfileSummary
-          company={company}
-          api={api}
-          busy={busy}
-          onTeam={onTeam}
-          onDocuments={onDocuments}
-        />
+        <CompanyProfileSummary company={company} api={api} />
       </div>
       <div className="grid min-w-0 gap-5 md:col-start-2">
         {editing && canEdit ? (
@@ -153,7 +143,7 @@ export const EmployerCompanyProfile = ({
           <>
             <section
               aria-label="О компании"
-              className="grid min-w-0 gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:p-6"
+              className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 sm:p-6"
             >
               <h2 className="text-xl font-semibold">О компании</h2>
               <p className="whitespace-pre-wrap text-sm leading-7 [overflow-wrap:anywhere]">

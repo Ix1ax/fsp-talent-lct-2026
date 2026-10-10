@@ -240,10 +240,7 @@ export const VacancyBank = ({
       <aside
         id="vacancy-filters"
         aria-label="Фильтры потребностей"
-        className={cn(
-          'min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto',
-          !filtersOpen && 'hidden lg:block',
-        )}
+        className={cn('min-w-0', !filtersOpen && 'hidden lg:block')}
       >
         <VacancyFilters
           value={filters}
@@ -257,7 +254,7 @@ export const VacancyBank = ({
         <form
           role="search"
           aria-label="Поиск потребностей"
-          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-2xl border border-border/60 bg-card p-4 sm:flex sm:p-5"
+          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl border border-border bg-card p-4 sm:flex sm:p-5"
           onSubmit={(event) => {
             event.preventDefault();
             updateFilters({ query: searchDraft.trim() });
@@ -361,8 +358,8 @@ export const VacancyBank = ({
             aria-label="Загрузка потребностей"
             className="grid gap-4"
           >
-            <Skeleton className="h-56 rounded-2xl" />
-            <Skeleton className="h-56 rounded-2xl" />
+            <Skeleton className="h-56 rounded-xl" />
+            <Skeleton className="h-56 rounded-xl" />
           </div>
         ) : error ? (
           <AsyncState
@@ -370,7 +367,7 @@ export const VacancyBank = ({
             title="Не удалось загрузить потребности"
             description={error}
             onRetry={filtered ? complete.retry : board.reload}
-            className="rounded-2xl bg-card"
+            className="rounded-xl bg-card"
           />
         ) : items.length && board.company ? (
           items.map((item) => (
@@ -385,7 +382,7 @@ export const VacancyBank = ({
             />
           ))
         ) : (
-          <div className="grid justify-items-center gap-3 rounded-2xl border border-dashed bg-card p-8 text-center sm:p-12">
+          <div className="grid justify-items-center gap-3 rounded-xl border border-dashed bg-card p-8 text-center sm:p-12">
             <SearchIcon className="size-8 text-muted-foreground" />
             <h2 className="text-lg font-semibold">
               {filtered

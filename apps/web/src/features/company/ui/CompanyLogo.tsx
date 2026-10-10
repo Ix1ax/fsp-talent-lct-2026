@@ -35,7 +35,7 @@ export const CompanyLogo = ({ company, api }: CompanyLogoProps) => {
     };
   }, [api, company.id, company.logoFileId]);
   return (
-    <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border/50 bg-muted text-2xl font-semibold text-muted-foreground">
+    <span className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border/50 bg-muted text-2xl font-semibold text-muted-foreground">
       {url ? (
         <Image
           src={url}

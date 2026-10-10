@@ -92,7 +92,7 @@ export const CompanyProfileForm = ({
   ] as const;
 
   return (
-    <Card className="rounded-2xl">
+    <Card className="rounded-xl">
       <CardHeader>
         <CardTitle>
           {create ? 'Создание компании' : 'Редактирование компании'}

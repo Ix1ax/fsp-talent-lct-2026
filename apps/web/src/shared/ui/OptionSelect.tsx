@@ -56,7 +56,7 @@ export const OptionSelect = ({
         {...props}
         disabled={disabled}
         className={cn(
-          'h-11 data-[size=default]:h-11 w-full min-w-0 bg-background px-3 text-base font-normal md:text-sm [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate [&_[data-slot=select-value]]:text-left',
+          'h-10 data-[size=default]:h-10 w-full min-w-0 bg-card px-3 text-base font-normal md:text-sm [&_[data-slot=select-value]]:min-w-0 [&_[data-slot=select-value]]:truncate [&_[data-slot=select-value]]:text-left',
           className,
         )}
       >

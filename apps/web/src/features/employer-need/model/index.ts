@@ -1,6 +1,6 @@
 export { useNeedActions } from './useNeedActions';
 export { useNeedEditor } from './useNeedEditor';
-export { useNeedFlowEditor } from './useNeedFlowEditor';
+export { NEED_FLOW_LAST_STEP, useNeedFlowEditor } from './useNeedFlowEditor';
 export {
   loadNeedSkills,
   type NeedSkillLoader,

@@ -1,13 +1,11 @@
 import {
   CalendarDaysIcon,
   ExternalLinkIcon,
-  FileTextIcon,
   GlobeIcon,
   MailIcon,
-  UsersIcon,
 } from 'lucide-react';
 
-import { Badge, Button } from '@/shared/ui';
+import { Badge } from '@/shared/ui';
 import { contactUrlSchema } from '@/shared/validation/contactUrl';
 import type { Company } from '@/entities/company';
 import { MEMBER_ROLE_LABELS, VERIFICATION_LABELS } from '@/entities/company';
@@ -18,16 +16,10 @@ import type { EmployerGateway } from '../lib/gateway';
 interface CompanyProfileSummaryProps {
   company: Company;
   api: EmployerGateway;
-  busy: boolean;
-  onTeam: () => void;
-  onDocuments: () => void;
 }
 export const CompanyProfileSummary = ({
   company,
   api,
-  busy,
-  onTeam,
-  onDocuments,
 }: CompanyProfileSummaryProps) => {
   const parsedUrl = contactUrlSchema.safeParse(company.contactUrl);
   const website =
@@ -36,7 +28,7 @@ export const CompanyProfileSummary = ({
   return (
     <aside
       aria-label="Сведения о компании"
-      className="grid min-w-0 gap-6 rounded-2xl border border-border/60 bg-card p-5 sm:p-6 md:sticky md:top-40 lg:top-24"
+      className="grid min-w-0 gap-6 rounded-xl border border-border bg-card p-5 sm:p-6 md:sticky md:top-40 lg:top-24"
     >
       <div className="flex min-w-0 items-start gap-3">
         <CompanyLogo company={company} api={api} />
@@ -131,26 +123,6 @@ export const CompanyProfileSummary = ({
             </div>
           )}
         </dl>
-      </div>
-      <div className="grid gap-2 border-t pt-4">
-        <Button
-          variant="outline"
-          disabled={busy}
-          onClick={onTeam}
-          className="justify-start"
-        >
-          <UsersIcon />
-          Сотрудники компании
-        </Button>
-        <Button
-          variant="ghost"
-          disabled={busy}
-          onClick={onDocuments}
-          className="justify-start"
-        >
-          <FileTextIcon />
-          Документы и логотип
-        </Button>
       </div>
     </aside>
   );

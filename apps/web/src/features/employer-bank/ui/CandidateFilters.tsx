@@ -44,7 +44,7 @@ export const CandidateFilters = ({
   onReset,
 }: CandidateFiltersProps) => {
   return (
-    <div className="grid gap-5 rounded-2xl border border-border/60 bg-card p-5">
+    <div className="grid gap-5 rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between gap-2">
         <h2 className="flex items-center gap-2 font-semibold">
           <SlidersHorizontalIcon className="size-4" />

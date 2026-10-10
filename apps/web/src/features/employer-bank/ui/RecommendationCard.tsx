@@ -43,7 +43,7 @@ export const RecommendationCard = ({
     .join(', ');
 
   return (
-    <article className="grid min-w-0 gap-3 rounded-2xl border border-border/60 bg-card p-5 xl:grid-cols-[150px_minmax(0,1fr)] xl:p-6">
+    <article className="grid min-w-0 gap-3 rounded-xl border border-border bg-card p-5 xl:grid-cols-[150px_minmax(0,1fr)] xl:p-6">
       <div>
         <p className="text-base font-semibold">Кандидат {position}</p>
         <p className="mt-1 text-sm text-muted-foreground">

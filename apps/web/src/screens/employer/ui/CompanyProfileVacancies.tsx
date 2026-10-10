@@ -59,7 +59,7 @@ export const CompanyProfileVacancies = ({
         </Button>
       </div>
       {remote.loading ? (
-        <Skeleton className="h-48 rounded-2xl" />
+        <Skeleton className="h-48 rounded-xl" />
       ) : remote.error ? (
         <AsyncState
           error
@@ -68,7 +68,7 @@ export const CompanyProfileVacancies = ({
           onRetry={remote.retry}
         />
       ) : !remote.data?.items.length ? (
-        <div className="grid justify-items-start gap-3 rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
+        <div className="grid justify-items-start gap-3 rounded-xl border border-border bg-card p-5 sm:p-6">
           <h3 className="font-semibold">Открытых потребностей пока нет</h3>
           <p className="text-sm leading-relaxed text-muted-foreground">
             Активные потребности компании появятся здесь. В банке потребностей
