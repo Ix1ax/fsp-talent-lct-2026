@@ -1,62 +1,30 @@
-import Link from 'next/link';
-import { ArrowRightIcon } from 'lucide-react';
+import { LANDING_ELEMENTS } from '../constants';
+import { Hero } from './Hero';
+import { LandingMotion } from './motion';
+import {
+  CareerSection,
+  ClosingSection,
+  DisciplinesSection,
+  EmployerSection,
+  FaqSection,
+  FederationSection,
+  ManifestSection,
+} from './sections';
 
-import { STATIC_ROUTES } from '@/shared/contants';
-import { Button, FadeIn, Stagger, StaggerItem } from '@/shared/ui';
-
-export const HomePage = () => {
-  return (
-    <main className="container-page py-10 md:py-20">
-      <FadeIn className="max-w-3xl space-y-6">
-        <h1 className="text-3xl font-semibold leading-tight tracking-tight sm:text-5xl">
-          Навыки, которые помогают найти свою команду
-        </h1>
-        <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground">
-          Создайте профиль и подтвердите свои навыки. Или опишите, кого ищет
-          ваша команда, и получите подборку по условиям работы.
-        </p>
-      </FadeIn>
-      <Stagger
-        interval={0.08}
-        className="mt-8 grid gap-4 sm:mt-12 sm:gap-6 md:grid-cols-2"
-      >
-        <StaggerItem className="flex min-w-0 flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:p-8">
-          <h2 className="text-2xl font-semibold">Расскажите, что вы умеете</h2>
-          <p className="text-base leading-relaxed text-muted-foreground">
-            Укажите опыт, навыки и удобные условия работы. Вы управляете
-            публикацией профиля и доступом к своим данным.
-          </p>
-          <Button
-            asChild
-            className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
-          >
-            <Link href={STATIC_ROUTES.CANDIDATE}>
-              Создать профиль <ArrowRightIcon />
-            </Link>
-          </Button>
-        </StaggerItem>
-        <StaggerItem className="flex min-w-0 flex-col items-start gap-4 rounded-lg border border-border bg-card p-6 sm:p-8">
-          <h2 className="text-2xl font-semibold">
-            Найдите специалистов для команды
-          </h2>
-          <p className="text-base leading-relaxed text-muted-foreground">
-            Добавьте компанию, опишите задачи и условия. Сравните анонимные
-            профили по формату работы, зарплате и часовому поясу.
-          </p>
-          <Button
-            asChild
-            variant="outline"
-            className="mt-auto h-auto min-h-12 w-full whitespace-normal sm:w-auto"
-          >
-            <Link href={STATIC_ROUTES.EMPLOYER}>
-              Подобрать специалистов <ArrowRightIcon />
-            </Link>
-          </Button>
-        </StaggerItem>
-      </Stagger>
-      <p className="mt-8 text-sm text-muted-foreground">
-        Для начала работы понадобится аккаунт ФСП.
-      </p>
-    </main>
-  );
-};
+export const HomePage = () => (
+  <main
+    data-landing={LANDING_ELEMENTS.LANDING}
+    className="bg-background text-foreground overflow-clip [padding-bottom:clamp(48px,_7vw,_112px)] [&_h2]:[font-size:clamp(2.4rem,_4.8vw,_4.6rem)] [&_h2]:[line-height:1.08] [&_h2]:[letter-spacing:-0.055em] [&_h2]:font-[550] [&_h2_span]:text-muted-foreground [&_a:focus-visible]:[outline:3px_solid_var(--ring)] [&_a:focus-visible]:[outline-offset:6px] [&_button:focus-visible]:[outline:3px_solid_var(--ring)] [&_button:focus-visible]:[outline-offset:6px] [@media((prefers-reduced-motion:reduce))]:[&_*]:[animation:none]! [@media((prefers-reduced-motion:reduce))]:[&_*]:[transition:none]! [@media((prefers-reduced-motion:reduce))]:[&_*]:[scroll-behavior:auto]! [@media((prefers-reduced-motion:reduce))]:[&_*::before]:[animation:none]! [@media((prefers-reduced-motion:reduce))]:[&_*::before]:[transition:none]! [@media((prefers-reduced-motion:reduce))]:[&_*::before]:[scroll-behavior:auto]! [@media((prefers-reduced-motion:reduce))]:[&_*::after]:[animation:none]! [@media((prefers-reduced-motion:reduce))]:[&_*::after]:[transition:none]! [@media((prefers-reduced-motion:reduce))]:[&_*::after]:[scroll-behavior:auto]!"
+  >
+    <LandingMotion>
+      <Hero />
+      <ManifestSection />
+      <FederationSection />
+      <DisciplinesSection />
+      <CareerSection />
+      <EmployerSection />
+      <FaqSection />
+      <ClosingSection />
+    </LandingMotion>
+  </main>
+);

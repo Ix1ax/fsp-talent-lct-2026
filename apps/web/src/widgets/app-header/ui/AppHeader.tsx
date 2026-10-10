@@ -18,6 +18,7 @@ import {
   GUIDES_NAV_ITEM,
   type HeaderNavItem,
 } from '../model';
+import { AppHeaderPosition } from './AppHeaderPosition';
 import { HeaderGuidesButton } from './HeaderGuidesButton';
 import { HeaderNavLabel } from './HeaderNavLabel';
 
@@ -51,50 +52,54 @@ export const AppHeader = async () => {
   const items = getHeaderNavItems(role);
 
   return (
-    <HeaderBar
-      brand={
-        role ? (
-          <Brand href={getRoleHomeRoute(role)} label="ФСП Скаут — кабинет" />
-        ) : (
-          <Brand href={STATIC_ROUTES.HOME} label="ФСП Скаут — главная" />
-        )
-      }
-      nav={renderItems(items)}
-      mobileNav={
-        role
-          ? renderItems(items.filter((item) => item.id !== GUIDES_NAV_ITEM.id))
-          : null
-      }
-      actions={
-        <>
-          <HeaderGuidesButton />
-          {session.kind === 'user' && role === USER_ROLES.CANDIDATE && (
-            <OffersNotification key={session.user.id} />
-          )}
-          <ThemeToggle />
-          {session.kind === 'user' ? (
-            <UserMenu user={session.user} />
-          ) : session.kind === 'unavailable' ? (
-            <div className="flex items-center gap-2">
-              {session.displayName && (
-                <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
-                  {session.displayName}
-                </span>
-              )}
-              <span
-                className="inline-flex h-6 items-center rounded-sm bg-warning-soft px-2 text-xs font-medium text-warning"
-                role="status"
-              >
-                Сервис недоступен
-              </span>
-            </div>
+    <AppHeaderPosition>
+      <HeaderBar
+        brand={
+          role ? (
+            <Brand href={getRoleHomeRoute(role)} label="ФСП Скаут — кабинет" />
           ) : (
-            <Button asChild>
-              <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
-            </Button>
-          )}
-        </>
-      }
-    />
+            <Brand href={STATIC_ROUTES.HOME} label="ФСП Скаут — главная" />
+          )
+        }
+        nav={renderItems(items)}
+        mobileNav={
+          role
+            ? renderItems(
+                items.filter((item) => item.id !== GUIDES_NAV_ITEM.id),
+              )
+            : null
+        }
+        actions={
+          <>
+            <HeaderGuidesButton />
+            {session.kind === 'user' && role === USER_ROLES.CANDIDATE && (
+              <OffersNotification key={session.user.id} />
+            )}
+            <ThemeToggle />
+            {session.kind === 'user' ? (
+              <UserMenu user={session.user} />
+            ) : session.kind === 'unavailable' ? (
+              <div className="flex items-center gap-2">
+                {session.displayName && (
+                  <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
+                    {session.displayName}
+                  </span>
+                )}
+                <span
+                  className="inline-flex h-6 items-center rounded-sm bg-warning-soft px-2 text-xs font-medium text-warning"
+                  role="status"
+                >
+                  Сервис недоступен
+                </span>
+              </div>
+            ) : (
+              <Button asChild>
+                <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
+              </Button>
+            )}
+          </>
+        }
+      />
+    </AppHeaderPosition>
   );
 };

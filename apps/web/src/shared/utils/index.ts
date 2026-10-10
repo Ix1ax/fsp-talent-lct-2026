@@ -1,4 +1,5 @@
 export { camelToSnake } from './camelToSnake';
+export { clamp } from './clamp';
 export { convertCamelToSnake } from './convertCamelToSnake';
 export { convertSnakeToCamel } from './convertSnakeToCamel';
 export { formatDate } from './formatDate';
