@@ -2,6 +2,7 @@ import Link from 'next/link';
 import {
   BriefcaseBusinessIcon,
   Building2Icon,
+  ClipboardCheckIcon,
   FileTextIcon,
   MailIcon,
   SearchIcon,
@@ -25,6 +26,7 @@ const ICONS = {
   vacancies: BriefcaseBusinessIcon,
   candidates: SearchIcon,
   offers: MailIcon,
+  tasks: ClipboardCheckIcon,
 };
 const LABELS = {
   profile: 'Профиль',
@@ -33,6 +35,7 @@ const LABELS = {
   vacancies: 'Потребности',
   candidates: 'Соискатели',
   offers: 'Предложения',
+  tasks: 'Задания',
 };
 interface EmployerNavigationProps {
   section: EmployerSection;

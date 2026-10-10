@@ -4,7 +4,25 @@ import { ApiError } from '@/shared/api/errors';
 
 import type { TokenRefreshResult } from './tokens';
 
-export const refreshAuthTokens = async (
+const refreshRequests = new Map<string, Promise<TokenRefreshResult | null>>();
+
+export const refreshAuthTokens = (
+  refreshToken: string,
+): Promise<TokenRefreshResult | null> => {
+  const existing = refreshRequests.get(refreshToken);
+  if (existing) return existing;
+
+  const pending = requestAuthTokens(refreshToken).finally(() => {
+    if (refreshRequests.get(refreshToken) === pending)
+      refreshRequests.delete(refreshToken);
+  });
+
+  refreshRequests.set(refreshToken, pending);
+
+  return pending;
+};
+
+const requestAuthTokens = async (
   refreshToken: string,
 ): Promise<TokenRefreshResult | null> => {
   const tokenUrl = process.env.OIDC_TOKEN_URL;

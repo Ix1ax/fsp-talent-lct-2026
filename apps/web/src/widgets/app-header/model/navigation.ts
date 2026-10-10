@@ -66,6 +66,7 @@ export const EMPLOYER_NAV_ITEMS: HeaderNavItem[] = [
       STATIC_ROUTES.EMPLOYER_VACANCIES,
       STATIC_ROUTES.EMPLOYER_CANDIDATES,
       STATIC_ROUTES.EMPLOYER_OFFERS,
+      STATIC_ROUTES.EMPLOYER_TASKS,
     ],
   },
   {
@@ -86,6 +87,12 @@ export const EMPLOYER_NAV_ITEMS: HeaderNavItem[] = [
     href: STATIC_ROUTES.EMPLOYER_OFFERS,
     label: 'Предложения',
     icon: MailIcon,
+  },
+  {
+    id: 'tasks',
+    href: STATIC_ROUTES.EMPLOYER_TASKS,
+    label: 'Задания',
+    icon: ClipboardCheckIcon,
   },
 ];
 

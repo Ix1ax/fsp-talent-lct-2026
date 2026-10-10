@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import { useGuardedRouter, useUnsavedGuard } from '@/shared/hooks';
 
@@ -16,6 +17,7 @@ export const useEmployerWorkspace = ({
   board,
 }: EmployerWorkspaceOptions) => {
   const router = useGuardedRouter();
+  const searchParams = useSearchParams();
   const [createCompany, setCreateCompany] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const previousView = useRef({ section, createCompany });
@@ -54,6 +56,10 @@ export const useEmployerWorkspace = ({
     (value: boolean) => setDrafts((state) => ({ ...state, invitation: value })),
     [],
   );
+  const tasksDirtyChanged = useCallback(
+    (value: boolean) => setDrafts((state) => ({ ...state, tasks: value })),
+    [],
+  );
   const busyChanged = useCallback((value: boolean) => setChildBusy(value), []);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [candidateId, setCandidateId] = useState('');
@@ -62,12 +68,10 @@ export const useEmployerWorkspace = ({
   const needUnsaved = useUnsavedGuard(drafts.vacancies ?? false, busy, false);
   const guardNeed = needUnsaved.guard;
   const guard = unsaved.guard;
-  const href = (next: EmployerSection, companyId = board.companyId) =>
-    getEmployerHref(
-      next,
-      companyId,
-      typeof window === 'undefined' ? '' : window.location.search,
-    );
+
+  const href = (next: EmployerSection, companyId = board.companyId) => {
+    return getEmployerHref(next, companyId, searchParams.toString());
+  };
   const navigate = (next: EmployerSection) => {
     if (busy) return;
     const action = () => {
@@ -104,6 +108,7 @@ export const useEmployerWorkspace = ({
     teamDirtyChanged,
     documentsDirtyChanged,
     invitationDirtyChanged,
+    tasksDirtyChanged,
     busyChanged,
     archiveConfirm,
     setArchiveConfirm,

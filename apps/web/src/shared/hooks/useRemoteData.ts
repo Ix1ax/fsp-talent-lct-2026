@@ -18,10 +18,15 @@ type RemoteDataState<T> = RemoteDataRequest<T> & {
   loading: boolean;
 };
 
+type RemoteDataOptions = {
+  keepPreviousData?: boolean;
+};
+
 export const useRemoteData = <T>(
   load: RemoteDataLoader<T>,
   externalRevision = 0,
   enabled = true,
+  { keepPreviousData = false }: RemoteDataOptions = {},
 ) => {
   const [state, setState] = useState<RemoteDataState<T>>({
     load,
@@ -79,7 +84,11 @@ export const useRemoteData = <T>(
     state.revision === revision &&
     state.externalRevision === externalRevision
       ? state
-      : { loading: true, error: '', data: undefined };
+      : {
+          loading: true,
+          error: '',
+          data: enabled && keepPreviousData ? state.data : undefined,
+        };
 
   const updateData = useCallback(
     (update: (data: T) => T) => {

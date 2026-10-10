@@ -64,6 +64,10 @@ export const EmployerSessionRecovery = ({
             'Попробуйте ещё раз — данные компании сохраняются на сервере.'
           }
           onRetry={() => {
+            if (message) {
+              window.location.reload();
+              return;
+            }
             setPending(true);
             setError('');
             void recover();

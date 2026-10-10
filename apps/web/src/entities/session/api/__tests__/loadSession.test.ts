@@ -154,6 +154,8 @@ describe('loadSession', () => {
     expect(session).toMatchObject({
       kind: 'unavailable',
       code: 'network',
+      message:
+        'Сервис кабинета временно недоступен. Попробуйте обновить страницу.',
     });
   });
 });

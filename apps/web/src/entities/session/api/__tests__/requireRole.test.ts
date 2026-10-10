@@ -24,6 +24,22 @@ vi.mock('next/navigation', () => ({
 }));
 
 describe('requireSessionUser & requireRole', () => {
+  it('redirects forbidden sessions without mutating cookies during server rendering', async () => {
+    vi.mocked(clearAuthTokens).mockRejectedValueOnce(
+      new Error(
+        'Cookies can only be modified in a Server Action or Route Handler',
+      ),
+    );
+    vi.mocked(loadSession).mockResolvedValue({
+      kind: 'invalid',
+      reason: 'forbidden',
+      message: 'Forbidden',
+    });
+    await expect(requireSessionUser('/candidate/profile')).rejects.toThrow(
+      'NEXT_REDIRECT:/login?next=%2Fcandidate%2Fprofile',
+    );
+    expect(clearAuthTokens).not.toHaveBeenCalled();
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -108,7 +124,7 @@ describe('requireSessionUser & requireRole', () => {
     expect(clearAuthTokens).not.toHaveBeenCalled();
   });
 
-  it('clears tokens and redirects to login when invalid without a refresh token', async () => {
+  it('refreshes unauthorized sessions when the scoped cookie is invisible to the page', async () => {
     vi.mocked(loadSession).mockResolvedValue({
       kind: 'invalid',
       reason: 'unauthorized',
@@ -117,11 +133,11 @@ describe('requireSessionUser & requireRole', () => {
     });
 
     await expect(requireSessionUser('/candidate/profile')).rejects.toThrow(
-      'NEXT_REDIRECT:/login?next=%2Fcandidate%2Fprofile',
+      'NEXT_REDIRECT:/api/auth/refresh?next=%2Fcandidate%2Fprofile',
     );
-    expect(clearAuthTokens).toHaveBeenCalledOnce();
+    expect(clearAuthTokens).not.toHaveBeenCalled();
     expect(redirectMock).toHaveBeenCalledWith(
-      '/login?next=%2Fcandidate%2Fprofile',
+      '/api/auth/refresh?next=%2Fcandidate%2Fprofile',
     );
   });
 });

@@ -42,15 +42,15 @@ describe('requireAccessToken', () => {
     );
   });
 
-  it('redirects directly to login when both accessToken and refreshToken are missing', async () => {
+  it('uses the auth route when the scoped refresh cookie is invisible to the page', async () => {
     vi.mocked(getAccessToken).mockResolvedValue(undefined);
     vi.mocked(getRefreshToken).mockResolvedValue(undefined);
 
     await expect(requireAccessToken('/candidate/profile')).rejects.toThrow(
-      'NEXT_REDIRECT:/login?next=%2Fcandidate%2Fprofile',
+      'NEXT_REDIRECT:/api/auth/refresh?next=%2Fcandidate%2Fprofile',
     );
     expect(redirectMock).toHaveBeenCalledWith(
-      '/login?next=%2Fcandidate%2Fprofile',
+      '/api/auth/refresh?next=%2Fcandidate%2Fprofile',
     );
   });
 });

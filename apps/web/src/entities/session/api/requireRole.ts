@@ -2,7 +2,7 @@ import 'server-only';
 
 import { redirect } from 'next/navigation';
 
-import { clearAuthTokens, requireAccessToken } from '@/shared/auth/server';
+import { requireAccessToken } from '@/shared/auth/server';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { sanitizeRedirectPath } from '@/shared/utils';
 
@@ -27,10 +27,9 @@ export const requireSessionUser = async (
   }
 
   if (session.kind === 'invalid') {
-    if (session.hasRefreshToken && session.reason === 'unauthorized') {
+    if (session.reason === 'unauthorized') {
       redirect(`/api/auth/refresh?next=${encodeURIComponent(safeNext)}`);
     }
-    await clearAuthTokens();
     redirect(`${STATIC_ROUTES.LOGIN}?next=${encodeURIComponent(safeNext)}`);
   }
 

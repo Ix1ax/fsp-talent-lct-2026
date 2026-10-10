@@ -36,16 +36,34 @@ const RenderRemote = (
   load: (signal: AbortSignal) => Promise<string>,
   enabled = true,
   revision = 0,
+  keepPreviousData = false,
 ) => {
   hooks.cursor = 0;
   hooks.effects = [];
-  const result = useRemoteData(load, revision, enabled);
+
+  const result = useRemoteData(load, revision, enabled, { keepPreviousData });
+
   return { result, effect: hooks.effects[0] };
 };
 const flush = async () => {
   await Promise.resolve();
   await Promise.resolve();
 };
+it('keeps previous rows during filtering only when explicitly enabled', async () => {
+  const first = vi.fn(async () => 'previous rows');
+  RenderRemote(first).effect();
+  await flush();
+  const filtered = vi.fn(async () => 'filtered rows');
+  expect(RenderRemote(filtered).result.data).toBeUndefined();
+  const pending = RenderRemote(filtered, true, 0, true);
+  expect(pending.result.data).toBe('previous rows');
+  expect(pending.result.loading).toBe(true);
+  pending.effect();
+  await flush();
+  expect(RenderRemote(filtered, true, 0, true).result.data).toBe(
+    'filtered rows',
+  );
+});
 it('loads only visible resources, reuses completed data, and explicitly retries', async () => {
   const load = vi.fn(async () => 'data');
   const hidden = RenderRemote(load, false);

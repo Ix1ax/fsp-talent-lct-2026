@@ -3,3 +3,4 @@
 .next-dev/
 out/
 node_modules/
+.zed/
