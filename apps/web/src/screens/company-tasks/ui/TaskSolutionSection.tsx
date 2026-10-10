@@ -28,7 +28,7 @@ export const TaskSolutionSection = ({
         </FadeIn>
       )}
       {!submission && task.mySubmission && (
-        <div className="space-y-4 rounded-xl border bg-card p-6">
+        <div className="space-y-4 rounded-xl border bg-card p-5 sm:p-6">
           <h2 className="font-semibold">Вы уже отправили решение</h2>
           <p className="text-sm text-muted-foreground">
             Повторная отправка и замена файла недоступны.

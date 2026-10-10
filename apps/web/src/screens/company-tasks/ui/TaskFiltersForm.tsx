@@ -18,7 +18,7 @@ export const TaskFiltersForm = ({
 }: TaskFiltersFormProps) => {
   return (
     <form
-      className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 rounded-xl border bg-card p-5 sm:p-6 sm:flex-row sm:items-end"
       onSubmit={(event) => {
         event.preventDefault();
         onSearch();

@@ -1,3 +1,4 @@
+import { AsyncState } from '@/shared/ui';
 import { AssessmentRunner } from '@/features/assessment-runner';
 
 import type { useAssessmentAttempt } from '../model';
@@ -13,8 +14,14 @@ export const AssessmentAttemptContent = ({
 
   return (
     <>
-      {error && <p role="alert">{error}</p>}
-      {loading && <p role="status">Загружаем попытку…</p>}
+      {error && (
+        <AsyncState error title="Попытка недоступна" description={error} />
+      )}
+      {loading && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Загружаем попытку…
+        </p>
+      )}
       {attempt && (
         <AssessmentRunner key={attempt.id} initialAttempt={attempt} />
       )}

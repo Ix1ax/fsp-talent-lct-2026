@@ -36,7 +36,7 @@ export const TasksLoading = () => {
     <TasksShell title="Задания компаний">
       <div
         aria-hidden="true"
-        className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-end motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+        className="flex flex-col gap-3 rounded-xl border bg-card p-5 sm:p-6 sm:flex-row sm:items-end motion-reduce:[&_[data-slot=skeleton]]:animate-none"
       >
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <Skeleton className="h-5 w-32" />

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { Button, FadeIn, PageWrapper } from '@/shared/ui';
+import { Button, PageHeader, PageWrapper } from '@/shared/ui';
 
 import { useAssessmentAttempt } from '../model';
 import { AssessmentAttemptContent } from './AssessmentAttemptContent';
@@ -20,16 +20,20 @@ export const AssessmentAttemptPage = ({
 
   return (
     <PageWrapper>
-      <Button asChild variant="outline" className="min-h-11 self-start">
-        <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
-          <ArrowLeftIcon aria-hidden="true" />К списку тестов
-        </Link>
-      </Button>
-      <FadeIn>
-        <h1 className="text-2xl font-semibold sm:text-3xl">
-          Тестирование навыков
-        </h1>
-      </FadeIn>
+      <PageHeader>
+        <PageHeader.Row>
+          <PageHeader.Content>
+            <PageHeader.Title>Тестирование навыков</PageHeader.Title>
+          </PageHeader.Content>
+          <PageHeader.Actions>
+            <Button asChild variant="outline">
+              <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
+                <ArrowLeftIcon aria-hidden="true" />К списку тестов
+              </Link>
+            </Button>
+          </PageHeader.Actions>
+        </PageHeader.Row>
+      </PageHeader>
       <AssessmentAttemptContent state={state} />
     </PageWrapper>
   );

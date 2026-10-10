@@ -5,6 +5,8 @@ import { CheckIcon } from 'lucide-react';
 import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Button,
+  Card,
+  CardContent,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -72,7 +74,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     );
 
   return (
-    <>
+    <div className="flex min-w-0 flex-col gap-6">
       <AssessmentFocusWarning violations={violations} />
       {storageError && (
         <p role="alert" className="text-sm text-muted-foreground">
@@ -96,44 +98,43 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           )}
         </div>
       )}
-      <section
-        aria-label="Ход теста"
-        className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 tabular-nums">
-            <p
-              role="timer"
-              aria-label="Оставшееся время"
-              className="font-medium"
-            >
-              Осталось {formatDuration(remaining)}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Готово: {completed} из {questions.length}
-            </p>
+      <Card role="region" aria-label="Ход теста">
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 tabular-nums">
+              <p
+                role="timer"
+                aria-label="Оставшееся время"
+                className="font-medium"
+              >
+                Осталось {formatDuration(remaining)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Готово: {completed} из {questions.length}
+              </p>
+            </div>
+            {!reviewing && (
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                disabled={busy || locked}
+                onClick={() => setConfirm(true)}
+              >
+                Завершить досрочно
+              </Button>
+            )}
           </div>
-          {!reviewing && (
-            <Button
-              variant="ghost"
-              className="min-h-11 text-muted-foreground"
-              disabled={busy || locked}
-              onClick={() => setConfirm(true)}
-            >
-              Завершить досрочно
-            </Button>
-          )}
-        </div>
-        <progress
-          className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
-          value={completed}
-          max={Math.max(1, questions.length)}
-          aria-label="Завершённые задания"
-        />
-        <p className="text-xs text-muted-foreground">
-          Задание засчитывается после перехода дальше и сохранения ответа.
-        </p>
-      </section>
+          <progress
+            className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+            value={completed}
+            max={Math.max(1, questions.length)}
+            aria-label="Завершённые задания"
+          />
+          <p className="text-xs text-muted-foreground">
+            Задание засчитывается после перехода дальше и сохранения ответа.
+          </p>
+        </CardContent>
+      </Card>
       {error && <p role="alert">{error}</p>}
       {consentBlocked && (
         <Button asChild variant="outline">
@@ -160,7 +161,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           {questions.map((item, position) => (
             <Button
               key={item.id}
-              className="h-11 w-14 shrink-0 px-2"
+              className="h-10 w-12 shrink-0 px-2"
               aria-label={`Задание ${item.position}${progress[position] === 'complete' ? ', готово' : ''}`}
               variant={position === index ? 'default' : 'outline'}
               aria-current={position === index ? 'step' : undefined}
@@ -245,6 +246,6 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };

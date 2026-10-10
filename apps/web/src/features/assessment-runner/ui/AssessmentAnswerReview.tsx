@@ -49,7 +49,7 @@ export const AssessmentAnswerReview = ({
           нельзя.
         </p>
       </CardHeader>
-      <CardContent className="flex min-w-0 flex-col gap-5">
+      <CardContent className="flex min-w-0 flex-col gap-6">
         <ul className="divide-y divide-border">
           {questions.map((question, index) => (
             <li key={question.id}>
@@ -74,11 +74,7 @@ export const AssessmentAnswerReview = ({
             </li>
           ))}
         </ul>
-        <Button
-          className="min-h-11 self-end"
-          disabled={disabled}
-          onClick={onFinish}
-        >
+        <Button className="self-end" disabled={disabled} onClick={onFinish}>
           Завершить тест
         </Button>
       </CardContent>

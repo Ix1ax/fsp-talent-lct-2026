@@ -29,7 +29,7 @@ export const TaskSubmissionsPage = () => {
 
   return (
     <TasksShell title="Мои решения" history>
-      <div className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-xl border bg-card p-5 sm:p-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="submission-status">Статус решения</Label>
           <OptionSelect

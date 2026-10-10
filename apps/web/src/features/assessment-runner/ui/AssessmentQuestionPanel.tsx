@@ -53,7 +53,7 @@ export const AssessmentQuestionPanel = ({
             Задание {question.position} из {questionCount}
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex min-w-0 flex-col gap-5">
+        <CardContent className="flex min-w-0 flex-col gap-6">
           <p className="whitespace-pre-wrap wrap-anywhere">
             {question.prompt.text}
           </p>
@@ -61,7 +61,7 @@ export const AssessmentQuestionPanel = ({
             <pre
               tabIndex={0}
               aria-label="Код задания"
-              className="max-w-full overflow-x-auto rounded bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
+              className="max-w-full overflow-x-auto rounded-lg bg-muted p-3 focus-visible:outline-2 focus-visible:outline-ring"
             >
               <code>{question.prompt.code}</code>
             </pre>
@@ -77,7 +77,6 @@ export const AssessmentQuestionPanel = ({
           <div className="grid grid-cols-2 gap-3 border-t pt-5 sm:flex sm:justify-between">
             <Button
               variant="outline"
-              className="min-h-11"
               disabled={index === 0 || busy}
               onClick={() => onNavigate(index - 1)}
             >
@@ -85,17 +84,13 @@ export const AssessmentQuestionPanel = ({
               Назад
             </Button>
             {index < questionCount - 1 ? (
-              <Button
-                className="min-h-11"
-                disabled={busy}
-                onClick={() => onNavigate(index + 1)}
-              >
+              <Button disabled={busy} onClick={() => onNavigate(index + 1)}>
                 Далее
                 <ArrowRightIcon aria-hidden="true" />
               </Button>
             ) : (
               <Button
-                className="h-auto min-h-11 whitespace-normal"
+                className="h-auto min-h-10 whitespace-normal"
                 disabled={busy || locked}
                 onClick={onReview}
               >

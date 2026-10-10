@@ -10,7 +10,7 @@ interface TaskSubmissionCardProps {
 
 export const TaskSubmissionCard = ({ submission }: TaskSubmissionCardProps) => {
   return (
-    <article className="flex flex-col justify-between gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center">
+    <article className="flex flex-col justify-between gap-4 rounded-xl border bg-card p-5 sm:p-6 sm:flex-row sm:items-center">
       <div className="min-w-0 space-y-2">
         <p className="break-words text-sm text-muted-foreground">
           {submission.companyName}

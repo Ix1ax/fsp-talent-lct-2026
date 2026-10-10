@@ -12,7 +12,7 @@ export const TaskCondition = ({ task }: TaskConditionProps) => {
   return (
     <section
       aria-labelledby="task-condition-title"
-      className="grid min-w-0 gap-6 rounded-xl border bg-card p-5 sm:p-8"
+      className="grid min-w-0 gap-6 rounded-xl border bg-card p-5 sm:p-6"
     >
       <div className="grid gap-4">
         <h2 id="task-condition-title" className="text-xl font-semibold">
