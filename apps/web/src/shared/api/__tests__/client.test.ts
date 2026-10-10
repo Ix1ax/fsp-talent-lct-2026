@@ -7,7 +7,7 @@ import {
   setClientAccessToken,
 } from '@/shared/auth';
 
-import { ensureClientAccessToken } from '../client';
+import { clientApi, ensureClientAccessToken } from '../client';
 
 vi.mock('@/shared/auth', () => ({
   clearClientAccessToken: vi.fn(),
@@ -20,6 +20,7 @@ vi.mock('@/shared/auth', () => ({
 const fetchMock = vi.fn();
 
 describe('client session refresh', () => {
+  const originalAdapter = clientApi.defaults.adapter;
   beforeEach(() => {
     vi.resetAllMocks();
     vi.stubGlobal('window', {});
@@ -27,7 +28,59 @@ describe('client session refresh', () => {
     vi.mocked(getClientAccessToken).mockReturnValue(null);
     vi.mocked(getClientSessionRevision).mockReturnValue(0);
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    clientApi.defaults.adapter = originalAdapter;
+  });
+
+  it.each([{}, { accessToken: 42 }, { accessToken: '' }, { accessToken: ' ' }])(
+    'preserves auth state when refresh returns malformed token data: %j',
+    async (body) => {
+      fetchMock.mockResolvedValue(Response.json(body));
+      await expect(ensureClientAccessToken()).rejects.toMatchObject({
+        status: 503,
+        code: 'auth_unavailable',
+      });
+      expect(setClientAccessToken).not.toHaveBeenCalled();
+      expect(clearClientAccessToken).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retries a late 401 with the token already refreshed by another request', async () => {
+    let token = 'old';
+    vi.mocked(getClientAccessToken).mockImplementation(() => token);
+    vi.mocked(setClientAccessToken).mockImplementation((value) => {
+      token = value ?? '';
+    });
+    fetchMock.mockResolvedValue(Response.json({ accessToken: 'new' }));
+    let rejectLate!: () => void;
+    const unauthorized = (config: InternalAxiosRequestConfig) =>
+      new AxiosError('Unauthorized', 'ERR_BAD_REQUEST', config, undefined, {
+        data: {},
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: {},
+        config,
+      });
+    const adapter = vi.fn(async (config: InternalAxiosRequestConfig) => {
+      if (config.headers.Authorization === 'Bearer old') {
+        if (config.url === '/late')
+          return new Promise<never>((_resolve, reject) => {
+            rejectLate = () => reject(unauthorized(config));
+          });
+        throw unauthorized(config);
+      }
+      return { data: {}, status: 200, statusText: 'OK', headers: {}, config };
+    });
+    clientApi.defaults.adapter = adapter;
+    const first = clientApi.get('/first');
+    const late = clientApi.get('/late');
+    await first;
+    rejectLate();
+    await late;
+    expect(fetchMock).toHaveBeenCalledOnce();
+    expect(adapter).toHaveBeenCalledTimes(4);
+  });
 
   it('preserves the session on a temporary HTTP failure', async () => {
     fetchMock.mockResolvedValue(Response.json({}, { status: 503 }));
@@ -98,3 +151,4 @@ describe('client session refresh', () => {
     expect(setClientAccessToken).toHaveBeenCalledWith('new');
   });
 });
+import { AxiosError, type InternalAxiosRequestConfig } from 'axios';

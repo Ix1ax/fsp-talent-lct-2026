@@ -44,10 +44,23 @@ const runRefreshRequest = async (revision: number): Promise<string | null> => {
     );
   }
 
-  const data = (await response.json()) as { accessToken?: string };
+  const data: unknown = await response.json().catch(() => null);
   if (revision !== getClientSessionRevision())
     throw new DOMException('Auth state changed', 'AbortError');
-  const token = data.accessToken ?? null;
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !('accessToken' in data) ||
+    typeof data.accessToken !== 'string' ||
+    !data.accessToken.trim()
+  ) {
+    throw new ApiError(
+      503,
+      'Сервис авторизации вернул некорректный ответ',
+      'auth_unavailable',
+    );
+  }
+  const token = data.accessToken;
   setClientAccessToken(token);
   return token;
 };
@@ -108,7 +121,12 @@ clientApi.interceptors.response.use(
     }
 
     config._retry = true;
-    const token = await refreshClientAccessToken();
+    // A delayed 401 may belong to the token already replaced by another request.
+    const currentToken = getClientAccessToken();
+    const token =
+      currentToken && config.headers.Authorization !== `Bearer ${currentToken}`
+        ? currentToken
+        : await refreshClientAccessToken();
 
     if (!token) {
       emitSessionExpired();

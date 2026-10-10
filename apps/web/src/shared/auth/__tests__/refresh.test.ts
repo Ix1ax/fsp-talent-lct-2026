@@ -7,6 +7,33 @@ vi.mock('server-only', () => ({}));
 const fetchMock = vi.fn();
 
 describe('refreshAuthTokens', () => {
+  it('shares concurrent refreshes so a rotating token is used only once', async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+      }),
+    );
+    const first = refreshAuthTokens('same-refresh');
+    const second = refreshAuthTokens('same-refresh');
+    expect(first).toBe(second);
+    expect(await Promise.all([first, second])).toEqual([
+      {
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        expiresIn: undefined,
+      },
+      {
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        expiresIn: undefined,
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledOnce();
+    fetchMock.mockResolvedValue(Response.json({ access_token: 'next-access' }));
+    await refreshAuthTokens('same-refresh');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
   beforeEach(() => {
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
