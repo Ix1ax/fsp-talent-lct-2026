@@ -17,25 +17,33 @@ export const EducationItem = ({
   onDelete,
 }: EducationItemProps) => {
   return (
-    <RecordItem
-      title={record.institution}
-      subtitle={record.specialty || undefined}
-      meta={
-        <>
-          {EDUCATION_LEVEL_LABELS[record.level]} · окончание{' '}
-          <time dateTime={String(record.graduationYear)}>
-            {record.graduationYear}
-          </time>
-        </>
-      }
-      actions={
-        <RecordItemActions
-          label={`образование: ${record.institution}`}
-          disabled={disabled}
-          onEdit={onEdit}
-          onDelete={onDelete}
-        />
-      }
-    />
+    <RecordItem>
+      <RecordItem.Header>
+        <RecordItem.Content>
+          <RecordItem.Heading>
+            <RecordItem.Title>{record.institution}</RecordItem.Title>
+          </RecordItem.Heading>
+          <RecordItem.Subtitle>
+            {record.specialty || undefined}
+          </RecordItem.Subtitle>
+          <RecordItem.Meta>
+            <>
+              {EDUCATION_LEVEL_LABELS[record.level]} · окончание{' '}
+              <time dateTime={String(record.graduationYear)}>
+                {record.graduationYear}
+              </time>
+            </>
+          </RecordItem.Meta>
+        </RecordItem.Content>
+        <RecordItem.Actions>
+          <RecordItemActions
+            label={`образование: ${record.institution}`}
+            disabled={disabled}
+            onEdit={onEdit}
+            onDelete={onDelete}
+          />
+        </RecordItem.Actions>
+      </RecordItem.Header>
+    </RecordItem>
   );
 };

@@ -46,7 +46,8 @@ export const EmployerWorkspaceContent = ({
     href,
     startCompany,
   } = workspace;
-  if (board.error)
+
+  if (board.error) {
     return (
       <AsyncState
         error
@@ -55,14 +56,18 @@ export const EmployerWorkspaceContent = ({
         onRetry={board.retry}
       />
     );
-  if (!board.resources)
+  }
+
+  if (!board.resources) {
     return (
       <div role="status" aria-label="Загрузка кабинета" className="grid gap-4">
         <Skeleton className="h-12 w-64" />
         <Skeleton className="h-64" />
       </div>
     );
-  if (section === 'invitation')
+  }
+
+  if (section === 'invitation') {
     return (
       <div className="grid w-full min-w-0 gap-4">
         <Button
@@ -83,7 +88,9 @@ export const EmployerWorkspaceContent = ({
         />
       </div>
     );
-  if (createCompany)
+  }
+
+  if (createCompany) {
     return (
       <div className="grid w-full min-w-0 gap-4">
         <Button
@@ -111,7 +118,9 @@ export const EmployerWorkspaceContent = ({
         />
       </div>
     );
-  if (!board.company)
+  }
+
+  if (!board.company) {
     return (
       <EmployerCompanyOnboarding
         api={api}
@@ -122,6 +131,8 @@ export const EmployerWorkspaceContent = ({
         onBusyChange={busyChanged}
       />
     );
+  }
+
   return (
     <EmployerCompanySections
       user={user}

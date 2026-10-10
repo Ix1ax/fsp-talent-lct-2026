@@ -10,6 +10,7 @@ export const AssessmentAttemptContent = ({
   state,
 }: AssessmentAttemptContentProps) => {
   const { attempt, error, loading } = state;
+
   return (
     <>
       {error && <p role="alert">{error}</p>}

@@ -27,22 +27,27 @@ export const CandidateSkillItem = ({
   onDelete,
 }: CandidateSkillItemProps) => {
   return (
-    <RecordItem
-      title={skill.name}
-      badges={
-        skill.moderationStatus !== 'approved' && (
-          <Badge variant="outline" className="h-auto min-h-6 whitespace-normal">
-            {MODERATION_LABELS[skill.moderationStatus]}
-          </Badge>
-        )
-      }
-      meta={
-        skill.verifiedLevel != null
-          ? `Подтверждённый уровень: ${skill.verifiedLevel} из 5`
-          : 'Уровень пока не подтверждён. Можно пройти тестирование.'
-      }
-      actions={
-        <>
+    <RecordItem>
+      <RecordItem.Header>
+        <RecordItem.Content>
+          <RecordItem.Heading>
+            <RecordItem.Title>{skill.name}</RecordItem.Title>
+            {skill.moderationStatus !== 'approved' && (
+              <Badge
+                variant="outline"
+                className="h-auto min-h-6 whitespace-normal"
+              >
+                {MODERATION_LABELS[skill.moderationStatus]}
+              </Badge>
+            )}
+          </RecordItem.Heading>
+          <RecordItem.Meta>
+            {skill.verifiedLevel != null
+              ? `Подтверждённый уровень: ${skill.verifiedLevel} из 5`
+              : 'Уровень пока не подтверждён. Можно пройти тестирование.'}
+          </RecordItem.Meta>
+        </RecordItem.Content>
+        <RecordItem.Actions>
           <div className="flex items-center gap-2">
             <span className="text-sm text-muted-foreground">Самооценка</span>
             <SkillLevelSelect
@@ -66,8 +71,8 @@ export const CandidateSkillItem = ({
           >
             <Trash2Icon aria-hidden="true" />
           </Button>
-        </>
-      }
-    />
+        </RecordItem.Actions>
+      </RecordItem.Header>
+    </RecordItem>
   );
 };

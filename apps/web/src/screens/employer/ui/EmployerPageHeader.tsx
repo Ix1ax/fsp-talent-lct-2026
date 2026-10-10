@@ -37,6 +37,7 @@ export const EmployerPageHeader = ({
     createCompany ||
     section === 'invitation' ||
     (!!board.resources && !company);
+
   const companySwitcher = board.resources && (
     <CompanySwitcher
       companies={board.resources.companies}
@@ -54,6 +55,7 @@ export const EmployerPageHeader = ({
       onCreateCompany={startCompany}
     />
   );
+
   return (
     <PageHeader>
       <PageHeader.Row>

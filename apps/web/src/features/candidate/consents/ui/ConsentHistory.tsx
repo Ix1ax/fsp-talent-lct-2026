@@ -63,26 +63,33 @@ export const ConsentHistory = ({
       {history && history.items.length > 0 && (
         <ul className="flex flex-col gap-3">
           {history.items.map((consent) => (
-            <RecordItem
-              key={consent.id}
-              title={CONSENT_LABELS[consent.kind]}
-              badges={
-                <Badge variant={consent.revokedAt ? 'outline' : 'success'}>
-                  {consent.revokedAt ? 'Отозвано' : 'Действует'}
-                </Badge>
-              }
-              meta={
-                <>
-                  Версия {consent.policyVersion} · дано{' '}
-                  {formatDate(consent.grantedAt)} UTC
-                  {consent.revokedAt &&
-                    ` · отозвано ${formatDate(consent.revokedAt)} UTC`}
-                </>
-              }
-              subtitle={
-                consent.companyId ? `Компания: ${consent.companyId}` : undefined
-              }
-            />
+            <RecordItem key={consent.id}>
+              <RecordItem.Header>
+                <RecordItem.Content>
+                  <RecordItem.Heading>
+                    <RecordItem.Title>
+                      {CONSENT_LABELS[consent.kind]}
+                    </RecordItem.Title>
+                    <Badge variant={consent.revokedAt ? 'outline' : 'success'}>
+                      {consent.revokedAt ? 'Отозвано' : 'Действует'}
+                    </Badge>
+                  </RecordItem.Heading>
+                  <RecordItem.Subtitle>
+                    {consent.companyId
+                      ? `Компания: ${consent.companyId}`
+                      : undefined}
+                  </RecordItem.Subtitle>
+                  <RecordItem.Meta>
+                    <>
+                      Версия {consent.policyVersion} · дано{' '}
+                      {formatDate(consent.grantedAt)} UTC
+                      {consent.revokedAt &&
+                        ` · отозвано ${formatDate(consent.revokedAt)} UTC`}
+                    </>
+                  </RecordItem.Meta>
+                </RecordItem.Content>
+              </RecordItem.Header>
+            </RecordItem>
           ))}
         </ul>
       )}
