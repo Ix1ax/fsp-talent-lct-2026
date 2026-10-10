@@ -7,7 +7,7 @@ import type { Catalogs, Skill } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 import type { EmployerNeed } from '@/entities/employer-need';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 import { CompanyVacancyContent } from './CompanyVacancyContent';
 
 interface CompanyProfileVacanciesProps {

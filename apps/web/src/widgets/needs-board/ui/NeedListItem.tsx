@@ -1,8 +1,7 @@
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { formatSalaryRange } from '@/shared/utils';
-import type { Catalogs } from '@/entities/catalog';
-import { SpecializationBadge } from '@/entities/catalog';
+import { type Catalogs, SpecializationBadge } from '@/entities/catalog';
 import {
   type EmployerNeed,
   getMissingNeedFields,

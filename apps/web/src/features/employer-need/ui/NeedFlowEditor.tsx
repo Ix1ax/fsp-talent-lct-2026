@@ -15,8 +15,10 @@ import {
   Textarea,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
-import type { NeedInput } from '@/entities/employer-need';
-import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
+import {
+  NEED_DETAIL_STATUS_LABELS,
+  type NeedInput,
+} from '@/entities/employer-need';
 
 import { validateNeed } from '../lib';
 import { NEED_FLOW_LAST_STEP, useNeedFlowEditor } from '../model';

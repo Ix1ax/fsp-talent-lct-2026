@@ -1,5 +1,4 @@
-import type { KeyboardEvent, PointerEvent } from 'react';
-import { useState } from 'react';
+import { type KeyboardEvent, type PointerEvent, useState } from 'react';
 import {
   ArrowDown,
   ArrowLeft,

@@ -18,7 +18,7 @@ import type {
   RecommendationPage,
 } from '@/entities/employer-need';
 
-import { filtersForNeed, filtersMatchNeed } from '../lib/filtersForNeed';
+import { filtersForNeed, filtersMatchNeed } from '../lib';
 import { CandidateCard } from './CandidateCard';
 import { CandidateDetails } from './CandidateDetails';
 import { CandidateFilters } from './CandidateFilters';

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 
-import { PROFILE_STEPS } from '@/screens/candidate/constants';
+import { PROFILE_STEPS } from '@/screens/candidate';
 
 const CandidateProfileSectionPage = async ({
   params,

@@ -18,7 +18,7 @@ import {
   HeaderNavLabel,
 } from '@/widgets/app-header';
 
-import type { EmployerSection } from '../constants/sections';
+import type { EmployerSection } from '../constants';
 
 // Пункты те же, что в общей шапке сайта; здесь переходы идут через
 // защиту несохранённых изменений кабинета. Настройки компании (профиль,

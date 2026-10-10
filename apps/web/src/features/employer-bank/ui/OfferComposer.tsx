@@ -21,11 +21,14 @@ import {
   toast,
 } from '@/shared/ui';
 import type { Company } from '@/entities/company';
-import type { CandidateOffer, OfferInput } from '@/entities/employer-bank';
-import type { EmployerBankApi } from '@/entities/employer-bank';
+import {
+  type CandidateOffer,
+  type EmployerBankApi,
+  type OfferInput,
+} from '@/entities/employer-bank';
 import type { EmployerNeed } from '@/entities/employer-need';
 
-import { offerSchema } from '../constants/offerSchema';
+import { offerSchema } from '../constants';
 import { isUncertainOfferError } from '../lib';
 
 interface OfferComposerProps {

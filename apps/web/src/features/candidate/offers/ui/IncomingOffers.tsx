@@ -13,12 +13,13 @@ import {
   CardTitle,
   FadeIn,
   OptionSelect,
+  PageControls,
   PageHeader,
   RefreshButton,
+  RemoteState,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
-import { PageControls, RemoteState } from '@/shared/ui';
 import {
   getIncomingOffers,
   type IncomingOffer,

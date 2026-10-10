@@ -4,7 +4,7 @@ import { Building2Icon } from 'lucide-react';
 
 import type { Company } from '@/entities/company';
 
-import type { CompanyManagementApi } from '../model/management';
+import type { CompanyManagementApi } from '../model';
 
 interface CompanyLogoProps {
   company: Company;

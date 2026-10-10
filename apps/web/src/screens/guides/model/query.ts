@@ -1,4 +1,4 @@
-import type { SkillsSearchQuery } from '@/entities/catalog/api';
+import type { SkillsSearchQuery } from '@/entities/catalog';
 
 type SearchParams = {
   [key: string]: string | string[] | undefined;

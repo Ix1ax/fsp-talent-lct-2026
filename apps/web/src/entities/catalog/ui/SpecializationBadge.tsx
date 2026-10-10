@@ -1,7 +1,7 @@
 import { SPECIALIZATIONS } from '@/shared/contants';
 import { Badge } from '@/shared/ui';
 
-import type { CatalogItem } from '../model/types';
+import type { CatalogItem } from '../model';
 
 interface SpecializationBadgeProps {
   specialization?: CatalogItem;

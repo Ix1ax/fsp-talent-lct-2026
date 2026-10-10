@@ -2,14 +2,14 @@ import { normalizePage } from '@/shared/api';
 import { clientApi } from '@/shared/api/client';
 import type { Page } from '@/shared/api/types';
 
-import type { Company } from '../model';
-import type {
-  CompanyFile,
-  CompanyFilePurpose,
-  CompanyInvitation,
-  CompanyMember,
-  TeamRole,
-} from '../model/management';
+import {
+  type Company,
+  type CompanyFile,
+  type CompanyFilePurpose,
+  type CompanyInvitation,
+  type CompanyMember,
+  type TeamRole,
+} from '../model';
 
 const path = (id: string) => `/v1/companies/${id}`;
 

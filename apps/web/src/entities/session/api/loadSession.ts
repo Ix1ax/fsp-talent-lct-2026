@@ -6,7 +6,7 @@ import { ApiError } from '@/shared/api/errors';
 import { getTokenDisplayName } from '@/shared/auth/server';
 import { getAccessToken, getRefreshToken } from '@/shared/auth/session.server';
 
-import type { SessionUser } from '../model';
+import type { SessionState } from '../model';
 import { getMe } from './getMe';
 
 const getUnavailableSessionMessage = (error: ApiError) => {
@@ -20,24 +20,6 @@ const getUnavailableSessionMessage = (error: ApiError) => {
 
   return 'Сервис кабинета временно недоступен. Попробуйте обновить страницу.';
 };
-
-export type SessionState =
-  | { kind: 'guest' }
-  | { kind: 'user'; user: SessionUser }
-  | {
-      kind: 'invalid';
-      reason: 'unauthorized' | 'forbidden' | 'token_expired';
-      message: string;
-      hasRefreshToken?: boolean;
-    }
-  | {
-      kind: 'unavailable';
-      message: string;
-      code: string;
-      status: number;
-      displayName?: string;
-      retryAfter?: string;
-    };
 
 export const loadSession = cache(async (): Promise<SessionState> => {
   const token = await getAccessToken();

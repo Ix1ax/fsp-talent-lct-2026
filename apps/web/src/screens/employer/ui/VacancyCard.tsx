@@ -3,8 +3,11 @@ import { ArrowRightIcon, MapPinIcon } from 'lucide-react';
 import { Badge, Button } from '@/shared/ui';
 import { formatSalaryRange, pluralizeRu } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
-import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
-import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
+import {
+  type EmployerNeed,
+  NEED_DETAIL_STATUS_LABELS,
+  type NeedStatus,
+} from '@/entities/employer-need';
 
 interface VacancyCardProps {
   need: EmployerNeed;

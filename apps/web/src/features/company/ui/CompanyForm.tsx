@@ -4,7 +4,6 @@ import { useForm, useWatch } from 'react-hook-form';
 
 import { getApiErrorMessage } from '@/shared/api';
 import { useFormUnsavedChanges } from '@/shared/hooks';
-import { toast } from '@/shared/ui';
 import {
   Button,
   Input,
@@ -14,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
   Textarea,
+  toast,
 } from '@/shared/ui';
 import type { Company, CompanyInput } from '@/entities/company';
 

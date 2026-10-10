@@ -21,8 +21,7 @@ import {
 } from '@/entities/admin';
 
 import { catalogFormSchema } from '../constants';
-import { useAdminSession } from '../model';
-import { useAdminMutation } from '../model/useAdminMutation';
+import { useAdminMutation, useAdminSession } from '../model';
 import { ErrorNotice, Field } from './Common';
 
 interface CatalogEditorProps {

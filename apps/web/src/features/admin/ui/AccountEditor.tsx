@@ -16,8 +16,7 @@ import { adminRequest, adminSchemas } from '@/entities/admin';
 
 import { accountFormSchema } from '../constants';
 import { getAdminPasswordIssue } from '../lib';
-import { useAdminSession } from '../model';
-import { useAdminMutation } from '../model/useAdminMutation';
+import { useAdminMutation, useAdminSession } from '../model';
 import { ErrorNotice, Field } from './Common';
 
 interface AccountEditorProps {

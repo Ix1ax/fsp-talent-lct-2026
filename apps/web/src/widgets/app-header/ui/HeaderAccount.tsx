@@ -2,11 +2,11 @@ import Link from 'next/link';
 
 import { APP_HEADER_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
-import type { loadSession } from '@/entities/session/api/server';
+import type { SessionState } from '@/entities/session';
 import { UserMenu } from '@/features/auth';
 
 interface HeaderAccountProps {
-  session: Awaited<ReturnType<typeof loadSession>>;
+  session: SessionState;
 }
 
 export const HeaderAccount = ({ session }: HeaderAccountProps) => {

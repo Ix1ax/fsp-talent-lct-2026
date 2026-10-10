@@ -6,7 +6,7 @@ import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, PageTransition } from '@/shared/ui';
 import { AdminApiError, type Template } from '@/entities/admin';
 
-import { useServerPreview } from '../model/useServerPreview';
+import { useServerPreview } from '../model';
 import { AdminConfirmDialog } from './AdminConfirmDialog';
 import { AdminPanel } from './AdminPanel';
 import { ErrorNotice } from './Common';

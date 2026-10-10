@@ -4,8 +4,11 @@ import { ArrowLeftIcon, FileTextIcon, UsersIcon } from 'lucide-react';
 import { AsyncState, Badge, Button, SectionTabs } from '@/shared/ui';
 import { formatSalaryRange } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
-import type { EmployerNeed, NeedInput } from '@/entities/employer-need';
-import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
+import {
+  type EmployerNeed,
+  NEED_DETAIL_STATUS_LABELS,
+  type NeedInput,
+} from '@/entities/employer-need';
 import {
   NeedActions,
   NeedFlowEditor,

@@ -20,7 +20,7 @@ import {
   type TaskSubmission,
 } from '@/entities/company-task';
 
-import { type SolutionFormValues, solutionSchema } from '../constants/schema';
+import { type SolutionFormValues, solutionSchema } from '../constants';
 import { isTaskOpen, taskErrorMessage } from '../lib';
 
 interface TaskSolutionFormProps {

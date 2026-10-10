@@ -16,8 +16,11 @@ import {
   Input,
   Textarea,
 } from '@/shared/ui';
-import type { Company, CompanyInput } from '@/entities/company';
-import { VERIFICATION_LABELS } from '@/entities/company';
+import {
+  type Company,
+  type CompanyInput,
+  VERIFICATION_LABELS,
+} from '@/entities/company';
 
 import { companySchema } from '../constants';
 

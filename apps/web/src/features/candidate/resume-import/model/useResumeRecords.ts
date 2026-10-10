@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { ensureClientAccessToken } from '@/shared/api';
 
-import { getResumeImportError } from '../lib/importError';
+import { getResumeImportError } from '../lib';
 import { createResumeRecordSaver } from './createResumeRecordSaver';
 import type { ResumeRecordStatus } from './types';
 

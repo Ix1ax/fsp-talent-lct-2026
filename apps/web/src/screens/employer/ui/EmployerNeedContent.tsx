@@ -5,7 +5,7 @@ import type { Catalogs } from '@/entities/catalog';
 import { emptyNeed, NeedActions, NeedEditor } from '@/features/employer-need';
 import { MatchTable } from '@/widgets/need-matches';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 import type { EmployerBoard } from '../model';
 
 interface EmployerNeedContentProps {

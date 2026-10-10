@@ -18,7 +18,8 @@ import {
   filterSearchNeeds,
   loadSearchNeeds,
   type NeedsSearchApi,
-} from '../lib/loadSearchNeeds';
+} from '../lib';
+
 interface EmployerSearchProps {
   api: NeedsSearchApi;
   companyId: string;

@@ -5,7 +5,7 @@ import { Button, RemoteState, Skeleton } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { EmployerNeed } from '@/entities/employer-need';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 import { VacancyCard } from './VacancyCard';
 
 interface CompanyVacancyContentProps {

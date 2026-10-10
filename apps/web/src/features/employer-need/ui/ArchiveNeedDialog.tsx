@@ -1,5 +1,4 @@
 import { getApiErrorMessage } from '@/shared/api';
-import { toast } from '@/shared/ui';
 import {
   Button,
   Dialog,
@@ -8,6 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  toast,
 } from '@/shared/ui';
 interface ArchiveNeedDialogProps {
   open: boolean;

@@ -10,7 +10,7 @@ import {
 } from '@/shared/ui';
 import { AcceptInvitation } from '@/features/company';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 
 interface EmployerCompanyOnboardingProps {
   api: EmployerGateway;

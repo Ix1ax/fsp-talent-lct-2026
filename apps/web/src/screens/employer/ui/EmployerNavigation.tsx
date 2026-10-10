@@ -12,7 +12,7 @@ import {
 import { cn } from '@/shared/lib/utils';
 import { OptionSelect } from '@/shared/ui';
 
-import { EMPLOYER_SECTIONS, type EmployerSection } from '../constants/sections';
+import { EMPLOYER_SECTIONS, type EmployerSection } from '../constants';
 
 // Вкладки настроек компании. Потребности, банк и предложения — в шапке.
 const COMPANY_TABS = EMPLOYER_SECTIONS.filter((item) =>

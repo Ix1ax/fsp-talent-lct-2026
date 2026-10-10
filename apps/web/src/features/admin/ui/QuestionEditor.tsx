@@ -8,9 +8,11 @@ import { adminRequest, adminSchemas, type Question } from '@/entities/admin';
 
 import { questionFormSchema } from '../constants';
 import { questionContent } from '../lib';
-import type { QuestionFormValues } from '../model';
-import { useAdminSession } from '../model';
-import { useAdminMutation } from '../model/useAdminMutation';
+import {
+  type QuestionFormValues,
+  useAdminMutation,
+  useAdminSession,
+} from '../model';
 import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';

@@ -1,7 +1,11 @@
 import { ensureClientAccessToken } from '@/shared/api/client';
 import { getClientCatalogs, searchCatalogSkills } from '@/entities/catalog';
-import { createCompany, getCompanies, updateCompany } from '@/entities/company';
-import { companyManagementApi as management } from '@/entities/company';
+import {
+  companyManagementApi as management,
+  createCompany,
+  getCompanies,
+  updateCompany,
+} from '@/entities/company';
 import {
   getBankCandidate,
   getBankCandidates,

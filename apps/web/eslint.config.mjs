@@ -43,6 +43,21 @@ const EMPTY_CATCH_RESTRICTIONS = [
   },
 ];
 
+const PUBLIC_API_RESTRICTIONS = [
+  {
+    selector:
+      'ImportDeclaration[source.value=/^\\.\\.\\/(api|model|lib|constants|ui)\\//]',
+    message:
+      'Между сегментами используйте index.ts. Внутри сегмента допустим прямой импорт.',
+  },
+  {
+    selector:
+      'ImportDeclaration[source.value=/^@\\/(entities|features|widgets|screens)\\/.+\\/(api|model|lib|constants|ui)(\\/|$)/]:not([source.value=/\\/api\\/server$/])',
+    message:
+      'Используйте публичный API слайса или подмодуля; серверный API импортируйте отдельно из api/server.',
+  },
+];
+
 const eslintConfig = [
   {
     ignores: [
@@ -83,6 +98,7 @@ const eslintConfig = [
         },
       ],
       'simple-import-sort/exports': 'error',
+      'import/no-duplicates': ['error', { 'prefer-inline': true }],
       'no-empty': ['error', { allowEmptyCatch: false }],
       'no-nested-ternary': 'error',
       'no-restricted-syntax': ['error', ...EMPTY_CATCH_RESTRICTIONS],
@@ -95,6 +111,29 @@ const eslintConfig = [
         'error',
         ...EMPTY_CATCH_RESTRICTIONS,
         ...COMPONENT_RETURN_RESTRICTIONS,
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...PUBLIC_API_RESTRICTIONS,
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/__tests__/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...COMPONENT_RETURN_RESTRICTIONS,
+        ...PUBLIC_API_RESTRICTIONS,
       ],
     },
   },

@@ -1,5 +1,4 @@
-import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { ApiError, ensureClientAccessToken } from '@/shared/api';
 import { Button } from '@/shared/ui';

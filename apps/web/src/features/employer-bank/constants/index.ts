@@ -1,0 +1,1 @@
+export { offerSchema } from './offerSchema';

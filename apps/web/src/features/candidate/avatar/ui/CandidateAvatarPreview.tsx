@@ -5,7 +5,7 @@ import { LoaderCircleIcon, UserRoundIcon } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage, Button } from '@/shared/ui';
 import { getCandidateAvatar } from '@/entities/candidate';
 
-import { getAvatarError } from '../lib/getAvatarError';
+import { getAvatarError } from '../lib';
 import { AvatarAction } from './AvatarAction';
 
 interface CandidateAvatarPreviewProps {

@@ -4,7 +4,7 @@ import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 import type { EmployerBoard } from '../model';
 import { EmployerNeedContent } from './EmployerNeedContent';
 

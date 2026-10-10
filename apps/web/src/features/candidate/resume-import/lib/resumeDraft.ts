@@ -8,7 +8,7 @@ import type { ContactsFormValues } from '../../contacts';
 import type { EducationFormValues } from '../../education';
 import type { ExperienceFormValues } from '../../experience';
 import type { ProfileFormValues } from '../../profile';
-import type { ResumeCurrentDraft, ResumeFieldChange } from '../model/types';
+import type { ResumeCurrentDraft, ResumeFieldChange } from '../model';
 
 export const getResumeFormPatches = (draft: ResumeDraft) => {
   const profile: Partial<ProfileFormValues> = {};

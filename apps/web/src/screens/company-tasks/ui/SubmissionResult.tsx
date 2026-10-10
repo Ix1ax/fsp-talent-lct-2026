@@ -1,5 +1,7 @@
-import type { TaskSubmission } from '@/entities/company-task';
-import { downloadMyTaskSolution } from '@/entities/company-task';
+import {
+  downloadMyTaskSolution,
+  type TaskSubmission,
+} from '@/entities/company-task';
 
 import { TaskFileDownload } from './TaskFileDownload';
 
