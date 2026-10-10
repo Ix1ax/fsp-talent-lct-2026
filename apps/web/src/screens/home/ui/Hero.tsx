@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUpRight, Pause, Play } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useMediaQuery } from '@/shared/hooks';
+import { buttonVariants } from '@/shared/ui';
 
 import { LANDING_ELEMENTS } from '../constants';
 
@@ -117,7 +118,10 @@ export const Hero = () => {
           <Link
             href={STATIC_ROUTES.CANDIDATE}
             data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
-            className="inline-flex items-center justify-between gap-9 [padding:19px_24px] [border-radius:var(--radius-lg)] [font-size:15px] font-medium [transition:background_0.2s,_transform_0.2s] bg-primary text-primary-foreground [&:hover]:[transform:translateY(-3px)] [@media((max-width:767px))]:[padding:17px_20px]"
+            className={buttonVariants({
+              className:
+                'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
+            })}
           >
             Создать профиль <ArrowUpRight size={20} />
           </Link>

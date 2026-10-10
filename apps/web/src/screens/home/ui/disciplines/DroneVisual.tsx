@@ -104,7 +104,7 @@ export const DroneVisual = () => {
             type="button"
             onClick={() => move(x, y)}
             aria-label={`Беспилотник: ${label.toLowerCase()}`}
-            className="grid size-11 place-items-center rounded-md border border-white/30 hover:bg-white/15"
+            className="grid size-11 place-items-center rounded-lg border border-white/30 hover:bg-white/15"
           >
             <Icon size={16} />
           </button>
@@ -113,7 +113,7 @@ export const DroneVisual = () => {
           type="button"
           onClick={() => setPosition({ x: 20, y: 75 })}
           aria-label="Вернуть беспилотник на старт"
-          className="grid size-11 place-items-center rounded-md border border-white/30 hover:bg-white/15"
+          className="grid size-11 place-items-center rounded-lg border border-white/30 hover:bg-white/15"
         >
           <RotateCcw size={16} />
         </button>

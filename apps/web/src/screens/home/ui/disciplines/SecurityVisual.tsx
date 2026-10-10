@@ -32,7 +32,7 @@ export const SecurityVisual = () => {
           type="button"
           aria-pressed={isEnabled}
           onClick={() => setIsEnabled((value) => !value)}
-          className="mx-auto flex min-h-11 items-center gap-3 rounded-md border border-white/30 px-4 text-xs hover:bg-white/15"
+          className="mx-auto flex min-h-11 items-center gap-3 rounded-lg border border-white/30 px-4 text-xs hover:bg-white/15"
         >
           <span
             className="relative h-5 w-9 rounded-full bg-white/20"

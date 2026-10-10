@@ -56,7 +56,7 @@ export const AlgorithmVisual = () => {
             type="button"
             onClick={step}
             disabled={sorted}
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-white/30 px-4 text-xs hover:bg-white/15 disabled:opacity-50"
+            className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-white/30 px-4 text-xs hover:bg-white/15 disabled:opacity-50"
           >
             Шаг сортировки <ArrowRight size={16} />
           </button>
@@ -64,7 +64,7 @@ export const AlgorithmVisual = () => {
             type="button"
             onClick={() => setValues(initialValues)}
             aria-label="Начать сортировку заново"
-            className="grid size-11 place-items-center rounded-md border border-white/30 hover:bg-white/15"
+            className="grid size-11 place-items-center rounded-lg border border-white/30 hover:bg-white/15"
           >
             <RotateCcw size={16} />
           </button>

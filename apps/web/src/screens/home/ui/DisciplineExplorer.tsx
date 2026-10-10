@@ -33,7 +33,7 @@ export const DisciplineExplorer = () => {
     >
       <div
         data-landing={LANDING_ELEMENTS.DISCIPLINE_STAGE}
-        className="sticky [top:40px] h-[600px] bg-primary text-primary-foreground overflow-hidden flex flex-col justify-between [padding:30px] [&::before]:[content:''] [&::before]:absolute [&::before]:[width:360px] [&::before]:[height:360px] [&::before]:[border:1px_solid_rgb(255_255_255_/_15%)] [&::before]:rounded-full [&::before]:[top:60px] [&::before]:[left:50%] [&::before]:[transform:translateX(-50%)] [&_>_span]:relative [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.14em] [&_>_strong]:[font-size:clamp(130px,_17vw,_240px)] [&_>_strong]:[line-height:0.9] [&_>_strong]:[letter-spacing:-0.08em] [&_>_strong]:font-[450] [&_>_strong]:absolute [&_>_strong]:[left:20px] [&_>_strong]:[bottom:80px] [&_>_strong]:[opacity:0.12] [&_>_p]:relative [&_>_p]:[font-size:13px] [&_>_p]:[line-height:1.6] [&_>_p]:[max-width:240px] [@media((max-width:1000px))]:p-6 [@media((max-width:767px))]:relative [@media((max-width:767px))]:[top:auto] max-md:h-[560px] [@media((max-width:767px))]:[&_>_strong]:[font-size:180px] [@media((max-width:767px))]:[&_>_strong]:[bottom:50px]"
+        className="sticky [top:40px] h-[600px] rounded-xl bg-primary text-primary-foreground overflow-hidden flex flex-col justify-between p-8 [&::before]:[content:''] [&::before]:absolute [&::before]:[width:360px] [&::before]:[height:360px] [&::before]:[border:1px_solid_rgb(255_255_255_/_15%)] [&::before]:rounded-full [&::before]:[top:60px] [&::before]:[left:50%] [&::before]:[transform:translateX(-50%)] [&_>_span]:relative [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.14em] [&_>_strong]:[font-size:clamp(130px,_17vw,_240px)] [&_>_strong]:[line-height:0.9] [&_>_strong]:[letter-spacing:-0.08em] [&_>_strong]:font-[450] [&_>_strong]:absolute [&_>_strong]:[left:20px] [&_>_strong]:[bottom:80px] [&_>_strong]:[opacity:0.12] [&_>_p]:relative [&_>_p]:[font-size:13px] [&_>_p]:[line-height:1.6] [&_>_p]:[max-width:240px] [@media((max-width:1000px))]:p-6 [@media((max-width:767px))]:relative [@media((max-width:767px))]:[top:auto] max-md:h-[560px] [@media((max-width:767px))]:[&_>_strong]:[font-size:180px] [@media((max-width:767px))]:[&_>_strong]:[bottom:50px]"
       >
         <span>ФСП / {selected.code} — 05</span>
         <strong aria-hidden="true">{selected.code}</strong>
@@ -75,7 +75,7 @@ export const DisciplineExplorer = () => {
             <article
               key={item.code}
               data-landing={LANDING_ELEMENTS.DISCIPLINE}
-              className="[border-top:1px_solid_var(--border)] [transition:background_0.25s] [&:last-child]:[border-bottom:1px_solid_var(--border)] [&[data-open='true']]:bg-accent [&_h3_button]:grid [&_h3_button]:[grid-template-columns:28px_1fr_24px] [&_h3_button]:[gap:14px] [&_h3_button]:items-center [&_h3_button]:text-left [&_h3_button]:[padding:26px_16px] [&_h3_button]:w-full [&_h3_button]:cursor-pointer [&_h3_button]:[font-size:clamp(18px,_1.8vw,_25px)] [&_h3_button]:[line-height:1.25] [&_h3_button]:[letter-spacing:-0.03em] [&_h3_button:hover]:text-brand-text [&[data-open='true']_h3]:text-brand-text [@media((max-width:767px))]:[&_h3_button]:[font-size:19px] [@media((max-width:767px))]:[&_h3_button]:[padding-inline:12px]"
+              className="[border-top:1px_solid_var(--border)] [transition:background_0.25s] [&:last-child]:[border-bottom:1px_solid_var(--border)] [&[data-open='true']]:rounded-xl [&[data-open='true']]:bg-accent [&_h3_button]:grid [&_h3_button]:[grid-template-columns:28px_1fr_24px] [&_h3_button]:[gap:14px] [&_h3_button]:items-center [&_h3_button]:text-left [&_h3_button]:[padding:26px_16px] [&_h3_button]:w-full [&_h3_button]:cursor-pointer [&_h3_button]:[font-size:clamp(18px,_1.8vw,_25px)] [&_h3_button]:[line-height:1.25] [&_h3_button]:[letter-spacing:-0.03em] [&_h3_button:hover]:text-brand-text [&[data-open='true']_h3]:text-brand-text [@media((max-width:767px))]:[&_h3_button]:[font-size:19px] [@media((max-width:767px))]:[&_h3_button]:[padding-inline:12px]"
               data-open={open}
             >
               <h3>
@@ -103,7 +103,7 @@ export const DisciplineExplorer = () => {
               >
                 <div
                   data-landing={LANDING_ELEMENTS.SKILL_TAGS}
-                  className="flex flex-wrap [align-content:start] gap-2 pt-2 [&_span]:[padding:8px_12px] [&_span]:[border:1px_solid_var(--input)] [&_span]:[border-radius:6px] [&_span]:[font-size:12px]"
+                  className="flex flex-wrap [align-content:start] gap-2 pt-2 [&_span]:[padding:8px_12px] [&_span]:[border:1px_solid_var(--input)] [&_span]:[border-radius:var(--radius-sm)] [&_span]:[font-size:12px]"
                 >
                   {SKILLS[index].map((skill) => (
                     <span key={skill}>{skill}</span>

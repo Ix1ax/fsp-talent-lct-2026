@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight, Trophy } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
+import { buttonVariants } from '@/shared/ui';
 
 import { LANDING_ELEMENTS } from '../../constants';
 import { ScoutSymbol } from '../ScoutSymbol';
@@ -34,7 +35,7 @@ export const FederationSection = () => (
       >
         <div
           data-landing={LANDING_ELEMENTS.RECORD}
-          className="p-9 [border:1px_solid_var(--border)] bg-background relative [&_>_svg]:text-brand-text [&_>_svg]:mb-5 [&_>_span]:block [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.1em] [&_h3]:[font-size:36px] [&_h3]:[line-height:1.1] [&_h3]:[letter-spacing:-0.05em] [&_h3]:[margin-block:28px_18px] [&_p]:[max-width:380px] [&_p]:[font-size:14px] [&_p]:[line-height:1.7] [&_p]:text-muted-foreground [&_dl]:[margin-block:24px] [&_dl_>_div]:flex [&_dl_>_div]:justify-between [&_dl_>_div]:gap-4 [&_dl_>_div]:[padding-block:14px] [&_dl_>_div]:[border-top:1px_solid_var(--border)] [&_dl_>_div]:[font-size:13px] [&_dt]:text-muted-foreground [&_small]:block [&_small]:[font-size:11px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [@media((max-width:767px))]:p-6"
+          className="rounded-xl p-8 [border:1px_solid_var(--border)] bg-background relative [&_>_svg]:text-brand-text [&_>_svg]:mb-5 [&_>_span]:block [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.1em] [&_h3]:[font-size:36px] [&_h3]:[line-height:1.1] [&_h3]:[letter-spacing:-0.05em] [&_h3]:[margin-block:28px_18px] [&_p]:[max-width:380px] [&_p]:[font-size:14px] [&_p]:[line-height:1.7] [&_p]:text-muted-foreground [&_dl]:[margin-block:24px] [&_dl_>_div]:flex [&_dl_>_div]:justify-between [&_dl_>_div]:gap-4 [&_dl_>_div]:[padding-block:14px] [&_dl_>_div]:[border-top:1px_solid_var(--border)] [&_dl_>_div]:[font-size:13px] [&_dt]:text-muted-foreground [&_small]:block [&_small]:[font-size:11px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [@media((max-width:767px))]:p-6"
         >
           <Trophy size={32} strokeWidth={1} />
           <span>ДОСТИЖЕНИЯ ФСП</span>
@@ -65,7 +66,7 @@ export const FederationSection = () => (
         </div>
         <div
           data-landing={LANDING_ELEMENTS.FEDERATION_SYMBOL}
-          className="bg-[#1b1c21]"
+          className="overflow-hidden rounded-xl bg-[#1b1c21]"
         >
           <ScoutSymbol />
         </div>
@@ -80,7 +81,10 @@ export const FederationSection = () => (
           <Link
             href={STATIC_ROUTES.CANDIDATE_FSP}
             data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
-            className="inline-flex items-center justify-between gap-9 [padding:19px_24px] [border-radius:var(--radius-lg)] [font-size:15px] font-medium [transition:background_0.2s,_transform_0.2s] bg-primary text-primary-foreground [&:hover]:[transform:translateY(-3px)] [@media((max-width:767px))]:[padding:17px_20px]"
+            className={buttonVariants({
+              className:
+                'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
+            })}
           >
             Перейти к достижениям <ArrowUpRight size={20} />
           </Link>
