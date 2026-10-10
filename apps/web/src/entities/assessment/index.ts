@@ -1,6 +1,7 @@
-export type { StartAssessmentInput } from './api';
+export type { AssessmentHistoryParams, StartAssessmentInput } from './api';
 export {
   getAssessmentAttempt,
+  getAssessmentHistory,
   getAvailableAssessments,
   getCurrentAssessment,
   saveAssessmentAnswer,
@@ -10,6 +11,8 @@ export {
 export type {
   AssessmentAnswer,
   AssessmentAttempt,
+  AssessmentHistoryItem,
+  AssessmentHistoryPage,
   AssessmentQuestion,
   AssessmentReason,
   AssessmentResult,
