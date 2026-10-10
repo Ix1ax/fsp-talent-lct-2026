@@ -1,34 +1,4 @@
-import { STATIC_ROUTES } from '@/shared/contants';
-
 import type { DisciplineKind } from './types';
-
-export const milestones = [
-  {
-    date: '19.10.2021',
-    title: 'Точка старта',
-    text: 'Основание Федерации спортивного программирования.',
-  },
-  {
-    date: '12.04.2022',
-    title: 'Официально — спорт',
-    text: 'Спортивное программирование признано видом спорта.',
-  },
-  {
-    date: '16.06.2022',
-    title: 'Новые связи',
-    text: 'Подписание меморандума на ПМЭФ.',
-  },
-  {
-    date: '17.02.2023',
-    title: 'Одна федерация. Вся страна.',
-    text: 'Получение статуса общероссийской спортивной федерации.',
-  },
-  {
-    date: '02.08.2023',
-    title: 'Больше возможностей',
-    text: 'Включение в реестр социально ориентированных НКО.',
-  },
-];
 
 export const disciplines = [
   {
@@ -73,27 +43,6 @@ export const disciplines = [
   code: string;
   kind: DisciplineKind;
 }[];
-
-export const careerSteps = [
-  {
-    number: '01',
-    title: 'Расскажи о себе',
-    description: 'Укажи опыт, навыки и удобные условия работы.',
-    href: STATIC_ROUTES.CANDIDATE_PROFILE,
-  },
-  {
-    number: '02',
-    title: 'Добавь достижения ФСП',
-    description: 'Привяжи ФСП и дополни профиль результатами соревнований.',
-    href: STATIC_ROUTES.CANDIDATE_FSP,
-  },
-  {
-    number: '03',
-    title: 'Получи приглашение',
-    description: 'Рассмотри предложения работодателей и выбери подходящее.',
-    href: STATIC_ROUTES.OFFERS,
-  },
-];
 
 export const faqs = [
   {

@@ -29,7 +29,7 @@
 
 # Серверная сессия
 
-`loadSession` и `getMe` обёрнуты в `React.cache()`; хедер, SessionStatus и
+`loadSession` и `getMe` обёрнуты в `React.cache()`; хедер и
 `requireSessionUser` используют одну и ту же функцию `loadSession`. Кеш React
 живёт в пределах серверного рендеринга HTTP-запроса. Межпользовательский кеш,
 `unstable_cache` и кеш токенов не добавлены. HTTP-запросы к API выполняются через

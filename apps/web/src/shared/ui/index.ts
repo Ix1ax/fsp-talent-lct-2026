@@ -33,7 +33,6 @@ export {
   CommandList,
 } from './Command';
 export { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
-export { ConfirmDiscardDialog } from './ConfirmDiscardDialog';
 export {
   Dialog,
   DialogClose,

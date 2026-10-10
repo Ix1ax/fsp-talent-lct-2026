@@ -212,7 +212,6 @@ const eslintConfig = [
   {
     files: [
       'src/widgets/employer-shell/**/*.{ts,tsx}',
-      'src/widgets/needs-board/**/*.{ts,tsx}',
       'src/widgets/need-matches/**/*.{ts,tsx}',
     ],
     rules: {
