@@ -1,3 +1,4 @@
+import { SEARCH_STATUS_LABELS } from '@/shared/contants';
 import {
   Badge,
   Button,
@@ -6,10 +7,11 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
-import type { CandidateReadiness } from '@/entities/candidate';
+import type { CandidateReadiness, SearchStatus } from '@/entities/candidate';
 
 interface ProfileReadinessCardProps {
   readiness: CandidateReadiness;
+  searchStatus?: SearchStatus;
   busy: boolean;
   refreshing: boolean;
   error: string;
@@ -20,6 +22,7 @@ interface ProfileReadinessCardProps {
 }
 export const ProfileReadinessCard = ({
   readiness,
+  searchStatus,
   busy,
   refreshing,
   error,
@@ -42,7 +45,7 @@ export const ProfileReadinessCard = ({
         max={100}
         value={readiness.percent}
       />
-      {readiness.readyToPublish ? (
+      {readiness.readyToPublish || searchStatus ? (
         <Button
           type="button"
           variant="outline"
@@ -51,9 +54,15 @@ export const ProfileReadinessCard = ({
           onClick={() => onSelectItem('search_status')}
         >
           <span className="min-w-0">
-            <span className="block font-medium">Выберите статус поиска</span>
+            <span className="block font-medium">
+              {searchStatus
+                ? SEARCH_STATUS_LABELS[searchStatus]
+                : 'Выберите статус поиска'}
+            </span>
             <span className="mt-1 block text-sm font-normal text-muted-foreground">
-              Условия публикации выполнены.
+              {searchStatus
+                ? 'Изменить статус поиска'
+                : 'Условия публикации выполнены.'}
             </span>
           </span>
           <ChevronRightIcon aria-hidden="true" />

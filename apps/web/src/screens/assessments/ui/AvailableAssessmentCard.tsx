@@ -10,13 +10,14 @@ import {
   CardTitle,
 } from '@/shared/ui';
 import type { AvailableAssessment } from '@/entities/assessment';
-import type { Catalogs } from '@/entities/catalog';
+import type { Catalogs, Skill } from '@/entities/catalog';
 
 import { getAssessmentReasonText, getAssessmentTitle } from '../lib';
 
 interface AvailableAssessmentCardProps {
   test: AvailableAssessment;
   catalogs?: Catalogs;
+  skills?: Skill[];
   disabled: boolean;
   onSelect: (test: AvailableAssessment) => void;
 }
@@ -24,6 +25,7 @@ interface AvailableAssessmentCardProps {
 export const AvailableAssessmentCard = ({
   test,
   catalogs,
+  skills = [],
   disabled,
   onSelect,
 }: AvailableAssessmentCardProps) => {
@@ -31,7 +33,7 @@ export const AvailableAssessmentCard = ({
     <Card className="min-w-0">
       <CardHeader>
         <CardTitle className="wrap-anywhere">
-          {getAssessmentTitle(test, catalogs)}
+          {getAssessmentTitle(test, catalogs, skills)}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">

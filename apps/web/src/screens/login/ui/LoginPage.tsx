@@ -13,7 +13,7 @@ import { LoginButton } from '@/features/auth';
 
 export const LoginPage = () => {
   return (
-    <main className="container-page flex flex-1 justify-center py-12 md:py-24">
+    <main className="container-page flex flex-1 items-center justify-center py-12 md:py-24">
       <div className="flex w-full max-w-110 flex-col gap-4">
         <Card>
           <CardHeader>
