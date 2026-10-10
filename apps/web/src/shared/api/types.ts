@@ -1,6 +1,7 @@
-/** Ответ API со страницей записей. total отсутствует у некоторых списков. */
-export interface Page<T> {
+/** Нормализованная страница: hasMore учитывает дополнительную запись API. */
+export type Page<T> = {
   items: T[];
   limit: number;
   offset: number;
-}
+  hasMore?: boolean;
+};
