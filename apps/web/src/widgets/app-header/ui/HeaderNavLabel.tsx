@@ -10,11 +10,15 @@ export const HeaderNavLabel = ({ item }: HeaderNavLabelProps) => (
     <item.icon aria-hidden="true" />
     {item.shortLabel ? (
       <>
-        <span className="lg:hidden">{item.shortLabel}</span>
-        <span className="max-lg:hidden">{item.label}</span>
+        <span data-header-label="" className="lg:hidden">
+          {item.shortLabel}
+        </span>
+        <span data-header-label="" className="max-lg:hidden">
+          {item.label}
+        </span>
       </>
     ) : (
-      item.label
+      <span data-header-label="">{item.label}</span>
     )}
   </>
 );

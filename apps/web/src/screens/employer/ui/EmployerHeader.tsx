@@ -61,6 +61,8 @@ export const EmployerHeader = ({
             key={item.id}
             data-preserve-draft
             href={href(target)}
+            aria-label={item.label}
+            title={item.label}
             aria-current={active ? 'page' : undefined}
             aria-disabled={disabled || undefined}
             tabIndex={disabled ? -1 : undefined}
@@ -108,6 +110,8 @@ export const EmployerHeader = ({
           <Link
             data-preserve-draft
             href={GUIDES_NAV_ITEM.href}
+            aria-label={GUIDES_NAV_ITEM.label}
+            title={GUIDES_NAV_ITEM.label}
             className={headerNavItemClassName}
           >
             <HeaderNavLabel item={GUIDES_NAV_ITEM} />

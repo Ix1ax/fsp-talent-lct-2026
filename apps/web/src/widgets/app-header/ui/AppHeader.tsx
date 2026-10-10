@@ -38,6 +38,7 @@ const renderItems = (items: HeaderNavItem[]) =>
     <HeaderNavLink
       key={item.id}
       href={item.href}
+      label={item.label}
       exclude={item.exclude}
       include={item.include}
     >

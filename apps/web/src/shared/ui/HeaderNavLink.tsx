@@ -8,6 +8,7 @@ import { headerNavItemClassName } from './HeaderBar';
 
 interface HeaderNavLinkProps {
   href: string;
+  label?: string;
   children: ReactNode;
   exact?: boolean;
   /** Префиксы, при которых пункт не считается активным (вложенный раздел с собственным пунктом). */
@@ -18,6 +19,7 @@ interface HeaderNavLinkProps {
 
 export const HeaderNavLink = ({
   href,
+  label,
   children,
   exact,
   exclude = [],
@@ -34,6 +36,8 @@ export const HeaderNavLink = ({
   return (
     <Link
       href={href}
+      aria-label={label}
+      title={label}
       aria-current={active ? 'page' : undefined}
       className={headerNavItemClassName}
     >
