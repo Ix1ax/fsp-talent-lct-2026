@@ -1,4 +1,4 @@
-import type { Page } from '@/shared/api';
+import { normalizePage, type Page } from '@/shared/api';
 import { clientApi } from '@/shared/api/client';
 
 import type {
@@ -17,11 +17,11 @@ export const getNeeds = async (
   signal?: AbortSignal,
 ) => {
   const { data } = await clientApi.get<Page<EmployerNeed>>(path(companyId), {
-    params: { status, offset, limit: 20 },
+    params: { status, offset, limit: 21 },
     signal,
   });
 
-  return data;
+  return normalizePage(data);
 };
 
 export const getNeed = async (

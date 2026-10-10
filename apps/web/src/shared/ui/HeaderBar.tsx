@@ -27,6 +27,7 @@ interface HeaderBarProps {
 /**
  * Единая шапка для всех ролей: плавающая полупрозрачная плашка.
  * Порядок всегда один: логотип → контекст → разделы → поиск → действия.
+ * До 2xl верхняя навигация показывает иконки с доступными названиями ссылок.
  * Ниже lg разделы переносятся второй строкой внутри плашки равными колонками,
  * без горизонтальной прокрутки.
  */
@@ -54,7 +55,7 @@ export const HeaderBar = ({
         {nav && (
           <nav
             aria-label={navLabel}
-            className="hidden min-w-0 items-center gap-1 lg:flex"
+            className="hidden shrink-0 items-center gap-1 lg:flex max-2xl:[&_[data-header-label]]:hidden"
           >
             {nav}
           </nav>
@@ -75,6 +76,7 @@ export const HeaderBar = ({
               // На телефоне пункты — равные колонки: иконка над короткой подписью.
               'max-sm:[&>*]:min-h-12 max-sm:[&>*]:flex-col max-sm:[&>*]:justify-center max-sm:[&>*]:gap-1 max-sm:[&>*]:px-1 max-sm:[&>*]:text-center max-sm:[&>*]:text-[0.6875rem] max-sm:[&>*]:leading-tight',
               'sm:[&>*]:justify-center',
+              'max-[480px]:[&_[data-header-label]]:hidden',
             )}
           >
             {mobileNav}

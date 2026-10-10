@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
+import { UserRoundIcon } from 'lucide-react';
 
 import { useUnsavedGuard } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
   AsyncState,
   Badge,
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -28,6 +30,7 @@ interface TaskSubmissionDialogProps {
   taskId: string;
   submissionId: string;
   onClose: () => void;
+  onOpenCandidate: (candidateId: string) => void;
   onReviewed: (submission: TaskSubmission) => void;
   onUnavailable: () => void;
   onDirtyChange: (dirty: boolean) => void;
@@ -39,6 +42,7 @@ export const TaskSubmissionDialog = ({
   taskId,
   submissionId,
   onClose,
+  onOpenCandidate,
   onReviewed,
   onUnavailable,
   onDirtyChange,
@@ -133,9 +137,18 @@ export const TaskSubmissionDialog = ({
                   ? 'Проверено'
                   : 'Ожидает проверки'}
               </Badge>
-              <p className="break-all text-sm text-muted-foreground">
-                ID профиля: {submission.candidateId}
-              </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm font-medium">
+                  Кандидат · {submission.candidateId.slice(0, 8)}
+                </p>
+                <Button
+                  variant="outline"
+                  disabled={busy}
+                  onClick={() => onOpenCandidate(submission.candidateId)}
+                >
+                  <UserRoundIcon /> Открыть профиль
+                </Button>
+              </div>
               <p className="text-sm text-muted-foreground">
                 Отправлено: {formatDate(submission.submittedAt)}
               </p>

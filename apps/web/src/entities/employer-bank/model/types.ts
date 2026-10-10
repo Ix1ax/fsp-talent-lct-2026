@@ -4,6 +4,13 @@ export type CandidateCategory = {
   stackSkillId: string | null;
   stackName: string | null;
 };
+export type CandidateInteraction = {
+  hasOffer: boolean;
+  viewed: boolean;
+  lastViewedAt: string | null;
+  lastOfferedAt: string | null;
+  nextAvailableAt: string | null;
+};
 export type BankCandidate = {
   id: string;
   city: string | null;

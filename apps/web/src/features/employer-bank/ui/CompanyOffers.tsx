@@ -150,6 +150,7 @@ export const CompanyOffers = ({
               <PageControls
                 offset={offset}
                 count={remote.data.items.length}
+                hasMore={remote.data.hasMore}
                 pending={mutation.pending}
                 onPage={setOffset}
               />

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
@@ -31,6 +31,7 @@ interface CandidateDetailsProps {
   busy: boolean;
   onClose: () => void;
   onOffer: () => void;
+  onViewed?: () => void;
 }
 
 const EDUCATION: Record<string, string> = {
@@ -52,6 +53,7 @@ export const CandidateDetails = ({
   busy,
   onClose,
   onOffer,
+  onViewed,
 }: CandidateDetailsProps) => {
   const load = useCallback(
     (signal: AbortSignal) =>
@@ -61,6 +63,21 @@ export const CandidateDetails = ({
   const remote = useRemoteData(load);
 
   const candidate = remote.data;
+  const onViewedRef = useRef(onViewed);
+  useEffect(() => {
+    onViewedRef.current = onViewed;
+  }, [onViewed]);
+  const recordView = useCallback(
+    async (signal: AbortSignal) => {
+      signal.throwIfAborted();
+      // Уже открытый профиль должен учитываться, даже если диалог сразу закрыли.
+      const interaction = await api.viewBankCandidate(company.id, candidateId);
+      onViewedRef.current?.();
+      return interaction;
+    },
+    [api, company.id, candidateId],
+  );
+  const view = useRemoteData(recordView, 0, !!candidate);
 
   return (
     <Dialog
@@ -82,6 +99,28 @@ export const CandidateDetails = ({
         <RemoteState {...remote} />
         {candidate && (
           <div className="grid min-w-0 gap-5">
+            {view.loading && (
+              <p role="status" className="sr-only">
+                Сохраняем просмотр кандидата…
+              </p>
+            )}
+            {view.error && (
+              <div
+                role="alert"
+                className="grid gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4"
+              >
+                <p className="text-sm text-destructive">
+                  Не удалось сохранить просмотр. {view.error}
+                </p>
+                <Button
+                  variant="outline"
+                  className="justify-self-start"
+                  onClick={view.retry}
+                >
+                  Повторить
+                </Button>
+              </div>
+            )}
             <Card>
               <CardHeader>
                 <CardTitle>Профиль и условия поиска</CardTitle>

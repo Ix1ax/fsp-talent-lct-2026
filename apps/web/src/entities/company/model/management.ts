@@ -1,5 +1,15 @@
 import type { MemberRole } from './types';
 
+export type CompanyVerification = {
+  companyId: string;
+  status: 'unverified' | 'pending' | 'verified' | 'rejected';
+  version: number;
+  requestedAt: string | null;
+  reviewedAt: string | null;
+  reason: string | null;
+  documentIds: string[];
+};
+
 export type TeamRole = Exclude<MemberRole, 'owner'>;
 export type CompanyMember = {
   companyId: string;

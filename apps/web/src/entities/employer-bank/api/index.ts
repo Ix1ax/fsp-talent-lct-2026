@@ -2,6 +2,7 @@ export {
   getBankCandidate,
   getBankCandidates,
   getNeedCandidates,
+  viewBankCandidate,
 } from './candidates';
 export { bankFilterParams, validateBankFilters } from './filters';
 export {

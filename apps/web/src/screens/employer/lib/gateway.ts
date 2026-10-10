@@ -10,6 +10,7 @@ import {
   getNeedCandidates,
   getOfferContacts,
   sendCandidateOffer,
+  viewBankCandidate,
 } from '@/entities/employer-bank';
 import {
   archiveNeed,
@@ -26,6 +27,7 @@ export const employerGateway = {
   getCompanyOffers,
   getCompanyOffer,
   sendCandidateOffer,
+  viewBankCandidate,
   getOfferContacts,
   getNeedCandidates,
   authorize: ensureClientAccessToken,

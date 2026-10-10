@@ -240,6 +240,7 @@ export const CompanyTeam = ({
               <PageControls
                 offset={memberOffset}
                 count={members.data.items.length}
+                hasMore={members.data.hasMore}
                 pending={mutation.pending}
                 onPage={setMemberOffset}
               />
@@ -370,6 +371,7 @@ export const CompanyTeam = ({
                 <PageControls
                   offset={invitationOffset}
                   count={invitations.data.items.length}
+                  hasMore={invitations.data.hasMore}
                   pending={mutation.pending}
                   onPage={setInvitationOffset}
                 />

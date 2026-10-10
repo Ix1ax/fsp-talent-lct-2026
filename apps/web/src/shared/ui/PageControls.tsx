@@ -1,3 +1,7 @@
+'use client';
+
+import { useEffect } from 'react';
+
 import { Button } from './Button';
 
 interface PageControlsProps {
@@ -5,6 +9,7 @@ interface PageControlsProps {
   count: number;
   limit?: number;
   total?: number;
+  hasMore?: boolean;
   pending?: boolean;
   onPage: (offset: number) => void;
 }
@@ -14,11 +19,22 @@ export const PageControls = ({
   count,
   limit = 20,
   total,
+  hasMore: explicitHasMore,
   pending,
   onPage,
 }: PageControlsProps) => {
   const hasMore =
-    total === undefined ? count === limit : offset + limit < total;
+    explicitHasMore ??
+    (total === undefined ? count === limit : offset + limit < total);
+  // Удаление/просмотр последней записи может сделать текущую страницу пустой.
+  useEffect(() => {
+    if (pending || count || !offset) return;
+    const lastOffset =
+      total === undefined
+        ? Math.max(0, offset - limit)
+        : Math.max(0, Math.ceil(total / limit) - 1) * limit;
+    if (lastOffset < offset) onPage(lastOffset);
+  }, [count, offset, limit, total, pending, onPage]);
   if (!offset && !hasMore) return null;
 
   return (

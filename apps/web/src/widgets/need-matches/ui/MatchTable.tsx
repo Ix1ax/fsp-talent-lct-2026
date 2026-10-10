@@ -1,6 +1,6 @@
 'use client';
 
-import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import { AsyncState, PageControls, Skeleton } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 import { getRecommendations } from '@/entities/employer-need';
 
@@ -90,26 +90,15 @@ export const MatchTable = ({
           />
         </div>
       )}
-      {data && data.total > data.limit && (
-        <div className="flex items-center justify-between gap-2 border-t border-border p-4">
-          <Button
-            variant="outline"
-            disabled={!offset}
-            onClick={() => setOffset((v) => Math.max(0, v - data.limit))}
-          >
-            Назад
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            {offset + 1}–{Math.min(offset + data.items.length, data.total)} из{' '}
-            {data.total}
-          </span>
-          <Button
-            variant="outline"
-            disabled={offset + data.limit >= data.total}
-            onClick={() => setOffset((v) => v + data.limit)}
-          >
-            Далее
-          </Button>
+      {data && (
+        <div className="p-4">
+          <PageControls
+            offset={offset}
+            count={data.items.length}
+            limit={data.limit}
+            total={data.total}
+            onPage={setOffset}
+          />
         </div>
       )}
       {data && (

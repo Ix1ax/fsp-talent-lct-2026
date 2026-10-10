@@ -1,7 +1,8 @@
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
-interface SearchPage {
+type SearchPage = {
   items: EmployerNeed[];
-}
+  hasMore?: boolean;
+};
 export interface NeedsSearchApi {
   needs: (
     companyId: string,
@@ -23,7 +24,7 @@ export const loadSearchNeeds = async (
         signal.throwIfAborted();
         const page = await api.needs(companyId, status, offset, signal);
         items.push(...page.items);
-        if (page.items.length < 20) return items;
+        if (page.hasMore === false || page.items.length < 20) return items;
       }
       throw new Error(
         'Компания слишком велика для локального поиска. Нужен серверный поиск.',

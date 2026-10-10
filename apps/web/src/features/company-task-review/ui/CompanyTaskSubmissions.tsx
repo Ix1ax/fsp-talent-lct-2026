@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ArrowLeftIcon } from 'lucide-react';
+import { FileTextIcon, UserRoundIcon } from 'lucide-react';
 
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import { cn } from '@/shared/lib/utils';
@@ -28,7 +28,7 @@ import { TaskSubmissionDialog } from './TaskSubmissionDialog';
 interface CompanyTaskSubmissionsProps {
   company: Company;
   task: CompanyTask;
-  onBack: () => void;
+  onOpenCandidate: (candidateId: string) => void;
   onDirtyChange: (dirty: boolean) => void;
   onBusyChange: (busy: boolean) => void;
 }
@@ -36,7 +36,7 @@ interface CompanyTaskSubmissionsProps {
 export const CompanyTaskSubmissions = ({
   company,
   task,
-  onBack,
+  onOpenCandidate,
   onDirtyChange,
   onBusyChange,
 }: CompanyTaskSubmissionsProps) => {
@@ -70,11 +70,8 @@ export const CompanyTaskSubmissions = ({
 
   return (
     <div className="grid min-w-0 gap-5">
-      <Button variant="ghost" onClick={onBack} className="justify-self-start">
-        <ArrowLeftIcon /> Все задания компании
-      </Button>
       <div className="grid gap-2">
-        <h2 className="break-words text-xl font-semibold">{task.title}</h2>
+        <h3 className="text-xl font-semibold">Решения кандидатов</h3>
         <p className="text-sm text-muted-foreground">
           Здесь доступны решения активных кандидатов с действующими согласиями
           на обработку данных и публикацию профиля.
@@ -187,14 +184,22 @@ export const CompanyTaskSubmissions = ({
                       </span>
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    disabled={query.loading}
-                    onClick={() => setSubmissionId(submission.id)}
-                    className="self-start sm:self-auto"
-                  >
-                    Посмотреть решение
-                  </Button>
+                  <div className="flex flex-wrap gap-2 self-start sm:shrink-0 sm:self-auto">
+                    <Button
+                      variant="outline"
+                      disabled={query.loading}
+                      onClick={() => onOpenCandidate(submission.candidateId)}
+                    >
+                      <UserRoundIcon /> Открыть профиль
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={query.loading}
+                      onClick={() => setSubmissionId(submission.id)}
+                    >
+                      <FileTextIcon /> Посмотреть решение
+                    </Button>
+                  </div>
                 </article>
               </StaggerItem>
             ))}
@@ -215,6 +220,7 @@ export const CompanyTaskSubmissions = ({
           taskId={task.id}
           submissionId={submissionId}
           onClose={() => setSubmissionId('')}
+          onOpenCandidate={onOpenCandidate}
           onReviewed={reviewed}
           onUnavailable={query.retry}
           onDirtyChange={onDirtyChange}

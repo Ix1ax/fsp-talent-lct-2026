@@ -279,6 +279,7 @@ export const CandidateBank = ({
           api={api}
           busy={busy}
           onClose={() => setCandidateId('')}
+          onViewed={remote.retry}
           onOffer={() => setOffer(true)}
         />
       )}
@@ -293,6 +294,7 @@ export const CandidateBank = ({
           onSent={() => {
             setOffer(false);
             setCandidateId('');
+            remote.retry();
           }}
         />
       )}
