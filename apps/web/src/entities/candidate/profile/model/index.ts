@@ -8,4 +8,5 @@ export type {
   CandidateReadiness,
   CandidateReadinessItem,
 } from './fullProfile';
+export type { CandidateOnboarding, CandidateSurvey } from './onboarding';
 export type { CandidateProfile, SearchStatus } from './types';

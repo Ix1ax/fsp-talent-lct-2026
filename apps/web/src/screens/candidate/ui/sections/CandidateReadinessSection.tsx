@@ -1,3 +1,5 @@
+import { CandidatePDFButton } from '@/features/candidate/resume-export';
+
 import type { CandidateWorkspace } from '../../model';
 import { ProfileReadinessCard } from '../steps';
 
@@ -21,15 +23,22 @@ export const CandidateReadinessSection = ({
   if (!fullProfile) return null;
 
   return (
-    <ProfileReadinessCard
-      readiness={fullProfile.readiness}
-      busy={busy}
-      refreshing={dataRefreshing}
-      error={refreshError}
-      onRefresh={() => void refreshFullProfile().catch(() => {})}
-      onGoToProfile={() => changeStep('profile')}
-      onGoToConsents={() => changeStep('consents')}
-      onSelectItem={navigateFromReadiness}
-    />
+    <div className="grid gap-5">
+      <ProfileReadinessCard
+        readiness={fullProfile.readiness}
+        busy={busy}
+        refreshing={dataRefreshing}
+        error={refreshError}
+        onRefresh={() => void refreshFullProfile().catch(() => {})}
+        onGoToProfile={() => changeStep('profile')}
+        onGoToConsents={() => changeStep('consents')}
+        onSelectItem={navigateFromReadiness}
+      />
+      <CandidatePDFButton
+        profileExists={!!workspace.profile}
+        processing={workspace.permissions.processing}
+        disabled={busy || dataRefreshing}
+      />
+    </div>
   );
 };

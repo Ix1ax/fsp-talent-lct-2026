@@ -87,3 +87,4 @@ export const submitAssessment = async (id: string) => {
 
   return data;
 };
+export { type AssessmentHistoryParams, getAssessmentHistory } from './history';

@@ -1,3 +1,4 @@
+export type { AssessmentHistoryItem, AssessmentHistoryPage } from './history';
 export type {
   AssessmentAnswer,
   AssessmentAttempt,
