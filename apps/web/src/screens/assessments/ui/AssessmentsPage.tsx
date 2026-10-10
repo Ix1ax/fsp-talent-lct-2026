@@ -7,7 +7,6 @@ import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import {
   AsyncState,
   Button,
-  FadeIn,
   PageHeader,
   Skeleton,
   Stagger,
@@ -72,8 +71,11 @@ export const AssessmentsPage = ({
             История попыток
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="available">
-          <FadeIn className="grid gap-6">
+        <TabsContent
+          value="available"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none"
+        >
+          <div className="grid gap-6">
             <p className="text-sm text-muted-foreground">
               Перед тестированием можно{' '}
               <Link
@@ -148,12 +150,13 @@ export const AssessmentsPage = ({
                 ))}
               </Stagger>
             )}
-          </FadeIn>
+          </div>
         </TabsContent>
-        <TabsContent value="history">
-          <FadeIn>
-            <AssessmentHistory catalogs={catalogs} />
-          </FadeIn>
+        <TabsContent
+          value="history"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none"
+        >
+          <AssessmentHistory catalogs={catalogs} />
         </TabsContent>
       </Tabs>
       <StartAssessmentDialog
