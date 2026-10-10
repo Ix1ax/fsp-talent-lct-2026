@@ -33,6 +33,9 @@ const jetbrains = localFont({
 
 export const metadata: Metadata = {
   title: 'ФСП Скаут',
+  icons: {
+    icon: { url: '/brand/favicon.svg', type: 'image/svg+xml' },
+  },
   other: {
     'color-scheme': 'dark light',
   },
