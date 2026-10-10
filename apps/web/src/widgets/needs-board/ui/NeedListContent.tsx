@@ -1,4 +1,4 @@
-import { AsyncState, Skeleton } from '@/shared/ui';
+import { RemoteState, Skeleton } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 import type { NeedStatus } from '@/entities/employer-need';
 
@@ -20,52 +20,34 @@ export const NeedListContent = ({
   onSelect,
   canWrite,
 }: NeedListContentProps) => {
-  if (list.loading) {
-    return (
-      <div
-        className="grid gap-4 p-4"
-        role="status"
-        aria-label="Загрузка потребностей"
-      >
-        {[1, 2, 3].map((v) => (
-          <Skeleton key={v} className="h-24 rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (list.listError) {
-    return (
-      <div className="p-2">
-        <AsyncState
-          error
-          title="Не удалось загрузить потребности"
-          description={list.listError}
-          onRetry={list.reload}
-        />
-      </div>
-    );
-  }
-
-  if (list.items.length) {
-    return list.items.map((need) => (
-      <NeedListItem
-        key={need.id}
-        need={need}
-        catalogs={catalogs}
-        selected={need.id === list.selectedId && !composer}
-        onSelect={() => onSelect(need.id)}
-      />
-    ));
-  }
-
   return (
-    <div className="p-2">
-      <AsyncState
-        title={getEmptyNeedListTitle(list.status)}
-        description={getEmptyNeedListDescription(list.status, canWrite)}
-      />
-    </div>
+    <RemoteState
+      loading={list.loading}
+      error={list.listError}
+      retry={list.reload}
+      loadingLabel="Загрузка потребностей"
+      errorTitle="Не удалось загрузить потребности"
+      loadingContent={
+        <div className="grid gap-4 p-4">
+          {[1, 2, 3].map((v) => (
+            <Skeleton key={v} className="h-24 rounded-lg" />
+          ))}
+        </div>
+      }
+      empty={!list.items.length}
+      emptyTitle={getEmptyNeedListTitle(list.status)}
+      emptyDescription={getEmptyNeedListDescription(list.status, canWrite)}
+    >
+      {list.items.map((need) => (
+        <NeedListItem
+          key={need.id}
+          need={need}
+          catalogs={catalogs}
+          selected={need.id === list.selectedId && !composer}
+          onSelect={() => onSelect(need.id)}
+        />
+      ))}
+    </RemoteState>
   );
 };
 

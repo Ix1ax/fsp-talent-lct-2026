@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
 import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -110,10 +109,19 @@ export const IncomingOffers = () => {
                 onClick={remote.retry}
               />
             </div>
-            <RemoteState {...remote} />
+            <RemoteState
+              {...remote}
+              empty={remote.data?.items.length === 0}
+              emptyTitle={
+                status
+                  ? 'Нет предложений с этим статусом'
+                  : 'Предложений пока нет'
+              }
+              emptyDescription="Здесь появятся предложения работодателей. Для их получения нужен профиль кандидата."
+            />
             {remote.data && (
               <>
-                {remote.data.items.length ? (
+                {
                   <Stagger
                     key={`${status ?? 'all'}:${offset}`}
                     interval={0.01}
@@ -131,16 +139,7 @@ export const IncomingOffers = () => {
                       </StaggerItem>
                     ))}
                   </Stagger>
-                ) : (
-                  <AsyncState
-                    title={
-                      status
-                        ? 'Нет предложений с этим статусом'
-                        : 'Предложений пока нет'
-                    }
-                    description="Здесь появятся предложения работодателей. Для их получения нужен профиль кандидата."
-                  />
-                )}
+                }
                 <PageControls
                   offset={offset}
                   count={remote.data.items.length}

@@ -1,4 +1,4 @@
-import { AsyncState } from '@/shared/ui';
+import { RemoteState } from '@/shared/ui';
 import { AssessmentRunner } from '@/features/assessment-runner';
 
 import type { useAssessmentAttempt } from '../model';
@@ -10,21 +10,18 @@ interface AssessmentAttemptContentProps {
 export const AssessmentAttemptContent = ({
   state,
 }: AssessmentAttemptContentProps) => {
-  const { attempt, error, loading } = state;
-
+  const { attempt, error, loading, retry } = state;
   return (
-    <>
-      {error && (
-        <AsyncState error title="Попытка недоступна" description={error} />
-      )}
-      {loading && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Загружаем попытку…
-        </p>
-      )}
+    <RemoteState
+      loading={loading}
+      error={error}
+      retry={retry}
+      loadingLabel="Загружаем попытку…"
+      errorTitle="Попытка недоступна"
+    >
       {attempt && (
         <AssessmentRunner key={attempt.id} initialAttempt={attempt} />
       )}
-    </>
+    </RemoteState>
   );
 };

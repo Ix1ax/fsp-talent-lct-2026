@@ -144,7 +144,7 @@ export const CompanyTaskSubmissions = ({
             query.loading && 'opacity-60',
           )}
         >
-          {!query.data.items.length && (
+          {!query.loading && !query.error && !query.data.items.length && (
             <AsyncState
               title="Решений пока нет"
               description="Попробуйте другой статус. Здесь появятся доступные ответы кандидатов на это задание."

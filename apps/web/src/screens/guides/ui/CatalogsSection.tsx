@@ -1,4 +1,8 @@
-import { Stagger, StaggerItem } from '@/shared/ui';
+'use client';
+
+import { useRouter } from 'next/navigation';
+
+import { RemoteState, Stagger, StaggerItem } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 
 import { CatalogCard } from './CatalogCard';
@@ -8,6 +12,7 @@ interface CatalogsSectionProps {
 }
 
 export const CatalogsSection = ({ catalogs }: CatalogsSectionProps) => {
+  const router = useRouter();
   return (
     <section aria-labelledby="catalogs-title" className="flex flex-col gap-4">
       <h2 id="catalogs-title" className="text-xl font-semibold">
@@ -36,13 +41,12 @@ export const CatalogsSection = ({ catalogs }: CatalogsSectionProps) => {
           </StaggerItem>
         </Stagger>
       ) : (
-        <p
-          role="alert"
-          className="rounded-lg border border-border bg-card p-4 text-muted-foreground"
-        >
-          Не удалось загрузить справочники. Обновите страницу и попробуйте ещё
-          раз.
-        </p>
+        <RemoteState
+          loading={false}
+          error="Не удалось загрузить справочники. Попробуйте ещё раз."
+          errorTitle="Справочники недоступны"
+          retry={() => router.refresh()}
+        />
       )}
     </section>
   );

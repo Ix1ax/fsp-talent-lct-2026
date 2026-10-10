@@ -9,7 +9,6 @@ import { EMPLOYER_DRAFT_SCOPE, STATIC_ROUTES } from '@/shared/contants';
 import { useAsyncMutation, useFormUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -220,12 +219,13 @@ export const CompanyTeam = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <RemoteState {...members} />
+          <RemoteState
+            {...members}
+            empty={members.data?.items.length === 0}
+            emptyTitle="Участников нет"
+          />
           {members.data && (
             <>
-              {!members.data.items.length && (
-                <AsyncState title="Участников нет" />
-              )}
               {members.data.items.map((member) => (
                 <MemberItem
                   key={member.userId}
@@ -336,12 +336,13 @@ export const CompanyTeam = ({
                 </Button>
               </div>
             )}
-            <RemoteState {...invitations} />
+            <RemoteState
+              {...invitations}
+              empty={invitations.data?.items.length === 0}
+              emptyTitle="Приглашений пока нет"
+            />
             {invitations.data && (
               <>
-                {!invitations.data.items.length && (
-                  <AsyncState title="Приглашений пока нет" />
-                )}
                 {invitations.data.items.map((invitation) => (
                   <article
                     key={invitation.id}

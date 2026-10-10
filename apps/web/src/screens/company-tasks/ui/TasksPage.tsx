@@ -57,7 +57,7 @@ export const TasksPage = () => {
           aria-busy={query.pending}
           className={`flex flex-col gap-6 transition-opacity motion-reduce:transition-none ${query.pending ? 'opacity-60' : 'opacity-100'}`}
         >
-          {!query.data.items.length && (
+          {!query.pending && !query.error && !query.data.items.length && (
             <AsyncState
               title="Заданий пока нет"
               description="Попробуйте изменить поиск или вернитесь позже: здесь появятся задания работодателей."

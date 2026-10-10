@@ -173,7 +173,7 @@ export const CompanyTaskSolutions = ({
             query.loading && 'opacity-60',
           )}
         >
-          {!query.data.items.length && (
+          {!query.loading && !query.error && !query.data.items.length && (
             <AsyncState
               title="Заданий пока нет"
               description="Здесь появятся опубликованные задания этой компании. Попробуйте изменить поиск или статус."

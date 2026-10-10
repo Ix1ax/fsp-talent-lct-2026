@@ -5,7 +5,6 @@ import { ArrowRightIcon, HistoryIcon } from 'lucide-react';
 import { DYNAMIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
 import {
-  AsyncState,
   Badge,
   Button,
   FadeIn,
@@ -59,15 +58,12 @@ export const AssessmentHistory = ({ catalogs }: AssessmentHistoryProps) => {
         loading={query.loading}
         error={query.error}
         retry={query.retry}
+        empty={query.data?.items.length === 0}
+        emptyTitle="Попыток пока нет"
+        emptyDescription="После первого теста здесь появятся результат и присвоенная категория."
       />
       {query.data && (
         <>
-          {query.data.items.length === 0 && (
-            <AsyncState
-              title="Попыток пока нет"
-              description="После первого теста здесь появятся результат и присвоенная категория."
-            />
-          )}
           <Stagger className="grid gap-3" key={offset}>
             {query.data.items.map((item) => {
               const specialization =

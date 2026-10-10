@@ -1,6 +1,6 @@
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import { Button, RemoteState, Skeleton } from '@/shared/ui';
 import type { Skill } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import { AcceptInvitation, CompanyProfileForm } from '@/features/company';
@@ -47,23 +47,21 @@ export const EmployerWorkspaceContent = ({
     startCompany,
   } = workspace;
 
-  if (board.error) {
+  if (board.error || !board.resources) {
     return (
-      <AsyncState
-        error
-        title="Не удалось открыть кабинет"
-        description={board.error}
-        onRetry={board.retry}
+      <RemoteState
+        loading={!board.error && !board.resources}
+        error={board.error}
+        retry={board.retry}
+        errorTitle="Не удалось открыть кабинет"
+        loadingLabel="Загрузка кабинета"
+        loadingContent={
+          <div className="grid gap-4">
+            <Skeleton className="h-12 w-64" />
+            <Skeleton className="h-64" />
+          </div>
+        }
       />
-    );
-  }
-
-  if (!board.resources) {
-    return (
-      <div role="status" aria-label="Загрузка кабинета" className="grid gap-4">
-        <Skeleton className="h-12 w-64" />
-        <Skeleton className="h-64" />
-      </div>
     );
   }
 

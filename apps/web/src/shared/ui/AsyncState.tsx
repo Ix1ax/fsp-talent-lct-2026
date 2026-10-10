@@ -7,6 +7,7 @@ interface AsyncStateProps {
   description?: string;
   onRetry?: () => void;
   error?: boolean;
+  retryDisabled?: boolean;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export const AsyncState = ({
   description,
   onRetry,
   error,
+  retryDisabled,
   className,
 }: AsyncStateProps) => {
   return (
@@ -38,7 +40,12 @@ export const AsyncState = ({
         </p>
       )}
       {onRetry && (
-        <Button variant="outline" onClick={onRetry}>
+        <Button
+          type="button"
+          variant="outline"
+          disabled={retryDisabled}
+          onClick={onRetry}
+        >
           Повторить
         </Button>
       )}

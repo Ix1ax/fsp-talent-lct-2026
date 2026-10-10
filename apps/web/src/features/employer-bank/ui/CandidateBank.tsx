@@ -5,13 +5,7 @@ import { SlidersHorizontalIcon } from 'lucide-react';
 
 import { useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import {
-  AsyncState,
-  Badge,
-  Button,
-  PageControls,
-  RemoteState,
-} from '@/shared/ui';
+import { Badge, Button, PageControls, RemoteState } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 import {
@@ -230,6 +224,9 @@ export const CandidateBank = ({
             <RemoteState
               {...remote}
               loading={remote.loading || (!!needId && needs.loading)}
+              empty={remote.data?.items.length === 0}
+              emptyTitle="Кандидаты не найдены"
+              emptyDescription="Измените фильтры или вернитесь позже."
             />
           )}
           {remote.data && (
@@ -254,12 +251,7 @@ export const CandidateBank = ({
                   onOpen={() => setCandidateId(candidate.id)}
                 />
               ))}
-              {!remote.data.items.length && (
-                <AsyncState
-                  title="Кандидаты не найдены"
-                  description="Измените фильтры или вернитесь позже."
-                />
-              )}
+
               <PageControls
                 offset={offset}
                 count={remote.data.items.length}

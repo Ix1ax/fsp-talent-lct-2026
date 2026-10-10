@@ -4,6 +4,7 @@ import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import {
   AsyncState,
   Button,
+  RemoteState,
   Skeleton,
   Stagger,
   StaggerItem,
@@ -45,14 +46,10 @@ export const AvailableAssessments = ({
           </Link>
         </Button>
       )}
-      {error && (
+      {error && errorType === 'start' && (
         <AsyncState
           error
-          title={
-            errorType === 'start'
-              ? 'Не удалось начать тест'
-              : 'Не удалось загрузить тесты'
-          }
+          title="Не удалось начать тест"
           description={error}
           onRetry={refresh}
         />
@@ -65,18 +62,22 @@ export const AvailableAssessments = ({
       >
         Обновить список
       </Button>
-      {loading && (
-        <div role="status" aria-label="Загружаем тесты" className="grid gap-4">
-          <Skeleton className="h-36 w-full" />
-          <Skeleton className="h-36 w-full" />
-        </div>
-      )}
-      {!loading && !error && items.length === 0 && (
-        <AsyncState
-          title="Доступных тестов пока нет"
-          description="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
-        />
-      )}
+      <RemoteState
+        loading={loading}
+        error={errorType === 'load' ? error : ''}
+        retry={refresh}
+        loadingLabel="Загружаем тесты"
+        errorTitle="Не удалось загрузить тесты"
+        empty={!items.length && !error}
+        emptyTitle="Доступных тестов пока нет"
+        emptyDescription="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
+        loadingContent={
+          <div className="grid gap-4">
+            <Skeleton className="h-36 w-full" />
+            <Skeleton className="h-36 w-full" />
+          </div>
+        }
+      />
       {!loading && (
         <Stagger
           interval={Math.min(0.04, 0.2 / Math.max(1, items.length))}

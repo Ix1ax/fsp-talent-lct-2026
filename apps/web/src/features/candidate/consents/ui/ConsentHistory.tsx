@@ -1,7 +1,7 @@
 import { RefreshCwIcon } from 'lucide-react';
 
 import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
-import { Badge, Button, RecordItem } from '@/shared/ui';
+import { Badge, Button, RecordItem, RemoteState } from '@/shared/ui';
 import type { CandidateConsents } from '@/entities/candidate';
 
 import { CONSENT_LABELS } from '../model';
@@ -47,19 +47,19 @@ export const ConsentHistory = ({
         <RefreshCwIcon aria-hidden="true" />
         Обновить историю
       </Button>
-      {loading && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Загрузка истории…
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-destructive">
-          {error}
-        </p>
-      )}
-      {history?.items.length === 0 && (
-        <p className="text-sm text-muted-foreground">Согласий пока нет.</p>
-      )}
+      <RemoteState
+        loading={loading}
+        error={error}
+        retry={() => void onRefresh()}
+        retryDisabled={busy}
+        loadingLabel="Загрузка истории согласий"
+        errorTitle="Не удалось загрузить историю согласий"
+        loadingContent={
+          <p className="text-sm text-muted-foreground">Загрузка истории…</p>
+        }
+        empty={history?.items.length === 0}
+        emptyTitle="Согласий пока нет."
+      />
       {history && history.items.length > 0 && (
         <ul className="flex flex-col gap-3">
           {history.items.map((consent) => (

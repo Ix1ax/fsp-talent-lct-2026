@@ -18,7 +18,6 @@ import {
 import { useAsyncMutation, useUnsavedChanges } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks';
 import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -269,19 +268,18 @@ export const CompanyDocuments = ({
               {mutation.error}
             </p>
           )}
-          <RemoteState {...remote} />
+          <RemoteState
+            {...remote}
+            empty={remote.data?.items.length === 0}
+            emptyTitle="Документов пока нет"
+            emptyDescription={
+              readonly
+                ? 'Владелец компании может загрузить документы и логотип.'
+                : 'Загрузите документы компании или добавьте логотип.'
+            }
+          />
           {remote.data && (
             <>
-              {!remote.data.items.length && (
-                <AsyncState
-                  title="Документов пока нет"
-                  description={
-                    readonly
-                      ? 'Владелец компании может загрузить документы и логотип.'
-                      : 'Загрузите документы компании или добавьте логотип.'
-                  }
-                />
-              )}
               {remote.data.items.map((item) => (
                 <div
                   key={item.id}
