@@ -5,6 +5,7 @@ import { ArrowRightIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, PageHeader, Stagger } from '@/shared/ui';
+import { CandidateOnboardingCard } from '@/features/candidate/onboarding';
 
 import { PROFILE_STEPS } from '../constants';
 import { ProfileStepItem } from './ProfileStepItem';
@@ -26,12 +27,23 @@ export const CandidateProfileOverview = () => {
           </>
         }
       />
+      <CandidateOnboardingCard />
       <nav aria-label="Разделы профиля">
         <Stagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PROFILE_STEPS.map((step, index) => (
             <ProfileStepItem key={index} step={step} number={index + 1} />
           ))}
         </Stagger>
+      </nav>
+      <nav aria-label="Развитие и достижения" className="flex flex-wrap gap-3">
+        <Button asChild variant="outline">
+          <Link href={STATIC_ROUTES.CANDIDATE_SURVEY}>
+            Направление и уровень
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={STATIC_ROUTES.CANDIDATE_FSP}>Достижения ФСП</Link>
+        </Button>
       </nav>
       <div className="flex flex-col items-start gap-3 border-t pt-6 sm:flex-row sm:items-center sm:justify-between">
         <div>

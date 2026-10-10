@@ -22,6 +22,8 @@ export const STATIC_ROUTES = {
   CANDIDATE_READINESS: '/candidate/readiness',
   CANDIDATE_TASKS: '/candidate/tasks',
   CANDIDATE_TASK_SUBMISSIONS: '/candidate/task-submissions',
+  CANDIDATE_SURVEY: '/candidate/survey',
+  CANDIDATE_FSP: '/candidate/fsp',
   CANDIDATE_ASSESSMENTS: '/candidate/assessments',
   EMPLOYER: '/employer',
   EMPLOYER_PROFILE: '/employer/profile',
