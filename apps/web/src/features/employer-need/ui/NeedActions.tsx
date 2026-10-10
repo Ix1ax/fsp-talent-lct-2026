@@ -21,7 +21,7 @@ interface NeedActionsProps {
   pending: boolean;
   dirty: boolean;
   onFind: () => void;
-  /** Черновик: перейти к брифу, чтобы дополнить и активировать. */
+  /** Перейти к брифу: дополнить черновик или изменить условия активной. */
   onEditBrief?: () => void;
   onRestore: () => void;
   onArchive: () => void;
@@ -49,6 +49,17 @@ export const NeedActions = ({
         >
           <UsersIcon />
           Подобрать кандидатов
+        </Button>
+      )}
+      {canWrite && status === 'active' && onEditBrief && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onEditBrief}
+        >
+          <PencilIcon />
+          Изменить условия
         </Button>
       )}
       {canWrite && status === 'draft' && onEditBrief && (

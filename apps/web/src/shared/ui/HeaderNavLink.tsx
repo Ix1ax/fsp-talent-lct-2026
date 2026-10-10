@@ -15,6 +15,8 @@ interface HeaderNavLinkProps {
   exclude?: string[];
   /** Дополнительные префиксы, при которых пункт активен. */
   include?: string[];
+  /** Переход без подтверждения: черновик формы сохраняется (например, справочник). */
+  preserveDraft?: boolean;
 }
 
 export const HeaderNavLink = ({
@@ -24,6 +26,7 @@ export const HeaderNavLink = ({
   exact,
   exclude = [],
   include = [],
+  preserveDraft,
 }: HeaderNavLinkProps) => {
   const pathname = usePathname();
   const matches = exact
@@ -36,6 +39,7 @@ export const HeaderNavLink = ({
   return (
     <Link
       href={href}
+      data-preserve-draft={preserveDraft || undefined}
       aria-label={label}
       title={label}
       aria-current={active ? 'page' : undefined}

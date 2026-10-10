@@ -80,7 +80,7 @@ export const UserMenu = ({
                 <AvatarImage src={avatarUrl} alt="" />
                 <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
-              <span className="max-w-40 truncate max-xl:hidden">
+              <span className="max-w-40 truncate max-2xl:hidden">
                 {displayName}
               </span>
               <ChevronDownIcon className="size-3.5 opacity-60" />

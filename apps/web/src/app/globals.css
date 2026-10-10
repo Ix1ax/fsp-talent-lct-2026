@@ -162,6 +162,19 @@
     @apply m-0 min-h-screen bg-background text-foreground;
   }
 
+  /* Нижняя панель разделов не перекрывает конец страницы, пока она видна. */
+  @media (width < 80rem) {
+    body:has([data-bottom-tabs='xl']) {
+      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  @media (width < 64rem) {
+    body:has([data-bottom-tabs='lg']) {
+      padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    }
+  }
+
   h1,
   h2,
   h3 {

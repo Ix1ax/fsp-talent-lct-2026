@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
-import { cn } from '@/shared/lib/utils';
 import {
   AsyncState,
   Button,
@@ -16,21 +15,21 @@ import {
   FadeIn,
   OptionSelect,
   PageHeader,
+  RefreshButton,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
 import { PageControls, RemoteState } from '@/shared/ui';
-import { formatDate, formatSalaryRange } from '@/shared/utils';
 import {
   getIncomingOffers,
   type IncomingOffer,
   type OfferStatus,
 } from '@/entities/candidate-offers';
 
-import { OFFER_CARD_STYLES, OFFER_STATUS } from '../constants';
+import { OFFER_STATUS } from '../constants';
 import { updateIncomingOffersPage } from '../model';
+import { IncomingOfferCard } from './IncomingOfferCard';
 import { IncomingOfferDialog } from './IncomingOfferDialog';
-import { OfferStatusBadge } from './OfferStatusBadge';
 
 const FADE_IN_DELAY = 0.025;
 
@@ -89,7 +88,7 @@ export const IncomingOffers = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <OptionSelect
                 aria-label="Статус предложений"
                 value={status ?? ''}
@@ -105,13 +104,11 @@ export const IncomingOffers = () => {
                   })),
                 ]}
               />
-              <Button
-                variant="outline"
+              <RefreshButton
+                loading={remote.loading}
                 disabled={remote.loading}
                 onClick={remote.retry}
-              >
-                Обновить
-              </Button>
+              />
             </div>
             <RemoteState {...remote} />
             {remote.data && (
@@ -124,39 +121,13 @@ export const IncomingOffers = () => {
                   >
                     {remote.data.items.map((offer) => (
                       <StaggerItem key={offer.id}>
-                        <article
-                          key={offer.id}
-                          className={cn(
-                            'grid min-w-0 gap-3 rounded-lg border p-4 wrap-anywhere',
-                            OFFER_CARD_STYLES[offer.status],
-                          )}
-                        >
-                          <div className="flex flex-wrap items-start justify-between gap-2">
-                            <h2 className="min-w-0 flex-1 font-medium">
-                              {offer.title}
-                            </h2>
-                            <OfferStatusBadge status={offer.status} />
-                          </div>
-                          <p className="text-sm text-muted-foreground">
-                            {offer.companyName} · {formatDate(offer.createdAt)}
-                          </p>
-                          <p className="text-sm">
-                            {formatSalaryRange(
-                              offer.salaryFromRub,
-                              offer.salaryToRub,
-                            )}
-                          </p>
-                          <Button
-                            variant="outline"
-                            className="justify-self-start"
-                            onClick={(event) => {
-                              opener.current = event.currentTarget;
-                              setId(offer.id);
-                            }}
-                          >
-                            Посмотреть условия
-                          </Button>
-                        </article>
+                        <IncomingOfferCard
+                          offer={offer}
+                          onOpen={(event) => {
+                            opener.current = event.currentTarget;
+                            setId(offer.id);
+                          }}
+                        />
                       </StaggerItem>
                     ))}
                   </Stagger>

@@ -1,5 +1,6 @@
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useFormUnsavedChanges } from '@/shared/hooks';
@@ -14,6 +15,7 @@ import { useAdminOptions } from '../model/useAdminOptions';
 import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
+import { DifficultyPicker } from './QuestionKindPicker';
 
 interface TemplateEditorProps {
   template?: Template;
@@ -52,6 +54,12 @@ export const TemplateEditor = ({
   };
   const rows = useFieldArray({ control: form.control, name: 'blueprint' });
   const blueprint = useWatch({ control: form.control, name: 'blueprint' });
+  const timeLimit = useWatch({ control: form.control, name: 'time_limit_sec' });
+  const passScore = useWatch({ control: form.control, name: 'pass_score' });
+  const questionTotal = blueprint.reduce(
+    (sum, row) => sum + (Number(row.question_count) || 0),
+    0,
+  );
   const submit = form.handleSubmit(async (values) => {
     await mutation.run(async () => {
       const saved = await adminRequest(
@@ -131,12 +139,35 @@ export const TemplateEditor = ({
               );
             })}
             <Field
-              label="Время, секунд (300–14400)"
+              label="Время на тест, минут (5–240)"
               error={form.formState.errors.time_limit_sec?.message}
             >
-              <Input
-                type="number"
-                {...form.register('time_limit_sec', { valueAsNumber: true })}
+              {/* API хранит секунды, администратору удобнее минуты. */}
+              <Controller
+                control={form.control}
+                name="time_limit_sec"
+                render={({ field }) => (
+                  <Input
+                    type="number"
+                    min={5}
+                    max={240}
+                    name={field.name}
+                    ref={field.ref}
+                    onBlur={field.onBlur}
+                    value={
+                      Number.isFinite(field.value)
+                        ? Math.round(field.value / 60)
+                        : ''
+                    }
+                    onChange={(event) =>
+                      field.onChange(
+                        event.target.value === ''
+                          ? Number.NaN
+                          : Math.round(Number(event.target.value) * 60),
+                      )
+                    }
+                  />
+                )}
               />
             </Field>
             <Field
@@ -160,19 +191,44 @@ export const TemplateEditor = ({
           <section className="grid gap-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-medium">Состав теста</h3>
-              <p className="text-sm text-muted-foreground">
-                Вопросов:{' '}
-                {blueprint.reduce(
-                  (sum, row) => sum + (Number(row.question_count) || 0),
-                  0,
-                )}
-              </p>
+              <ul
+                aria-label="Сводка теста"
+                className="flex flex-wrap gap-1.5 text-xs font-medium"
+              >
+                <li className="rounded-full bg-accent px-2.5 py-1 text-brand-text">
+                  {questionTotal} вопр.
+                </li>
+                <li className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+                  {Number.isFinite(timeLimit)
+                    ? Math.round(timeLimit / 60)
+                    : '—'}{' '}
+                  мин
+                </li>
+                <li className="rounded-full bg-muted px-2.5 py-1 text-muted-foreground">
+                  проходной {Number.isFinite(passScore) ? passScore : '—'}%
+                </li>
+              </ul>
             </div>
             {rows.fields.map((row, index) => (
               <div
                 key={row.id}
-                className="grid min-w-0 gap-3 rounded-lg border p-4"
+                className="grid min-w-0 gap-3 rounded-xl border border-border bg-muted/30 p-4"
               >
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium">Блок {index + 1}</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={`Удалить блок ${index + 1}`}
+                    title="Удалить блок"
+                    disabled={rows.fields.length <= 1}
+                    onClick={() => rows.remove(index)}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <Trash2Icon />
+                  </Button>
+                </div>
                 <Controller
                   control={form.control}
                   name={`blueprint.${index}.skill_id`}
@@ -197,13 +253,15 @@ export const TemplateEditor = ({
                         ?.message
                     }
                   >
-                    <Input
-                      type="number"
-                      min={1}
-                      max={5}
-                      {...form.register(`blueprint.${index}.difficulty`, {
-                        valueAsNumber: true,
-                      })}
+                    <Controller
+                      control={form.control}
+                      name={`blueprint.${index}.difficulty`}
+                      render={({ field }) => (
+                        <DifficultyPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                        />
+                      )}
                     />
                   </Field>
                   <Field
@@ -237,24 +295,19 @@ export const TemplateEditor = ({
                     />
                   </Field>
                 </AdminFieldGrid>
-                <Button
-                  className="justify-self-end"
-                  type="button"
-                  variant="ghost"
-                  disabled={rows.fields.length <= 1}
-                  onClick={() => rows.remove(index)}
-                >
-                  Убрать строку
-                </Button>
               </div>
             ))}
-            <p className="min-h-5 text-sm text-destructive">
-              {form.formState.errors.blueprint?.message ??
-                form.formState.errors.blueprint?.root?.message}
-            </p>
+            {(form.formState.errors.blueprint?.message ??
+              form.formState.errors.blueprint?.root?.message) && (
+              <p role="alert" className="text-sm text-destructive">
+                {form.formState.errors.blueprint?.message ??
+                  form.formState.errors.blueprint?.root?.message}
+              </p>
+            )}
             <Button
               type="button"
               variant="outline"
+              className="justify-self-start border-dashed"
               disabled={rows.fields.length >= 30}
               onClick={() =>
                 rows.append({
@@ -265,11 +318,12 @@ export const TemplateEditor = ({
                 })
               }
             >
-              Добавить строку
+              <PlusIcon aria-hidden="true" />
+              Добавить блок навыка
             </Button>
           </section>
           <ErrorNotice error={mutation.error} />
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <div className="sticky bottom-0 z-10 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t border-border bg-card/95 p-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8">
             <Button type="button" variant="outline" onClick={close}>
               Отмена
             </Button>

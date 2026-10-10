@@ -1,4 +1,5 @@
 export { AsyncState } from './AsyncState';
+export { AuthLayout } from './AuthLayout';
 export {
   Avatar,
   AvatarBadge,
@@ -9,6 +10,7 @@ export {
 } from './Avatar';
 export { Badge, badgeVariants } from './Badge';
 export { BrandLogo } from './BrandLogo';
+export { BrandPattern } from './BrandPattern';
 export { BriefToken, briefTokenClassName } from './BriefToken';
 export { Button, buttonVariants } from './Button';
 export {
@@ -63,7 +65,12 @@ export {
 } from './DropdownMenu';
 export { FieldMessage } from './FieldMessage';
 export { FileInput } from './FileInput';
-export { HeaderBar, headerNavItemClassName } from './HeaderBar';
+export {
+  HeaderBar,
+  type HeaderNavBreakpoint,
+  headerNavItemClassName,
+} from './HeaderBar';
+export { HeaderMenu } from './HeaderMenu';
 export { HeaderMobileSearch } from './HeaderMobileSearch';
 export { HeaderNavLink } from './HeaderNavLink';
 export { Input } from './Input';
@@ -95,6 +102,7 @@ export {
   PopoverTrigger,
 } from './Popover';
 export { RecordItem, RecordItemActions } from './RecordItem';
+export { RefreshButton } from './RefreshButton';
 export { RemoteState } from './RemoteState';
 export type { SalaryRange } from './SalaryRangeInput';
 export { SalaryRangeInput } from './SalaryRangeInput';
@@ -135,7 +143,7 @@ export {
   TabsTrigger,
 } from './Tabs';
 export { Textarea } from './Textarea';
-export { ThemeToggle } from './ThemeToggle';
+export { ThemeMenuItem, ThemeToggle } from './ThemeToggle';
 export {
   Tooltip,
   TooltipContent,

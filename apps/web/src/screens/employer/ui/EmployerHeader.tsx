@@ -11,9 +11,10 @@ import {
 import type { SessionUser } from '@/entities/session';
 import { UserMenu } from '@/features/auth';
 import {
+  EMPLOYER_NAV_FROM,
   EMPLOYER_NAV_ITEMS,
-  GUIDES_NAV_ITEM,
   HeaderGuidesButton,
+  HeaderMenuExtra,
   HeaderNavLabel,
 } from '@/widgets/app-header';
 
@@ -47,9 +48,9 @@ export const EmployerHeader = ({
   href,
   onNavigate,
 }: EmployerHeaderProps) => {
-  const workItems = (
+  const renderItems = (items: typeof EMPLOYER_NAV_ITEMS) => (
     <>
-      {EMPLOYER_NAV_ITEMS.map((item) => {
+      {items.map((item) => {
         const target = item.id as EmployerSection;
         const disabled = busy || (!hasCompany && target !== 'overview');
         const active =
@@ -104,25 +105,17 @@ export const EmployerHeader = ({
           <BrandLogo />
         </Link>
       }
-      nav={
-        <>
-          {workItems}
-          <Link
-            data-preserve-draft
-            href={GUIDES_NAV_ITEM.href}
-            aria-label={GUIDES_NAV_ITEM.label}
-            title={GUIDES_NAV_ITEM.label}
-            className={headerNavItemClassName}
-          >
-            <HeaderNavLabel item={GUIDES_NAV_ITEM} />
-          </Link>
-        </>
-      }
-      mobileNav={workItems}
+      nav={renderItems(EMPLOYER_NAV_ITEMS)}
+      navFrom={EMPLOYER_NAV_FROM}
+      tabs={renderItems(EMPLOYER_NAV_ITEMS.filter((item) => !item.secondary))}
+      menuExtra={<HeaderMenuExtra />}
       actions={
         <>
-          <HeaderGuidesButton />
-          <ThemeToggle />
+          {/* На телефоне справочник и тема — в меню-бургере. */}
+          <HeaderGuidesButton className="max-sm:hidden" />
+          <span className="contents max-sm:hidden">
+            <ThemeToggle />
+          </span>
           <UserMenu user={user} />
         </>
       }

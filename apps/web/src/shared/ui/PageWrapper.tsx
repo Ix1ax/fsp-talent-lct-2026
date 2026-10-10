@@ -5,6 +5,7 @@ import { cn } from '@/shared/lib/utils';
 const PAGE_WRAPPER_VARIANTS = {
   page: 'container-page page-rhythm flex flex-1 flex-col gap-8',
   landing: '',
+  auth: 'w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8',
   login:
     'container-page flex flex-1 items-center justify-center py-12 md:py-24',
   workspace: 'container-page page-rhythm flex-1',
