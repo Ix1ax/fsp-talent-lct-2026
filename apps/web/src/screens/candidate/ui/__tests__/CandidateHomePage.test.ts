@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
+import { TooltipProvider } from '@/shared/ui';
 import type {
   CandidateFullProfile,
   CandidateProfile,
@@ -58,7 +59,11 @@ const full: CandidateFullProfile = {
 };
 const render = (initialFullProfile = full) =>
   renderToString(
-    createElement(CandidateHomePage, { user, initialFullProfile }),
+    createElement(
+      TooltipProvider,
+      null,
+      createElement(CandidateHomePage, { user, initialFullProfile }),
+    ),
   );
 
 const existingProfile: CandidateProfile = {
