@@ -4,10 +4,12 @@ import { type ReactNode, useLayoutEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import { PageTransition } from '@/shared/ui';
 import { AdminProvider, useAdminSession } from '@/features/admin';
 
 import { useSidebarCollapsed } from '../model';
+import { AdminBackground } from './AdminBackground';
 import { AdminSessionState } from './AdminSessionState';
 import { AdminShellHeader } from './AdminShellHeader';
 import { AdminSidebar } from './AdminSidebar';
@@ -27,6 +29,7 @@ const Content = ({ children }: AdminShellProps) => {
   }, [pathname]);
 
   const exit = async () => {
+    if (exiting || !confirmUnsavedChanges()) return;
     setExiting(true);
     try {
       await logout();
@@ -65,6 +68,7 @@ const Content = ({ children }: AdminShellProps) => {
         ref={contentRef}
         className="relative isolate h-dvh min-w-0 overflow-y-auto overscroll-y-contain"
       >
+        <AdminBackground />
         <AdminShellHeader exiting={exiting} onLogout={() => void exit()} />
         <div
           key={session.admin.id}

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Badge,
   Button,
@@ -57,7 +58,7 @@ export const AvailableAssessmentCard = ({
           {getAssessmentReasonText(test)}
         </p>
         {test.reason === 'consent_required' && (
-          <Link href="/candidate" className="text-sm underline">
+          <Link href={STATIC_ROUTES.CANDIDATE} className="text-sm underline">
             Настроить согласия
           </Link>
         )}

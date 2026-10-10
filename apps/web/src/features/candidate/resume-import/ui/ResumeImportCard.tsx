@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   AlertCircleIcon,
   LoaderCircleIcon,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 
 import { ApiError, ensureClientAccessToken } from '@/shared/api';
+import { STATIC_ROUTES } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
@@ -75,7 +76,21 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
   const input = useRef<HTMLInputElement>(null);
   const uploadButton = useRef<HTMLButtonElement>(null);
 
-  useUnsavedChanges(!!props.applied || !!pending);
+  useUnsavedChanges(!!file || !!pending, {
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.CANDIDATE,
+        STATIC_ROUTES.CANDIDATE_CONSENTS,
+        STATIC_ROUTES.CANDIDATE_PROFILE,
+        STATIC_ROUTES.CANDIDATE_CONTACTS,
+        STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+        STATIC_ROUTES.CANDIDATE_EDUCATION,
+        STATIC_ROUTES.CANDIDATE_SKILLS,
+        STATIC_ROUTES.CANDIDATE_READINESS,
+      ],
+      [],
+    ),
+  });
 
   useEffect(() => () => request.current?.abort(), []);
 

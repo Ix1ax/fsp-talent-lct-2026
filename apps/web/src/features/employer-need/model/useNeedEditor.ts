@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import type { NeedInput, NeedStatus } from '@/entities/employer-need';
 
 import { toNeedInput, validateNeed } from '../lib';
@@ -27,7 +28,8 @@ export const useNeedEditor = ({
     control: form.control,
     defaultValue: defaults,
   }) as NeedInput;
-  const dirty = form.formState.isDirty;
+  const unsaved = useFormUnsavedChanges(form);
+  const dirty = unsaved.dirty;
   const [editing, setEditing] = useState(!!isNew);
   const [advanced, setAdvanced] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -48,13 +50,6 @@ export const useNeedEditor = ({
     onDirtyChange(dirty);
     return () => onDirtyChange(false);
   }, [dirty, onDirtyChange]);
-  useEffect(() => {
-    const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (dirty) event.preventDefault();
-    };
-    window.addEventListener('beforeunload', beforeUnload);
-    return () => window.removeEventListener('beforeunload', beforeUnload);
-  }, [dirty]);
   const submit = async (status: NeedStatus) => {
     setSaveError('');
     const normalized = {
@@ -77,18 +72,21 @@ export const useNeedEditor = ({
     }
     try {
       await onSave(normalized);
+      form.reset(normalized);
+      unsaved.markSaved();
     } catch (error) {
       setSaveError(getApiErrorMessage(error));
     }
   };
-  const cancel = () => {
-    form.reset(defaults);
-    setErrors({});
-    setSaveError('');
-    setAttemptedStatus(null);
-    setEditing(!!isNew);
-    onCancel();
-  };
+  const cancel = () =>
+    unsaved.discard(() => {
+      form.reset(defaults);
+      setErrors({});
+      setSaveError('');
+      setAttemptedStatus(null);
+      setEditing(!!isNew);
+      onCancel();
+    });
   return {
     value,
     dirty,

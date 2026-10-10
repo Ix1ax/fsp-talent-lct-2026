@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
+import { useFormUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   Dialog,
@@ -47,6 +48,10 @@ export const CatalogEditor = ({
       aliases: item?.aliases?.join('\n') ?? '',
     },
   });
+  const unsaved = useFormUnsavedChanges(form);
+  const close = () => {
+    if (!mutation.busy) unsaved.discard(onClose);
+  };
   const submit = form.handleSubmit(async (values) => {
     if (!session) return;
     if (
@@ -89,6 +94,8 @@ export const CatalogEditor = ({
           ...(kind === 'grades' ? { rank: values.rank } : {}),
         });
       }
+      form.reset(form.getValues());
+      unsaved.markSaved();
       toast.success('Запись сохранена');
       onSaved();
       onClose();
@@ -98,7 +105,7 @@ export const CatalogEditor = ({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !mutation.busy) onClose();
+        if (!open) close();
       }}
     >
       <DialogContent
@@ -146,7 +153,7 @@ export const CatalogEditor = ({
               type="button"
               variant="outline"
               disabled={mutation.busy}
-              onClick={onClose}
+              onClick={close}
             >
               Отмена
             </Button>

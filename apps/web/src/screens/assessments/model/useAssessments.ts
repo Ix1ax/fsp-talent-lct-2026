@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 import { ApiError } from '@/shared/api';
-import { CANDIDATE_DATA_UPDATED_EVENT } from '@/shared/contants';
+import {
+  CANDIDATE_DATA_UPDATED_EVENT,
+  DYNAMIC_ROUTES,
+} from '@/shared/contants';
+import { useGuardedRouter } from '@/shared/hooks';
 import {
   type AvailableAssessment,
   getAvailableAssessments,
@@ -13,7 +16,7 @@ import {
 import { getAssessmentLoadError, getAssessmentStartError } from '../lib';
 
 export const useAssessments = () => {
-  const router = useRouter();
+  const router = useGuardedRouter();
 
   const [items, setItems] = useState<AvailableAssessment[]>([]);
   const [current, setCurrent] = useState<string>();
@@ -76,7 +79,7 @@ export const useAssessments = () => {
         specializationId: selected.specializationId,
         gradeId: selected.gradeId,
       });
-      router.push(`/candidate/assessments/${attempt.id}`);
+      router.push(DYNAMIC_ROUTES.CANDIDATE_ASSESSMENT(attempt.id));
       setSelected(undefined);
     } catch (err) {
       if (
@@ -84,7 +87,7 @@ export const useAssessments = () => {
         err.code === 'attempt_active' &&
         err.attemptId
       ) {
-        router.replace(`/candidate/assessments/${err.attemptId}`);
+        router.replace(DYNAMIC_ROUTES.CANDIDATE_ASSESSMENT(err.attemptId));
         return;
       }
       if (
@@ -94,7 +97,9 @@ export const useAssessments = () => {
         try {
           const activeAttempt = await getCurrentAssessment();
           if (activeAttempt.id) {
-            router.replace(`/candidate/assessments/${activeAttempt.id}`);
+            router.replace(
+              DYNAMIC_ROUTES.CANDIDATE_ASSESSMENT(activeAttempt.id),
+            );
             return;
           }
         } catch {

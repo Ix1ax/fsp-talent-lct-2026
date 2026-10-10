@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 
+import { ApiError } from '@/shared/api/errors';
+import { takeLoginReturnPath } from '@/shared/auth/loginReturnPath';
+import { useGuardedRouter } from '@/shared/hooks';
 import {
   Button,
   Card,
@@ -12,6 +14,7 @@ import {
   CardTitle,
 } from '@/shared/ui';
 import {
+  getMeClient,
   getRoleHomeRoute,
   registerRole,
   type RegistrationRole,
@@ -19,7 +22,7 @@ import {
 } from '@/entities/session';
 
 export const RoleChooser = () => {
-  const router = useRouter();
+  const router = useGuardedRouter();
   const [pending, setPending] = useState<RegistrationRole | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,8 +31,18 @@ export const RoleChooser = () => {
     setError(null);
 
     try {
-      await registerRole(role);
-      router.push(getRoleHomeRoute(role));
+      try {
+        await registerRole(role);
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.code !== 'already_registered')
+          throw error;
+        const user = await getMeClient();
+        if (!user.role)
+          throw new Error('Не удалось определить роль. Попробуйте снова.');
+        router.push(takeLoginReturnPath(getRoleHomeRoute(user.role)));
+        return;
+      }
+      router.push(takeLoginReturnPath(getRoleHomeRoute(role)));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Ошибка регистрации');
       setPending(null);

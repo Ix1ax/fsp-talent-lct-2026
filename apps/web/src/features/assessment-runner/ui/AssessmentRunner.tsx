@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { CheckIcon } from 'lucide-react';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Button,
   Dialog,
@@ -136,7 +137,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
       {error && <p role="alert">{error}</p>}
       {consentBlocked && (
         <Button asChild variant="outline">
-          <Link href="/candidate">Настроить согласия</Link>
+          <Link href={STATIC_ROUTES.CANDIDATE}>Настроить согласия</Link>
         </Button>
       )}
       {locked && !consentBlocked && !limitReached && (

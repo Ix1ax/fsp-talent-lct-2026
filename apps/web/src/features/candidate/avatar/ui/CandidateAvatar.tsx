@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import dynamic from 'next/dynamic';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { ApiError } from '@/shared/api/errors';
-import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
+import { CANDIDATE_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
 import { Button, ConfirmDeleteDialog, Input, toast } from '@/shared/ui';
 import {
@@ -55,7 +55,21 @@ export const CandidateAvatar = ({
   const [revision, setRevision] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const mutating = useRef(false);
-  useUnsavedChanges(!!selectedFile || !!editorFile);
+  useUnsavedChanges(!!selectedFile || !!editorFile, {
+    preserveWithin: useMemo(
+      () => [
+        STATIC_ROUTES.CANDIDATE,
+        STATIC_ROUTES.CANDIDATE_CONSENTS,
+        STATIC_ROUTES.CANDIDATE_PROFILE,
+        STATIC_ROUTES.CANDIDATE_CONTACTS,
+        STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+        STATIC_ROUTES.CANDIDATE_EDUCATION,
+        STATIC_ROUTES.CANDIDATE_SKILLS,
+        STATIC_ROUTES.CANDIDATE_READINESS,
+      ],
+      [],
+    ),
+  });
 
   const disabled = formDisabled || checking || !!editorFile;
 

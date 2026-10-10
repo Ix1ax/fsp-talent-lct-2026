@@ -1,15 +1,20 @@
 'use client';
-import type { ReactNode } from 'react';
+import { type ReactNode, useState } from 'react';
 import { ArrowRightIcon, PencilIcon } from 'lucide-react';
 
 import { TIMEZONE_LABELS } from '@/shared/contants';
 import { Button, Input, Textarea } from '@/shared/ui';
 import { MetaLabel } from '@/shared/ui/MetaLabel';
-import type { Catalogs, Skill } from '@/entities/catalog';
+import type { Catalogs } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
 
 import { getNeedSaveLabel, getNeedStatusLabel } from '../lib';
-import { useNeedEditor } from '../model';
+import {
+  loadNeedSkills,
+  type NeedSkillLoader,
+  useNeedEditor,
+  useNeedSkills,
+} from '../model';
 import { BriefPhrase } from './BriefPhrase';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedReadiness } from './NeedReadiness';
@@ -18,7 +23,10 @@ interface NeedEditorProps {
   initial: NeedInput;
   footer?: ReactNode;
   catalogs: Catalogs;
-  skills: Skill[];
+  loadSkills?: NeedSkillLoader;
+  catalogsLoading?: boolean;
+  catalogsError?: string;
+  onRetryCatalogs?: () => void;
   isNew?: boolean;
   readonly?: boolean;
   pending: boolean;
@@ -31,7 +39,10 @@ export const NeedEditor = ({
   initial,
   footer,
   catalogs,
-  skills,
+  loadSkills = loadNeedSkills,
+  catalogsLoading,
+  catalogsError,
+  onRetryCatalogs,
   isNew,
   readonly,
   pending,
@@ -54,6 +65,14 @@ export const NeedEditor = ({
     submit,
     cancel,
   } = useNeedEditor({ initial, isNew, onSave, onCancel, onDirtyChange });
+
+  const [skillQuery, setSkillQuery] = useState('');
+  const skillSearch = useNeedSkills(
+    loadSkills,
+    skillQuery.trim(),
+    value.skills.map((skill) => skill.skillId),
+  );
+  const skills = skillSearch.skills;
 
   const displayedError = saveError || error;
 
@@ -80,6 +99,19 @@ export const NeedEditor = ({
           {getNeedStatusLabel(value.status, readonly)}
         </MetaLabel>
       </div>
+      {catalogsLoading && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          Загружаем специализации, грейды и форматы работы…
+        </p>
+      )}
+      {catalogsError && (
+        <div role="alert" className="mb-4 grid gap-2 text-sm">
+          <p>Справочники условий недоступны: {catalogsError}</p>
+          <Button type="button" variant="outline" onClick={onRetryCatalogs}>
+            Повторить загрузку условий
+          </Button>
+        </div>
+      )}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -114,6 +146,13 @@ export const NeedEditor = ({
               onChange={changeValue}
               catalogs={catalogs}
               skills={skills}
+              searchItems={skillSearch.items}
+              skillQuery={skillQuery}
+              onSkillQuery={setSkillQuery}
+              skillsLoading={skillSearch.loading}
+              skillsError={skillSearch.error}
+              onRetrySkills={skillSearch.retry}
+              catalogsUnavailable={!!catalogsLoading || !!catalogsError}
               disabled={pending}
               errors={errors}
             />
@@ -199,6 +238,14 @@ export const NeedEditor = ({
             />
           )}
         </fieldset>
+        {(!editing || readonly) && skillSearch.error && (
+          <div role="alert" className="grid gap-2 text-sm">
+            <p>Названия навыков недоступны: {skillSearch.error}</p>
+            <Button type="button" variant="outline" onClick={skillSearch.retry}>
+              Повторить загрузку навыков
+            </Button>
+          </div>
+        )}
         {displayedError && (
           <p role="alert" className="text-sm text-destructive">
             {displayedError}

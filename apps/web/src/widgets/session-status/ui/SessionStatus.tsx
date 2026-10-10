@@ -19,13 +19,24 @@ export const SessionStatus = async () => {
     );
   }
 
-  if (session.kind === 'error') {
+  if (session.kind === 'invalid') {
     return (
       <div className="flex flex-wrap items-center gap-3">
         <Badge variant="destructive">{session.message}</Badge>
         <Button asChild size="sm" variant="outline">
           <Link href={STATIC_ROUTES.LOGIN}>Войти снова</Link>
         </Button>
+      </div>
+    );
+  }
+
+  if (session.kind === 'unavailable') {
+    return (
+      <div className="flex flex-wrap items-center gap-3">
+        {session.displayName && (
+          <Badge variant="secondary">{session.displayName}</Badge>
+        )}
+        <Badge variant="destructive">{session.message}</Badge>
       </div>
     );
   }

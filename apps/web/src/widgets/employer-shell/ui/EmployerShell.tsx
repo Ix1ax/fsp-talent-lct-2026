@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 
+import { STATIC_ROUTES } from '@/shared/contants';
 import { HeaderBar, headerNavItemClassName } from '@/shared/ui';
 import { BrandLogo } from '@/shared/ui/BrandLogo';
 import { ThemeToggle } from '@/shared/ui/ThemeToggle';
@@ -32,7 +33,7 @@ export const EmployerShell = ({
   user,
   accountMenu,
   footer,
-  homeHref = '/employer',
+  homeHref = STATIC_ROUTES.EMPLOYER,
   search,
   companies,
   company,

@@ -6,6 +6,7 @@ import {
   clearClientAccessToken,
   emitSessionExpired,
   getClientAccessToken,
+  getClientSessionRevision,
   setClientAccessToken,
 } from '@/shared/auth';
 
@@ -17,13 +18,19 @@ export const clientApi = createApi({
 });
 
 let refreshPromise: Promise<string | null> | null = null;
+let refreshRevision = -1;
 
-const runRefreshRequest = async (): Promise<string | null> => {
+const runRefreshRequest = async (revision: number): Promise<string | null> => {
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'same-origin',
     signal: AbortSignal.timeout(12_000),
   });
+
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
 
   if (response.status === 401) {
     clearClientAccessToken();
@@ -38,6 +45,8 @@ const runRefreshRequest = async (): Promise<string | null> => {
   }
 
   const data = (await response.json()) as { accessToken?: string };
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
   const token = data.accessToken ?? null;
   setClientAccessToken(token);
   return token;
@@ -46,16 +55,21 @@ const runRefreshRequest = async (): Promise<string | null> => {
 const refreshClientAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
 
-  if (!refreshPromise) {
+  const revision = getClientSessionRevision();
+  if (!refreshPromise || refreshRevision !== revision) {
+    refreshRevision = revision;
     const request = async (): Promise<string | null> => {
       if (typeof navigator !== 'undefined' && navigator.locks?.request) {
-        return await navigator.locks.request('auth-refresh', runRefreshRequest);
+        return await navigator.locks.request('auth-refresh', () =>
+          runRefreshRequest(revision),
+        );
       }
-      return runRefreshRequest();
+      return runRefreshRequest(revision);
     };
-    refreshPromise = request().finally(() => {
-      refreshPromise = null;
+    const pending = request().finally(() => {
+      if (refreshPromise === pending) refreshPromise = null;
     });
+    refreshPromise = pending;
   }
   return refreshPromise;
 };

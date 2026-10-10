@@ -15,4 +15,8 @@ export type {
   Recommendation,
   RecommendationPage,
 } from './model';
-export { getMissingNeedFields, NEED_STATUS_LABELS } from './model';
+export {
+  getMissingNeedFields,
+  NEED_DETAIL_STATUS_LABELS,
+  NEED_STATUS_LABELS,
+} from './model';

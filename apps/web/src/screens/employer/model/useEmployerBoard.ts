@@ -1,70 +1,34 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
-import type { Catalogs, Skill } from '@/entities/catalog';
-import type { Company } from '@/entities/company';
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { useCompanyActions } from '@/features/company';
 import { useNeedActions } from '@/features/employer-need';
 
-import { type EmployerGateway, employerGateway } from '../lib/gateway';
+import { type EmployerGateway, employerGateway } from '../lib';
+import { getEmployerLocationState } from './getEmployerLocationState';
+import {
+  loadEmployerCompanies,
+  useEmployerResources,
+} from './useEmployerResources';
 import { useNeedsQuery } from './useNeedsQuery';
-interface Resources {
-  companies: Company[];
-  catalogs: Catalogs;
-  skills: Skill[];
-}
 export const useEmployerBoard = (
   gateway: EmployerGateway = employerGateway,
+  needsEnabled = true,
 ) => {
-  const [resources, setResources] = useState<Resources | null>(null);
-  const [error, setError] = useState('');
-  const [retry, setRetry] = useState(0);
-  const [companyId, setCompanyId] = useState('');
-  const [status, setStatus] = useState<NeedStatus>('active');
-  const [offset, setOffset] = useState(0);
-  const [selectedId, setSelectedId] = useState('');
+  const resources = useEmployerResources(gateway);
+  const refreshController = useRef<AbortController | null>(null);
+  useEffect(() => () => refreshController.current?.abort(), [gateway]);
+  const searchParams = useSearchParams();
+  const location = getEmployerLocationState(searchParams.toString());
+  const companyId =
+    resources.companies?.find((company) => company.id === location.companyId)
+      ?.id ??
+    resources.companies?.[0]?.id ??
+    '';
+  const { status, offset, selectedId } = location;
   const [revision, setRevision] = useState(0);
-  useEffect(() => {
-    const controller = new AbortController();
-    (async () => {
-      await gateway.authorize();
-      const [catalogs, skills] = await Promise.all([
-        gateway.catalogs(controller.signal),
-        gateway.skills('', controller.signal),
-      ]);
-      const companies: Company[] = [];
-      for (let skip = 0; skip <= 10000; skip += 100) {
-        const page = await gateway.companies(skip, controller.signal);
-        companies.push(...page.items);
-        if (page.items.length < 100) break;
-      }
-      if (controller.signal.aborted) return;
-      const query = new URLSearchParams(window.location.search);
-      setResources({ companies, catalogs, skills });
-      setCompanyId(
-        companies.find((c) => c.id === query.get('company'))?.id ??
-          companies[0]?.id ??
-          '',
-      );
-      const pageOffset = Number(query.get('offset') ?? 0);
-      setOffset(
-        Number.isInteger(pageOffset) && pageOffset >= 0 && pageOffset <= 10000
-          ? pageOffset
-          : 0,
-      );
-      const tab = query.get('tab');
-      setStatus(tab === 'draft' || tab === 'archived' ? tab : 'active');
-      const needId = query.get('need') ?? '';
-      setSelectedId(/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(needId) ? needId : '');
-    })().catch((e) => {
-      if (!controller.signal.aborted) {
-        setError(getApiErrorMessage(e));
-      }
-    });
-    return () => controller.abort();
-  }, [gateway, retry]);
   const query = useNeedsQuery({
     api: gateway,
     companyId,
@@ -72,92 +36,116 @@ export const useEmployerBoard = (
     offset,
     selectedId,
     revision,
-    enabled: !!resources,
+    enabled: !!resources.companies && needsEnabled,
   });
   const needActions = useNeedActions({
     api: gateway,
     companyId,
     need: query.selected,
     onSaved: (next) => {
-      if (next.status !== status || next.id !== selectedId) setOffset(0);
-      setStatus(next.status);
-      setSelectedId(next.id);
+      syncQuery({
+        status: next.status,
+        selectedId: next.id,
+        offset: next.status !== status || next.id !== selectedId ? 0 : offset,
+      });
       setRevision((v) => v + 1);
     },
     onArchived: () => {
-      setOffset(0);
-      setStatus('archived');
+      syncQuery({ status: 'archived', offset: 0 });
       setRevision((v) => v + 1);
     },
   });
   const companyActions = useCompanyActions({
     api: gateway,
-    company: resources?.companies.find((c) => c.id === companyId) ?? null,
+    company: resources.companies?.find((c) => c.id === companyId) ?? null,
     onSaved: (company, created) => {
-      setResources((r) =>
-        r
-          ? {
-              ...r,
-              companies: created
-                ? [...r.companies, company]
-                : r.companies.map((c) => (c.id === company.id ? company : c)),
-            }
-          : r,
+      resources.updateCompanies((companies) =>
+        created
+          ? [...companies, company]
+          : companies.map((current) =>
+              current.id === company.id ? company : current,
+            ),
       );
-      if (created) {
-        setCompanyId(company.id);
-        setSelectedId('');
-        setOffset(0);
-      }
+      if (created)
+        syncQuery({ companyId: company.id, selectedId: '', offset: 0 });
     },
   });
   const clearError = () => {
     needActions.clearError();
     companyActions.clearError();
   };
-  useEffect(() => {
-    if (!resources) return;
+  const syncQuery = (next: {
+    companyId?: string;
+    status?: NeedStatus;
+    offset?: number;
+    selectedId?: string;
+  }) => {
     const query = new URLSearchParams(window.location.search);
-    if (companyId) query.set('company', companyId);
+    const selectedCompany = next.companyId ?? companyId;
+    if (selectedCompany) query.set('company', selectedCompany);
     else query.delete('company');
-    query.set('tab', status);
-    if (offset) query.set('offset', String(offset));
+    query.set('tab', next.status ?? status);
+    const pageOffset = next.offset ?? offset;
+    if (pageOffset) query.set('offset', String(pageOffset));
     else query.delete('offset');
-    if (selectedId) query.set('need', selectedId);
+    const needId = next.selectedId ?? selectedId;
+    if (needId) query.set('need', needId);
     else query.delete('need');
     window.history.replaceState(
       null,
       '',
-      `${window.location.pathname}?${query}`,
+      `${window.location.pathname}?${query}${window.location.hash}`,
     );
-  }, [resources, companyId, status, selectedId, offset]);
+  };
+  useEffect(() => {
+    if (!companyId || location.companyId === companyId) return;
+    const query = new URLSearchParams(window.location.search);
+    query.set('company', companyId);
+    window.history.replaceState(
+      null,
+      '',
+      `${window.location.pathname}?${query}${window.location.hash}`,
+    );
+  }, [companyId, location.companyId]);
   const chooseCompany = (id: string) => {
-    setCompanyId(id);
-    setSelectedId('');
-    setOffset(0);
+    syncQuery({ companyId: id, selectedId: '', offset: 0 });
     clearError();
   };
   const chooseStatus = (tab: NeedStatus) => {
-    setStatus(tab);
-    setSelectedId('');
-    setOffset(0);
+    syncQuery({ status: tab, selectedId: '', offset: 0 });
     clearError();
   };
   const select = (id: string) => {
-    setSelectedId(id);
+    syncQuery({ selectedId: id });
     clearError();
   };
   const reload = useCallback(() => setRevision((v) => v + 1), []);
   return {
-    resources,
-    error,
-    retry: () => {
-      setResources(null);
-      setError('');
-      setRetry((v) => v + 1);
-      setRevision((v) => v + 1);
+    refreshCompanies: async (preferredId = companyId) => {
+      refreshController.current?.abort();
+      const controller = new AbortController();
+      refreshController.current = controller;
+      const companies = await loadEmployerCompanies(gateway, controller.signal);
+      controller.signal.throwIfAborted();
+      resources.updateCompanies(() => companies);
+      const nextId =
+        companies.find((company) => company.id === preferredId)?.id ??
+        companies[0]?.id ??
+        '';
+      syncQuery({
+        companyId: nextId,
+        ...(nextId !== companyId ? { selectedId: '', offset: 0 } : {}),
+      });
+      setRevision((value) => value + 1);
     },
-    company: resources?.companies.find((c) => c.id === companyId) ?? null,
+    resources: resources.companies ? { companies: resources.companies } : null,
+    catalogs: resources.catalogs,
+    catalogsLoading: resources.catalogsLoading,
+    catalogsError: resources.catalogsError,
+    retryCatalogs: resources.retryCatalogs,
+    error: resources.error,
+    retry: resources.retry,
+    company: resources.companies?.find((c) => c.id === companyId) ?? null,
     companyId,
     status,
     offset,
@@ -176,15 +164,12 @@ export const useEmployerBoard = (
     chooseStatus,
     select,
     openNeed: (need: EmployerNeed) => {
-      setStatus(need.status);
-      setOffset(0);
-      setSelectedId(need.id);
+      syncQuery({ status: need.status, offset: 0, selectedId: need.id });
       clearError();
     },
     reload,
     page: (next: number) => {
-      setOffset(next);
-      setSelectedId('');
+      syncQuery({ offset: next, selectedId: '' });
     },
     clearError,
   };

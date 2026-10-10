@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { validateAuthMutation } from '@/shared/auth/request.server';
 import { setAuthTokens } from '@/shared/auth/server';
 import { isObject } from '@/shared/utils';
 
@@ -28,6 +29,9 @@ const isSessionBody = (body: unknown): body is SessionBody => {
 };
 
 export const POST = async (request: NextRequest): Promise<Response> => {
+  const rejected = validateAuthMutation(request, true);
+  if (rejected) return rejected;
+
   let body: unknown;
 
   try {

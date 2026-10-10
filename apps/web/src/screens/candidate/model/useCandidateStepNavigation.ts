@@ -1,7 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 import { DYNAMIC_ROUTES } from '@/shared/contants';
+import { useGuardedRouter } from '@/shared/hooks';
 import {
   type CandidateFullProfile,
   getConsentPermissions,
@@ -25,7 +26,7 @@ export const useCandidateStepNavigation = ({
   busy,
 }: CandidateStepNavigationOptions) => {
   const pathname = usePathname();
-  const router = useRouter();
+  const router = useGuardedRouter();
   const navigationRef = useRef<HTMLDivElement>(null);
   const profileContainerRef = useRef<HTMLElement>(null);
   const sectionContentRef = useRef<HTMLDivElement>(null);

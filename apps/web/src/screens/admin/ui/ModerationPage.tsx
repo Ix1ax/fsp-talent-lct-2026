@@ -8,12 +8,12 @@ import { adminSchemas, type CatalogItem } from '@/entities/admin';
 import {
   AdminAnimatedList,
   AdminListLoading,
+  AdminListViewport,
   ErrorNotice,
   ModerationEditor,
   Pagination,
   SkillPicker,
   Status,
-  useAdminOptions,
   useAdminQuery,
 } from '@/features/admin';
 
@@ -21,7 +21,6 @@ import { AdminPageHeader } from './AdminPageHeader';
 
 export const ModerationPage = () => {
   const params = useSearchParams();
-  const options = useAdminOptions();
   const [offset, setOffset] = useState(0);
   const [selection, setSelection] = useState<{
     item: CatalogItem;
@@ -98,7 +97,6 @@ export const ModerationPage = () => {
   const refresh = () => {
     list.reload();
     detail.reload();
-    options.reload();
   };
   return (
     <div className="grid min-w-0 gap-6">
@@ -112,7 +110,7 @@ export const ModerationPage = () => {
         <p role="status" aria-live="polite" className="sr-only">
           {list.loading ? 'Загружаем очередь…' : ''}
         </p>
-        <div>
+        <AdminListViewport loading={list.loading}>
           <AdminListLoading loading={list.loading} hasData={!!list.data} />
           {!list.loading && !list.error && !list.data?.items.length && (
             <p className="py-6 text-center text-muted-foreground">
@@ -120,7 +118,7 @@ export const ModerationPage = () => {
             </p>
           )}
           <AdminAnimatedList>{list.data?.items.map(row)}</AdminAnimatedList>
-        </div>
+        </AdminListViewport>
         <Pagination
           offset={offset}
           count={list.data?.items.length ?? 0}
@@ -137,12 +135,8 @@ export const ModerationPage = () => {
           label="Выберите навык"
           value={id}
           onChange={setId}
-          items={(options.data.skills ?? []).filter(
-            (s) => s.moderation_status === 'approved',
-          )}
-          disabled={options.loading}
+          approvedOnly
         />
-        <ErrorNotice error={options.error} onRetry={options.reload} />
         <ErrorNotice error={detail.error} onRetry={detail.reload} />
         {detail.loading && <p role="status">Открываем навык…</p>}
         {card && row(card)}

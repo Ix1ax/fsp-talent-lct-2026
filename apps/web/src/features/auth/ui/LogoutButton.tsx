@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import { Button } from '@/shared/ui';
 
 import { logoutSession } from '../api';
@@ -15,6 +16,7 @@ export const LogoutButton = ({ className }: LogoutButtonProps) => {
   const [error, setError] = useState<string | null>(null);
 
   const onLogout = async () => {
+    if (pending || !confirmUnsavedChanges()) return;
     setPending(true);
     setError(null);
 

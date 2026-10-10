@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Cropper, { type Area } from 'react-easy-crop';
 
-import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
+import { CANDIDATE_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
+import { useUnsavedChanges } from '@/shared/hooks';
 import {
   Button,
   Dialog,
@@ -37,6 +38,27 @@ export const AvatarCropDialog = ({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState('');
   const applying = useRef(false);
+  const unsaved = useUnsavedChanges(
+    crop.x !== 0 || crop.y !== 0 || zoom !== 1 || rotation !== 0,
+    {
+      preserveWithin: useMemo(
+        () => [
+          STATIC_ROUTES.CANDIDATE,
+          STATIC_ROUTES.CANDIDATE_CONSENTS,
+          STATIC_ROUTES.CANDIDATE_PROFILE,
+          STATIC_ROUTES.CANDIDATE_CONTACTS,
+          STATIC_ROUTES.CANDIDATE_EXPERIENCE,
+          STATIC_ROUTES.CANDIDATE_EDUCATION,
+          STATIC_ROUTES.CANDIDATE_SKILLS,
+          STATIC_ROUTES.CANDIDATE_READINESS,
+        ],
+        [],
+      ),
+    },
+  );
+  const cancel = () => {
+    if (!processing) unsaved.discard(onCancel);
+  };
 
   useEffect(() => {
     const objectUrl = URL.createObjectURL(file);
@@ -64,6 +86,7 @@ export const AvatarCropDialog = ({
         reportError(validation.error.issues[0].message);
         return;
       }
+      unsaved.markSaved();
       onApply(result);
     } catch (error) {
       reportError(
@@ -88,7 +111,7 @@ export const AvatarCropDialog = ({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open && !processing) onCancel();
+        if (!open) cancel();
       }}
     >
       <DialogContent
@@ -198,7 +221,7 @@ export const AvatarCropDialog = ({
             type="button"
             variant="outline"
             disabled={processing}
-            onClick={onCancel}
+            onClick={cancel}
           >
             Отмена
           </Button>
