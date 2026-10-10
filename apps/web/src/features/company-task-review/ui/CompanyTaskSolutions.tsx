@@ -6,10 +6,13 @@ import {
   AsyncState,
   Badge,
   Button,
+  FadeIn,
   Input,
   Label,
   OptionSelect,
   PageControls,
+  Stagger,
+  StaggerItem,
 } from '@/shared/ui';
 import { formatDate } from '@/shared/utils';
 import type { Company } from '@/entities/company';
@@ -51,38 +54,42 @@ export const CompanyTaskSolutions = ({
 
   if (creating) {
     return (
-      <CompanyTaskCreateForm
-        companyId={company.id}
-        onCancel={() => setCreating(false)}
-        onDirtyChange={onDirtyChange}
-        onBusyChange={onBusyChange}
-        onCreated={(created) => {
-          setCreating(false);
-          setOffset(0);
-          setSearch('');
-          setFilters({ status: 'all' });
-          query.retry();
-          setTask(created);
-        }}
-      />
+      <FadeIn key="create" distance={6}>
+        <CompanyTaskCreateForm
+          companyId={company.id}
+          onCancel={() => setCreating(false)}
+          onDirtyChange={onDirtyChange}
+          onBusyChange={onBusyChange}
+          onCreated={(created) => {
+            setCreating(false);
+            setOffset(0);
+            setSearch('');
+            setFilters({ status: 'all' });
+            query.retry();
+            setTask(created);
+          }}
+        />
+      </FadeIn>
     );
   }
 
   if (task) {
     return (
-      <CompanyTaskSubmissions
-        key={task.id}
-        company={company}
-        task={task}
-        onBack={() => setTask(null)}
-        onDirtyChange={onDirtyChange}
-        onBusyChange={onBusyChange}
-      />
+      <FadeIn key={task.id} distance={6}>
+        <CompanyTaskSubmissions
+          key={task.id}
+          company={company}
+          task={task}
+          onBack={() => setTask(null)}
+          onDirtyChange={onDirtyChange}
+          onBusyChange={onBusyChange}
+        />
+      </FadeIn>
     );
   }
 
   return (
-    <div className="grid min-w-0 gap-5">
+    <FadeIn key="tasks" distance={6} className="grid min-w-0 gap-5">
       {canReviewTaskSubmission(company.memberRole) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
@@ -161,40 +168,42 @@ export const CompanyTaskSolutions = ({
               description="Здесь появятся опубликованные задания этой компании. Попробуйте изменить поиск или статус."
             />
           )}
-          <div className="grid gap-4 md:grid-cols-2">
+          <Stagger className="grid gap-4 md:grid-cols-2">
             {query.data.items.map((item) => (
-              <article
-                key={item.id}
-                className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 sm:p-6"
-              >
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary">
-                    {item.status === 'open' ? 'Приём открыт' : 'Приём завершён'}
-                  </Badge>
-                  {item.moderationStatus === 'hidden' && (
-                    <Badge variant="outline">Скрыто модератором</Badge>
-                  )}
-                </div>
-                <h2 className="break-words text-lg font-semibold">
-                  {item.title}
-                </h2>
-                <p className="line-clamp-3 break-words text-sm text-muted-foreground">
-                  {item.description || 'Условие задания — в приложенном файле.'}
-                </p>
-                <p className="mt-auto text-sm text-muted-foreground">
-                  Опубликовано: {formatDate(item.publishedAt)}
-                </p>
-                <Button
-                  variant="outline"
-                  disabled={query.loading}
-                  onClick={() => setTask(item)}
-                  className="self-start"
-                >
-                  Посмотреть решения
-                </Button>
-              </article>
+              <StaggerItem key={item.id} className="min-w-0">
+                <article className="flex h-full min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 sm:p-6">
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="secondary">
+                      {item.status === 'open'
+                        ? 'Приём открыт'
+                        : 'Приём завершён'}
+                    </Badge>
+                    {item.moderationStatus === 'hidden' && (
+                      <Badge variant="outline">Скрыто модератором</Badge>
+                    )}
+                  </div>
+                  <h2 className="break-words text-lg font-semibold">
+                    {item.title}
+                  </h2>
+                  <p className="line-clamp-3 break-words text-sm text-muted-foreground">
+                    {item.description ||
+                      'Условие задания — в приложенном файле.'}
+                  </p>
+                  <p className="mt-auto text-sm text-muted-foreground">
+                    Опубликовано: {formatDate(item.publishedAt)}
+                  </p>
+                  <Button
+                    variant="outline"
+                    disabled={query.loading}
+                    onClick={() => setTask(item)}
+                    className="self-start"
+                  >
+                    Посмотреть решения
+                  </Button>
+                </article>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
           <PageControls
             offset={query.data.offset}
             count={query.data.items.length}
@@ -204,6 +213,6 @@ export const CompanyTaskSolutions = ({
           />
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 };

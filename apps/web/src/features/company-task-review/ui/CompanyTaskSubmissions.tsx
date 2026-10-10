@@ -10,6 +10,8 @@ import {
   Label,
   OptionSelect,
   PageControls,
+  Stagger,
+  StaggerItem,
 } from '@/shared/ui';
 import { formatDate } from '@/shared/utils';
 import type { Company } from '@/entities/company';
@@ -152,52 +154,51 @@ export const CompanyTaskSubmissions = ({
               description="Попробуйте другой статус. Здесь появятся доступные ответы кандидатов на это задание."
             />
           )}
-          <div className="grid gap-3">
+          <Stagger className="grid gap-3">
             {query.data.items.map((submission) => (
-              <article
-                key={submission.id}
-                className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="grid min-w-0 gap-2">
-                  <h3 className="font-semibold">
-                    Кандидат {submission.candidateId.slice(0, 8)}
-                  </h3>
-                  <p className="break-all text-sm text-muted-foreground">
-                    {submission.file.originalName}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant={
-                        submission.status === 'reviewed'
-                          ? 'success'
-                          : 'secondary'
-                      }
-                    >
-                      {submission.status === 'reviewed'
-                        ? 'Проверено'
-                        : 'Ожидает проверки'}
-                    </Badge>
-                    {submission.score !== null && (
-                      <span className="text-sm font-medium">
-                        {submission.score} из 100
+              <StaggerItem key={submission.id} className="min-w-0">
+                <article className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="grid min-w-0 gap-2">
+                    <h3 className="font-semibold">
+                      Кандидат {submission.candidateId.slice(0, 8)}
+                    </h3>
+                    <p className="break-all text-sm text-muted-foreground">
+                      {submission.file.originalName}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant={
+                          submission.status === 'reviewed'
+                            ? 'success'
+                            : 'secondary'
+                        }
+                      >
+                        {submission.status === 'reviewed'
+                          ? 'Проверено'
+                          : 'Ожидает проверки'}
+                      </Badge>
+                      {submission.score !== null && (
+                        <span className="text-sm font-medium">
+                          {submission.score} из 100
+                        </span>
+                      )}
+                      <span className="text-sm text-muted-foreground">
+                        {formatDate(submission.submittedAt)}
                       </span>
-                    )}
-                    <span className="text-sm text-muted-foreground">
-                      {formatDate(submission.submittedAt)}
-                    </span>
+                    </div>
                   </div>
-                </div>
-                <Button
-                  variant="outline"
-                  disabled={query.loading}
-                  onClick={() => setSubmissionId(submission.id)}
-                  className="self-start sm:self-auto"
-                >
-                  Посмотреть решение
-                </Button>
-              </article>
+                  <Button
+                    variant="outline"
+                    disabled={query.loading}
+                    onClick={() => setSubmissionId(submission.id)}
+                    className="self-start sm:self-auto"
+                  >
+                    Посмотреть решение
+                  </Button>
+                </article>
+              </StaggerItem>
             ))}
-          </div>
+          </Stagger>
           <PageControls
             offset={query.data.offset}
             count={query.data.items.length}

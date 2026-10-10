@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderCircleIcon } from 'lucide-react';
 
 import { ApiError } from '@/shared/api';
 import { Button, Input, Label, Textarea, toast } from '@/shared/ui';
@@ -151,6 +152,12 @@ export const TaskReviewForm = ({
         disabled={isSubmitting}
         className="justify-self-start"
       >
+        {isSubmitting && (
+          <LoaderCircleIcon
+            aria-hidden="true"
+            className="animate-spin motion-reduce:animate-none"
+          />
+        )}
         {isSubmitting ? 'Сохраняем…' : 'Сохранить проверку'}
       </Button>
     </form>

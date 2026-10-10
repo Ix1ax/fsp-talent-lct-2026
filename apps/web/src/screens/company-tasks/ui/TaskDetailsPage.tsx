@@ -2,9 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  Building2Icon,
+  CalendarClockIcon,
+  CheckCircle2Icon,
+  FileTextIcon,
+} from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { AsyncState, Badge, Button } from '@/shared/ui';
+import { AsyncState, Badge, Button, FadeIn } from '@/shared/ui';
 import {
   downloadTask,
   getTask,
@@ -14,7 +20,7 @@ import { isTaskOpen, TaskSolutionForm } from '@/features/task-solution';
 
 import { useTaskQuery } from '../model';
 import { SubmissionResult } from './SubmissionResult';
-import { TaskDetailsSkeleton } from './TaskDetailsLoading';
+import { TaskDetailsSkeleton } from './TaskDetailsSkeleton';
 import { TaskFileDownload } from './TaskFileDownload';
 import { TasksShell } from './TasksShell';
 
@@ -36,13 +42,7 @@ export const TaskDetailsPage = ({ id }: TaskDetailsPageProps) => {
   const task = query.data;
 
   return (
-    <TasksShell title="Задание компании">
-      <Link
-        href={STATIC_ROUTES.CANDIDATE_TASKS}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Все задания
-      </Link>
+    <TasksShell title="Задание компании" detail>
       {query.pending && <TaskDetailsSkeleton />}
       {query.error && (
         <AsyncState
@@ -53,60 +53,110 @@ export const TaskDetailsPage = ({ id }: TaskDetailsPageProps) => {
         />
       )}
       {task && (
-        <div className="grid items-start gap-6 lg:grid-cols-[1.2fr_1fr]">
-          <section className="space-y-5 rounded-xl border bg-card p-5 sm:p-6">
-            <Badge variant="secondary">
-              {isTaskOpen(task, now) ? 'Приём открыт' : 'Приём завершён'}
-            </Badge>
-            <div>
-              <p className="break-words text-sm text-muted-foreground">
+        <FadeIn distance={6} className="grid gap-8">
+          <header className="grid gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                <Building2Icon aria-hidden="true" className="size-4" />
                 {task.companyName}
-              </p>
-              <h2 className="mt-2 break-words text-2xl font-semibold">
-                {task.title}
-              </h2>
+              </span>
+              <Badge variant={isTaskOpen(task, now) ? 'success' : 'secondary'}>
+                {isTaskOpen(task, now) ? 'Приём открыт' : 'Приём завершён'}
+              </Badge>
             </div>
-            <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
-              {task.description || 'Скачайте файл с условием задания.'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {task.deadlineAt
-                ? `Срок отправки: ${new Date(task.deadlineAt).toLocaleString('ru-RU')}`
-                : 'Срок окончания не указан'}
-            </p>
-            <TaskFileDownload
-              name={task.file.originalName}
-              load={() => downloadTask(id)}
-            />
-          </section>
-          <div>
-            {submission && <SubmissionResult submission={submission} />}
-            {!submission && task.mySubmission && (
-              <div className="space-y-4 rounded-xl border bg-card p-6">
-                <h2 className="font-semibold">Вы уже отправили решение</h2>
-                <p className="text-sm text-muted-foreground">
-                  Повторная отправка и замена файла недоступны.
+            <h1 className="max-w-4xl break-words text-3xl font-semibold leading-tight tracking-tight sm:text-4xl">
+              {task.title}
+            </h1>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-muted-foreground">
+              <span className="inline-flex items-center gap-2">
+                <CalendarClockIcon
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                />
+                {task.deadlineAt
+                  ? `Приём до ${new Date(task.deadlineAt).toLocaleString('ru-RU')}`
+                  : 'Без срока окончания'}
+              </span>
+              <span className="inline-flex items-center gap-2">
+                <CheckCircle2Icon
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                />
+                Одна окончательная отправка
+              </span>
+            </div>
+          </header>
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
+            <section
+              aria-labelledby="task-condition-title"
+              className="grid min-w-0 gap-6 rounded-xl border bg-card p-5 sm:p-8"
+            >
+              <div className="grid gap-4">
+                <h2 id="task-condition-title" className="text-xl font-semibold">
+                  Условие задания
+                </h2>
+                <p className="whitespace-pre-wrap break-words text-base leading-relaxed text-muted-foreground">
+                  {task.description ||
+                    'Скачайте файл с полным условием задания.'}
                 </p>
-                <Button asChild>
-                  <Link
-                    href={`${STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS}/${task.mySubmission.id}`}
-                  >
-                    Посмотреть решение
-                  </Link>
-                </Button>
               </div>
-            )}
-            {!submission && !task.mySubmission && isTaskOpen(task, now) && (
-              <TaskSolutionForm task={task} onSubmitted={setSubmission} />
-            )}
-            {!submission && !task.mySubmission && !isTaskOpen(task, now) && (
-              <AsyncState
-                title="Приём решений завершён"
-                description="Условие можно скачать, но отправить решение уже нельзя."
-              />
-            )}
+              <div className="grid gap-4 border-t pt-6">
+                <div className="flex items-center gap-3">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                    <FileTextIcon
+                      aria-hidden="true"
+                      className="size-5 text-muted-foreground"
+                    />
+                  </span>
+                  <div>
+                    <h3 className="font-medium">Файл условия</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {(task.file.sizeBytes / 1024).toLocaleString('ru-RU', {
+                        maximumFractionDigits: 1,
+                      })}{' '}
+                      КиБ
+                    </p>
+                  </div>
+                </div>
+                <TaskFileDownload
+                  name={task.file.originalName}
+                  load={() => downloadTask(id)}
+                />
+              </div>
+            </section>
+            <div className="min-w-0">
+              {submission && (
+                <FadeIn distance={4}>
+                  <SubmissionResult submission={submission} />
+                </FadeIn>
+              )}
+              {!submission && task.mySubmission && (
+                <div className="space-y-4 rounded-xl border bg-card p-6">
+                  <h2 className="font-semibold">Вы уже отправили решение</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Повторная отправка и замена файла недоступны.
+                  </p>
+                  <Button asChild>
+                    <Link
+                      href={`${STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS}/${task.mySubmission.id}`}
+                    >
+                      Посмотреть решение
+                    </Link>
+                  </Button>
+                </div>
+              )}
+              {!submission && !task.mySubmission && isTaskOpen(task, now) && (
+                <TaskSolutionForm task={task} onSubmitted={setSubmission} />
+              )}
+              {!submission && !task.mySubmission && !isTaskOpen(task, now) && (
+                <AsyncState
+                  title="Приём решений завершён"
+                  description="Условие можно скачать, но отправить решение уже нельзя."
+                />
+              )}
+            </div>
           </div>
-        </div>
+        </FadeIn>
       )}
     </TasksShell>
   );

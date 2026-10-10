@@ -18,7 +18,7 @@ interface StaggerProps extends HTMLMotionProps<'div'> {
 }
 
 export const Stagger = ({
-  interval = 0.025,
+  interval = 0.008,
   inView = false,
   once = true,
   ...props

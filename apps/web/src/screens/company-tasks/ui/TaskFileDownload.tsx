@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { DownloadIcon, LoaderCircleIcon } from 'lucide-react';
 
-import { Button } from '@/shared/ui';
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui';
 import { taskErrorMessage } from '@/features/task-solution';
 
 interface TaskFileDownloadProps {
@@ -33,13 +34,28 @@ export const TaskFileDownload = ({ name, load }: TaskFileDownloadProps) => {
 
   return (
     <div className="space-y-2">
-      <Button
-        variant="outline"
-        disabled={pending}
-        onClick={() => void download()}
-      >
-        {pending ? 'Скачиваем…' : 'Скачать файл'}
-      </Button>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() => void download()}
+          >
+            {pending ? (
+              <LoaderCircleIcon
+                aria-hidden="true"
+                className="animate-spin motion-reduce:animate-none"
+              />
+            ) : (
+              <DownloadIcon aria-hidden="true" />
+            )}
+            {pending ? 'Скачиваем…' : 'Скачать файл'}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6} className="motion-reduce:animate-none">
+          Скачать «{name}» на устройство.
+        </TooltipContent>
+      </Tooltip>
       <p className="break-all text-sm text-muted-foreground">{name}</p>
       {error && (
         <p role="alert" className="text-sm text-destructive">

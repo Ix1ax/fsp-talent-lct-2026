@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { LoaderCircleIcon } from 'lucide-react';
 
 import { ApiError } from '@/shared/api';
 import { Button } from '@/shared/ui';
@@ -72,6 +73,12 @@ export const TaskSolutionDownload = ({
         disabled={pending}
         onClick={() => void download()}
       >
+        {pending && (
+          <LoaderCircleIcon
+            aria-hidden="true"
+            className="animate-spin motion-reduce:animate-none"
+          />
+        )}
         {pending ? 'Скачиваем…' : 'Скачать решение'}
       </Button>
       <p className="break-all text-sm text-muted-foreground">

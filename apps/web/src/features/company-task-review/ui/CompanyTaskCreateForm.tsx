@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderCircleIcon } from 'lucide-react';
 
 import { useUnsavedGuard } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
@@ -229,6 +230,12 @@ export const CompanyTaskCreateForm = ({
       )}
       <div className="flex flex-wrap gap-3">
         <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting && (
+            <LoaderCircleIcon
+              aria-hidden="true"
+              className="animate-spin motion-reduce:animate-none"
+            />
+          )}
           {isSubmitting ? 'Публикуем…' : 'Опубликовать задание'}
         </Button>
         <Button

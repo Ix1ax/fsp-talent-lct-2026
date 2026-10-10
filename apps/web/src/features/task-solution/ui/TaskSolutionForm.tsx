@@ -1,10 +1,18 @@
 import { useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { InfoIcon, LoaderCircleIcon, UploadIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { Button, Input, Label } from '@/shared/ui';
+import {
+  Button,
+  FileInput,
+  Label,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/shared/ui';
 import { getCandidateFullProfileClient } from '@/entities/candidate';
 import {
   type CompanyTask,
@@ -71,34 +79,62 @@ export const TaskSolutionForm = ({
   return (
     <form
       onSubmit={(event) => void form.handleSubmit(send)(event)}
-      className="space-y-5 rounded-xl border bg-card p-5 sm:p-6"
+      className="space-y-6 rounded-xl border bg-card p-5 sm:p-6"
     >
       <div>
-        <h2 className="text-lg font-semibold">Отправить решение</h2>
+        <h2 className="flex items-center gap-2 text-xl font-semibold">
+          <UploadIcon aria-hidden="true" className="size-5 text-primary" />
+          Ваше решение
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Один окончательный ответ на задание. После отправки заменить файл
           нельзя.
         </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="solution-file">Файл решения</Label>
-        <Input
-          id="solution-file"
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.zip,.txt,.md"
-          {...form.register('file')}
-          disabled={form.formState.isSubmitting}
-          aria-invalid={!!form.formState.errors.file}
-          aria-describedby="solution-file-help solution-file-error"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) form.setValue('file', file, { shouldValidate: true });
-            else {
-              form.resetField('file');
-              void form.trigger('file');
-            }
-            form.setValue('confirmed', false);
-          }}
+        <div className="flex items-center gap-1">
+          <Label htmlFor="solution-file">Файл решения</Label>
+          <Tooltip delayDuration={300}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-8 text-muted-foreground"
+                aria-label="О выборе файла решения"
+              >
+                <InfoIcon aria-hidden="true" className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent
+              sideOffset={6}
+              className="motion-reduce:animate-none"
+            >
+              Выберите один файл с готовым решением. До отправки его можно
+              заменить.
+            </TooltipContent>
+          </Tooltip>
+        </div>
+        <Controller
+          control={form.control}
+          name="file"
+          render={({ field }) => (
+            <FileInput
+              id="solution-file"
+              name={field.name}
+              ref={field.ref}
+              onBlur={field.onBlur}
+              fileName={field.value?.name ?? null}
+              accept=".pdf,.jpg,.jpeg,.png,.zip,.txt,.md"
+              disabled={form.formState.isSubmitting}
+              aria-invalid={!!form.formState.errors.file}
+              aria-describedby="solution-file-help solution-file-error"
+              onChange={(event) => {
+                field.onChange(event.target.files?.[0]);
+                form.setValue('confirmed', false, { shouldDirty: true });
+              }}
+            />
+          )}
         />
         <p id="solution-file-help" className="text-sm text-muted-foreground">
           До 10 МиБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
@@ -114,7 +150,7 @@ export const TaskSolutionForm = ({
         </p>
       </div>
       <div>
-        <label className="flex items-start gap-3 text-sm">
+        <label className="flex items-start gap-3 rounded-lg bg-muted p-4 text-sm leading-relaxed">
           <input
             type="checkbox"
             className="mt-1 size-4 accent-primary"
@@ -159,9 +195,27 @@ export const TaskSolutionForm = ({
           {error}
         </p>
       )}
-      <Button type="submit" disabled={form.formState.isSubmitting}>
-        {form.formState.isSubmitting ? 'Отправляем…' : 'Отправить решение'}
-      </Button>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={form.formState.isSubmitting}
+          >
+            {form.formState.isSubmitting && (
+              <LoaderCircleIcon
+                aria-hidden="true"
+                className="animate-spin motion-reduce:animate-none"
+              />
+            )}
+            {form.formState.isSubmitting ? 'Отправляем…' : 'Отправить решение'}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent sideOffset={6} className="motion-reduce:animate-none">
+          Отправить окончательное решение работодателю. После отправки заменить
+          файл нельзя.
+        </TooltipContent>
+      </Tooltip>
     </form>
   );
 };
