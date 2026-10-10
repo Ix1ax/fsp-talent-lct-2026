@@ -95,28 +95,29 @@ export const CandidateEducationCard = (props: CandidateEducationCardProps) => {
                 </Button>
               </div>
             )}
-            {actions.items && (
-              <p className="text-sm text-muted-foreground">
-                Добавлено: {actions.items.length} из {EDUCATION_LIMIT}
-              </p>
-            )}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              {actions.items && (
+                <p className="text-sm text-muted-foreground">
+                  Добавлено: {actions.items.length} из {EDUCATION_LIMIT}
+                </p>
+              )}
+              <Button
+                ref={addButton}
+                type="button"
+                variant="outline"
+                disabled={disabled || actions.atLimit || !!editor}
+                onClick={openNew}
+              >
+                <PlusIcon aria-hidden="true" />
+                Добавить образование
+              </Button>
+            </div>
             {actions.atLimit && (
               <p className="text-sm text-muted-foreground">
                 Можно добавить не больше 10 записей об образовании. Существующие
                 записи можно редактировать и удалять.
               </p>
             )}
-            <Button
-              ref={addButton}
-              type="button"
-              variant="outline"
-              className="self-start"
-              disabled={disabled || actions.atLimit || !!editor}
-              onClick={openNew}
-            >
-              <PlusIcon aria-hidden="true" />
-              Добавить образование
-            </Button>
             {editor && (
               <EducationForm
                 record={editor.record}
@@ -147,7 +148,7 @@ export const CandidateEducationCard = (props: CandidateEducationCardProps) => {
               <ul
                 ref={list}
                 aria-label="Образование"
-                className="flex flex-col gap-5"
+                className="flex flex-col gap-3"
               >
                 {actions.items.map((record) => (
                   <EducationItem

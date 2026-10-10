@@ -1,6 +1,6 @@
 import { TIMEZONE_LABELS } from '@/shared/contants';
 import { briefTokenClassName } from '@/shared/ui';
-import { formatSalaryRange } from '@/shared/utils';
+import { formatSalaryRange, pluralizeRu } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
 
@@ -21,15 +21,18 @@ const SummaryToken = ({ value, fallback }: SummaryTokenProps) => (
 
 /** Бриф потребности одной фразой: значения справочника — токены. */
 export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
-  const skillNames = (required: boolean) =>
-    value.skills
-      .filter((item) => item.required === required)
-      .map(
-        (item) =>
-          skills.find((skill) => skill.id === item.skillId)?.name ??
-          `Сохранённый навык ${item.skillId}`,
-      )
-      .join(', ');
+  // Потребность хранит только ID навыков: без названий показываем количество,
+  // а не технический идентификатор.
+  const skillNames = (required: boolean) => {
+    const selected = value.skills.filter((item) => item.required === required);
+    const names = selected
+      .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
+      .filter((name): name is string => !!name);
+    if (!selected.length) return '';
+    return names.length === selected.length
+      ? names.join(', ')
+      : pluralizeRu(selected.length, ['навык', 'навыка', 'навыков']);
+  };
   const specialization =
     catalogs.specializations.find((item) => item.id === value.specializationId)
       ?.name ??

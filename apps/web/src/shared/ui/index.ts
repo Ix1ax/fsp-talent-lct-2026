@@ -62,6 +62,7 @@ export {
   DropdownMenuTrigger,
 } from './DropdownMenu';
 export { FieldMessage } from './FieldMessage';
+export { FileInput } from './FileInput';
 export { HeaderBar, headerNavItemClassName } from './HeaderBar';
 export { HeaderMobileSearch } from './HeaderMobileSearch';
 export { HeaderNavLink } from './HeaderNavLink';
@@ -92,9 +93,11 @@ export {
   PopoverTitle,
   PopoverTrigger,
 } from './Popover';
+export { RecordItem, RecordItemActions } from './RecordItem';
 export { RemoteState } from './RemoteState';
 export type { SalaryRange } from './SalaryRangeInput';
 export { SalaryRangeInput } from './SalaryRangeInput';
+export { SectionTabs } from './SectionTabs';
 export {
   Select,
   SelectContent,

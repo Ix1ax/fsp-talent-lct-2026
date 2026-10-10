@@ -106,7 +106,7 @@ export const ProfileEmploymentFields = ({
               disabled={busy}
             >
               <SelectTrigger
-                className="h-11! w-full text-base sm:text-sm"
+                className="w-full text-base sm:text-sm"
                 ref={field.ref}
                 id={CANDIDATE_ELEMENT_IDS.profile.searchStatus.input}
                 onBlur={field.onBlur}

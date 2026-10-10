@@ -29,7 +29,6 @@ export const CandidateHomePage = ({
   const pathname = usePathname();
 
   const {
-    user,
     fullProfile,
     step,
     busy,
@@ -54,11 +53,6 @@ export const CandidateHomePage = ({
     >
       <div className="flex flex-col gap-8">
         <PageHeader
-          eyebrow={
-            <span className="normal-case [overflow-wrap:anywhere]">
-              Кандидат · {user.email}
-            </span>
-          }
           title="Мой профиль"
           description="Расскажите об опыте и условиях работы. Публикацией профиля управляете вы."
         />

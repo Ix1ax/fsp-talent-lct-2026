@@ -84,7 +84,6 @@ export const CompanyProfileVacancies = ({
             <VacancyCard
               key={need.id}
               need={need}
-              company={company}
               catalogs={catalogs}
               skills={skills}
               busy={busy}

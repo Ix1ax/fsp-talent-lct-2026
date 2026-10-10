@@ -51,16 +51,16 @@ export const EmployerNavigation = ({
       aria-label="Разделы кабинета работодателя"
       value={section}
       disabled={busy}
-      className="lg:hidden"
+      className="h-12 rounded-xl bg-card data-[size=default]:h-12 lg:hidden"
       onValueChange={(value) => onNavigate(value as EmployerSection)}
       options={COMPANY_TABS.map((item) => ({
         value: item.id,
-        label: item.title,
+        label: LABELS[item.id],
       }))}
     />
     <nav
       aria-label="Разделы кабинета работодателя"
-      className="hidden w-fit min-w-0 gap-1 overflow-x-auto rounded-lg bg-hover p-1 lg:flex"
+      className="hidden min-w-0 gap-1 overflow-x-auto rounded-xl border border-border/60 bg-card p-1.5 lg:flex"
     >
       {COMPANY_TABS.map((item) => {
         const Icon = ICONS[item.id];
@@ -81,9 +81,9 @@ export const EmployerNavigation = ({
             aria-disabled={busy || undefined}
             tabIndex={busy ? -1 : undefined}
             className={cn(
-              'flex h-8 shrink-0 items-center gap-2 rounded-md px-3 text-sm font-medium transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring',
+              'flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring',
               section === item.id
-                ? 'bg-card text-foreground ring-1 ring-border'
+                ? 'bg-accent text-brand-text'
                 : 'text-muted-foreground',
               busy && 'pointer-events-none opacity-60',
             )}

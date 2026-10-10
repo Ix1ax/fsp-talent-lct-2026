@@ -20,7 +20,7 @@ export const AsyncState = ({
   <div
     role={error ? 'alert' : 'status'}
     className={cn(
-      'flex min-h-48 flex-col items-center justify-center gap-2 border border-dashed border-input p-6 text-center',
+      'flex min-h-48 flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-input bg-muted/30 p-6 text-center',
       className,
     )}
   >
@@ -29,8 +29,8 @@ export const AsyncState = ({
       <p
         className={
           error
-            ? 'max-w-md text-sm text-destructive'
-            : 'max-w-md text-sm text-muted-foreground'
+            ? 'max-w-xl text-sm text-balance text-destructive'
+            : 'max-w-xl text-sm text-balance text-muted-foreground'
         }
       >
         {description}

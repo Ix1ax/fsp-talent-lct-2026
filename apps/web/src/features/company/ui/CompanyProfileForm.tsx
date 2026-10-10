@@ -138,7 +138,6 @@ export const CompanyProfileForm = ({
                   {...form.register(field.key)}
                   type={'type' in field ? field.type : 'text'}
                   maxLength={field.max}
-                  className="min-h-11"
                   aria-invalid={!!form.formState.errors[field.key]}
                 />
                 {form.formState.errors[field.key] && (

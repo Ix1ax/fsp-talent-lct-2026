@@ -1,1 +1,7 @@
-export { AppHeader } from './ui';
+export {
+  EMPLOYER_NAV_ITEMS,
+  getHeaderNavItems,
+  GUIDES_NAV_ITEM,
+  type HeaderNavItem,
+} from './model';
+export { HeaderGuidesButton, HeaderNavLabel } from './ui';

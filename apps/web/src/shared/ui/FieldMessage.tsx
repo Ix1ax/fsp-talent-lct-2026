@@ -20,7 +20,8 @@ export const FieldMessage = ({
       id={id}
       role={role}
       className={cn(
-        'min-h-5 text-sm text-destructive',
+        // Пустое сообщение не занимает места: отступы между полями задаёт форма.
+        'min-h-5 text-sm text-destructive empty:hidden',
         lines === 2 && 'min-h-10',
         className,
       )}

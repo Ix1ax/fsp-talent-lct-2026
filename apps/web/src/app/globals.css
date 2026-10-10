@@ -57,14 +57,14 @@
   --color-brand: var(--brand);
   --color-brand-soft: var(--brand-soft);
   --color-surface: var(--surface);
-  /* Шкала формы по ролям (направление A). Не добавлять промежуточные значения. */
-  --radius-sm: 4px; /* бейдж, грейд */
-  --radius-md: 6px; /* токен брифа, пункт меню, сегмент вкладок */
-  --radius-lg: 8px; /* кнопка, поле, селект, строка списка */
-  --radius-xl: 12px; /* карточка, панель */
-  --radius-2xl: 16px; /* поповер, диалог, sheet, cookie */
-  --radius-3xl: 16px; /* устарело: использовать 2xl */
-  --radius-4xl: 16px; /* устарело: использовать 2xl */
+  /* Шкала формы по ролям: мягкие скругления кабинета работодателя. Не добавлять промежуточные значения. */
+  --radius-sm: 6px; /* бейдж, грейд */
+  --radius-md: 8px; /* токен брифа, пункт меню, сегмент вкладок */
+  --radius-lg: 10px; /* кнопка, поле, селект, строка списка */
+  --radius-xl: 14px; /* карточка, панель */
+  --radius-2xl: 18px; /* шапка, заголовок страницы, поповер, диалог, sheet */
+  --radius-3xl: 18px; /* устарело: использовать 2xl */
+  --radius-4xl: 18px; /* устарело: использовать 2xl */
   --container-page: 80rem; /* 1280px — общий контейнер шапки, страниц и футера */
 }
 
@@ -104,7 +104,7 @@
   --warning-soft: rgba(138, 93, 0, 0.08);
   --overlay: rgba(27, 28, 33, 0.35);
   --shadow-popover: 0 16px 48px rgba(27, 28, 33, 0.16);
-  --radius: 0.5rem;
+  --radius: 0.625rem;
   --sidebar: var(--card);
   --sidebar-foreground: var(--foreground);
   --sidebar-primary: var(--primary);

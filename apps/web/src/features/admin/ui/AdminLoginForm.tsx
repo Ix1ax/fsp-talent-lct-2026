@@ -50,9 +50,6 @@ export const AdminLoginForm = () => {
           <ThemeToggle />
         </div>
         <div className="mb-6">
-          <p className="mb-2 text-xs uppercase tracking-widest text-brand-text">
-            Управление платформой
-          </p>
           <h1 className="text-2xl font-semibold sm:text-3xl">Вход в админку</h1>
           <p className="mt-3 text-sm text-muted-foreground">
             Используйте отдельный аккаунт администратора.

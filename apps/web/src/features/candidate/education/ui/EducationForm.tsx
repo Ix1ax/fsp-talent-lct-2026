@@ -117,7 +117,7 @@ export const EducationForm = ({
                   ref={field.ref}
                   id={`${prefix}-level`}
                   onBlur={field.onBlur}
-                  className="h-11! w-full min-w-0"
+                  className="w-full min-w-0"
                   aria-invalid={!!errors.level}
                   aria-describedby={
                     errors.level ? `${prefix}-level-error` : undefined
@@ -163,9 +163,7 @@ export const EducationForm = ({
                     .filter(Boolean)
                     .join(' ') || undefined
                 }
-                className={
-                  isYear ? 'min-h-11 w-full sm:w-40' : 'min-h-11 min-w-0'
-                }
+                className={isYear ? 'w-full sm:w-40' : 'min-w-0'}
                 {...(isYear
                   ? {
                       min: GRADUATION_YEAR_MIN,

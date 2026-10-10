@@ -19,11 +19,7 @@ export const LegalDocumentPage = ({ slug }: LegalDocumentPageProps) => {
 
   return (
     <main className="container-page page-rhythm flex flex-col gap-8">
-      <PageHeader
-        eyebrow="Документы"
-        title={current.title}
-        description={current.description}
-      />
+      <PageHeader title={current.title} description={current.description} />
       <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
         <nav
           aria-label="Документы"

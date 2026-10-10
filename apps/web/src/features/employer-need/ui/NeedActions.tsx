@@ -2,7 +2,9 @@ import {
   ArchiveIcon,
   CopyIcon,
   MoreHorizontalIcon,
+  PencilIcon,
   Undo2Icon,
+  UsersIcon,
 } from 'lucide-react';
 
 import {
@@ -19,6 +21,8 @@ interface NeedActionsProps {
   pending: boolean;
   dirty: boolean;
   onFind: () => void;
+  /** Черновик: перейти к брифу, чтобы дополнить и активировать. */
+  onEditBrief?: () => void;
   onRestore: () => void;
   onArchive: () => void;
   onDuplicate: () => void;
@@ -29,6 +33,7 @@ export const NeedActions = ({
   pending,
   dirty,
   onFind,
+  onEditBrief,
   onRestore,
   onArchive,
   onDuplicate,
@@ -41,7 +46,14 @@ export const NeedActions = ({
         disabled={pending || dirty}
         title={dirty ? 'Сохраните изменения перед поиском' : undefined}
       >
-        Найти кандидатов →
+        <UsersIcon />
+        Подобрать кандидатов
+      </Button>
+    )}
+    {canWrite && status === 'draft' && onEditBrief && (
+      <Button type="button" disabled={pending} onClick={onEditBrief}>
+        <PencilIcon />
+        Дополнить бриф
       </Button>
     )}
     {canWrite && status === 'archived' && (
@@ -61,14 +73,14 @@ export const NeedActions = ({
           <Button
             type="button"
             variant="outline"
-            className="w-12 px-0"
+            className="w-10 px-0"
             disabled={pending}
             aria-label="Ещё действия с потребностью"
           >
             <MoreHorizontalIcon />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent align="end">
           <DropdownMenuItem onSelect={onDuplicate}>
             <CopyIcon />
             Копия в черновики

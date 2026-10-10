@@ -10,12 +10,12 @@ import { BrandLogo } from '@/shared/ui';
 
 const linkClassName =
   'text-sm text-foreground underline-offset-4 hover:underline focus-visible:underline';
-const headingClassName =
-  'font-mono text-xs tracking-[0.06em] text-caption uppercase';
+// Заголовки колонок — тот же стиль, что у подзаголовков в кабинетах.
+const headingClassName = 'text-sm font-semibold text-foreground';
 
 export const SiteFooter = () => (
-  <footer className="mt-auto border-t border-border bg-card">
-    <div className="container-page flex flex-col gap-8 pt-10 pb-8">
+  <footer className="container-page mt-auto pb-3">
+    <div className="flex flex-col gap-8 rounded-2xl border border-border/60 bg-card px-5 pt-8 pb-6 sm:px-8 sm:pt-10 sm:pb-8">
       <div className="flex flex-wrap gap-x-12 gap-y-8">
         <div className="flex max-w-90 flex-[1_1_280px] flex-col gap-3">
           <Link

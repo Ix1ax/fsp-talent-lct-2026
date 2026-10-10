@@ -67,7 +67,6 @@ export const IncomingOffers = () => {
   return (
     <main className="container-page page-rhythm grid flex-1 content-start gap-8">
       <PageHeader
-        eyebrow="Кандидат · предложения"
         title="Входящие предложения"
         description="Посмотрите условия работодателей и ответьте на предложение."
         actions={

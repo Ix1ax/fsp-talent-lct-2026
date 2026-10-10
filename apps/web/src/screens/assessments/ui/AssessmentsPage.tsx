@@ -40,7 +40,6 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
   return (
     <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
       <PageHeader
-        eyebrow="Кандидат · тестирование"
         title="Тестирование"
         description="Подтвердите навыки и грейд. Результаты проверяются автоматически."
         actions={

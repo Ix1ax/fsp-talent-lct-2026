@@ -72,7 +72,7 @@ const Content = ({ children }: AdminShellProps) => {
         <AdminShellHeader exiting={exiting} onLogout={() => void exit()} />
         <div
           key={session.admin.id}
-          className="relative z-10 mx-auto w-full max-w-[1440px] p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8"
+          className="relative z-10 mx-auto w-full max-w-[1440px] p-4 pt-4 pb-[calc(5rem+env(safe-area-inset-bottom))] sm:p-6 sm:pt-4 sm:pb-[calc(5rem+env(safe-area-inset-bottom))] lg:p-8 lg:pt-4"
         >
           <PageTransition
             transitionKey={pathname}

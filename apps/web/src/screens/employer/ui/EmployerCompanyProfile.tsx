@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState } from 'react';
-import { ChevronRightIcon, PencilIcon } from 'lucide-react';
+import { PencilIcon } from 'lucide-react';
 
 import { useUnsavedGuard } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
@@ -26,7 +26,6 @@ interface EmployerCompanyProfileProps {
   onDirtyChange: (value: boolean) => void;
   onSave: (input: CompanyInput, create: boolean) => Promise<Company>;
   onEdit: () => void;
-  onCompanies: () => void;
   onVacancies: () => void;
   onOpenNeed: (need: EmployerNeed) => void;
 }
@@ -43,7 +42,6 @@ export const EmployerCompanyProfile = ({
   onDirtyChange,
   onSave,
   onEdit,
-  onCompanies,
   onVacancies,
   onOpenNeed,
 }: EmployerCompanyProfileProps) => {
@@ -72,63 +70,17 @@ export const EmployerCompanyProfile = ({
   return (
     <div
       ref={contentRef}
-      className="grid min-w-0 scroll-mt-40 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)] md:grid-rows-[auto_1fr] lg:scroll-mt-24 xl:grid-cols-[300px_minmax(0,1fr)]"
+      className="grid min-w-0 scroll-mt-40 items-start gap-5 md:grid-cols-[260px_minmax(0,1fr)] lg:scroll-mt-24 xl:grid-cols-[300px_minmax(0,1fr)]"
     >
-      <header className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 sm:p-6 md:col-start-2">
-        <nav
-          aria-label="Путь к компании"
-          className="flex min-w-0 items-center gap-2 text-xs text-muted-foreground"
-        >
-          <Button
-            variant="link"
-            size="sm"
-            disabled={busy}
-            onClick={onCompanies}
-            className="h-auto shrink-0 p-0 text-xs text-muted-foreground"
-          >
-            Компании
-          </Button>
-          <ChevronRightIcon aria-hidden="true" className="size-3 shrink-0" />
-          <span aria-current="page" className="truncate">
-            {company.name}
-          </span>
-        </nav>
-        <div className="flex min-w-0 flex-col items-start justify-between gap-4 lg:flex-row">
-          <div className="grid min-w-0 flex-1 gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight [overflow-wrap:anywhere] sm:text-3xl">
-              {company.name}
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {editing && canEdit
-                ? 'Редактирование профиля компании'
-                : 'О компании, контакты и открытые потребности.'}
-            </p>
-          </div>
-          {canEdit && !editing && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => {
-                onEdit();
-                setEditing(true);
-              }}
-              className="shrink-0"
-            >
-              <PencilIcon />
-              Редактировать
-            </Button>
-          )}
-        </div>
-      </header>
       <div
         className={cn(
-          'min-w-0 self-stretch md:col-start-1 md:row-start-1 md:row-span-2',
+          'min-w-0 self-stretch md:col-start-1 md:row-start-1',
           editing && canEdit && 'hidden md:block',
         )}
       >
         <CompanyProfileSummary company={company} api={api} />
       </div>
-      <div className="grid min-w-0 gap-5 md:col-start-2">
+      <div className="grid min-w-0 gap-5 md:col-start-2 md:row-start-1">
         {editing && canEdit ? (
           <CompanyProfileForm
             company={company}
@@ -145,7 +97,22 @@ export const EmployerCompanyProfile = ({
               aria-label="О компании"
               className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 sm:p-6"
             >
-              <h2 className="text-xl font-semibold">О компании</h2>
+              <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xl font-semibold">О компании</h2>
+                {canEdit && (
+                  <Button
+                    variant="outline"
+                    disabled={busy}
+                    onClick={() => {
+                      onEdit();
+                      setEditing(true);
+                    }}
+                  >
+                    <PencilIcon />
+                    Редактировать
+                  </Button>
+                )}
+              </div>
               <p className="whitespace-pre-wrap text-sm leading-7 [overflow-wrap:anywhere]">
                 {company.description || 'Описание компании пока не добавлено.'}
               </p>

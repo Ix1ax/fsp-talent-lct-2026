@@ -4,7 +4,6 @@ import { useCallback } from 'react';
 import { usePathname } from 'next/navigation';
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { cn } from '@/shared/lib/utils';
 import { AsyncState, Button, PageHeader, Skeleton } from '@/shared/ui';
 import type { Skill } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
@@ -35,6 +34,11 @@ import { EmployerOverview } from './EmployerOverview';
 import { VacancyBank } from './VacancyBank';
 
 const EMPTY_SKILLS: Skill[] = [];
+const MEMBER_ROLE_LABELS = {
+  owner: 'владелец',
+  recruiter: 'рекрутер',
+  viewer: 'наблюдатель',
+} as const;
 
 interface EmployerHomePageProps {
   user: SessionUser;
@@ -88,7 +92,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
     createCompany ||
     section === 'invitation' ||
     (!!board.resources && !company);
-  const profileView = section === 'profile' && !!company && !createCompany;
   const companySwitcher = board.resources && (
     <CompanySwitcher
       companies={board.resources.companies}
@@ -120,52 +123,37 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
         ref={mainRef}
         className="container-page page-rhythm flex-1 scroll-mt-40 [overflow-anchor:none] lg:scroll-mt-24"
       >
-        <div className="flex flex-col gap-8">
-          {!profileView && (
-            <PageHeader
-              className={cn(centered && 'mx-auto w-full max-w-2xl')}
-              eyebrow={
-                company && !centered && section !== 'overview'
-                  ? `Работодатель · ${company.name}`
-                  : 'Работодатель'
-              }
-              title={
-                createCompany
-                  ? 'Создание компании'
-                  : section === 'overview'
-                    ? 'Компании'
-                    : section === 'invitation'
-                      ? 'Приглашение в компанию'
-                      : selectedSection?.title
-              }
-              description={
-                section === 'overview'
-                  ? 'Ваши компании и команды. Выберите компанию, чтобы работать с её профилем, сотрудниками и потребностями.'
-                  : selectedSection?.description
-              }
-              actions={
-                board.resources &&
-                board.resources.companies.length > 0 &&
-                !centered &&
-                section !== 'overview' ? (
-                  <div className="flex min-w-0 flex-col items-start gap-1 sm:max-w-xs sm:items-end">
-                    {companySwitcher}
-                    {company && (
-                      <p className="text-xs text-muted-foreground">
-                        {
-                          {
-                            owner: 'Владелец',
-                            recruiter: 'Рекрутер',
-                            viewer: 'Наблюдатель',
-                          }[company.memberRole]
-                        }
-                      </p>
-                    )}
-                  </div>
-                ) : undefined
-              }
-            />
-          )}
+        <div className="flex flex-col gap-6">
+          <PageHeader
+            title={
+              createCompany
+                ? 'Создание компании'
+                : section === 'overview'
+                  ? 'Компании'
+                  : section === 'invitation'
+                    ? 'Приглашение в компанию'
+                    : selectedSection?.title
+            }
+            description={
+              section === 'overview'
+                ? 'Ваши компании и команды. Выберите компанию, чтобы работать с её профилем, сотрудниками и потребностями.'
+                : selectedSection?.description
+            }
+            actions={
+              board.resources &&
+              board.resources.companies.length > 0 &&
+              !centered &&
+              section !== 'overview' ? (
+                <div className="flex w-full min-w-0 flex-col gap-1.5 lg:w-72">
+                  <span className="text-xs text-muted-foreground">
+                    Компания
+                    {company && ` · ${MEMBER_ROLE_LABELS[company.memberRole]}`}
+                  </span>
+                  {companySwitcher}
+                </div>
+              ) : undefined
+            }
+          />
           {board.resources && board.catalogsError && (
             <AsyncState
               error
@@ -193,7 +181,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
           ) : (
             <>
               {section === 'invitation' ? (
-                <div className="mx-auto grid w-full max-w-2xl gap-4">
+                <div className="grid w-full min-w-0 gap-4">
                   <Button
                     variant="ghost"
                     className="self-start"
@@ -212,7 +200,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                   />
                 </div>
               ) : createCompany ? (
-                <div className="mx-auto grid w-full max-w-2xl gap-4">
+                <div className="grid w-full min-w-0 gap-4">
                   <Button
                     variant="ghost"
                     className="justify-self-start"
@@ -271,16 +259,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                     hidden={section === 'overview'}
                     className="grid min-w-0 items-start gap-5"
                   >
-                    {profileView && (
-                      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm text-muted-foreground">
-                          Профиль компании
-                        </p>
-                        <div className="min-w-0 sm:max-w-xs">
-                          {companySwitcher}
-                        </div>
-                      </div>
-                    )}
                     <div
                       className="min-w-0"
                       hidden={
@@ -295,11 +273,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                       />
                     </div>
                     <div
-                      className={cn(
-                        'grid min-w-0 scroll-mt-40 gap-5 lg:scroll-mt-24',
-                        (section === 'documents' || section === 'team') &&
-                          'mx-auto w-full max-w-4xl',
-                      )}
+                      className="grid min-w-0 scroll-mt-40 gap-5 lg:scroll-mt-24"
                       key={company.id}
                     >
                       <section
@@ -319,7 +293,6 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                           onSave={board.saveCompany}
                           onDirtyChange={profileDirtyChanged}
                           onEdit={board.clearError}
-                          onCompanies={() => navigate('overview')}
                           onVacancies={() => {
                             guardNeed(() => {
                               setComposer(false);

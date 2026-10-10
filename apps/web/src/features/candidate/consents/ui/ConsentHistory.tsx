@@ -1,5 +1,7 @@
+import { RefreshCwIcon } from 'lucide-react';
+
 import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
-import { Button } from '@/shared/ui';
+import { Badge, Button, RecordItem } from '@/shared/ui';
 import type { CandidateConsents } from '@/entities/candidate';
 
 import { CONSENT_LABELS } from '../model';
@@ -36,10 +38,12 @@ export const ConsentHistory = ({
   >
     <Button
       variant="outline"
+      size="sm"
       disabled={busy || loading}
       onClick={() => void onRefresh()}
       className="self-start"
     >
+      <RefreshCwIcon aria-hidden="true" />
       Обновить историю
     </Button>
     {loading && (
@@ -58,28 +62,26 @@ export const ConsentHistory = ({
     {history && history.items.length > 0 && (
       <ul className="flex flex-col gap-3">
         {history.items.map((consent) => (
-          <li
+          <RecordItem
             key={consent.id}
-            className="rounded-lg border border-border p-3 text-sm"
-          >
-            <p className="font-medium">{CONSENT_LABELS[consent.kind]}</p>
-            <p className="mt-1 text-muted-foreground">
-              Версия: {consent.policyVersion}. Дано:{' '}
-              {formatDate(consent.grantedAt)} UTC.
-            </p>
-            {consent.revokedAt ? (
-              <p className="text-muted-foreground">
-                Отозвано: {formatDate(consent.revokedAt)} UTC.
-              </p>
-            ) : (
-              <p className="text-muted-foreground">Действует</p>
-            )}
-            {consent.companyId && (
-              <p className="mt-1 text-xs text-muted-foreground [overflow-wrap:anywhere]">
-                Компания: {consent.companyId}
-              </p>
-            )}
-          </li>
+            title={CONSENT_LABELS[consent.kind]}
+            badges={
+              <Badge variant={consent.revokedAt ? 'outline' : 'success'}>
+                {consent.revokedAt ? 'Отозвано' : 'Действует'}
+              </Badge>
+            }
+            meta={
+              <>
+                Версия {consent.policyVersion} · дано{' '}
+                {formatDate(consent.grantedAt)} UTC
+                {consent.revokedAt &&
+                  ` · отозвано ${formatDate(consent.revokedAt)} UTC`}
+              </>
+            }
+            subtitle={
+              consent.companyId ? `Компания: ${consent.companyId}` : undefined
+            }
+          />
         ))}
       </ul>
     )}

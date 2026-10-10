@@ -28,10 +28,10 @@ export const ConsentOption = ({
   return (
     <section
       aria-labelledby={titleId}
-      className="flex min-w-0 flex-col gap-4 border border-border p-4"
+      className="flex min-w-0 flex-col gap-4 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h3 id={titleId} className="min-w-0 text-base font-medium">
+        <h3 id={titleId} className="min-w-0 text-base font-semibold">
           {CONSENT_LABELS[kind]}
         </h3>
         <Badge
@@ -50,7 +50,7 @@ export const ConsentOption = ({
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 w-full self-start sm:w-auto"
+          className="w-full self-start sm:w-auto"
           disabled={disabled}
           onClick={onRevoke}
           aria-label={`Отозвать согласие: ${CONSENT_LABELS[kind]}`}

@@ -231,7 +231,6 @@ export const CandidateFilters = ({
                 step={0.1}
                 value={experienceMin}
                 onChange={(event) => onExperienceMin(event.target.value)}
-                className="h-11"
               />
             </label>
             <label className="grid gap-2 text-xs text-muted-foreground">
@@ -244,7 +243,6 @@ export const CandidateFilters = ({
                 step={0.1}
                 value={experienceMax}
                 onChange={(event) => onExperienceMax(event.target.value)}
-                className="h-11"
               />
             </label>
           </div>
@@ -264,7 +262,6 @@ export const CandidateFilters = ({
                   : undefined,
               })
             }
-            className="h-11"
           />
         </label>
         <div className="grid gap-3">

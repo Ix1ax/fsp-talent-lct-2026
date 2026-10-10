@@ -10,18 +10,18 @@ import {
 } from '@/shared/ui';
 import type { SessionUser } from '@/entities/session';
 import { UserMenu } from '@/features/auth';
+import {
+  EMPLOYER_NAV_ITEMS,
+  GUIDES_NAV_ITEM,
+  HeaderGuidesButton,
+  HeaderNavLabel,
+} from '@/widgets/app-header';
 
 import type { EmployerSection } from '../constants/sections';
 
-// Рабочие разделы — в шапке; настройки компании (профиль, документы,
-// сотрудники) — вкладками внутри раздела «Компании».
-const LINKS = [
-  { section: 'overview', label: 'Компании' },
-  { section: 'vacancies', label: 'Потребности' },
-  { section: 'candidates', label: 'Банк соискателей' },
-  { section: 'offers', label: 'Предложения' },
-] as const;
-
+// Пункты те же, что в общей шапке сайта; здесь переходы идут через
+// защиту несохранённых изменений кабинета. Настройки компании (профиль,
+// документы, сотрудники) — вкладками внутри раздела «Компании».
 const COMPANY_SECTIONS: EmployerSection[] = [
   'overview',
   'profile',
@@ -46,78 +46,82 @@ export const EmployerHeader = ({
   hasCompany,
   href,
   onNavigate,
-}: EmployerHeaderProps) => (
-  <HeaderBar
-    navLabel="Основная навигация кабинета"
-    mobileNav
-    brand={
-      <Link
-        data-preserve-draft
-        href={STATIC_ROUTES.EMPLOYER}
-        className="flex min-h-11 items-center"
-        aria-label="ФСП Скаут — главная кабинета"
-        onNavigate={(e) => {
-          e.preventDefault();
-          onNavigate('overview');
-        }}
-        onClick={(e) => {
-          if (busy) e.preventDefault();
-        }}
-      >
-        <span className="sm:hidden">
-          <BrandLogo compact />
-        </span>
-        <span className="hidden sm:inline-flex">
-          <BrandLogo />
-        </span>
-      </Link>
-    }
-    nav={
-      <>
-        {LINKS.map((item) => {
-          const disabled = busy || (!hasCompany && item.section !== 'overview');
-          const active =
-            item.section === 'overview'
-              ? COMPANY_SECTIONS.includes(section)
-              : section === item.section;
-          return (
-            <Link
-              key={item.section}
-              data-preserve-draft
-              href={href(item.section)}
-              aria-current={active ? 'page' : undefined}
-              aria-disabled={disabled || undefined}
-              tabIndex={disabled ? -1 : undefined}
-              onNavigate={(e) => {
-                e.preventDefault();
-                if (!disabled) onNavigate(item.section);
-              }}
-              onClick={(e) => {
-                if (disabled) e.preventDefault();
-              }}
-              className={cn(
-                headerNavItemClassName,
-                disabled && 'pointer-events-none opacity-50',
-              )}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+}: EmployerHeaderProps) => {
+  const workItems = (
+    <>
+      {EMPLOYER_NAV_ITEMS.map((item) => {
+        const target = item.id as EmployerSection;
+        const disabled = busy || (!hasCompany && target !== 'overview');
+        const active =
+          target === 'overview'
+            ? COMPANY_SECTIONS.includes(section)
+            : section === target;
+        return (
+          <Link
+            key={item.id}
+            data-preserve-draft
+            href={href(target)}
+            aria-current={active ? 'page' : undefined}
+            aria-disabled={disabled || undefined}
+            tabIndex={disabled ? -1 : undefined}
+            onNavigate={(e) => {
+              e.preventDefault();
+              if (!disabled) onNavigate(target);
+            }}
+            onClick={(e) => {
+              if (disabled) e.preventDefault();
+            }}
+            className={cn(
+              headerNavItemClassName,
+              disabled && 'pointer-events-none opacity-50',
+            )}
+          >
+            <HeaderNavLabel item={item} />
+          </Link>
+        );
+      })}
+    </>
+  );
+  return (
+    <HeaderBar
+      navLabel="Основная навигация кабинета"
+      brand={
         <Link
           data-preserve-draft
-          href={STATIC_ROUTES.GUIDES}
-          className={headerNavItemClassName}
+          href={STATIC_ROUTES.EMPLOYER}
+          className="flex min-h-11 items-center"
+          aria-label="ФСП Скаут — главная кабинета"
+          onNavigate={(e) => {
+            e.preventDefault();
+            onNavigate('overview');
+          }}
+          onClick={(e) => {
+            if (busy) e.preventDefault();
+          }}
         >
-          Справочник
+          <BrandLogo />
         </Link>
-      </>
-    }
-    actions={
-      <>
-        <ThemeToggle />
-        <UserMenu user={user} />
-      </>
-    }
-  />
-);
+      }
+      nav={
+        <>
+          {workItems}
+          <Link
+            data-preserve-draft
+            href={GUIDES_NAV_ITEM.href}
+            className={headerNavItemClassName}
+          >
+            <HeaderNavLabel item={GUIDES_NAV_ITEM} />
+          </Link>
+        </>
+      }
+      mobileNav={workItems}
+      actions={
+        <>
+          <HeaderGuidesButton />
+          <ThemeToggle />
+          <UserMenu user={user} />
+        </>
+      }
+    />
+  );
+};

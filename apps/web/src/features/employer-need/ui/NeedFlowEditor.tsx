@@ -22,6 +22,7 @@ import { validateNeed } from '../lib';
 import { NEED_FLOW_LAST_STEP, useNeedFlowEditor } from '../model';
 import { BriefPhrase } from './BriefPhrase';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
+import { NeedReadiness } from './NeedReadiness';
 import { NeedSummary } from './NeedSummary';
 
 const STEPS = [
@@ -43,6 +44,8 @@ interface NeedFlowEditorProps {
   onSave: (value: NeedInput) => Promise<void>;
   onBack: () => void;
   onDirtyChange: (value: boolean) => void;
+  /** Кнопка «Потребности» над редактором; на экране потребности назад ведёт сводка. */
+  showBack?: boolean;
 }
 export const NeedFlowEditor = ({
   active = true,
@@ -57,6 +60,7 @@ export const NeedFlowEditor = ({
   onSave,
   onBack,
   onDirtyChange,
+  showBack = true,
 }: NeedFlowEditorProps) => {
   const {
     value,
@@ -89,15 +93,17 @@ export const NeedFlowEditor = ({
     );
   return (
     <div className="grid gap-5">
-      <Button
-        variant="ghost"
-        className="justify-self-start"
-        disabled={pending}
-        onClick={onBack}
-      >
-        <ArrowLeftIcon />
-        Потребности
-      </Button>
+      {showBack && (
+        <Button
+          variant="ghost"
+          className="justify-self-start"
+          disabled={pending}
+          onClick={onBack}
+        >
+          <ArrowLeftIcon />
+          Потребности
+        </Button>
+      )}
       <div className="grid gap-5">
         <div
           ref={stepNavigationRef}
@@ -245,18 +251,7 @@ export const NeedFlowEditor = ({
                     <p className="whitespace-pre-wrap text-sm">
                       {value.description}
                     </p>
-                    <ul className="grid gap-2">
-                      {Object.entries(validateNeed(value, 'active')).map(
-                        ([key, text]) => (
-                          <li
-                            key={key}
-                            className="text-sm text-muted-foreground"
-                          >
-                            {text}
-                          </li>
-                        ),
-                      )}
-                    </ul>
+                    <NeedReadiness value={value} />
                     {value.status === 'draft' &&
                       !Object.keys(validateNeed(value, 'active')).length && (
                         <p className="flex items-center gap-2 text-sm text-success">
@@ -301,35 +296,35 @@ export const NeedFlowEditor = ({
             </form>
           </CardContent>
         </Card>
-        <div className="flex flex-wrap justify-between gap-3 border-t pt-5">
-          {step > 0 && (
+        {/* Шаги переключаются вкладками сверху; здесь — только соседний шаг. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {step > 0 ? (
             <Button
               variant="ghost"
-              size="lg"
               disabled={pending}
               onClick={() => setStep(step - 1)}
             >
               <ArrowLeftIcon />
-              Назад
+              Предыдущий шаг
             </Button>
+          ) : (
+            <span />
           )}
           {step < LAST_STEP && (
             <Button
-              variant="outline"
-              size="lg"
+              variant="ghost"
               disabled={pending}
-              className="ml-auto"
               onClick={() => setStep(step + 1)}
             >
-              {readonly ? 'Продолжить' : 'Продолжить без сохранения'}
+              {readonly ? 'Следующий шаг' : 'Пропустить шаг'}
               <ArrowRightIcon />
             </Button>
           )}
         </div>
         {!readonly && step < LAST_STEP && (
-          <p className="text-center text-sm text-muted-foreground">
-            Изменения отправляются после нажатия «Сохранить». Без сохранения они
-            остаются в черновике этой страницы.
+          <p className="text-xs text-muted-foreground">
+            Пропущенный шаг не сохраняется на сервере: изменения остаются в
+            черновике этой страницы до нажатия «Сохранить».
           </p>
         )}
       </div>

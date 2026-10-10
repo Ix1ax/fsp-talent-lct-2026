@@ -20,7 +20,6 @@ export const GuidesPage = ({
   return (
     <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
       <PageHeader
-        eyebrow="Для кандидатов и работодателей"
         title="Справочник"
         description="Специализации, грейды и форматы работы, которые доступны при заполнении профиля и потребности команды, а также поиск навыка."
       />

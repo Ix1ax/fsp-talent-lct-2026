@@ -113,7 +113,7 @@ export const CandidateProfileForm = ({
         <Button
           type="submit"
           disabled={busy || !dirty || !!consentError}
-          className="min-h-11 w-full sm:w-auto sm:self-start"
+          className="w-full sm:w-auto sm:self-start"
         >
           {submitLabel}
         </Button>

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { AppHeader } from '@/widgets/app-header';
+import { AppHeader } from '@/widgets/app-header/server';
 import { SiteFooter } from '@/widgets/site-footer';
 
 export default function LoginLayout({

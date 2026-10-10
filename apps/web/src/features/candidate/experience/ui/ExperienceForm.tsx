@@ -109,7 +109,7 @@ export const ExperienceForm = ({
                   aria-describedby={
                     !inactive && errors[field.key] ? `${id}-error` : undefined
                   }
-                  className="min-h-11 min-w-0"
+                  className="min-w-0"
                 />
                 <FieldMessage
                   id={`${id}-error`}

@@ -8,63 +8,66 @@ import {
   HeaderNavLink,
   ThemeToggle,
 } from '@/shared/ui';
-import { USER_ROLES } from '@/entities/session';
+import { getRoleHomeRoute, USER_ROLES } from '@/entities/session';
 import { loadSession } from '@/entities/session/api/server';
 import { UserMenu } from '@/features/auth';
 import { OffersNotification } from '@/features/candidate';
 
-const Brand = () => (
-  <Link
-    href={STATIC_ROUTES.HOME}
-    className="flex min-h-11 items-center"
-    aria-label="ФСП Скаут — главная"
-  >
-    <span className="sm:hidden">
-      <BrandLogo compact />
-    </span>
-    <span className="hidden sm:inline-flex">
-      <BrandLogo />
-    </span>
+import {
+  getHeaderNavItems,
+  GUIDES_NAV_ITEM,
+  type HeaderNavItem,
+} from '../model';
+import { HeaderGuidesButton } from './HeaderGuidesButton';
+import { HeaderNavLabel } from './HeaderNavLabel';
+
+interface BrandProps {
+  href: string;
+  label: string;
+}
+
+// Шапка в две строки на узких экранах, поэтому логотип всегда полный.
+const Brand = ({ href, label }: BrandProps) => (
+  <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
+    <BrandLogo />
   </Link>
 );
+
+const renderItems = (items: HeaderNavItem[]) =>
+  items.map((item) => (
+    <HeaderNavLink
+      key={item.id}
+      href={item.href}
+      exclude={item.exclude}
+      include={item.include}
+    >
+      <HeaderNavLabel item={item} />
+    </HeaderNavLink>
+  ));
 
 export const AppHeader = async () => {
   const session = await loadSession();
   const role = session.kind === 'user' ? session.user.role : undefined;
+  const items = getHeaderNavItems(role);
 
   return (
     <HeaderBar
-      brand={<Brand />}
-      mobileNav
-      nav={
-        <>
-          {role === USER_ROLES.CANDIDATE && (
-            <>
-              <HeaderNavLink
-                href={STATIC_ROUTES.CANDIDATE}
-                exclude={[
-                  STATIC_ROUTES.CANDIDATE_ASSESSMENTS,
-                  STATIC_ROUTES.OFFERS,
-                ]}
-              >
-                Профиль
-              </HeaderNavLink>
-              <HeaderNavLink href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
-                Тестирование
-              </HeaderNavLink>
-              <HeaderNavLink href={STATIC_ROUTES.OFFERS}>
-                Предложения
-              </HeaderNavLink>
-            </>
-          )}
-          {role === USER_ROLES.EMPLOYER && (
-            <HeaderNavLink href={STATIC_ROUTES.EMPLOYER}>Кабинет</HeaderNavLink>
-          )}
-          <HeaderNavLink href={STATIC_ROUTES.GUIDES}>Справочник</HeaderNavLink>
-        </>
+      brand={
+        role ? (
+          <Brand href={getRoleHomeRoute(role)} label="ФСП Скаут — кабинет" />
+        ) : (
+          <Brand href={STATIC_ROUTES.HOME} label="ФСП Скаут — главная" />
+        )
+      }
+      nav={renderItems(items)}
+      mobileNav={
+        role
+          ? renderItems(items.filter((item) => item.id !== GUIDES_NAV_ITEM.id))
+          : null
       }
       actions={
         <>
+          <HeaderGuidesButton />
           {session.kind === 'user' && role === USER_ROLES.CANDIDATE && (
             <OffersNotification key={session.user.id} />
           )}

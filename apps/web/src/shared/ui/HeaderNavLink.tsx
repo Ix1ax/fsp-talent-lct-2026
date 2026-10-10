@@ -12,6 +12,8 @@ interface HeaderNavLinkProps {
   exact?: boolean;
   /** Префиксы, при которых пункт не считается активным (вложенный раздел с собственным пунктом). */
   exclude?: string[];
+  /** Дополнительные префиксы, при которых пункт активен. */
+  include?: string[];
 }
 
 export const HeaderNavLink = ({
@@ -19,13 +21,15 @@ export const HeaderNavLink = ({
   children,
   exact,
   exclude = [],
+  include = [],
 }: HeaderNavLinkProps) => {
   const pathname = usePathname();
   const matches = exact
     ? pathname === href
     : pathname === href || pathname.startsWith(`${href}/`);
   const active =
-    matches && !exclude.some((prefix) => pathname.startsWith(prefix));
+    (matches && !exclude.some((prefix) => pathname.startsWith(prefix))) ||
+    include.some((prefix) => pathname.startsWith(prefix));
 
   return (
     <Link

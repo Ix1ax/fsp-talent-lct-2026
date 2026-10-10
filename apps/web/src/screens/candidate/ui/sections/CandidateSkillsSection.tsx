@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ClipboardCheckIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { Button } from '@/shared/ui';
@@ -27,11 +28,18 @@ export const CandidateSkillsSection = ({
   if (!fullProfile) return null;
   return (
     <>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          Подтвердите навыки с помощью тестов.
-        </p>
-        <Button asChild variant="outline">
+      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-primary/15 bg-accent/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 items-start gap-3">
+          <ClipboardCheckIcon
+            aria-hidden="true"
+            className="mt-0.5 size-5 shrink-0 text-brand-text"
+          />
+          <p className="text-sm">
+            Подтвердите уровень навыков тестированием: работодатели видят
+            подтверждённый уровень.
+          </p>
+        </div>
+        <Button asChild variant="outline" className="shrink-0">
           <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
             Тестирование навыков
           </Link>

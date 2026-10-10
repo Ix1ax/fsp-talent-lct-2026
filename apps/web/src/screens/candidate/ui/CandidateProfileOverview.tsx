@@ -13,7 +13,6 @@ export const CandidateProfileOverview = () => {
   return (
     <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
       <PageHeader
-        eyebrow="Кандидат"
         title="Мой кабинет"
         description="Заполните профиль по разделам. Вы можете начать с любого шага и вернуться к остальным позже. Публикацией профиля управляете вы."
         actions={

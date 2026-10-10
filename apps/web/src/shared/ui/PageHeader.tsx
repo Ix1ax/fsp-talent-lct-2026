@@ -3,43 +3,46 @@ import type { ReactNode } from 'react';
 import { cn } from '@/shared/lib/utils';
 
 interface PageHeaderProps {
-  /** Моно-метка роли и контекста: «Работодатель · Технологии Севера». */
-  eyebrow?: ReactNode;
   title: ReactNode;
   description?: ReactNode;
-  /** Одно главное действие страницы. */
+  /** Главное действие или контекст страницы (например, выбор компании). */
   actions?: ReactNode;
+  /** Под заголовком внутри той же карточки: вкладки разделов. */
+  children?: ReactNode;
   className?: string;
 }
 
+/** Заголовок страницы в карточке; надписей над заголовком не используем. */
 export const PageHeader = ({
-  eyebrow,
   title,
   description,
   actions,
+  children,
   className,
 }: PageHeaderProps) => (
   <header
     className={cn(
-      'flex flex-wrap items-end justify-between gap-x-6 gap-y-3 md:gap-y-4',
+      'flex min-w-0 flex-col gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:p-6',
       className,
     )}
   >
-    <div className="flex max-w-3xl min-w-0 flex-col gap-2">
-      {eyebrow && (
-        <p className="truncate font-mono text-[0.6875rem] tracking-[0.08em] text-brand-text uppercase md:text-xs">
-          {eyebrow}
-        </p>
-      )}
-      <h1 className="text-[1.75rem] leading-9 font-bold tracking-tight text-balance md:text-[2.5rem] md:leading-[3rem]">
-        {title}
-      </h1>
-      {description && (
-        <div className="text-[0.9375rem] leading-relaxed text-muted-foreground md:text-base">
-          {description}
+    <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
+      <div className="grid min-w-0 flex-1 gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight text-balance [overflow-wrap:anywhere] sm:text-3xl">
+          {title}
+        </h1>
+        {description && (
+          <div className="max-w-3xl text-base leading-relaxed text-muted-foreground">
+            {description}
+          </div>
+        )}
+      </div>
+      {actions && (
+        <div className="flex min-w-0 shrink-0 flex-wrap items-start gap-3 lg:max-w-sm lg:justify-end">
+          {actions}
         </div>
       )}
     </div>
-    {actions && <div className="flex shrink-0 flex-wrap gap-3">{actions}</div>}
+    {children}
   </header>
 );

@@ -17,9 +17,6 @@ export const LoginPage = () => {
       <div className="flex w-full max-w-110 flex-col gap-4">
         <Card>
           <CardHeader>
-            <p className="font-mono text-xs tracking-[0.08em] text-brand-text uppercase">
-              Вход
-            </p>
             <CardTitle>
               <h1 className="text-2xl font-semibold">Войдите в ФСП Скаут</h1>
             </CardTitle>
