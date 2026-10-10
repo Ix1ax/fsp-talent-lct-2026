@@ -101,6 +101,15 @@ export const createFixtures = (scenario = 'filled') => {
         contact_url: null,
         logo_file_id: null,
         verification_status: 'pending',
+        verification_version: 1,
+        verification_requested_at: date,
+        verification_reviewed_at: null,
+        verification_reviewed_by: null,
+        verification_reason: null,
+        verification_document_ids: [],
+        status: 'active',
+        blocked_reason: null,
+        blocked_at: null,
         member_role: n === 1 ? 'owner' : 'recruiter',
         created_at: date,
       }));
@@ -150,6 +159,56 @@ export const createFixtures = (scenario = 'filled') => {
     companies,
     needs,
     admin,
+    adminUsers: empty
+      ? []
+      : ['employer', 'candidate', 'admin', 'employer'].map((role, i) => ({
+          id: fixtureId(90 + i),
+          role,
+          full_name: [
+            'Тестовый Работодатель',
+            'Тестовый Кандидат',
+            'Тестовый Администратор',
+            null,
+          ][i],
+          full_name_source:
+            i === 3 ? null : i === 1 ? 'candidate_contacts' : 'identity',
+          email: i === 3 ? null : `${role}@example.test`,
+          contact_email: i === 1 ? 'contacts@example.test' : null,
+          identity_updated_at: i === 3 ? null : date,
+          status: i === 1 ? 'blocked' : 'active',
+          blocked_reason: i === 1 ? 'Нарушение правил платформы' : null,
+          blocked_at: i === 1 ? date : null,
+          created_at: date,
+          updated_at: date,
+          candidate_profile_id: role === 'candidate' ? fixtureId(50) : null,
+          search_status: role === 'candidate' ? 'hidden' : null,
+        })),
+    adminMemberships: empty
+      ? []
+      : [
+          {
+            company_id: fixtureId(101),
+            user_id: fixtureId(90),
+            role: 'owner',
+            status: 'active',
+            joined_at: date,
+          },
+          {
+            company_id: fixtureId(101),
+            user_id: fixtureId(91),
+            role: 'viewer',
+            status: 'inactive',
+            joined_at: date,
+          },
+          {
+            company_id: fixtureId(102),
+            user_id: fixtureId(90),
+            role: 'recruiter',
+            status: 'inactive',
+            joined_at: date,
+          },
+        ],
+    adminAudit: [],
     adminCatalogs,
     experience: empty
       ? []

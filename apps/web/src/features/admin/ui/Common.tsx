@@ -1,8 +1,16 @@
-import { type ReactNode, useId, useState } from 'react';
+import {
+  Children,
+  cloneElement,
+  isValidElement,
+  type ReactNode,
+  useId,
+  useState,
+} from 'react';
 
 import {
   Button,
   Combobox,
+  Input,
   Label,
   Select,
   SelectContent,
@@ -10,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
   Skeleton,
+  Textarea,
 } from '@/shared/ui';
 import {
   AdminApiError,
@@ -30,20 +39,50 @@ export const Field = ({
   children,
   error,
   reserveErrorSpace = true,
-}: FieldProps) => (
-  <label className="grid min-w-0 gap-1.5 text-sm [&_input]:min-h-11 [&_input]:text-base [&_textarea]:text-base sm:[&_input]:text-sm sm:[&_textarea]:text-sm">
-    <span className="font-medium">{label}</span>
-    {children}
-    {(reserveErrorSpace || error) && (
-      <span
-        role={error ? 'alert' : undefined}
-        className="min-h-4 text-xs text-destructive"
-      >
-        {error}
+}: FieldProps) => {
+  const id = useId();
+  const labelId = `${id}-label`;
+  const errorId = `${id}-error`;
+  const controls = Children.map(children, (child) => {
+    if (
+      !isValidElement<{
+        'aria-describedby'?: string;
+        'aria-labelledby'?: string;
+        'aria-invalid'?: boolean;
+      }>(child) ||
+      (child.type !== Input && child.type !== Textarea)
+    )
+      return child;
+    return cloneElement(child, {
+      'aria-labelledby': labelId,
+      'aria-invalid': child.props['aria-invalid'] ?? !!error,
+      'aria-describedby':
+        [child.props['aria-describedby'], error ? errorId : undefined]
+          .filter(Boolean)
+          .join(' ') || undefined,
+    });
+  });
+  return (
+    <label
+      data-admin-field
+      className="grid min-w-0 content-start gap-1.5 text-sm [&_input]:h-11 [&_input]:text-base [&_textarea]:text-base sm:[&_input]:text-sm sm:[&_textarea]:text-sm"
+    >
+      <span id={labelId} className="min-h-5 font-medium leading-5">
+        {label}
       </span>
-    )}
-  </label>
-);
+      {controls}
+      {(reserveErrorSpace || error) && (
+        <span
+          id={errorId}
+          role={error ? 'alert' : undefined}
+          className="min-h-4 text-xs text-destructive"
+        >
+          {error}
+        </span>
+      )}
+    </label>
+  );
+};
 interface AdminSelectProps {
   value: string;
   onChange: (value: string) => void;
@@ -51,6 +90,8 @@ interface AdminSelectProps {
   label: string;
   disabled?: boolean;
   showLabel?: boolean;
+  error?: string;
+  reserveErrorSpace?: boolean;
 }
 export const AdminSelect = ({
   value,
@@ -59,11 +100,20 @@ export const AdminSelect = ({
   label,
   disabled,
   showLabel = false,
+  error,
+  reserveErrorSpace = showLabel,
 }: AdminSelectProps) => {
   const id = useId();
   return (
-    <div className="grid min-w-0 gap-2">
-      {showLabel && <Label htmlFor={id}>{label}</Label>}
+    <div
+      data-admin-field={showLabel ? '' : undefined}
+      className="grid min-w-0 content-start gap-1.5 text-sm"
+    >
+      {showLabel && (
+        <Label htmlFor={id} className="min-h-5 leading-5">
+          {label}
+        </Label>
+      )}
       <Select
         value={value || 'all'}
         onValueChange={(next) => onChange(next === 'all' ? '' : next)}
@@ -73,9 +123,13 @@ export const AdminSelect = ({
           id={id}
           className="w-full min-w-0 px-3 py-2 data-[size=default]:h-11 text-base sm:text-sm"
           aria-label={label}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : undefined}
         >
-          <SelectValue placeholder={label}>
-            {options.find((option) => option.value === value)?.label ?? label}
+          <SelectValue placeholder={label} className="min-w-0 flex-1">
+            <span className="truncate">
+              {options.find((option) => option.value === value)?.label ?? label}
+            </span>
           </SelectValue>
         </SelectTrigger>
         <SelectContent
@@ -95,6 +149,15 @@ export const AdminSelect = ({
           ))}
         </SelectContent>
       </Select>
+      {(reserveErrorSpace || error) && (
+        <span
+          id={`${id}-error`}
+          role={error ? 'alert' : undefined}
+          className="min-h-4 text-xs text-destructive"
+        >
+          {error}
+        </span>
+      )}
     </div>
   );
 };
@@ -192,6 +255,7 @@ interface SkillPickerProps {
   excludeId?: string;
   label?: string;
   disabled?: boolean;
+  error?: string;
 }
 export const SkillPicker = ({
   value,
@@ -201,6 +265,7 @@ export const SkillPicker = ({
   excludeId,
   label = 'Навык',
   disabled,
+  error,
 }: SkillPickerProps) => {
   const id = useId();
   const [query, setQuery] = useState('');
@@ -222,8 +287,13 @@ export const SkillPicker = ({
         (item.active !== false && item.moderation_status === 'approved')),
   );
   return (
-    <div className="grid min-w-0 gap-2">
-      <Label htmlFor={id}>{label}</Label>
+    <div
+      data-admin-field
+      className="grid min-w-0 content-start gap-1.5 text-sm [&_button[role=combobox]]:h-11 [&_button[role=combobox]]:min-w-0 [&_button[role=combobox]]:text-base [&_button[role=combobox]>span]:min-w-0 [&_button[role=combobox]>span]:flex-1 [&_button[role=combobox]>span]:text-left sm:[&_button[role=combobox]]:text-sm"
+    >
+      <Label htmlFor={id} className="min-h-5 leading-5">
+        {label}
+      </Label>
       <Combobox
         id={id}
         options={choices.map((item) => ({
@@ -236,16 +306,25 @@ export const SkillPicker = ({
         onValueChange={onChange}
         onSearchChange={setQuery}
         disabled={disabled}
+        aria-invalid={!!error}
+        aria-describedby={`${id}-feedback`}
         placeholder="Выберите навык"
         searchPlaceholder="Поиск навыка на сервере…"
         emptyMessage={
           search.loading ? 'Ищем навыки…' : 'Ничего не найдено. Уточните поиск.'
         }
       />
-      <p className="text-xs text-muted-foreground">
-        Показано до 50 навыков. Для других значений уточните поиск.
-      </p>
-      <ErrorNotice error={search.error} onRetry={search.retry} />
+      <div id={`${id}-feedback`} className="grid min-h-4 content-start gap-1.5">
+        {error && (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground">
+          Показано до 50 навыков. Для других значений уточните поиск.
+        </p>
+        <ErrorNotice error={search.error} onRetry={search.retry} />
+      </div>
     </div>
   );
 };

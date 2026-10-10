@@ -95,7 +95,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
           </div>
           <nav
             aria-label="Вопросы предпросмотра"
-            className="grid gap-2 sm:flex sm:flex-wrap"
+            className="flex flex-wrap gap-2"
           >
             {data.questions.map((q, i) => (
               <Button

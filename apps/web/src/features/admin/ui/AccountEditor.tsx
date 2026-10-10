@@ -76,42 +76,44 @@ export const AccountEditor = ({ onClose, onSaved }: AccountEditorProps) => {
           Будет создан активный аккаунт с ролью администратора.
         </DialogDescription>
         <form onSubmit={submit} className="grid gap-4">
-          <Field label="Почта" error={form.formState.errors.email?.message}>
-            <Input
-              type="email"
-              autoComplete="off"
-              {...form.register('email')}
-            />
-          </Field>
-          <Field label="Пароль" reserveErrorSpace={false}>
-            <Input
-              type="password"
-              autoComplete="new-password"
-              aria-describedby="admin-password-hint admin-password-status"
-              aria-invalid={!!password && !!passwordIssue}
-              {...form.register('password')}
-            />
-            <span
-              id="admin-password-hint"
-              className="text-xs text-muted-foreground"
-            >
-              Рекомендуем 12–72 латинских букв, цифр или знаков. Кириллица и
-              эмодзи тоже разрешены — допустимую длину проверим автоматически.
-            </span>
-            <span
-              id="admin-password-status"
-              role="status"
-              className={`min-h-8 text-xs ${passwordIssue ? 'text-destructive' : 'text-success'}`}
-            >
-              {password
-                ? (passwordIssue ?? 'Длина пароля подходит')
-                : form.formState.errors.password?.message}
-            </span>
-          </Field>
-          <ErrorNotice error={mutation.error} />
-          <Button disabled={mutation.busy || (!!password && !!passwordIssue)}>
-            {mutation.busy ? 'Создаём…' : 'Создать'}
-          </Button>
+          <fieldset disabled={mutation.busy} className="grid min-w-0 gap-4">
+            <Field label="Почта" error={form.formState.errors.email?.message}>
+              <Input
+                type="email"
+                autoComplete="off"
+                {...form.register('email')}
+              />
+            </Field>
+            <Field label="Пароль" reserveErrorSpace={false}>
+              <Input
+                type="password"
+                autoComplete="new-password"
+                aria-describedby="admin-password-hint admin-password-status"
+                aria-invalid={!!password && !!passwordIssue}
+                {...form.register('password')}
+              />
+              <span
+                id="admin-password-hint"
+                className="text-xs text-muted-foreground"
+              >
+                Рекомендуем 12–72 латинских букв, цифр или знаков. Кириллица и
+                эмодзи тоже разрешены — допустимую длину проверим автоматически.
+              </span>
+              <span
+                id="admin-password-status"
+                role="status"
+                className={`min-h-8 text-xs ${passwordIssue ? 'text-destructive' : 'text-success'}`}
+              >
+                {password
+                  ? (passwordIssue ?? 'Длина пароля подходит')
+                  : form.formState.errors.password?.message}
+              </span>
+            </Field>
+            <ErrorNotice error={mutation.error} />
+            <Button disabled={mutation.busy || (!!password && !!passwordIssue)}>
+              {mutation.busy ? 'Создаём…' : 'Создать'}
+            </Button>
+          </fieldset>
         </form>
       </DialogContent>
     </Dialog>

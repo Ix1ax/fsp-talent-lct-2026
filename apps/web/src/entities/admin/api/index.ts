@@ -1,6 +1,7 @@
 export {
   ADMIN_REQUEST_TIMEOUT_MS,
   AdminApiError,
+  adminDownloadFile,
   adminRequest,
   type AdminRequestOptions,
 } from './adminRequest';
@@ -18,6 +19,7 @@ export {
   loadAdminCatalog,
   updateAdminCatalogItem,
 } from './catalogs';
+export * from './operationsSchemas';
 export {
   deleteAdminPreview,
   getAdminPreview,
