@@ -144,8 +144,9 @@ export const Hero = () => {
               type="button"
               onClick={() => {
                 setPaused(playing);
-                if (!playing)
+                if (!playing) {
                   void video.current?.play().catch(() => setPlaying(false));
+                }
               }}
               aria-label={
                 playing ? 'Приостановить видео' : 'Воспроизвести видео'

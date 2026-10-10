@@ -195,13 +195,15 @@ export const ErrorNotice = ({ error, onRetry }: ErrorNoticeProps) => {
     </div>
   );
 };
-export const Status = ({ value }: { value: string }) => (
-  <span
-    className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center whitespace-normal border px-2 py-1 text-center text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
-  >
-    {statusLabels[value] ?? value}
-  </span>
-);
+export const Status = ({ value }: { value: string }) => {
+  return (
+    <span
+      className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center whitespace-normal border px-2 py-1 text-center text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
+    >
+      {statusLabels[value] ?? value}
+    </span>
+  );
+};
 interface PaginationProps {
   offset: number;
   count: number;
@@ -215,38 +217,40 @@ export const Pagination = ({
   total,
   onChange,
   loading,
-}: PaginationProps) => (
-  <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm tabular-nums">
-    <span className="text-muted-foreground">
-      {count ? `${offset + 1}–${offset + count}` : 'Нет записей'}
-      {total !== undefined && ` из ${total}`}
-    </span>
-    {(offset > 0 || count >= 20 || (total ?? 0) > 20) && (
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          className="h-11"
-          disabled={loading || offset === 0}
-          onClick={() => onChange(Math.max(0, offset - 20))}
-        >
-          Назад
-        </Button>
-        <Button
-          variant="outline"
-          className="h-11"
-          disabled={
-            loading ||
-            (total === undefined ? count < 20 : offset + count >= total) ||
-            offset >= 10000
-          }
-          onClick={() => onChange(offset + 20)}
-        >
-          Далее
-        </Button>
-      </div>
-    )}
-  </div>
-);
+}: PaginationProps) => {
+  return (
+    <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm tabular-nums">
+      <span className="text-muted-foreground">
+        {count ? `${offset + 1}–${offset + count}` : 'Нет записей'}
+        {total !== undefined && ` из ${total}`}
+      </span>
+      {(offset > 0 || count >= 20 || (total ?? 0) > 20) && (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="h-11"
+            disabled={loading || offset === 0}
+            onClick={() => onChange(Math.max(0, offset - 20))}
+          >
+            Назад
+          </Button>
+          <Button
+            variant="outline"
+            className="h-11"
+            disabled={
+              loading ||
+              (total === undefined ? count < 20 : offset + count >= total) ||
+              offset >= 10000
+            }
+            onClick={() => onChange(offset + 20)}
+          >
+            Далее
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
 interface SkillPickerProps {
   value: string;
   onChange: (value: string) => void;
@@ -335,17 +339,19 @@ export const AdminListLoading = ({
 }: {
   loading: boolean;
   hasData: boolean;
-}) => (
-  <>
-    <div
-      aria-hidden="true"
-      className={`pointer-events-none absolute inset-x-4 top-0 h-0.5 bg-primary transition-opacity duration-200 motion-reduce:transition-none sm:inset-x-6 ${loading ? 'opacity-100' : 'opacity-0'}`}
-    />
-    {loading && !hasData && (
-      <div aria-hidden="true" className="grid gap-2 py-4">
-        <Skeleton className="h-5 w-1/3" />
-        <Skeleton className="h-4 w-1/2" />
-      </div>
-    )}
-  </>
-);
+}) => {
+  return (
+    <>
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-x-4 top-0 h-0.5 bg-primary transition-opacity duration-200 motion-reduce:transition-none sm:inset-x-6 ${loading ? 'opacity-100' : 'opacity-0'}`}
+      />
+      {loading && !hasData && (
+        <div aria-hidden="true" className="grid gap-2 py-4">
+          <Skeleton className="h-5 w-1/3" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+      )}
+    </>
+  );
+};

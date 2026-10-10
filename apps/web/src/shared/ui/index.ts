@@ -84,6 +84,7 @@ export type { SelectOption } from './OptionSelect';
 export { OptionSelect } from './OptionSelect';
 export { PageControls } from './PageControls';
 export { PageHeader } from './PageHeader';
+export { PageWrapper } from './PageWrapper';
 export {
   Popover,
   PopoverAnchor,

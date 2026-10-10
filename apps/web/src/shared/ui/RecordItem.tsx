@@ -35,35 +35,37 @@ export const RecordItem = ({
   children,
   as: Component = 'li',
   className,
-}: RecordItemProps) => (
-  <Component
-    className={cn(
-      'flex min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5',
-      className,
-    )}
-  >
-    <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-      <div className="grid min-w-0 gap-1 [overflow-wrap:anywhere]">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
-          <h3 className="text-base font-semibold">{title}</h3>
-          {badges}
+}: RecordItemProps) => {
+  return (
+    <Component
+      className={cn(
+        'flex min-w-0 flex-col gap-3 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5',
+        className,
+      )}
+    >
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="grid min-w-0 gap-1 [overflow-wrap:anywhere]">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <h3 className="text-base font-semibold">{title}</h3>
+            {badges}
+          </div>
+          {subtitle && <p className="text-sm">{subtitle}</p>}
+          {meta && <p className="text-sm text-muted-foreground">{meta}</p>}
         </div>
-        {subtitle && <p className="text-sm">{subtitle}</p>}
-        {meta && <p className="text-sm text-muted-foreground">{meta}</p>}
+        {actions && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {actions}
+          </div>
+        )}
       </div>
-      {actions && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          {actions}
+      {children && (
+        <div className="border-t border-border/60 pt-3 text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
+          {children}
         </div>
       )}
-    </div>
-    {children && (
-      <div className="border-t border-border/60 pt-3 text-sm leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere]">
-        {children}
-      </div>
-    )}
-  </Component>
-);
+    </Component>
+  );
+};
 
 interface RecordItemActionsProps {
   /** Доступное имя записи для подписей кнопок: «место работы: Компания». */
@@ -79,29 +81,31 @@ export const RecordItemActions = ({
   disabled,
   onEdit,
   onDelete,
-}: RecordItemActionsProps) => (
-  <>
-    <Button
-      type="button"
-      variant="outline"
-      size="sm"
-      disabled={disabled}
-      onClick={onEdit}
-      aria-label={`Редактировать ${label}`}
-    >
-      <PencilIcon aria-hidden="true" />
-      Изменить
-    </Button>
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon-sm"
-      className="text-muted-foreground hover:text-destructive"
-      disabled={disabled}
-      onClick={onDelete}
-      aria-label={`Удалить ${label}`}
-    >
-      <Trash2Icon aria-hidden="true" />
-    </Button>
-  </>
-);
+}: RecordItemActionsProps) => {
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={disabled}
+        onClick={onEdit}
+        aria-label={`Редактировать ${label}`}
+      >
+        <PencilIcon aria-hidden="true" />
+        Изменить
+      </Button>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon-sm"
+        className="text-muted-foreground hover:text-destructive"
+        disabled={disabled}
+        onClick={onDelete}
+        aria-label={`Удалить ${label}`}
+      >
+        <Trash2Icon aria-hidden="true" />
+      </Button>
+    </>
+  );
+};

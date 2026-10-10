@@ -30,60 +30,62 @@ export const ConsentHistory = ({
   loading,
   busy,
   onRefresh,
-}: ConsentHistoryProps) => (
-  <section
-    id={CANDIDATE_ELEMENT_IDS.consents.history}
-    aria-label="История согласий"
-    className="flex flex-col gap-3"
-  >
-    <Button
-      variant="outline"
-      size="sm"
-      disabled={busy || loading}
-      onClick={() => void onRefresh()}
-      className="self-start"
+}: ConsentHistoryProps) => {
+  return (
+    <section
+      id={CANDIDATE_ELEMENT_IDS.consents.history}
+      aria-label="История согласий"
+      className="flex flex-col gap-3"
     >
-      <RefreshCwIcon aria-hidden="true" />
-      Обновить историю
-    </Button>
-    {loading && (
-      <p role="status" className="text-sm text-muted-foreground">
-        Загрузка истории…
-      </p>
-    )}
-    {error && (
-      <p role="alert" className="text-sm text-destructive">
-        {error}
-      </p>
-    )}
-    {history?.items.length === 0 && (
-      <p className="text-sm text-muted-foreground">Согласий пока нет.</p>
-    )}
-    {history && history.items.length > 0 && (
-      <ul className="flex flex-col gap-3">
-        {history.items.map((consent) => (
-          <RecordItem
-            key={consent.id}
-            title={CONSENT_LABELS[consent.kind]}
-            badges={
-              <Badge variant={consent.revokedAt ? 'outline' : 'success'}>
-                {consent.revokedAt ? 'Отозвано' : 'Действует'}
-              </Badge>
-            }
-            meta={
-              <>
-                Версия {consent.policyVersion} · дано{' '}
-                {formatDate(consent.grantedAt)} UTC
-                {consent.revokedAt &&
-                  ` · отозвано ${formatDate(consent.revokedAt)} UTC`}
-              </>
-            }
-            subtitle={
-              consent.companyId ? `Компания: ${consent.companyId}` : undefined
-            }
-          />
-        ))}
-      </ul>
-    )}
-  </section>
-);
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={busy || loading}
+        onClick={() => void onRefresh()}
+        className="self-start"
+      >
+        <RefreshCwIcon aria-hidden="true" />
+        Обновить историю
+      </Button>
+      {loading && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Загрузка истории…
+        </p>
+      )}
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
+      {history?.items.length === 0 && (
+        <p className="text-sm text-muted-foreground">Согласий пока нет.</p>
+      )}
+      {history && history.items.length > 0 && (
+        <ul className="flex flex-col gap-3">
+          {history.items.map((consent) => (
+            <RecordItem
+              key={consent.id}
+              title={CONSENT_LABELS[consent.kind]}
+              badges={
+                <Badge variant={consent.revokedAt ? 'outline' : 'success'}>
+                  {consent.revokedAt ? 'Отозвано' : 'Действует'}
+                </Badge>
+              }
+              meta={
+                <>
+                  Версия {consent.policyVersion} · дано{' '}
+                  {formatDate(consent.grantedAt)} UTC
+                  {consent.revokedAt &&
+                    ` · отозвано ${formatDate(consent.revokedAt)} UTC`}
+                </>
+              }
+              subtitle={
+                consent.companyId ? `Компания: ${consent.companyId}` : undefined
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+};

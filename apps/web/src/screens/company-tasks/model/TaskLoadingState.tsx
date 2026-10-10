@@ -8,14 +8,16 @@ interface TaskLoadingStateProps {
 export const TaskLoadingState = ({
   children,
   label,
-}: TaskLoadingStateProps) => (
-  <div role="status" aria-label={label} aria-busy="true">
-    <span className="sr-only">{label}</span>
-    <div
-      aria-hidden="true"
-      className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
-    >
-      {children}
+}: TaskLoadingStateProps) => {
+  return (
+    <div role="status" aria-label={label} aria-busy="true">
+      <span className="sr-only">{label}</span>
+      <div
+        aria-hidden="true"
+        className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
+      >
+        {children}
+      </div>
     </div>
-  </div>
-);
+  );
+};

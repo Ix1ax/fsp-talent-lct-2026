@@ -1,6 +1,5 @@
 # See https://nextjs.org/docs/app/building-your-application/configuring/eslint
-.next/
-.next-dev/
+.next*/
 out/
 node_modules/
 .zed/

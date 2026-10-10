@@ -438,12 +438,14 @@ const ChartTitle = ({
 }: {
   title: string;
   description: string;
-}) => (
-  <div>
-    <h2 className="text-lg font-medium">{title}</h2>
-    <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-  </div>
-);
+}) => {
+  return (
+    <div>
+      <h2 className="text-lg font-medium">{title}</h2>
+      <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+    </div>
+  );
+};
 const QueueLink = ({
   href,
   title,
@@ -452,15 +454,17 @@ const QueueLink = ({
   href: string;
   title: string;
   value: number;
-}) => (
-  <Link
-    href={href}
-    className="flex min-w-0 items-center justify-between gap-4 rounded-md border bg-card px-4 py-3 transition-colors hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-ring"
-  >
-    <span className="text-sm">{title}</span>
-    <span className="flex shrink-0 items-center gap-3 text-xl font-semibold tabular-nums">
-      {adminNumber(value)}
-      <ArrowUpRight size={16} className="text-muted-foreground" />
-    </span>
-  </Link>
-);
+}) => {
+  return (
+    <Link
+      href={href}
+      className="flex min-w-0 items-center justify-between gap-4 rounded-md border bg-card px-4 py-3 transition-colors hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-ring"
+    >
+      <span className="text-sm">{title}</span>
+      <span className="flex shrink-0 items-center gap-3 text-xl font-semibold tabular-nums">
+        {adminNumber(value)}
+        <ArrowUpRight size={16} className="text-muted-foreground" />
+      </span>
+    </Link>
+  );
+};

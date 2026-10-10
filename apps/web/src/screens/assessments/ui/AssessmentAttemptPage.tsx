@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { Button, FadeIn } from '@/shared/ui';
-import { AssessmentRunner } from '@/features/assessment-runner';
+import { Button, FadeIn, PageWrapper } from '@/shared/ui';
 
 import { useAssessmentAttempt } from '../model';
+import { AssessmentAttemptContent } from './AssessmentAttemptContent';
 
 interface AssessmentAttemptPageProps {
   attemptId: string;
@@ -16,10 +16,10 @@ interface AssessmentAttemptPageProps {
 export const AssessmentAttemptPage = ({
   attemptId,
 }: AssessmentAttemptPageProps) => {
-  const { attempt, error, loading } = useAssessmentAttempt(attemptId);
+  const state = useAssessmentAttempt(attemptId);
 
   return (
-    <main className="container-page page-rhythm flex flex-1 flex-col gap-6">
+    <PageWrapper>
       <Button asChild variant="outline" className="min-h-11 self-start">
         <Link href={STATIC_ROUTES.CANDIDATE_ASSESSMENTS}>
           <ArrowLeftIcon aria-hidden="true" />К списку тестов
@@ -30,11 +30,7 @@ export const AssessmentAttemptPage = ({
           Тестирование навыков
         </h1>
       </FadeIn>
-      {error && <p role="alert">{error}</p>}
-      {loading && <p role="status">Загружаем попытку…</p>}
-      {attempt && (
-        <AssessmentRunner key={attempt.id} initialAttempt={attempt} />
-      )}
-    </main>
+      <AssessmentAttemptContent state={state} />
+    </PageWrapper>
   );
 };

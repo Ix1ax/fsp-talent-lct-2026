@@ -65,16 +65,22 @@ export const IncomingOffers = () => {
   }, []);
 
   return (
-    <main className="container-page page-rhythm grid flex-1 content-start gap-8">
-      <PageHeader
-        title="Входящие предложения"
-        description="Посмотрите условия работодателей и ответьте на предложение."
-        actions={
-          <Button asChild variant="outline">
-            <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
-          </Button>
-        }
-      />
+    <div className="grid content-start gap-8">
+      <PageHeader>
+        <PageHeader.Row>
+          <PageHeader.Content>
+            <PageHeader.Title>Входящие предложения</PageHeader.Title>
+            <PageHeader.Description>
+              Посмотрите условия работодателей и ответьте на предложение.
+            </PageHeader.Description>
+          </PageHeader.Content>
+          <PageHeader.Actions>
+            <Button asChild variant="outline">
+              <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
+            </Button>
+          </PageHeader.Actions>
+        </PageHeader.Row>
+      </PageHeader>
       <FadeIn delay={FADE_IN_DELAY}>
         <Card>
           <CardHeader>
@@ -185,6 +191,6 @@ export const IncomingOffers = () => {
           onCloseAutoFocus={restoreFocus}
         />
       )}
-    </main>
+    </div>
   );
 };

@@ -87,12 +87,14 @@ const Content = ({ children }: AdminShellProps) => {
   );
 };
 
-export const AdminShell = ({ children }: AdminShellProps) => (
-  <AdminProvider>
-    <div data-admin-shell className="relative isolate min-h-screen">
-      <div className="relative z-10">
-        <Content>{children}</Content>
+export const AdminShell = ({ children }: AdminShellProps) => {
+  return (
+    <AdminProvider>
+      <div data-admin-shell className="relative isolate min-h-screen">
+        <div className="relative z-10">
+          <Content>{children}</Content>
+        </div>
       </div>
-    </div>
-  </AdminProvider>
-);
+    </AdminProvider>
+  );
+};

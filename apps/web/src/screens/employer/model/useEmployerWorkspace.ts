@@ -124,3 +124,8 @@ export const useEmployerWorkspace = ({
     refreshCompanies,
   };
 };
+
+export type EmployerWorkspace = Omit<
+  ReturnType<typeof useEmployerWorkspace>,
+  'mainRef'
+>;

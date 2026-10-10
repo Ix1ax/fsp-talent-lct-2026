@@ -1,4 +1,4 @@
-import { PageHeader } from '@/shared/ui';
+import { PageHeader, PageWrapper } from '@/shared/ui';
 import type { Catalogs, Skill, SkillsSearchQuery } from '@/entities/catalog';
 
 import { CatalogsSection } from './CatalogsSection';
@@ -18,13 +18,20 @@ export const GuidesPage = ({
   skillsError,
 }: GuidesPageProps) => {
   return (
-    <main className="container-page page-rhythm flex flex-1 flex-col gap-8">
-      <PageHeader
-        title="Справочник"
-        description="Специализации, грейды и форматы работы, которые доступны при заполнении профиля и потребности команды, а также поиск навыка."
-      />
+    <PageWrapper>
+      <PageHeader>
+        <PageHeader.Row>
+          <PageHeader.Content>
+            <PageHeader.Title>Справочник</PageHeader.Title>
+            <PageHeader.Description>
+              Специализации, грейды и форматы работы, которые доступны при
+              заполнении профиля и потребности команды, а также поиск навыка.
+            </PageHeader.Description>
+          </PageHeader.Content>
+        </PageHeader.Row>
+      </PageHeader>
       <CatalogsSection catalogs={catalogs} />
       <SkillsSection skills={skills} query={query} error={skillsError} />
-    </main>
+    </PageWrapper>
   );
 };

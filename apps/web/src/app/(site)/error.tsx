@@ -1,30 +1,14 @@
 'use client';
 
-import { ServiceUnavailableNotice } from '@/shared/ui';
+import { ServiceErrorPage } from '@/screens/service-error';
 
-interface ErrorProps {
+interface SiteErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
 }
 
-const SiteError = ({ error, reset }: ErrorProps) => {
-  const isTimeout = /timeout/i.test(error.message);
-  const title = isTimeout
-    ? 'Превышено время ожидания'
-    : 'Сервис временно недоступен';
-  const message =
-    error.message ||
-    'Не удалось связаться с сервисом. Попробуйте повторить попытку позже.';
-
-  return (
-    <main className="flex flex-1 items-center justify-center p-4">
-      <ServiceUnavailableNotice
-        title={title}
-        message={message}
-        onRetry={reset}
-      />
-    </main>
-  );
+const SiteError = ({ error, reset }: SiteErrorProps) => {
+  return <ServiceErrorPage error={error} reset={reset} />;
 };
 
 export default SiteError;

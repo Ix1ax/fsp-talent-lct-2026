@@ -32,49 +32,51 @@ export const CatalogItemActions = ({
   onEdit,
   onToggle,
   onDelete,
-}: CatalogItemActionsProps) => (
-  <div className="flex items-center gap-2">
-    <Button
-      variant="outline"
-      className="min-h-11"
-      disabled={busy}
-      onClick={onEdit}
-    >
-      Изменить
-    </Button>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-11"
-          disabled={busy}
-          aria-label={`Действия с записью «${item.name}»`}
-        >
-          <MoreHorizontal />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="end"
-        className="max-w-[calc(100vw-2rem)] [&_[role=menuitem]]:min-h-11"
+}: CatalogItemActionsProps) => {
+  return (
+    <div className="flex items-center gap-2">
+      <Button
+        variant="outline"
+        className="min-h-11"
+        disabled={busy}
+        onClick={onEdit}
       >
-        {kind === 'skills' && (
-          <DropdownMenuItem asChild>
-            <Link
-              href={`${STATIC_ROUTES.ADMIN_MODERATION}?${queryString({ skill_id: item.id })}`}
-            >
-              Открыть модерацию
-            </Link>
+        Изменить
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-11"
+            disabled={busy}
+            aria-label={`Действия с записью «${item.name}»`}
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="max-w-[calc(100vw-2rem)] [&_[role=menuitem]]:min-h-11"
+        >
+          {kind === 'skills' && (
+            <DropdownMenuItem asChild>
+              <Link
+                href={`${STATIC_ROUTES.ADMIN_MODERATION}?${queryString({ skill_id: item.id })}`}
+              >
+                Открыть модерацию
+              </Link>
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem onSelect={onToggle}>
+            {item.active === false ? 'Восстановить' : 'Архивировать'}
           </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onSelect={onToggle}>
-          {item.active === false ? 'Восстановить' : 'Архивировать'}
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem variant="destructive" onSelect={onDelete}>
-          Удалить запись
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  </div>
-);
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onSelect={onDelete}>
+            Удалить запись
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+};

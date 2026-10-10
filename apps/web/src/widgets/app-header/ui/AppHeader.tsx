@@ -28,11 +28,13 @@ interface BrandProps {
 }
 
 // Шапка в две строки на узких экранах, поэтому логотип всегда полный.
-const Brand = ({ href, label }: BrandProps) => (
-  <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
-    <BrandLogo />
-  </Link>
-);
+const Brand = ({ href, label }: BrandProps) => {
+  return (
+    <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
+      <BrandLogo />
+    </Link>
+  );
+};
 
 const renderItems = (items: HeaderNavItem[]) =>
   items.map((item) => (

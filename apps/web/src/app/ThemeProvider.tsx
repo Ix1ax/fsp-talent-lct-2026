@@ -7,13 +7,15 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-export const ThemeProvider = ({ children }: ThemeProviderProps) => (
-  <Provider
-    attribute="class"
-    defaultTheme="dark"
-    enableSystem
-    disableTransitionOnChange
-  >
-    {children}
-  </Provider>
-);
+export const ThemeProvider = ({ children }: ThemeProviderProps) => {
+  return (
+    <Provider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem
+      disableTransitionOnChange
+    >
+      {children}
+    </Provider>
+  );
+};

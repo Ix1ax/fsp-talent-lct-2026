@@ -11,6 +11,38 @@ const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
 
+const COMPONENT_RETURN_RESTRICTIONS = [
+  {
+    selector:
+      'VariableDeclarator[id.name=/^[A-Z]/] > ArrowFunctionExpression[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+  {
+    selector:
+      'ExportDefaultDeclaration > ArrowFunctionExpression[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+  {
+    selector:
+      'CallExpression[callee.name=/^(memo|forwardRef)$/] > ArrowFunctionExpression.arguments:first-child[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+];
+
+const EMPTY_CATCH_RESTRICTIONS = [
+  {
+    selector: 'CatchClause > BlockStatement[body.length=0]',
+    message:
+      'Пустой catch запрещён, в том числе с комментариями. Нужна явная обработка ошибки.',
+  },
+  {
+    selector:
+      'CallExpression[callee.type="MemberExpression"][callee.property.name="catch"] > :matches(ArrowFunctionExpression, FunctionExpression) > BlockStatement[body.length=0]',
+    message:
+      'Обработчик ошибки не должен быть пустым: обработайте ошибку, выберите fallback или передайте её выше.',
+  },
+];
+
 const eslintConfig = [
   {
     ignores: [
@@ -52,19 +84,16 @@ const eslintConfig = [
       ],
       'simple-import-sort/exports': 'error',
       'no-empty': ['error', { allowEmptyCatch: false }],
+      'no-restricted-syntax': ['error', ...EMPTY_CATCH_RESTRICTIONS],
+    },
+  },
+  {
+    files: ['src/**/*.tsx'],
+    rules: {
       'no-restricted-syntax': [
         'error',
-        {
-          selector: 'CatchClause > BlockStatement[body.length=0]',
-          message:
-            'Пустой catch запрещён, в том числе с комментариями. Нужна явная обработка ошибки.',
-        },
-        {
-          selector:
-            'CallExpression[callee.type="MemberExpression"][callee.property.name="catch"] > :matches(ArrowFunctionExpression, FunctionExpression) > BlockStatement[body.length=0]',
-          message:
-            'Обработчик ошибки не должен быть пустым: обработайте ошибку, выберите fallback или передайте её выше.',
-        },
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...COMPONENT_RETURN_RESTRICTIONS,
       ],
     },
   },

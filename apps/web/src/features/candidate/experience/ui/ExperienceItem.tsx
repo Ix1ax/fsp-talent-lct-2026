@@ -15,34 +15,36 @@ export const ExperienceItem = ({
   disabled,
   onEdit,
   onDelete,
-}: ExperienceItemProps) => (
-  <RecordItem
-    title={record.position}
-    subtitle={record.company}
-    meta={
-      <>
-        <time dateTime={record.startedOn}>
-          {formatExperienceMonth(record.startedOn)}
-        </time>
-        {' — '}
-        {record.endedOn === null ? (
-          'по настоящее время'
-        ) : (
-          <time dateTime={record.endedOn}>
-            {formatExperienceMonth(record.endedOn)}
+}: ExperienceItemProps) => {
+  return (
+    <RecordItem
+      title={record.position}
+      subtitle={record.company}
+      meta={
+        <>
+          <time dateTime={record.startedOn}>
+            {formatExperienceMonth(record.startedOn)}
           </time>
-        )}
-      </>
-    }
-    actions={
-      <RecordItemActions
-        label={`место работы: ${record.company}`}
-        disabled={disabled}
-        onEdit={onEdit}
-        onDelete={onDelete}
-      />
-    }
-  >
-    {record.description || undefined}
-  </RecordItem>
-);
+          {' — '}
+          {record.endedOn === null ? (
+            'по настоящее время'
+          ) : (
+            <time dateTime={record.endedOn}>
+              {formatExperienceMonth(record.endedOn)}
+            </time>
+          )}
+        </>
+      }
+      actions={
+        <RecordItemActions
+          label={`место работы: ${record.company}`}
+          disabled={disabled}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
+      }
+    >
+      {record.description || undefined}
+    </RecordItem>
+  );
+};

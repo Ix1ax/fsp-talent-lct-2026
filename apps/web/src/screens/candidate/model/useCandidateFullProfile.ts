@@ -68,7 +68,6 @@ export const useCandidateFullProfile = (initial?: CandidateFullProfile) => {
       await refreshFullProfile();
       return true;
     } catch {
-      // refreshFullProfile records the error displayed by the profile and readiness sections.
       return false;
     }
   };

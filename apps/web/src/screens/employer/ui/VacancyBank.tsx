@@ -9,7 +9,6 @@ import {
 import { getApiErrorMessage } from '@/shared/api';
 import { confirmUnsavedChanges, useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import { toast } from '@/shared/ui';
 import {
   AsyncState,
   Button,
@@ -17,6 +16,7 @@ import {
   OptionSelect,
   PageControls,
   Skeleton,
+  toast,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import { NEED_STATUS_LABELS } from '@/entities/employer-need';
