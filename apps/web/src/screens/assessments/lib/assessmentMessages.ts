@@ -1,7 +1,7 @@
 import { ApiError } from '@/shared/api';
 import { formatDate } from '@/shared/utils';
 import type { AvailableAssessment } from '@/entities/assessment';
-import type { Catalogs } from '@/entities/catalog';
+import type { Catalogs, Skill } from '@/entities/catalog';
 
 export const getAssessmentReasonText = (test: AvailableAssessment) => {
   if (test.reason === 'retake_cooldown')
@@ -24,6 +24,7 @@ export const getAssessmentReasonText = (test: AvailableAssessment) => {
 export const getAssessmentTitle = (
   test: AvailableAssessment,
   catalogs?: Catalogs,
+  skills: Skill[] = [],
 ): string => {
   const specialization =
     catalogs?.specializations.find((item) => item.id === test.specializationId)
@@ -33,7 +34,11 @@ export const getAssessmentTitle = (
     catalogs?.grades.find((item) => item.id === test.gradeId)?.name ??
     `Грейд №${test.gradeId}`;
 
-  return `${specialization} · ${grade}`;
+  const language =
+    skills.find((item) => item.id === test.stackSkillId)?.name ??
+    `Стек №${test.stackSkillId}`;
+
+  return `${language} · ${specialization} · ${grade}`;
 };
 
 export const getAssessmentLoadError = (error: unknown): string => {

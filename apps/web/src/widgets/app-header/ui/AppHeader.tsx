@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-import { STATIC_ROUTES } from '@/shared/contants';
+import { APP_HEADER_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
 import {
   BrandLogo,
   Button,
@@ -86,7 +86,10 @@ export const AppHeader = async () => {
               <ThemeToggle />
             </span>
             {session.kind === 'user' ? (
-              <UserMenu user={session.user} />
+              <UserMenu
+                user={session.user}
+                triggerId={APP_HEADER_ELEMENT_IDS.accountMenuTrigger}
+              />
             ) : session.kind === 'unavailable' ? (
               <div className="flex items-center gap-2">
                 {session.displayName && (

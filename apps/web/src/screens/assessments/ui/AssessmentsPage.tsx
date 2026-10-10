@@ -1,13 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
 import {
   AsyncState,
   Button,
-  FadeIn,
   PageHeader,
   Skeleton,
   Stagger,
@@ -17,7 +17,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui';
-import type { Catalogs } from '@/entities/catalog';
+import type { Catalogs, Skill } from '@/entities/catalog';
 
 import { useAssessments } from '../model';
 import { AssessmentHistory } from './AssessmentHistory';
@@ -26,9 +26,16 @@ import { StartAssessmentDialog } from './StartAssessmentDialog';
 
 interface AssessmentsPageProps {
   catalogs?: Catalogs;
+  skills?: Skill[];
+  catalogsError?: string;
 }
 
-export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
+export const AssessmentsPage = ({
+  catalogs,
+  skills = [],
+  catalogsError,
+}: AssessmentsPageProps) => {
+  const router = useRouter();
   const {
     items,
     current,
@@ -56,6 +63,14 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
           </Button>
         }
       />
+      {catalogsError && (
+        <AsyncState
+          error
+          title="Справочники недоступны"
+          description={catalogsError}
+          onRetry={() => router.refresh()}
+        />
+      )}
       <Tabs defaultValue="available" className="gap-6">
         <TabsList
           aria-label="Тестирование"
@@ -68,8 +83,11 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
             История попыток
           </TabsTrigger>
         </TabsList>
-        <TabsContent value="available">
-          <FadeIn className="grid gap-6">
+        <TabsContent
+          value="available"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none"
+        >
+          <div className="grid gap-6">
             <p className="text-sm text-muted-foreground">
               Перед тестированием можно{' '}
               <Link
@@ -136,6 +154,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
                     <AvailableAssessmentCard
                       test={test}
                       catalogs={catalogs}
+                      skills={skills}
                       disabled={busy || !!current}
                       onSelect={select}
                     />
@@ -143,16 +162,19 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
                 ))}
               </Stagger>
             )}
-          </FadeIn>
+          </div>
         </TabsContent>
-        <TabsContent value="history">
-          <FadeIn>
-            <AssessmentHistory catalogs={catalogs} />
-          </FadeIn>
+        <TabsContent
+          value="history"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-300 motion-reduce:animate-none"
+        >
+          <AssessmentHistory catalogs={catalogs} />
         </TabsContent>
       </Tabs>
       <StartAssessmentDialog
         test={selected}
+        catalogs={catalogs}
+        skills={skills}
         busy={busy}
         onClose={close}
         onStart={start}
