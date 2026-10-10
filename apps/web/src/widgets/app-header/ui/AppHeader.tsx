@@ -14,12 +14,13 @@ import { UserMenu } from '@/features/auth';
 import { OffersNotification } from '@/features/candidate';
 
 import {
+  getHeaderNavFrom,
   getHeaderNavItems,
-  GUIDES_NAV_ITEM,
   type HeaderNavItem,
 } from '../model';
 import { AppHeaderPosition } from './AppHeaderPosition';
 import { HeaderGuidesButton } from './HeaderGuidesButton';
+import { HeaderMenuExtra } from './HeaderMenuExtra';
 import { HeaderNavLabel } from './HeaderNavLabel';
 
 interface BrandProps {
@@ -27,7 +28,7 @@ interface BrandProps {
   label: string;
 }
 
-// Шапка в две строки на узких экранах, поэтому логотип всегда полный.
+// Шапка всегда в одну строку: разделы при нехватке места уходят в меню.
 const Brand = ({ href, label }: BrandProps) => (
   <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
     <BrandLogo />
@@ -51,6 +52,7 @@ export const AppHeader = async () => {
   const session = await loadSession();
   const role = session.kind === 'user' ? session.user.role : undefined;
   const items = getHeaderNavItems(role);
+  const hasNav = items.length > 0;
 
   return (
     <AppHeaderPosition>
@@ -62,21 +64,27 @@ export const AppHeader = async () => {
             <Brand href={STATIC_ROUTES.HOME} label="ФСП Скаут — главная" />
           )
         }
-        nav={renderItems(items)}
-        mobileNav={
-          role
-            ? renderItems(
-                items.filter((item) => item.id !== GUIDES_NAV_ITEM.id),
-              )
-            : null
+        nav={hasNav ? renderItems(items) : undefined}
+        navFrom={getHeaderNavFrom(role)}
+        tabs={
+          hasNav
+            ? renderItems(items.filter((item) => !item.secondary))
+            : undefined
         }
+        menuExtra={<HeaderMenuExtra />}
         actions={
           <>
-            <HeaderGuidesButton />
+            {/* С меню справочник и тема на телефоне переезжают в него. */}
+            <HeaderGuidesButton
+              labeled={!hasNav}
+              className={hasNav ? 'max-sm:hidden' : undefined}
+            />
             {session.kind === 'user' && role === USER_ROLES.CANDIDATE && (
               <OffersNotification key={session.user.id} />
             )}
-            <ThemeToggle />
+            <span className={hasNav ? 'contents max-sm:hidden' : 'contents'}>
+              <ThemeToggle />
+            </span>
             {session.kind === 'user' ? (
               <UserMenu user={session.user} />
             ) : session.kind === 'unavailable' ? (

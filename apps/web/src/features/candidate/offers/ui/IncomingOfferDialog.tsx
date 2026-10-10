@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
+import { CheckIcon, LinkIcon, MailIcon } from 'lucide-react';
 
 import { ApiError } from '@/shared/api/errors';
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import { useAsyncMutation, useRemoteData } from '@/shared/hooks';
+import { launchConfetti } from '@/shared/lib/launchConfetti';
 import {
   Button,
   Dialog,
@@ -71,6 +73,10 @@ export const IncomingOfferDialog = ({
           setSaved(updated);
           onUpdate(updated);
           onClose();
+          if (updated.status === 'accepted') {
+            launchConfetti();
+            toast.success('Предложение принято! Работодатель увидит ваш ответ.');
+          }
         } catch (error) {
           if (error instanceof ApiError && error.code === 'response_conflict') {
             const current = await getIncomingOffer(id);
@@ -107,19 +113,41 @@ export const IncomingOfferDialog = ({
         </DialogHeader>
         <RemoteState {...detail} />
         {offer && (
-          <div className="grid gap-4 wrap-anywhere">
+          <div className="grid gap-5 wrap-anywhere">
             <div className="flex flex-wrap items-center gap-3">
               <p className="text-sm font-medium">{offer.companyName}</p>
               <OfferStatusBadge status={offer.status} />
             </div>
-            <p className="whitespace-pre-wrap text-sm">{offer.description}</p>
-            <p className="font-medium">
-              {formatSalaryRange(offer.salaryFromRub, offer.salaryToRub)}
+            <div className="rounded-xl border border-primary/25 bg-linear-to-br from-primary/12 via-card to-(--brand-red)/6 p-4">
+              <p className="text-xs text-muted-foreground">Зарплата</p>
+              <p className="mt-1 text-2xl font-semibold text-brand-text tabular-nums">
+                {formatSalaryRange(offer.salaryFromRub, offer.salaryToRub)}
+              </p>
+            </div>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {offer.description}
             </p>
-            <p className="text-sm">
-              Контакт работодателя: {offer.contactEmail}
-            </p>
-            {offer.contactUrl && <p className="text-sm">{offer.contactUrl}</p>}
+            <div className="grid gap-2 rounded-xl bg-muted/60 p-4 text-sm">
+              <p className="text-xs text-muted-foreground">
+                Контакты работодателя
+              </p>
+              <a
+                href={`mailto:${offer.contactEmail}`}
+                className="flex items-center gap-2 text-brand-text underline-offset-4 hover:underline"
+              >
+                <MailIcon aria-hidden="true" className="size-4 shrink-0" />
+                {offer.contactEmail}
+              </a>
+              {offer.contactUrl && (
+                <p className="flex items-center gap-2">
+                  <LinkIcon
+                    aria-hidden="true"
+                    className="size-4 shrink-0 text-muted-foreground"
+                  />
+                  {offer.contactUrl}
+                </p>
+              )}
+            </div>
             {viewed.error && (
               <div className="grid gap-2">
                 <p role="alert" className="text-sm text-destructive">
@@ -137,13 +165,16 @@ export const IncomingOfferDialog = ({
                 </p>
                 <div className="flex flex-wrap gap-3">
                   <Button
+                    className="max-sm:flex-1"
                     disabled={mutation.pending || detail.loading}
                     onClick={() => respond('accepted')}
                   >
+                    <CheckIcon aria-hidden="true" />
                     Принять предложение
                   </Button>
                   <Button
                     variant="outline"
+                    className="max-sm:flex-1"
                     disabled={mutation.pending || detail.loading}
                     onClick={() => respond('rejected')}
                   >

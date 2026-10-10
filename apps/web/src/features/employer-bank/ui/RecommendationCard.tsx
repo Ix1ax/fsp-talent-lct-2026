@@ -1,7 +1,18 @@
+import type { ReactNode } from 'react';
+import { ChevronDownIcon, MapPinIcon, WalletIcon } from 'lucide-react';
+
 import { TIMEZONE_LABELS } from '@/shared/contants';
+import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 import type { Recommendation } from '@/entities/employer-need';
+
+import {
+  CriteriaPills,
+  MATCH_CONDITION_LABELS,
+  SkillPills,
+} from './MatchCriteria';
+import { MatchScoreRing } from './MatchScoreRing';
 
 interface RecommendationCardProps {
   candidate: Recommendation;
@@ -10,14 +21,32 @@ interface RecommendationCardProps {
   onOpen?: () => void;
 }
 
-const CONDITIONS: Record<string, string> = {
-  work_format: 'формат работы',
-  specialization: 'специализация',
-  grade: 'грейд',
-  skills: 'навыки',
-  salary: 'зарплата',
-  city: 'город',
-  timezone: 'часовой пояс',
+interface MetricProps {
+  label: string;
+  value: ReactNode;
+  muted?: boolean;
+}
+
+const Metric = ({ label, value, muted }: MetricProps) => (
+  <div className="grid gap-0.5 rounded-lg bg-muted/60 px-3 py-2">
+    <dt className="text-xs text-muted-foreground">{label}</dt>
+    <dd
+      className={cn(
+        'text-sm font-semibold tabular-nums',
+        muted && 'font-normal text-muted-foreground',
+      )}
+    >
+      {value}
+    </dd>
+  </div>
+);
+
+const formatPercent = (value: number | null | undefined, empty: string) =>
+  value === null || value === undefined ? empty : `${Math.round(value)}%`;
+
+const formatYears = (months: number) => {
+  const years = Math.round((months / 12) * 10) / 10;
+  return years ? `${years.toLocaleString('ru-RU')} г.` : 'нет';
 };
 
 export const RecommendationCard = ({
@@ -29,7 +58,7 @@ export const RecommendationCard = ({
   const location = [
     candidate.city,
     candidate.timezone
-      ? `Часовой пояс: ${TIMEZONE_LABELS[candidate.timezone] ?? candidate.timezone}`
+      ? (TIMEZONE_LABELS[candidate.timezone] ?? candidate.timezone)
       : null,
   ]
     .filter(Boolean)
@@ -38,96 +67,124 @@ export const RecommendationCard = ({
     .filter((format) => candidate.workFormatIds.includes(format.id))
     .map((format) => format.name)
     .join(', ');
+  const conditions = [
+    formats || 'Формат не указан',
+    candidate.salaryMinRub !== null
+      ? `от ${new Intl.NumberFormat('ru-RU').format(candidate.salaryMinRub)} ₽/мес`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const unknownConditions = candidate.unknownConditions
-    .map((condition) => CONDITIONS[condition] ?? condition)
+    .map((condition) =>
+      (MATCH_CONDITION_LABELS[condition] ?? condition).toLowerCase(),
+    )
     .join(', ');
 
   return (
-    <article className="grid min-w-0 gap-3 rounded-xl border border-border bg-card p-5 xl:grid-cols-[150px_minmax(0,1fr)] xl:p-6">
-      <div>
-        <p className="text-base font-semibold">Кандидат {position}</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {location || 'Город и пояс не указаны'}
-        </p>
-      </div>
-      <div className="grid gap-2">
+    <article className="grid min-w-0 gap-5 rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-sm sm:p-6">
+      <header className="flex items-start gap-4">
         {candidate.matchScore !== undefined && (
-          <p className="font-medium">
-            Совпадение с требованиями: {candidate.matchScore}%
-          </p>
+          <MatchScoreRing value={candidate.matchScore} />
         )}
-        {candidate.testScorePercent !== undefined && (
-          <p className="text-sm text-muted-foreground">
-            Результат теста:{' '}
-            {candidate.testScorePercent === null
-              ? 'нет подтверждения'
-              : `${candidate.testScorePercent}%`}
+        <div className="grid min-w-0 flex-1 gap-1.5">
+          <h3 className="text-lg leading-tight font-semibold">
+            Кандидат {position}
+          </h3>
+          <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPinIcon aria-hidden="true" className="size-4 shrink-0" />
+            <span className="truncate">
+              {location || 'Город и пояс не указаны'}
+            </span>
           </p>
-        )}
-        {candidate.skillMatchScore !== undefined && (
-          <p className="text-sm text-muted-foreground">
-            Совпадение навыков:{' '}
-            {candidate.skillMatchScore === null
-              ? 'требования не заданы'
-              : `${candidate.skillMatchScore}%`}
+          <p className="flex min-w-0 items-center gap-1.5 text-sm">
+            <WalletIcon
+              aria-hidden="true"
+              className="size-4 shrink-0 text-muted-foreground"
+            />
+            <span className="truncate">{conditions}</span>
           </p>
-        )}
-        {candidate.criteria?.map((item) => (
-          <p key={item.code} className="text-sm text-muted-foreground">
-            {CONDITIONS[item.code] ?? item.code}:{' '}
-            {
-              {
-                matched: 'совпадает',
-                mismatched: 'не совпадает',
-                partial: 'частичное совпадение',
-                unknown: 'нет данных',
-              }[item.status]
-            }
-          </p>
-        ))}
-        {candidate.skills?.map((skill) => (
-          <p key={skill.id} className="text-sm">
-            {skill.name}:{' '}
-            {
-              {
-                test: 'подтверждён тестом',
-                claimed: 'заявлен кандидатом',
-                missing: 'нет данных',
-              }[skill.source]
-            }
-            {skill.required ? ' · обязательный' : ''}
-          </p>
-        ))}
-        {candidate.reasons.length ? (
-          <ul className="list-inside list-disc space-y-1 text-sm">
-            {candidate.reasons.map((reason, index) => (
-              <li key={`${index}-${reason}`}>{reason}</li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-sm">Совпадения не подтверждены</p>
-        )}
-        {candidate.unknownConditions.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Не указаны: {unknownConditions}
-          </p>
-        )}
-        <p className="text-sm text-muted-foreground">
-          {formats || 'Формат не указан'}
-          {candidate.salaryMinRub !== null
-            ? ` · от ${new Intl.NumberFormat('ru-RU').format(candidate.salaryMinRub)} ₽/мес`
-            : ''}
-        </p>
+        </div>
         {onOpen && (
-          <Button
-            variant="outline"
-            className="justify-self-start"
-            onClick={onOpen}
-          >
+          <Button variant="outline" className="max-sm:hidden" onClick={onOpen}>
             Открыть профиль
           </Button>
         )}
-      </div>
+      </header>
+
+      <dl className="grid grid-cols-3 gap-2">
+        <Metric
+          label="Тест"
+          value={formatPercent(candidate.testScorePercent, 'не пройден')}
+          muted={!candidate.testScorePercent}
+        />
+        <Metric
+          label="Навыки"
+          value={formatPercent(candidate.skillMatchScore, 'не заданы')}
+          muted={
+            candidate.skillMatchScore === null ||
+            candidate.skillMatchScore === undefined
+          }
+        />
+        <Metric
+          label="Опыт"
+          value={formatYears(candidate.experienceMonths)}
+          muted={!candidate.experienceMonths}
+        />
+      </dl>
+
+      {Boolean(candidate.criteria?.length || candidate.skills?.length) && (
+        <div className="grid gap-3">
+          {candidate.criteria?.length ? (
+            <CriteriaPills criteria={candidate.criteria} />
+          ) : null}
+          {candidate.skills?.length ? (
+            <SkillPills skills={candidate.skills} />
+          ) : null}
+        </div>
+      )}
+
+      {candidate.reasons.length > 0 && (
+        <details className="group rounded-lg border border-border/70 px-3 [&_summary::-webkit-details-marker]:hidden">
+          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium">
+            Почему такая оценка
+            <ChevronDownIcon
+              aria-hidden="true"
+              className="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+            />
+          </summary>
+          <ul className="grid gap-1.5 pb-3 text-sm text-muted-foreground">
+            {candidate.reasons.map((reason, index) => (
+              <li
+                key={`${index}-${reason}`}
+                className="flex gap-2 before:mt-2 before:size-1 before:shrink-0 before:rounded-full before:bg-muted-foreground/60"
+              >
+                {reason}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+
+      {(unknownConditions || onOpen) && (
+        <footer
+          className={cn(
+            'flex flex-wrap items-center justify-between gap-3',
+            !unknownConditions && 'sm:hidden',
+          )}
+        >
+          {unknownConditions && (
+            <p className="text-xs text-muted-foreground">
+              Кандидат не указал: {unknownConditions}
+            </p>
+          )}
+          {onOpen && (
+            <Button className="w-full sm:hidden" onClick={onOpen}>
+              Открыть профиль
+            </Button>
+          )}
+        </footer>
+      )}
     </article>
   );
 };

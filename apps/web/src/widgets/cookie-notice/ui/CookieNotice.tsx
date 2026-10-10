@@ -54,7 +54,7 @@ export const CookieNotice = () => {
     <section
       role="region"
       aria-label="Использование cookie"
-      className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 flex flex-col gap-3 rounded-2xl border border-border bg-popover p-5 text-popover-foreground shadow-popover sm:inset-x-auto sm:left-6 sm:max-w-110 max-md:bottom-[calc(5rem+env(safe-area-inset-bottom))]"
+      className="fixed inset-x-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 flex flex-col gap-3 rounded-2xl border border-border bg-popover p-5 text-popover-foreground shadow-popover sm:inset-x-auto sm:left-6 sm:max-w-110 max-xl:bottom-[calc(5.5rem+env(safe-area-inset-bottom))]"
     >
       <p className="text-base font-semibold">Мы используем cookie</p>
       <p className="text-sm leading-relaxed text-muted-foreground">

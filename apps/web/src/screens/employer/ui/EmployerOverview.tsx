@@ -12,6 +12,13 @@ import { MEMBER_ROLE_LABELS, VERIFICATION_LABELS } from '@/entities/company';
 
 import type { EmployerSection } from '../constants/sections';
 
+const getVerificationVariant = (status: Company['verificationStatus']) => {
+  if (status === 'verified') return 'success';
+  if (status === 'pending') return 'warning';
+  if (status === 'rejected') return 'destructive';
+  return 'secondary';
+};
+
 interface EmployerOverviewProps {
   companies: Company[];
   busy: boolean;
@@ -71,20 +78,20 @@ export const EmployerOverview = ({
               {company.description ||
                 'Добавьте описание компании, чтобы рассказать о команде и её задачах.'}
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge
-                variant={
-                  company.verificationStatus === 'verified'
-                    ? 'success'
-                    : 'secondary'
-                }
-                className="h-auto rounded-md py-1"
+                variant={getVerificationVariant(company.verificationStatus)}
+                className="h-7 gap-1.5 rounded-full px-3"
               >
+                <span
+                  aria-hidden="true"
+                  className="size-1.5 rounded-full bg-current opacity-70"
+                />
                 {VERIFICATION_LABELS[company.verificationStatus] ??
                   'Не проверена'}
               </Badge>
               {company.inn && (
-                <span className="text-xs text-muted-foreground">
+                <span className="inline-flex h-7 items-center rounded-full border border-border px-3 text-xs text-muted-foreground tabular-nums">
                   ИНН {company.inn}
                 </span>
               )}
