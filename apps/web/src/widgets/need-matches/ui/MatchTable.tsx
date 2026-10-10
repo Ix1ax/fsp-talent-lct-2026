@@ -1,11 +1,22 @@
 'use client';
-
-import { AsyncState, PageControls, Skeleton } from '@/shared/ui';
+import { PageControls } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 import { getRecommendations } from '@/entities/employer-need';
 
 import { useNeedMatches } from '../model';
-import { MatchTableItem } from './MatchTableItem';
+import { MatchTableContent } from './MatchTableContent';
+
+const getMatchingModeLabel = (mode: string) => {
+  if (mode === 'similarity') {
+    return 'Сходство с требованиями';
+  }
+
+  if (mode === 'conditions_only') {
+    return 'Совпадение условий работы';
+  }
+
+  return 'Подборка по данным сервера';
+};
 
 const CRITERIA_LABELS: Record<string, string> = {
   specialization: 'специализация',
@@ -51,45 +62,14 @@ export const MatchTable = ({
           Сходство с требованиями потребности по квалификации и условиям работы.
         </p>
       </div>
-      {error ? (
-        <div className="p-4">
-          <AsyncState
-            error
-            title="Не удалось загрузить подборку"
-            description={error}
-            onRetry={retry}
-          />
-        </div>
-      ) : !data ? (
-        <div
-          className="grid gap-4 p-5"
-          role="status"
-          aria-label="Загрузка подборки"
-        >
-          {[1, 2, 3].map((n) => (
-            <Skeleton key={n} className="h-12 w-full rounded-lg" />
-          ))}
-        </div>
-      ) : data.items.length ? (
-        data.items.map((candidate, index) => (
-          <MatchTableItem
-            key={candidate.id}
-            candidate={candidate}
-            catalogs={catalogs}
-            position={offset + index + 1}
-            onOpen={
-              onOpenCandidate ? () => onOpenCandidate(candidate.id) : undefined
-            }
-          />
-        ))
-      ) : (
-        <div className="p-5">
-          <AsyncState
-            title="Пока нет подходящих кандидатов"
-            description="Проверьте формат работы, бюджет, город и часовой пояс."
-          />
-        </div>
-      )}
+      <MatchTableContent
+        data={data}
+        error={error}
+        offset={offset}
+        retry={retry}
+        catalogs={catalogs}
+        onOpenCandidate={onOpenCandidate}
+      />
       {data && (
         <div className="p-4">
           <PageControls
@@ -103,13 +83,7 @@ export const MatchTable = ({
       )}
       {data && (
         <p className="px-5 pt-4 text-sm text-muted-foreground">
-          Режим:{' '}
-          {data.matchingMode === 'similarity'
-            ? 'Сходство с требованиями'
-            : data.matchingMode === 'conditions_only'
-              ? 'Совпадение условий работы'
-              : 'Подборка по данным сервера'}
-          .{' '}
+          Режим: {getMatchingModeLabel(data.matchingMode)}.{' '}
           {data.unassessedCriteria.length > 0 &&
             `Не оценены: ${data.unassessedCriteria.map((criterion) => CRITERIA_LABELS[criterion] ?? criterion).join(', ')}`}
         </p>

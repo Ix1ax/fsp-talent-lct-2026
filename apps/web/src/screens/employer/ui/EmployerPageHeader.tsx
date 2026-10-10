@@ -4,6 +4,26 @@ import { CompanySwitcher } from '@/widgets/employer-shell';
 import { EMPLOYER_SECTIONS, type EmployerSection } from '../constants';
 import type { EmployerBoard, EmployerWorkspace } from '../model';
 
+const getEmployerPageTitle = (
+  createCompany: boolean,
+  section: EmployerSection,
+  selectedSection: (typeof EMPLOYER_SECTIONS)[number] | undefined,
+) => {
+  if (createCompany) {
+    return 'Создание компании';
+  }
+
+  if (section === 'overview') {
+    return 'Компании';
+  }
+
+  if (section === 'invitation') {
+    return 'Приглашение в компанию';
+  }
+
+  return selectedSection?.title;
+};
+
 const MEMBER_ROLE_LABELS = {
   owner: 'владелец',
   recruiter: 'рекрутер',
@@ -61,13 +81,7 @@ export const EmployerPageHeader = ({
       <PageHeader.Row>
         <PageHeader.Content>
           <PageHeader.Title>
-            {createCompany
-              ? 'Создание компании'
-              : section === 'overview'
-                ? 'Компании'
-                : section === 'invitation'
-                  ? 'Приглашение в компанию'
-                  : selectedSection?.title}
+            {getEmployerPageTitle(createCompany, section, selectedSection)}
           </PageHeader.Title>
           <PageHeader.Description>
             {section === 'overview'

@@ -21,6 +21,18 @@ import { VERIFICATION_LABELS } from '@/entities/company';
 
 import { companySchema } from '../constants';
 
+const getCompanySubmitLabel = (pending: boolean, create: boolean) => {
+  if (pending) {
+    return 'Сохраняем…';
+  }
+
+  if (create) {
+    return 'Создать компанию и продолжить';
+  }
+
+  return 'Сохранить изменения';
+};
+
 interface CompanyProfileFormProps {
   company: Company | null;
   create?: boolean;
@@ -175,11 +187,7 @@ export const CompanyProfileForm = ({
                 disabled={pending}
                 className="w-full sm:w-auto sm:justify-self-start"
               >
-                {pending
-                  ? 'Сохраняем…'
-                  : create
-                    ? 'Создать компанию и продолжить'
-                    : 'Сохранить изменения'}
+                {getCompanySubmitLabel(pending, create)}
               </Button>
               {onCancel && (
                 <Button

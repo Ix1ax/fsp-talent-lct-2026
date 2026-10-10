@@ -13,6 +13,30 @@ import { ErrorNotice } from './Common';
 import { PreviewQuestionBody } from './PreviewQuestionBody';
 import { PreviewResultSummary } from './PreviewResultSummary';
 
+const getPreviewAnswerSaveLabel = (dirty: boolean, answered: boolean) => {
+  if (dirty) {
+    return 'Изменения не сохранены';
+  }
+
+  if (answered) {
+    return 'Ответ сохранён';
+  }
+
+  return 'Можно пропустить вопрос';
+};
+
+const getPreviewStartLabel = (busy: boolean, retry: boolean) => {
+  if (busy) {
+    return 'Загружаем…';
+  }
+
+  if (retry) {
+    return 'Повторить запрос';
+  }
+
+  return 'Начать пробное прохождение';
+};
+
 interface TemplatePreviewProps {
   template: Template;
 }
@@ -72,11 +96,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
               void state.start();
             }}
           >
-            {busy
-              ? 'Загружаем…'
-              : error && !missing
-                ? 'Повторить запрос'
-                : 'Начать пробное прохождение'}
+            {getPreviewStartLabel(busy, Boolean(error && !missing))}
           </Button>
         </div>
       )}
@@ -145,11 +165,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
                     </Button>
                   )}
                   <span role="status" className="text-sm text-muted-foreground">
-                    {dirty
-                      ? 'Изменения не сохранены'
-                      : question.answer
-                        ? 'Ответ сохранён'
-                        : 'Можно пропустить вопрос'}
+                    {getPreviewAnswerSaveLabel(dirty, Boolean(question.answer))}
                   </span>
                 </div>
               )}

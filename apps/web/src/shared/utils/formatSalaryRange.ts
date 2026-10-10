@@ -10,5 +10,9 @@ export const formatSalaryRange = (
       ? `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(n / 1000)}K`
       : new Intl.NumberFormat('ru-RU').format(n);
 
-  return `${from === null ? 'до ' : to === null ? 'от ' : ''}${from === null ? fmt(to!) : to === null ? fmt(from) : `${fmt(from)}–${fmt(to)}`}${compact ? '' : ' ₽/мес'}`;
+  const suffix = compact ? '' : ' ₽/мес';
+  if (from === null) return `до ${fmt(to!)}${suffix}`;
+  if (to === null) return `от ${fmt(from)}${suffix}`;
+
+  return `${fmt(from)}–${fmt(to)}${suffix}`;
 };

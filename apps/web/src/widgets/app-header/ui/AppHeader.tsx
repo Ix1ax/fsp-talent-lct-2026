@@ -1,16 +1,9 @@
 import Link from 'next/link';
 
-import { APP_HEADER_ELEMENT_IDS, STATIC_ROUTES } from '@/shared/contants';
-import {
-  BrandLogo,
-  Button,
-  HeaderBar,
-  HeaderNavLink,
-  ThemeToggle,
-} from '@/shared/ui';
+import { STATIC_ROUTES } from '@/shared/contants';
+import { BrandLogo, HeaderBar, HeaderNavLink, ThemeToggle } from '@/shared/ui';
 import { getRoleHomeRoute, USER_ROLES } from '@/entities/session';
 import { loadSession } from '@/entities/session/api/server';
-import { UserMenu } from '@/features/auth';
 import { OffersNotification } from '@/features/candidate';
 
 import {
@@ -19,6 +12,7 @@ import {
   type HeaderNavItem,
 } from '../model';
 import { AppHeaderPosition } from './AppHeaderPosition';
+import { HeaderAccount } from './HeaderAccount';
 import { HeaderGuidesButton } from './HeaderGuidesButton';
 import { HeaderNavLabel } from './HeaderNavLabel';
 
@@ -79,30 +73,7 @@ export const AppHeader = async () => {
               <OffersNotification key={session.user.id} />
             )}
             <ThemeToggle />
-            {session.kind === 'user' ? (
-              <UserMenu
-                user={session.user}
-                triggerId={APP_HEADER_ELEMENT_IDS.accountMenuTrigger}
-              />
-            ) : session.kind === 'unavailable' ? (
-              <div className="flex items-center gap-2">
-                {session.displayName && (
-                  <span className="hidden text-sm font-medium text-muted-foreground sm:inline">
-                    {session.displayName}
-                  </span>
-                )}
-                <span
-                  className="inline-flex h-6 items-center rounded-sm bg-warning-soft px-2 text-xs font-medium text-warning"
-                  role="status"
-                >
-                  Сервис недоступен
-                </span>
-              </div>
-            ) : (
-              <Button asChild>
-                <Link href={STATIC_ROUTES.LOGIN}>Войти</Link>
-              </Button>
-            )}
+            <HeaderAccount session={session} />
           </>
         }
       />

@@ -84,6 +84,7 @@ const eslintConfig = [
       ],
       'simple-import-sort/exports': 'error',
       'no-empty': ['error', { allowEmptyCatch: false }],
+      'no-nested-ternary': 'error',
       'no-restricted-syntax': ['error', ...EMPTY_CATCH_RESTRICTIONS],
     },
   },

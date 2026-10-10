@@ -5,6 +5,8 @@ import { type Catalogs, SkillPicker } from '@/entities/catalog';
 import type { BankFilters } from '@/entities/employer-bank';
 import type { EmployerNeed } from '@/entities/employer-need';
 
+import { CandidateNeedHint } from './CandidateNeedHint';
+
 interface CandidateFiltersProps {
   filters: BankFilters;
   catalogs: Catalogs;
@@ -79,42 +81,14 @@ export const CandidateFilters = ({
             ]}
           />
         </label>
-        {needsError ? (
-          <>
-            <p role="alert" className="text-xs text-destructive">
-              {needsError}
-            </p>
-            <Button
-              variant="link"
-              size="sm"
-              disabled={busy}
-              onClick={onRetryNeeds}
-              className="justify-self-start p-0"
-            >
-              Повторить загрузку
-            </Button>
-          </>
-        ) : !needsLoading && !needs.length ? (
-          <>
-            <p className="text-xs leading-relaxed text-muted-foreground">
-              Для подбора по требованиям нужна активная потребность.
-            </p>
-            <Button
-              variant="link"
-              size="sm"
-              disabled={busy}
-              onClick={onNeeds}
-              className="justify-self-start p-0 text-brand-text"
-            >
-              Потребности компании
-            </Button>
-          </>
-        ) : (
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            Изменение фильтров снимает привязку. Верните условия выбранной
-            потребности — привязка восстановится.
-          </p>
-        )}
+        <CandidateNeedHint
+          needsError={needsError}
+          needsLoading={needsLoading}
+          needs={needs}
+          busy={busy}
+          onRetryNeeds={onRetryNeeds}
+          onNeeds={onNeeds}
+        />
       </div>
       <fieldset disabled={busy} className="grid gap-5">
         <label className="grid gap-2 text-sm font-medium text-muted-foreground">

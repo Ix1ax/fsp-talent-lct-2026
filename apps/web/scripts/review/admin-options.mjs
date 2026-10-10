@@ -2,6 +2,19 @@ import assert from 'node:assert/strict';
 
 import { createFixtures } from './fixtures.mjs';
 
+const getSkillSearchItems = (q) => {
+  if (q === 'fresh') {
+    return [skill('fresh', 'Fresh result')];
+  }
+  if (q === 'slow') {
+    return [skill('slow', 'Stale result')];
+  }
+  return [
+    skill('chosen', 'Chosen skill'),
+    ...Array.from({ length: 49 }, (_, i) => skill(`skill-${i}`, `Skill ${i}`)),
+  ];
+};
+
 const app = process.env.REVIEW_APP_URL ?? 'http://127.0.0.1:5185';
 const api = process.env.REVIEW_API_URL ?? 'http://127.0.0.1:5191';
 const cdp = process.env.REVIEW_CDP_URL ?? 'http://127.0.0.1:9224';
@@ -162,17 +175,7 @@ try {
     if (kind === 'skills') {
       const q = url.searchParams.get('q') ?? '';
       skillPages.push(q);
-      const items =
-        q === 'fresh'
-          ? [skill('fresh', 'Fresh result')]
-          : q === 'slow'
-            ? [skill('slow', 'Stale result')]
-            : [
-                skill('chosen', 'Chosen skill'),
-                ...Array.from({ length: 49 }, (_, i) =>
-                  skill(`skill-${i}`, `Skill ${i}`),
-                ),
-              ];
+      const items = getSkillSearchItems(q);
       body = {
         items,
         limit: Number(url.searchParams.get('limit')),

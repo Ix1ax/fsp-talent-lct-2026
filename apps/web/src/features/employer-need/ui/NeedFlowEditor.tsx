@@ -25,6 +25,18 @@ import { NeedAdvancedFields } from './NeedAdvancedFields';
 import { NeedReadiness } from './NeedReadiness';
 import { NeedSummary } from './NeedSummary';
 
+const getNeedSaveLabel = (pending: boolean, step: number) => {
+  if (pending) {
+    return 'Сохраняем…';
+  }
+
+  if (step < LAST_STEP) {
+    return 'Сохранить и продолжить';
+  }
+
+  return 'Сохранить';
+};
+
 const STEPS = [
   { id: 'brief', title: 'Бриф' },
   { id: 'conditions', title: 'Задачи и условия' },
@@ -275,11 +287,7 @@ export const NeedFlowEditor = ({
               {!readonly && (
                 <div className="flex flex-wrap gap-3">
                   <Button type="submit" size="lg" disabled={pending}>
-                    {pending
-                      ? 'Сохраняем…'
-                      : step < LAST_STEP
-                        ? 'Сохранить и продолжить'
-                        : 'Сохранить'}
+                    {getNeedSaveLabel(pending, step)}
                   </Button>
                   {step === LAST_STEP && value.status === 'draft' && !isNew && (
                     <Button

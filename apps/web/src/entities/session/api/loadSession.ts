@@ -9,6 +9,18 @@ import { getAccessToken, getRefreshToken } from '@/shared/auth/session.server';
 import type { SessionUser } from '../model';
 import { getMe } from './getMe';
 
+const getUnavailableSessionMessage = (error: ApiError) => {
+  if (error.code === 'timeout') {
+    return 'Превышено время ожидания ответа сервиса. Попробуйте обновить страницу.';
+  }
+
+  if (error.status === 503) {
+    return 'Сервис временно недоступен. Ведутся технические работы.';
+  }
+
+  return 'Сервис кабинета временно недоступен. Попробуйте обновить страницу.';
+};
+
 export type SessionState =
   | { kind: 'guest' }
   | { kind: 'user'; user: SessionUser }
@@ -79,12 +91,7 @@ export const loadSession = cache(async (): Promise<SessionState> => {
           code: error.code,
           status: error.status,
           retryAfter: error.retryAfter,
-          message:
-            error.code === 'timeout'
-              ? 'Превышено время ожидания ответа сервиса. Попробуйте обновить страницу.'
-              : error.status === 503
-                ? 'Сервис временно недоступен. Ведутся технические работы.'
-                : 'Сервис кабинета временно недоступен. Попробуйте обновить страницу.',
+          message: getUnavailableSessionMessage(error),
           displayName,
         };
       }

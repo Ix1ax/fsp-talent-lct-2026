@@ -1,4 +1,14 @@
 // Synthetic data only. Wire format matches the existing API (snake_case).
+const getFixtureFullNameSource = (i) => {
+  if (i === 3) {
+    return null;
+  }
+  if (i === 1) {
+    return 'candidate_contacts';
+  }
+  return 'identity';
+};
+
 const date = '2026-10-01T12:00:00Z';
 export const fixtureId = (n) =>
   `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
@@ -170,8 +180,7 @@ export const createFixtures = (scenario = 'filled') => {
             'Тестовый Администратор',
             null,
           ][i],
-          full_name_source:
-            i === 3 ? null : i === 1 ? 'candidate_contacts' : 'identity',
+          full_name_source: getFixtureFullNameSource(i),
           email: i === 3 ? null : `${role}@example.test`,
           contact_email: i === 1 ? 'contacts@example.test' : null,
           identity_updated_at: i === 3 ? null : date,

@@ -17,6 +17,18 @@ import {
 } from '@/shared/ui';
 import type { Company, CompanyInput } from '@/entities/company';
 
+const getCompanySubmitLabel = (pending: boolean, create: boolean) => {
+  if (pending) {
+    return 'Сохраняем…';
+  }
+
+  if (create) {
+    return 'Создать компанию';
+  }
+
+  return 'Сохранить';
+};
+
 interface CompanyFormProps {
   company: Company | null;
   create: boolean;
@@ -150,11 +162,7 @@ export const CompanyForm = ({
             )}
             {!readonly && (
               <Button type="submit" disabled={pending}>
-                {pending
-                  ? 'Сохраняем…'
-                  : create
-                    ? 'Создать компанию'
-                    : 'Сохранить'}
+                {getCompanySubmitLabel(pending, create)}
               </Button>
             )}
           </form>

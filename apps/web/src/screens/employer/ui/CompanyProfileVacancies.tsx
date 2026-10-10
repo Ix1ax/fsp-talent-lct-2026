@@ -2,13 +2,13 @@ import { useCallback } from 'react';
 import { ArrowRightIcon, BriefcaseBusinessIcon } from 'lucide-react';
 
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
-import { AsyncState, Button, Skeleton } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 import type { EmployerNeed } from '@/entities/employer-need';
 
 import type { EmployerGateway } from '../lib/gateway';
-import { VacancyCard } from './VacancyCard';
+import { CompanyVacancyContent } from './CompanyVacancyContent';
 
 interface CompanyProfileVacanciesProps {
   active: boolean;
@@ -58,50 +58,14 @@ export const CompanyProfileVacancies = ({
           Потребности <ArrowRightIcon />
         </Button>
       </div>
-      {remote.loading ? (
-        <Skeleton className="h-48 rounded-xl" />
-      ) : remote.error ? (
-        <AsyncState
-          error
-          title="Не удалось загрузить потребности"
-          description={remote.error}
-          onRetry={remote.retry}
-        />
-      ) : !remote.data?.items.length ? (
-        <div className="grid justify-items-start gap-3 rounded-xl border border-border bg-card p-5 sm:p-6">
-          <h3 className="font-semibold">Открытых потребностей пока нет</h3>
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            Активные потребности компании появятся здесь. В банке потребностей
-            доступны черновики и архив.
-          </p>
-          <Button variant="outline" disabled={busy} onClick={onVacancies}>
-            Перейти к потребностьм <ArrowRightIcon />
-          </Button>
-        </div>
-      ) : (
-        <>
-          {remote.data.items.slice(0, 3).map((need) => (
-            <VacancyCard
-              key={need.id}
-              need={need}
-              catalogs={catalogs}
-              skills={skills}
-              busy={busy}
-              onOpen={() => onOpen(need)}
-            />
-          ))}
-          {remote.data.items.length > 3 && (
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={onVacancies}
-              className="justify-self-start"
-            >
-              Все активные потребности <ArrowRightIcon />
-            </Button>
-          )}
-        </>
-      )}
+      <CompanyVacancyContent
+        remote={remote}
+        busy={busy}
+        onVacancies={onVacancies}
+        catalogs={catalogs}
+        skills={skills}
+        onOpen={onOpen}
+      />
     </section>
   );
 };
