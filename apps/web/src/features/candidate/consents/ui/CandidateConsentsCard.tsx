@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDownIcon, HistoryIcon } from 'lucide-react';
 
 import { CANDIDATE_ELEMENT_IDS } from '@/shared/contants';
 import {
@@ -97,22 +98,30 @@ export const CandidateConsentsCard = (props: CandidateConsentsCardProps) => {
             </Button>
           </div>
         )}
-        <Button
-          variant="ghost"
-          disabled={disabled}
-          aria-expanded={showHistory}
-          aria-controls={CANDIDATE_ELEMENT_IDS.consents.history}
-          className="min-h-11 self-start"
-          onClick={() => {
-            setShowHistory(!showHistory);
-            if (!showHistory) void loadHistory();
-          }}
-        >
-          {showHistory ? 'Скрыть историю' : 'История согласий'}
-        </Button>
-        <p className="text-xs text-muted-foreground">
-          Версия политики: {consents.currentPolicyVersion}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/60 pt-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={disabled}
+            aria-expanded={showHistory}
+            aria-controls={CANDIDATE_ELEMENT_IDS.consents.history}
+            className="-ml-3"
+            onClick={() => {
+              setShowHistory(!showHistory);
+              if (!showHistory) void loadHistory();
+            }}
+          >
+            <HistoryIcon aria-hidden="true" />
+            {showHistory ? 'Скрыть историю согласий' : 'История согласий'}
+            <ChevronDownIcon
+              aria-hidden="true"
+              className={showHistory ? 'rotate-180' : undefined}
+            />
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Версия политики: {consents.currentPolicyVersion}
+          </p>
+        </div>
         {showHistory && (
           <ConsentHistory
             history={history}

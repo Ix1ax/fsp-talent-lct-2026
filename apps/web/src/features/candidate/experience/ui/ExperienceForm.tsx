@@ -109,7 +109,7 @@ export const ExperienceForm = ({
                   aria-describedby={
                     !inactive && errors[field.key] ? `${id}-error` : undefined
                   }
-                  className="min-h-11 min-w-0"
+                  className="min-w-0"
                 />
                 <FieldMessage
                   id={`${id}-error`}
@@ -171,16 +171,10 @@ export const ExperienceForm = ({
         </p>
       )}
       <div className="grid gap-3 sm:flex sm:flex-wrap">
-        <Button type="submit" size="lg" disabled={disabled}>
+        <Button type="submit" disabled={disabled}>
           {busy ? 'Сохранение…' : 'Сохранить место работы'}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          disabled={busy}
-          onClick={close}
-        >
+        <Button type="button" variant="outline" disabled={busy} onClick={close}>
           Отменить изменения
         </Button>
       </div>

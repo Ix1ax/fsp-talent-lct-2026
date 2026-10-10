@@ -37,26 +37,26 @@ export const CompanySwitcher = ({
     <DropdownMenuTrigger asChild>
       <Button
         aria-label={`Компания: ${company?.name ?? 'выбрать компанию'}`}
-        variant="ghost"
+        variant="outline"
         disabled={pending}
-        className="h-auto min-h-11 min-w-0 max-w-full gap-2 rounded-lg border border-border px-3 py-2 max-md:flex-1"
+        className="h-11 w-full min-w-0 justify-start gap-2.5 border-border bg-background pr-3 pl-1.5"
       >
-        <span className="hidden size-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary sm:flex">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
           {company?.name
             .split(/\s+/)
             .slice(0, 2)
             .map((p) => p[0])
             .join('') || '+'}
         </span>
-        <span className="min-w-0 max-w-64 truncate">
+        <span className="min-w-0 flex-1 truncate text-left">
           {company?.name ?? 'Выбрать компанию'}
         </span>
-        <ChevronDownIcon className="size-3" />
+        <ChevronDownIcon className="size-4 text-muted-foreground" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent
       align="start"
-      className="w-72 max-w-[calc(100vw-2rem)] rounded-md border-input shadow-popover"
+      className="w-72 max-w-[calc(100vw-2rem)] shadow-popover"
     >
       <DropdownMenuLabel>
         <MetaLabel>Компании</MetaLabel>
@@ -64,10 +64,7 @@ export const CompanySwitcher = ({
       {companies.map((c) => (
         <DropdownMenuItem
           key={c.id}
-          className={cn(
-            'min-h-12 rounded-md',
-            c.id === company?.id && 'bg-accent',
-          )}
+          className={cn('min-h-11', c.id === company?.id && 'bg-accent')}
           onSelect={() => onCompany(c.id)}
         >
           <span className="grid flex-1 gap-1">

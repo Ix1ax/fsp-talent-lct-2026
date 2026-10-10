@@ -13,6 +13,11 @@ import { OptionSelect } from '@/shared/ui';
 
 import { EMPLOYER_SECTIONS, type EmployerSection } from '../constants/sections';
 
+// Вкладки настроек компании. Потребности, банк и предложения — в шапке.
+const COMPANY_TABS = EMPLOYER_SECTIONS.filter((item) =>
+  ['profile', 'documents', 'team'].includes(item.id),
+);
+
 const ICONS = {
   profile: Building2Icon,
   documents: FileTextIcon,
@@ -46,18 +51,18 @@ export const EmployerNavigation = ({
       aria-label="Разделы кабинета работодателя"
       value={section}
       disabled={busy}
-      className="h-12 data-[size=default]:h-12 rounded-xl bg-card lg:hidden"
+      className="h-12 rounded-xl bg-card data-[size=default]:h-12 lg:hidden"
       onValueChange={(value) => onNavigate(value as EmployerSection)}
-      options={EMPLOYER_SECTIONS.map((item) => ({
+      options={COMPANY_TABS.map((item) => ({
         value: item.id,
-        label: item.title,
+        label: LABELS[item.id],
       }))}
     />
     <nav
       aria-label="Разделы кабинета работодателя"
       className="hidden min-w-0 gap-1 overflow-x-auto rounded-xl border border-border/60 bg-card p-1.5 lg:flex"
     >
-      {EMPLOYER_SECTIONS.map((item) => {
+      {COMPANY_TABS.map((item) => {
         const Icon = ICONS[item.id];
         return (
           <Link
@@ -76,7 +81,7 @@ export const EmployerNavigation = ({
             aria-disabled={busy || undefined}
             tabIndex={busy ? -1 : undefined}
             className={cn(
-              'flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring sm:px-4',
+              'flex min-h-11 shrink-0 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-ring',
               section === item.id
                 ? 'bg-accent text-brand-text'
                 : 'text-muted-foreground',

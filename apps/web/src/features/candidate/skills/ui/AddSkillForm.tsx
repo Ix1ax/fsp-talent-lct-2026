@@ -102,7 +102,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
               id={listId}
               role="listbox"
               aria-label="Навыки из справочника"
-              className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto border border-border bg-popover p-1 shadow-popover"
+              className="absolute inset-x-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-lg border border-border bg-popover p-1 shadow-popover"
             >
               {items.map((skill, index) => (
                 <li key={skill.id} role="presentation">
@@ -127,7 +127,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
         <p
           id={CANDIDATE_ELEMENT_IDS.skills.hint}
           aria-live="polite"
-          className={`min-h-10 text-sm ${error ? 'text-destructive' : 'text-muted-foreground'}`}
+          className={`text-sm ${error ? 'text-destructive' : 'text-muted-foreground'}`}
         >
           {hint}
         </p>
@@ -150,11 +150,7 @@ export const AddSkillForm = ({ disabled, onAdd }: AddSkillFormProps) => {
               )}
             />
           </div>
-          <Button
-            type="submit"
-            className="h-11"
-            disabled={disabled || !name.trim()}
-          >
+          <Button type="submit" disabled={disabled || !name.trim()}>
             Добавить навык
           </Button>
         </div>

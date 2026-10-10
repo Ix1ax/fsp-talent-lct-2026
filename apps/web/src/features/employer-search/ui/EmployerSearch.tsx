@@ -67,7 +67,7 @@ export const EmployerSearch = ({
   return (
     <Command
       shouldFilter={false}
-      className="relative w-full min-w-0 overflow-visible rounded-lg border border-input bg-background transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 [&>div]:border-b-0"
+      className="relative w-full min-w-0 overflow-visible rounded-lg border border-input bg-muted transition-colors focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50 [&>div]:border-b-0"
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
       }}
@@ -83,7 +83,7 @@ export const EmployerSearch = ({
         disabled={disabled || !companyId}
         aria-label="Поиск потребностей компании"
         placeholder="Поиск потребностей"
-        className="h-11 text-sm"
+        className="h-10 text-sm"
       >
         <input
           role="combobox"
@@ -95,7 +95,7 @@ export const EmployerSearch = ({
         {requested && (
           <CommandList
             label="Результаты поиска потребностей"
-            className="absolute top-full right-0 z-40 mt-2 max-h-80 w-full overflow-x-hidden overflow-y-auto rounded-lg border border-input bg-popover p-0 shadow-popover"
+            className="absolute top-full right-0 z-40 mt-2 max-h-80 w-full min-w-72 overflow-x-hidden overflow-y-auto rounded-2xl border border-border bg-popover p-1.5 shadow-popover"
           >
             <p
               className="border-b border-border px-3 py-2 text-xs text-muted-foreground"
@@ -123,7 +123,7 @@ export const EmployerSearch = ({
               <CommandItem
                 key={need.id}
                 value={need.id}
-                className="flex-col items-start gap-1 rounded-none border-b border-border px-3 [overflow-wrap:anywhere]"
+                className="flex-col items-start gap-1 rounded-md px-3 [overflow-wrap:anywhere]"
                 onSelect={() => {
                   setOpen(false);
                   setQuery('');

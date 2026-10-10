@@ -15,7 +15,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
+  FileInput,
 } from '@/shared/ui';
 import {
   type CandidateEducation,
@@ -225,11 +225,12 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
           <label htmlFor={id} className="text-base font-medium">
             Выберите файл резюме
           </label>
-          <Input
+          <FileInput
             ref={input}
             id={id}
-            type="file"
             accept=".pdf,application/pdf"
+            buttonLabel="Выбрать PDF"
+            fileName={file?.name ?? null}
             disabled={props.busy || !props.processing}
             className="w-full max-w-xl text-left"
             onChange={(event) => {

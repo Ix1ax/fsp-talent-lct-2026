@@ -1,6 +1,11 @@
 export { CANDIDATE_ELEMENT_IDS } from './candidateElementIds';
 export { CANDIDATE_DATA_UPDATED_EVENT } from './events';
 export { FILE_STATUS } from './fileStatus';
+export {
+  LEGAL_DOCUMENTS,
+  LEGAL_OPERATOR_PLACEHOLDER,
+  type LegalDocumentSlug,
+} from './legalDocuments';
 export { MOTION_LAYOUT_IDS, MOTION_SPRING, MOTION_TRANSITION } from './motion';
 export {
   DYNAMIC_ROUTES,

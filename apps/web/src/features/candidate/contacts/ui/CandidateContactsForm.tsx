@@ -74,7 +74,7 @@ export const CandidateContactsForm = (props: CandidateContactsFormProps) => {
         )}
         <Button
           type="submit"
-          className="min-h-11 w-full sm:w-auto sm:self-start"
+          className="w-full sm:w-auto sm:self-start"
           disabled={props.busy || !props.processing || !dirty}
         >
           {props.onSaved ? 'Сохранить и продолжить' : 'Сохранить контакты'}

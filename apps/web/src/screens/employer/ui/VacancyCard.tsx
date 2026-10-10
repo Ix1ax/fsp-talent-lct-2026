@@ -1,23 +1,30 @@
-import { ArrowUpRightIcon, MapPinIcon } from 'lucide-react';
+import { ArrowRightIcon, MapPinIcon } from 'lucide-react';
 
 import { Badge, Button } from '@/shared/ui';
-import { formatSalaryRange } from '@/shared/utils';
+import { formatSalaryRange, pluralizeRu } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
-import type { Company } from '@/entities/company';
-import type { EmployerNeed } from '@/entities/employer-need';
+import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
 
 interface VacancyCardProps {
   need: EmployerNeed;
-  company: Company;
   catalogs: Catalogs;
   skills: Skill[];
   busy: boolean;
   onOpen: () => void;
 }
+
+// Что работодатель получит, открыв потребность: главное действие по статусу.
+const OPEN_LABELS: Record<NeedStatus, string> = {
+  active: 'Подбор кандидатов',
+  draft: 'Дополнить бриф',
+  archived: 'Посмотреть',
+};
+
+const SKILL_FORMS = ['навык', 'навыка', 'навыков'] as const;
+
 export const VacancyCard = ({
   need,
-  company,
   catalogs,
   skills,
   busy,
@@ -27,41 +34,34 @@ export const VacancyCard = ({
   const specialization = catalogs.specializations.find(
     (item) => item.id === need.specializationId,
   )?.name;
-  const skillNames = need.skills.map(
-    (item) =>
-      skills.find((skill) => skill.id === item.skillId)?.name ??
-      `Навык #${item.skillId}`,
+  const formats = need.workFormatIds.map(
+    (id) =>
+      catalogs.workFormats.find((format) => format.id === id)?.name ??
+      `Формат #${id}`,
   );
+  // Потребность хранит только ID навыков; без названий показываем количество,
+  // а не технический идентификатор.
+  const skillNames = need.skills
+    .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
+    .filter((name): name is string => !!name);
+  const namesKnown = skillNames.length === need.skills.length;
+
   return (
-    <article className="group grid min-w-0 gap-4 rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/35 sm:p-6">
-      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-        <span
-          className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted font-semibold"
-          aria-hidden="true"
-        >
-          {company.name.trim().slice(0, 1).toLocaleUpperCase('ru')}
-        </span>
-        <span className="max-w-56 truncate font-medium text-foreground">
-          {company.name}
-        </span>
-        {need.workFormatIds.map((id) => (
-          <Badge key={id} variant="secondary" className="rounded-md">
-            {catalogs.workFormats.find((format) => format.id === id)?.name ??
-              `Формат #${id}`}
-          </Badge>
-        ))}
-        {grade && (
-          <Badge variant="secondary" className="rounded-md">
-            {grade}
-          </Badge>
-        )}
-        <span className="ml-auto">
-          {new Date(need.createdAt).toLocaleDateString('ru-RU')}
-        </span>
-      </div>
-      <div className="flex min-w-0 flex-col items-start justify-between gap-3 sm:flex-row">
+    <article className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/35 sm:p-6">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <div className="grid min-w-0 gap-2">
-          <h2 className="text-xl font-semibold leading-snug [overflow-wrap:anywhere]">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge
+              variant={need.status === 'active' ? 'success' : 'outline'}
+              className="rounded-md"
+            >
+              {NEED_DETAIL_STATUS_LABELS[need.status]}
+            </Badge>
+            <span className="text-xs whitespace-nowrap text-muted-foreground">
+              от {new Date(need.createdAt).toLocaleDateString('ru-RU')}
+            </span>
+          </div>
+          <h2 className="text-xl leading-snug font-semibold [overflow-wrap:anywhere]">
             <button
               type="button"
               disabled={busy}
@@ -71,53 +71,62 @@ export const VacancyCard = ({
               {need.title}
             </button>
           </h2>
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <span>
-              {specialization ?? `Специализация #${need.specializationId}`}
-            </span>
-            <span className="inline-flex min-w-0 items-center gap-1 [overflow-wrap:anywhere]">
-              <MapPinIcon className="size-3.5 shrink-0" />
-              {need.city || 'Любой город'}
-            </span>
-          </p>
         </div>
-        <p className="shrink-0 text-base font-semibold sm:text-right">
+        <p className="text-base font-semibold whitespace-nowrap">
           {formatSalaryRange(need.salaryFromRub, need.salaryToRub)}
         </p>
       </div>
-      <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground [overflow-wrap:anywhere]">
-        {need.description}
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        <span>
+          {specialization ?? `Специализация #${need.specializationId}`}
+          {grade && ` · ${grade}`}
+        </span>
+        {formats.length > 0 && <span>{formats.join(', ')}</span>}
+        <span className="inline-flex min-w-0 items-center gap-1 [overflow-wrap:anywhere]">
+          <MapPinIcon className="size-3.5 shrink-0" aria-hidden="true" />
+          {need.city || 'Любой город'}
+        </span>
       </p>
-      <div className="flex flex-wrap items-center gap-2">
-        {skillNames.slice(0, 5).map((name, i) => (
-          <Badge
-            key={need.skills[i].skillId}
-            variant="secondary"
-            className="max-w-full truncate rounded-md bg-muted/70"
-          >
-            {name}
-          </Badge>
-        ))}
-        {skillNames.length > 5 && (
-          <span className="text-xs text-muted-foreground">
-            +{skillNames.length - 5} навыков
-          </span>
+      {need.description && (
+        <p className="line-clamp-2 text-sm leading-relaxed [overflow-wrap:anywhere]">
+          {need.description}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-2 border-t border-border/60 pt-4">
+        {namesKnown ? (
+          <>
+            {skillNames.slice(0, 5).map((name, i) => (
+              <Badge
+                key={need.skills[i].skillId}
+                variant="secondary"
+                className="max-w-full truncate rounded-md bg-muted/70"
+              >
+                {name}
+              </Badge>
+            ))}
+            {skillNames.length > 5 && (
+              <span className="text-xs text-muted-foreground">
+                +{pluralizeRu(skillNames.length - 5, SKILL_FORMS)}
+              </span>
+            )}
+          </>
+        ) : (
+          need.skills.length > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {pluralizeRu(need.skills.length, SKILL_FORMS)} в требованиях
+            </span>
+          )
         )}
-        <Badge
-          variant={need.status === 'active' ? 'success' : 'outline'}
-          className="rounded-md"
-        >
-          {NEED_DETAIL_STATUS_LABELS[need.status]}
-        </Badge>
         <Button
-          variant="ghost"
+          variant={need.status === 'active' ? 'default' : 'outline'}
           size="sm"
           disabled={busy}
           onClick={onOpen}
-          className="ml-auto text-brand-text"
-          aria-label={`Открыть потребность: ${need.title}`}
+          className="ml-auto"
+          aria-label={`${OPEN_LABELS[need.status]}: ${need.title}`}
         >
-          Открыть <ArrowUpRightIcon />
+          {OPEN_LABELS[need.status]}
+          <ArrowRightIcon />
         </Button>
       </div>
     </article>

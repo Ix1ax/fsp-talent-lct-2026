@@ -63,7 +63,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
         <Button
           type="button"
           variant={compact ? 'ghost' : 'outline'}
-          className={compact ? 'size-11 p-0' : 'h-11 gap-2 px-3'}
+          className={compact ? 'size-10 p-0' : 'h-10 gap-2 pr-3 pl-1.5'}
           aria-label={`Аккаунт: ${displayName}`}
           disabled={pending}
         >
@@ -75,7 +75,7 @@ export const UserMenu = ({ user, compact = false }: UserMenuProps) => {
                 <AvatarImage src={avatarUrl} alt="" />
                 <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>
-              <span className="max-w-40 truncate max-sm:hidden">
+              <span className="max-w-40 truncate max-xl:hidden">
                 {displayName}
               </span>
               <ChevronDownIcon className="size-3.5 opacity-60" />

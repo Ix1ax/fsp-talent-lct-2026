@@ -5,6 +5,7 @@ import localFont from 'next/font/local';
 
 import { cn } from '@/shared/lib/utils';
 import { Toaster, TooltipProvider } from '@/shared/ui';
+import { CookieNotice } from '@/widgets/cookie-notice';
 
 import { AuthBootstrap } from './AuthBootstrap';
 import { ThemeProvider } from './ThemeProvider';
@@ -51,6 +52,7 @@ const RootLayout = ({ children }: Readonly<RootLayoutProps>) => {
               <AuthBootstrap>{children}</AuthBootstrap>
             </UnsavedChangesProvider>
             <Toaster />
+            <CookieNotice />
           </TooltipProvider>
         </ThemeProvider>
       </body>

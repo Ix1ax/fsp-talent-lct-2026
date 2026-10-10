@@ -88,7 +88,7 @@ export const NeedEditor = ({
 
   return (
     <section
-      className="border border-border bg-card p-4 md:p-6 xl:px-8 xl:py-7"
+      className="rounded-xl border border-border bg-card p-5 md:p-8"
       aria-label={isNew ? 'Новая потребность' : 'Бриф потребности'}
     >
       <div className="mb-5 flex items-center gap-3">
@@ -136,7 +136,7 @@ export const NeedEditor = ({
               {fieldError('title')}
             </label>
           ) : (
-            <h2 className="text-[22px] font-bold leading-tight tracking-tight md:text-[26px] xl:text-[30px]">
+            <h2 className="text-2xl leading-tight font-bold tracking-tight text-balance md:text-[2rem] md:leading-10">
               {value.title}
             </h2>
           )}
@@ -262,7 +262,6 @@ export const NeedEditor = ({
             >
               <Button
                 type="button"
-                size="lg"
                 disabled={pending}
                 onClick={() =>
                   void submit(
@@ -277,7 +276,6 @@ export const NeedEditor = ({
               {(isNew || value.status === 'draft') && (
                 <Button
                   type="submit"
-                  size="lg"
                   variant="outline"
                   disabled={pending}
                   className="max-md:flex-1"
@@ -287,7 +285,6 @@ export const NeedEditor = ({
               )}
               <Button
                 type="button"
-                size="lg"
                 variant="ghost"
                 disabled={pending}
                 onClick={cancel}

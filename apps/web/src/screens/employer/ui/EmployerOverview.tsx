@@ -41,7 +41,7 @@ export const EmployerOverview = ({
       {companies.map((company) => (
         <article
           key={company.id}
-          className="flex min-w-0 flex-col gap-5 rounded-2xl border border-border/70 bg-card p-5 transition-colors hover:border-primary/35 sm:p-6"
+          className="flex min-w-0 flex-col gap-5 rounded-xl border border-border bg-card p-5 transition-colors hover:border-primary/35 sm:p-6"
         >
           <div className="flex min-w-0 items-start gap-3">
             <span
@@ -133,7 +133,7 @@ export const EmployerOverview = ({
         type="button"
         disabled={busy}
         onClick={onCreateCompany}
-        className="group flex min-h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-dashed bg-card/40 p-6 text-center transition-colors hover:border-primary/40 hover:bg-card focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
+        className="group flex min-h-64 flex-col items-center justify-center gap-3 rounded-xl border border-dashed bg-card/40 p-6 text-center transition-colors hover:border-primary/40 hover:bg-card focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50"
       >
         <span className="flex size-12 items-center justify-center rounded-xl bg-muted text-muted-foreground group-hover:text-brand-text">
           <PlusIcon className="size-5" />
@@ -144,7 +144,7 @@ export const EmployerOverview = ({
         </span>
       </button>
     </section>
-    <div className="flex flex-col items-start gap-4 rounded-2xl border border-border/70 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+    <div className="flex flex-col items-start gap-4 rounded-xl border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
       <div className="flex items-start gap-3">
         <MailIcon className="mt-0.5 size-5 shrink-0 text-muted-foreground" />
         <div className="grid gap-1">

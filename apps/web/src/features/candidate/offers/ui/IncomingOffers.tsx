@@ -15,6 +15,7 @@ import {
   CardTitle,
   FadeIn,
   OptionSelect,
+  PageHeader,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
@@ -64,23 +65,16 @@ export const IncomingOffers = () => {
   }, []);
 
   return (
-    <main className="mx-auto grid w-full max-w-6xl flex-1 content-start gap-6 px-4 py-6 sm:px-6 sm:py-10">
-      <FadeIn>
-        <header className="grid gap-3">
-          <Link
-            href={STATIC_ROUTES.CANDIDATE}
-            className="text-sm text-muted-foreground underline"
-          >
-            Мой кабинет
-          </Link>
-          <h1 className="text-2xl font-semibold sm:text-3xl">
-            Входящие предложения
-          </h1>
-          <p className="text-muted-foreground">
-            Посмотрите условия работодателей и ответьте на предложение.
-          </p>
-        </header>
-      </FadeIn>
+    <main className="container-page page-rhythm grid flex-1 content-start gap-8">
+      <PageHeader
+        title="Входящие предложения"
+        description="Посмотрите условия работодателей и ответьте на предложение."
+        actions={
+          <Button asChild variant="outline">
+            <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
+          </Button>
+        }
+      />
       <FadeIn delay={FADE_IN_DELAY}>
         <Card>
           <CardHeader>

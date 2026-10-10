@@ -10,10 +10,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Checkbox,
   Input,
   OptionSelect,
-  SalaryRangeInput,
   Textarea,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
@@ -21,16 +19,18 @@ import type { NeedInput } from '@/entities/employer-need';
 import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
 
 import { validateNeed } from '../lib';
-import { useNeedFlowEditor } from '../model';
+import { NEED_FLOW_LAST_STEP, useNeedFlowEditor } from '../model';
+import { BriefPhrase } from './BriefPhrase';
 import { NeedAdvancedFields } from './NeedAdvancedFields';
+import { NeedReadiness } from './NeedReadiness';
 import { NeedSummary } from './NeedSummary';
 
 const STEPS = [
-  { id: 'role', title: 'Роль и задачи' },
-  { id: 'conditions', title: 'Условия работы' },
-  { id: 'skills', title: 'Навыки' },
+  { id: 'brief', title: 'Бриф' },
+  { id: 'conditions', title: 'Задачи и условия' },
   { id: 'readiness', title: 'Готовность' },
 ] as const;
+const LAST_STEP = NEED_FLOW_LAST_STEP;
 interface NeedFlowEditorProps {
   active?: boolean;
   initial: NeedInput;
@@ -44,6 +44,8 @@ interface NeedFlowEditorProps {
   onSave: (value: NeedInput) => Promise<void>;
   onBack: () => void;
   onDirtyChange: (value: boolean) => void;
+  /** Кнопка «Потребности» над редактором; на экране потребности назад ведёт сводка. */
+  showBack?: boolean;
 }
 export const NeedFlowEditor = ({
   active = true,
@@ -58,6 +60,7 @@ export const NeedFlowEditor = ({
   onSave,
   onBack,
   onDirtyChange,
+  showBack = true,
 }: NeedFlowEditorProps) => {
   const {
     value,
@@ -90,15 +93,17 @@ export const NeedFlowEditor = ({
     );
   return (
     <div className="grid gap-5">
-      <Button
-        variant="ghost"
-        className="justify-self-start"
-        disabled={pending}
-        onClick={onBack}
-      >
-        <ArrowLeftIcon />
-        Потребности
-      </Button>
+      {showBack && (
+        <Button
+          variant="ghost"
+          className="justify-self-start"
+          disabled={pending}
+          onClick={onBack}
+        >
+          <ArrowLeftIcon />
+          Потребности
+        </Button>
+      )}
       <div className="grid gap-5">
         <div
           ref={stepNavigationRef}
@@ -120,7 +125,7 @@ export const NeedFlowEditor = ({
           />
           <nav
             aria-label="Разделы потребности"
-            className="hidden gap-1 sm:grid sm:grid-cols-4"
+            className="hidden w-fit gap-1 rounded-lg bg-hover p-1 sm:flex"
           >
             {STEPS.map((item, i) => (
               <Button
@@ -129,9 +134,11 @@ export const NeedFlowEditor = ({
                 variant="ghost"
                 disabled={pending}
                 aria-current={step === i ? 'step' : undefined}
+                size="sm"
                 className={cn(
-                  'h-auto min-h-11 justify-start whitespace-normal text-left',
-                  step === i && 'bg-accent text-brand-text',
+                  'rounded-md px-3 text-muted-foreground hover:bg-transparent hover:text-foreground',
+                  step === i &&
+                    'bg-card text-foreground ring-1 ring-border hover:bg-card',
                 )}
                 onClick={() => setStep(i)}
               >
@@ -173,217 +180,32 @@ export const NeedFlowEditor = ({
                         maxLength={200}
                         onChange={(e) => change({ title: e.target.value })}
                         aria-invalid={!!errors.title}
-                        className="min-h-11"
+                        placeholder="Например, Frontend-разработчик в команду платформы"
                       />
                       {message('title')}
                     </label>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Специализация *
-                      <OptionSelect
-                        aria-label="Специализация потребности"
+                    <div className="grid gap-2">
+                      <p className="text-sm font-medium">Кого ищем</p>
+                      <BriefPhrase
+                        value={value}
+                        onChange={(next) => change(next)}
+                        catalogs={catalogs}
+                        skills={skills}
+                        searchItems={skillSearch.items}
+                        skillQuery={q}
+                        onSkillQuery={setQ}
+                        skillsLoading={skillSearch.loading}
+                        skillsError={skillSearch.error}
+                        onRetrySkills={skillSearch.retry}
+                        catalogsUnavailable={false}
                         disabled={readonly || pending}
-                        value={value.specializationId}
-                        onValueChange={(value) =>
-                          change({ specializationId: Number(value) })
-                        }
-                        aria-invalid={!!errors.specializationId}
-                        options={[
-                          { value: 0, label: 'Выберите специализацию' },
-                          ...(value.specializationId > 0 &&
-                          !catalogs.specializations.some(
-                            (item) => item.id === value.specializationId,
-                          )
-                            ? [
-                                {
-                                  value: value.specializationId,
-                                  label: `Сохранённая специализация #${value.specializationId}`,
-                                },
-                              ]
-                            : []),
-                          ...catalogs.specializations.map((item) => ({
-                            value: item.id,
-                            label: item.name,
-                          })),
-                        ]}
+                        errors={errors}
                       />
                       {message('specializationId')}
-                    </label>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Грейд
-                      <OptionSelect
-                        aria-label="Грейд потребности"
-                        disabled={readonly || pending}
-                        value={value.gradeId ?? ''}
-                        onValueChange={(value) =>
-                          change({
-                            gradeId: value ? Number(value) : null,
-                          })
-                        }
-                        options={[
-                          { value: '', label: 'Любой грейд' },
-                          ...(value.gradeId !== null &&
-                          !catalogs.grades.some(
-                            (item) => item.id === value.gradeId,
-                          )
-                            ? [
-                                {
-                                  value: value.gradeId,
-                                  label: `Сохранённый грейд #${value.gradeId}`,
-                                },
-                              ]
-                            : []),
-                          ...catalogs.grades.map((item) => ({
-                            value: item.id,
-                            label: item.name,
-                          })),
-                        ]}
-                      />
                       {message('gradeId')}
-                    </label>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Задачи и описание *
-                      <Textarea
-                        value={value.description}
-                        maxLength={10000}
-                        rows={6}
-                        onChange={(e) =>
-                          change({ description: e.target.value })
-                        }
-                        aria-invalid={!!errors.description}
-                      />
-                      {message('description')}
-                    </label>
-                  </>
-                )}
-                {step === 1 && (
-                  <>
-                    <div className="grid gap-3">
-                      <p className="text-sm font-medium">Зарплата в месяц, ₽</p>
-                      <SalaryRangeInput
-                        from={value.salaryFromRub}
-                        to={value.salaryToRub}
-                        onChange={({ from, to }) =>
-                          change({ salaryFromRub: from, salaryToRub: to })
-                        }
-                        errors={{
-                          from: errors.salaryFromRub,
-                          to: errors.salaryToRub,
-                        }}
-                      />
-                    </div>
-                    <div className="grid gap-3">
-                      <p className="text-sm font-medium">Форматы работы</p>
-                      {[
-                        ...catalogs.workFormats,
-                        ...value.workFormatIds
-                          .filter(
-                            (id) =>
-                              !catalogs.workFormats.some((f) => f.id === id),
-                          )
-                          .map((id) => ({
-                            id,
-                            code: '',
-                            name: `Сохранённый формат #${id}`,
-                          })),
-                      ].map((format) => (
-                        <label
-                          key={format.id}
-                          className="flex min-h-11 items-center gap-3 text-sm"
-                        >
-                          <Checkbox
-                            checked={value.workFormatIds.includes(format.id)}
-                            disabled={
-                              !value.workFormatIds.includes(format.id) &&
-                              value.workFormatIds.length >= 10
-                            }
-                            onCheckedChange={(checked) =>
-                              change({
-                                workFormatIds: checked
-                                  ? [...value.workFormatIds, format.id]
-                                  : value.workFormatIds.filter(
-                                      (id) => id !== format.id,
-                                    ),
-                              })
-                            }
-                          />
-                          {format.name}
-                        </label>
-                      ))}
                       {message('workFormatIds')}
+                      {message('skills')}
                     </div>
-                    <NeedAdvancedFields
-                      value={{ ...value, skills: [] }}
-                      skills={skills}
-                      errors={errors}
-                      change={change}
-                    />
-                  </>
-                )}
-                {step === 2 && (
-                  <>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Поиск навыка
-                      <Input
-                        value={q}
-                        onChange={(e) => setQ(e.target.value)}
-                        placeholder="Название или синоним"
-                      />
-                    </label>
-                    {skillSearch.loading && (
-                      <p role="status">Загрузка навыков…</p>
-                    )}
-                    {skillSearch.error && (
-                      <div role="alert">
-                        <p>{skillSearch.error}</p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={skillSearch.retry}
-                        >
-                          Повторить загрузку навыков
-                        </Button>
-                      </div>
-                    )}
-                    <div className="grid max-h-72 gap-2 overflow-y-auto">
-                      {skillSearch.items.map((skill) => (
-                        <label
-                          key={skill.id}
-                          className="flex min-h-11 items-center gap-3 text-sm"
-                        >
-                          <Checkbox
-                            checked={value.skills.some(
-                              (s) => s.skillId === skill.id,
-                            )}
-                            disabled={
-                              value.skills.length >= 50 &&
-                              !value.skills.some((s) => s.skillId === skill.id)
-                            }
-                            onCheckedChange={(checked) =>
-                              change({
-                                skills: checked
-                                  ? [
-                                      ...value.skills,
-                                      {
-                                        skillId: skill.id,
-                                        required: true,
-                                        weight: 1,
-                                      },
-                                    ]
-                                  : value.skills.filter(
-                                      (s) => s.skillId !== skill.id,
-                                    ),
-                              })
-                            }
-                          />
-                          {skill.name}
-                        </label>
-                      ))}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Выбрано {value.skills.length} из 50 навыков. Обязательные
-                      навыки сильнее влияют на подбор.
-                    </p>
-                    {message('skills')}
                     <NeedAdvancedFields
                       skillsOnly
                       value={value}
@@ -393,35 +215,33 @@ export const NeedFlowEditor = ({
                         if (patch.skills) change({ skills: patch.skills });
                       }}
                     />
-                    {value.skills.map(
-                      (s) =>
-                        !skills.some((item) => item.id === s.skillId) && (
-                          <div
-                            key={s.skillId}
-                            className="flex items-center gap-3 text-sm"
-                          >
-                            <span className="break-all">
-                              Сохранённый навык: {s.skillId}
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              onClick={() =>
-                                change({
-                                  skills: value.skills.filter(
-                                    (item) => item.skillId !== s.skillId,
-                                  ),
-                                })
-                              }
-                            >
-                              Убрать
-                            </Button>
-                          </div>
-                        ),
-                    )}
                   </>
                 )}
-                {step === 3 && (
+                {step === 1 && (
+                  <>
+                    <label className="grid gap-2 text-sm font-medium">
+                      Задачи и описание *
+                      <Textarea
+                        value={value.description}
+                        maxLength={10000}
+                        rows={6}
+                        placeholder="Задачи на первые месяцы, команда, продукт"
+                        onChange={(e) =>
+                          change({ description: e.target.value })
+                        }
+                        aria-invalid={!!errors.description}
+                      />
+                      {message('description')}
+                    </label>
+                    <NeedAdvancedFields
+                      value={{ ...value, skills: [] }}
+                      skills={skills}
+                      errors={errors}
+                      change={change}
+                    />
+                  </>
+                )}
+                {step === LAST_STEP && (
                   <>
                     <NeedSummary
                       value={value}
@@ -431,18 +251,7 @@ export const NeedFlowEditor = ({
                     <p className="whitespace-pre-wrap text-sm">
                       {value.description}
                     </p>
-                    <ul className="grid gap-2">
-                      {Object.entries(validateNeed(value, 'active')).map(
-                        ([key, text]) => (
-                          <li
-                            key={key}
-                            className="text-sm text-muted-foreground"
-                          >
-                            {text}
-                          </li>
-                        ),
-                      )}
-                    </ul>
+                    <NeedReadiness value={value} />
                     {value.status === 'draft' &&
                       !Object.keys(validateNeed(value, 'active')).length && (
                         <p className="flex items-center gap-2 text-sm text-success">
@@ -468,11 +277,11 @@ export const NeedFlowEditor = ({
                   <Button type="submit" size="lg" disabled={pending}>
                     {pending
                       ? 'Сохраняем…'
-                      : step < 3
+                      : step < LAST_STEP
                         ? 'Сохранить и продолжить'
                         : 'Сохранить'}
                   </Button>
-                  {step === 3 && value.status === 'draft' && !isNew && (
+                  {step === LAST_STEP && value.status === 'draft' && !isNew && (
                     <Button
                       type="button"
                       size="lg"
@@ -487,35 +296,35 @@ export const NeedFlowEditor = ({
             </form>
           </CardContent>
         </Card>
-        <div className="flex flex-wrap justify-between gap-3 border-t pt-5">
-          {step > 0 && (
+        {/* Шаги переключаются вкладками сверху; здесь — только соседний шаг. */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {step > 0 ? (
             <Button
               variant="ghost"
-              size="lg"
               disabled={pending}
               onClick={() => setStep(step - 1)}
             >
               <ArrowLeftIcon />
-              Назад
+              Предыдущий шаг
             </Button>
+          ) : (
+            <span />
           )}
-          {step < 3 && (
+          {step < LAST_STEP && (
             <Button
-              variant="outline"
-              size="lg"
+              variant="ghost"
               disabled={pending}
-              className="ml-auto"
               onClick={() => setStep(step + 1)}
             >
-              {readonly ? 'Продолжить' : 'Продолжить без сохранения'}
+              {readonly ? 'Следующий шаг' : 'Пропустить шаг'}
               <ArrowRightIcon />
             </Button>
           )}
         </div>
-        {!readonly && step < 3 && (
-          <p className="text-center text-sm text-muted-foreground">
-            Изменения отправляются после нажатия «Сохранить». Без сохранения они
-            остаются в черновике этой страницы.
+        {!readonly && step < LAST_STEP && (
+          <p className="text-xs text-muted-foreground">
+            Пропущенный шаг не сохраняется на сервере: изменения остаются в
+            черновике этой страницы до нажатия «Сохранить».
           </p>
         )}
       </div>

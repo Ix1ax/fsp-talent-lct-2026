@@ -26,7 +26,7 @@ import {
   CardHeader,
   CardTitle,
   ConfirmDeleteDialog,
-  Input,
+  FileInput,
   OptionSelect,
   PageControls,
   RemoteState,
@@ -196,7 +196,7 @@ export const CompanyDocuments = ({
         )}
         {!readonly && (
           <form
-            className="grid gap-4 rounded-lg border p-4"
+            className="grid gap-4 rounded-xl border border-border/60 bg-muted/50 p-4 sm:p-5"
             onSubmit={handleFormSubmit}
           >
             <fieldset disabled={mutation.pending} className="grid gap-4">
@@ -215,11 +215,12 @@ export const CompanyDocuments = ({
                   ]}
                 />
               </label>
-              <label className="grid gap-2 text-sm">
-                Файл
-                <Input
+              <div className="grid gap-2 text-sm">
+                <span id={`${company.id}-file-label`}>Файл</span>
+                <FileInput
                   ref={input}
-                  type="file"
+                  aria-labelledby={`${company.id}-file-label`}
+                  fileName={file?.name ?? null}
                   required
                   accept={
                     purpose === 'company_logo'
@@ -228,7 +229,7 @@ export const CompanyDocuments = ({
                   }
                   onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                 />
-              </label>
+              </div>
               <Button
                 type="submit"
                 size="lg"

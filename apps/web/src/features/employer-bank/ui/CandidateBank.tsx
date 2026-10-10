@@ -149,10 +149,7 @@ export const CandidateBank = ({
         <aside
           id="candidate-filters"
           aria-label="Фильтры соискателей"
-          className={cn(
-            'min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto',
-            !filtersOpen && 'hidden lg:block',
-          )}
+          className={cn('min-w-0', !filtersOpen && 'hidden lg:block')}
         >
           <CandidateFilters
             filters={filters}
@@ -196,7 +193,7 @@ export const CandidateBank = ({
           />
         </aside>
         <div className="grid min-w-0 gap-5">
-          <div className="grid gap-3 rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
+          <div className="grid gap-3 rounded-xl border border-border bg-card p-5 sm:p-6">
             <h2 className="text-xl font-semibold">
               {selectedNeed
                 ? `Подбор по потребности: ${selectedNeed.title}`

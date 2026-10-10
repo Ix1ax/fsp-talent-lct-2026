@@ -1,4 +1,6 @@
-import { formatSalaryRange } from '@/shared/utils';
+import { TIMEZONE_LABELS } from '@/shared/contants';
+import { briefTokenClassName } from '@/shared/ui';
+import { formatSalaryRange, pluralizeRu } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
 
@@ -8,60 +10,66 @@ interface NeedSummaryProps {
   skills: Skill[];
 }
 
-export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
-  const skillNames = (required: boolean) =>
-    value.skills
-      .filter((item) => item.required === required)
-      .map(
-        (item) =>
-          skills.find((skill) => skill.id === item.skillId)?.name ??
-          `Сохранённый навык ${item.skillId}`,
-      )
-      .filter(Boolean)
-      .join(', ');
+interface SummaryTokenProps {
+  value: string | null | undefined;
+  fallback: string;
+}
 
-  const fields = [
-    [
-      'Специализация',
-      catalogs.specializations.find(
-        (item) => item.id === value.specializationId,
-      )?.name ??
-        (value.specializationId
-          ? `Сохранённая специализация #${value.specializationId}`
-          : null),
-    ],
-    [
-      'Грейд',
-      catalogs.grades.find((item) => item.id === value.gradeId)?.name ??
-        (value.gradeId ? `Сохранённый грейд #${value.gradeId}` : 'Любой грейд'),
-    ],
-    [
-      'Формат работы',
-      value.workFormatIds
-        .map(
-          (id) =>
-            catalogs.workFormats.find((item) => item.id === id)?.name ??
-            `Сохранённый формат #${id}`,
-        )
-        .join(', '),
-    ],
-    ['Город', value.city ?? 'Любой город'],
-    ['Часовой пояс', value.timezone],
-    ['Зарплата', formatSalaryRange(value.salaryFromRub, value.salaryToRub)],
-    ['Обязательные навыки', skillNames(true)],
-    ['Желательные навыки', skillNames(false)],
-  ];
+const SummaryToken = ({ value, fallback }: SummaryTokenProps) => (
+  <span className={briefTokenClassName(!value)}>{value || fallback}</span>
+);
+
+/** Бриф потребности одной фразой: значения справочника — токены. */
+export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
+  // Потребность хранит только ID навыков: без названий показываем количество,
+  // а не технический идентификатор.
+  const skillNames = (required: boolean) => {
+    const selected = value.skills.filter((item) => item.required === required);
+    const names = selected
+      .map((item) => skills.find((skill) => skill.id === item.skillId)?.name)
+      .filter((name): name is string => !!name);
+    if (!selected.length) return '';
+    return names.length === selected.length
+      ? names.join(', ')
+      : pluralizeRu(selected.length, ['навык', 'навыка', 'навыков']);
+  };
+  const specialization =
+    catalogs.specializations.find((item) => item.id === value.specializationId)
+      ?.name ??
+    (value.specializationId
+      ? `Сохранённая специализация #${value.specializationId}`
+      : null);
+  const grade =
+    catalogs.grades.find((item) => item.id === value.gradeId)?.name ??
+    (value.gradeId ? `Сохранённый грейд #${value.gradeId}` : null);
+  const formats = value.workFormatIds
+    .map(
+      (id) =>
+        catalogs.workFormats
+          .find((item) => item.id === id)
+          ?.name.toLowerCase() ?? `сохранённый формат #${id}`,
+    )
+    .join(', ');
+  const salary =
+    value.salaryFromRub === null && value.salaryToRub === null
+      ? null
+      : formatSalaryRange(value.salaryFromRub, value.salaryToRub);
+  const timezone = value.timezone
+    ? (TIMEZONE_LABELS[value.timezone] ?? value.timezone)
+    : null;
 
   return (
-    <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-      {fields.map(([label, content]) => (
-        <div key={label} className="min-w-0">
-          <dt className="text-xs text-muted-foreground">{label}</dt>
-          <dd className="mt-1 text-sm leading-relaxed wrap-anywhere">
-            {content || 'Не указано'}
-          </dd>
-        </div>
-      ))}
-    </dl>
+    <p className="text-xl leading-[2.6rem] text-pretty">
+      Ищем специалиста{' '}
+      <SummaryToken value={specialization} fallback="специализация" /> уровня{' '}
+      <SummaryToken value={grade} fallback="любой грейд" />, формат —{' '}
+      <SummaryToken value={formats} fallback="не указан" />, город{' '}
+      <SummaryToken value={value.city} fallback="любой" />, часовой пояс{' '}
+      <SummaryToken value={timezone} fallback="любой" />, вилка{' '}
+      <SummaryToken value={salary} fallback="не указана" />. Обязательно —{' '}
+      <SummaryToken value={skillNames(true)} fallback="не указано" />,
+      желательно —{' '}
+      <SummaryToken value={skillNames(false)} fallback="не указано" />.
+    </p>
   );
 };

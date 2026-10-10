@@ -30,6 +30,7 @@ export const STATIC_ROUTES = {
   EMPLOYER_OFFERS: '/employer/offers',
   EMPLOYER_INVITATION: '/employer/invitation',
   GUIDES: '/guides',
+  LEGAL: '/legal',
   OFFERS: '/candidate/offers',
 } as const;
 
@@ -43,6 +44,7 @@ export const DYNAMIC_ROUTES = {
     `${STATIC_ROUTES.ADMIN_TEMPLATES}/${encodeURIComponent(id)}${action ? `/${action}` : ''}`,
   ADMIN_QUESTION: (id: string, action?: 'edit') =>
     `${STATIC_ROUTES.ADMIN_QUESTIONS}/${encodeURIComponent(id)}${action ? `/${action}` : ''}`,
+  LEGAL: (slug: string) => `${STATIC_ROUTES.LEGAL}/${slug}`,
 };
 
 export const EMPLOYER_DRAFT_SCOPE = ['company'] as const;

@@ -20,6 +20,9 @@ type NeedFlowEditorOptions = {
   onSave: (value: NeedInput) => Promise<void>;
   onDirtyChange: (value: boolean) => void;
 };
+
+/** Шаги: бриф → задачи и условия → готовность. */
+export const NEED_FLOW_LAST_STEP = 2;
 export const useNeedFlowEditor = ({
   initial,
   initialSkills,
@@ -118,7 +121,7 @@ export const useNeedFlowEditor = ({
       markSaved();
       setSaved(true);
       onDirtyChange(false);
-      if (advance) setStep(Math.min(3, step + 1));
+      if (advance) setStep(Math.min(NEED_FLOW_LAST_STEP, step + 1));
     } catch {
       /* Parent displays the API error. */
     }

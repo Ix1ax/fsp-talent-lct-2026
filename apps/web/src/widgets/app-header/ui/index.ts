@@ -1,1 +1,2 @@
-export { AppHeader } from './AppHeader';
+export { HeaderGuidesButton } from './HeaderGuidesButton';
+export { HeaderNavLabel } from './HeaderNavLabel';

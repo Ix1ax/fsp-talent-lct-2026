@@ -9,7 +9,7 @@ export {
 } from './Avatar';
 export { Badge, badgeVariants } from './Badge';
 export { BrandLogo } from './BrandLogo';
-export { BriefToken } from './BriefToken';
+export { BriefToken, briefTokenClassName } from './BriefToken';
 export { Button, buttonVariants } from './Button';
 export {
   Card,
@@ -62,6 +62,10 @@ export {
   DropdownMenuTrigger,
 } from './DropdownMenu';
 export { FieldMessage } from './FieldMessage';
+export { FileInput } from './FileInput';
+export { HeaderBar, headerNavItemClassName } from './HeaderBar';
+export { HeaderMobileSearch } from './HeaderMobileSearch';
+export { HeaderNavLink } from './HeaderNavLink';
 export { Input } from './Input';
 export { Label } from './Label';
 export {
@@ -79,6 +83,7 @@ export {
 export type { SelectOption } from './OptionSelect';
 export { OptionSelect } from './OptionSelect';
 export { PageControls } from './PageControls';
+export { PageHeader } from './PageHeader';
 export {
   Popover,
   PopoverAnchor,
@@ -88,9 +93,11 @@ export {
   PopoverTitle,
   PopoverTrigger,
 } from './Popover';
+export { RecordItem, RecordItemActions } from './RecordItem';
 export { RemoteState } from './RemoteState';
 export type { SalaryRange } from './SalaryRangeInput';
 export { SalaryRangeInput } from './SalaryRangeInput';
+export { SectionTabs } from './SectionTabs';
 export {
   Select,
   SelectContent,

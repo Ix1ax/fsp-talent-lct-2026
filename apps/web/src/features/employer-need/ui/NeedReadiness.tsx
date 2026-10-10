@@ -12,7 +12,7 @@ export const NeedReadiness = ({ value }: NeedReadinessProps) => {
   const missing = getMissingNeedFields(value);
   return (
     <div
-      className="grid gap-3 border border-border bg-muted p-4"
+      className="grid gap-3 rounded-xl border border-border/60 bg-muted/60 p-4"
       aria-label="Готовность потребности к активации"
     >
       <MetaLabel>Чтобы начать поиск</MetaLabel>
@@ -30,7 +30,7 @@ export const NeedReadiness = ({ value }: NeedReadinessProps) => {
             <li key={label} className="flex items-center gap-2 text-sm">
               <span
                 className={cn(
-                  'flex size-5 items-center justify-center border border-input text-caption',
+                  'flex size-5 shrink-0 items-center justify-center rounded-md border border-input bg-card text-caption',
                   ready && 'border-success bg-success-soft text-success',
                 )}
               >

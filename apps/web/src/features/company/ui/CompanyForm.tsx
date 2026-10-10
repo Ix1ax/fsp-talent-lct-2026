@@ -145,7 +145,7 @@ export const CompanyForm = ({
               </p>
             )}
             {!readonly && (
-              <Button type="submit" size="lg" disabled={pending}>
+              <Button type="submit" disabled={pending}>
                 {pending
                   ? 'Сохраняем…'
                   : create

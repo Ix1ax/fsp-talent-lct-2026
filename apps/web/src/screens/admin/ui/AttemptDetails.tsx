@@ -41,7 +41,7 @@ export const AttemptDetails = ({ id }: { id: string }) => {
             <OperationStatus value={attempt.status} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="border bg-muted/30 p-5">
+            <div className="rounded-xl border bg-muted/30 p-5">
               <p className="text-xs text-muted-foreground">
                 Итоговый результат
               </p>
@@ -51,7 +51,7 @@ export const AttemptDetails = ({ id }: { id: string }) => {
                   : `${attempt.score_percent}%`}
               </p>
             </div>
-            <div className="border bg-muted/30 p-5">
+            <div className="rounded-xl border bg-muted/30 p-5">
               <p className="text-xs text-muted-foreground">Порог прохождения</p>
               <p className="mt-2 text-3xl font-semibold tabular-nums">
                 {attempt.pass_score}%

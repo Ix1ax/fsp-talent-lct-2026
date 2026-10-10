@@ -5,5 +5,6 @@ export { formatDate } from './formatDate';
 export { formatDuration } from './formatDuration';
 export { formatSalaryRange } from './formatSalaryRange';
 export { isObject } from './isObject';
+export { pluralizeRu } from './pluralizeRu';
 export { sanitizeRedirectPath } from './sanitizeRedirectPath';
 export { snakeToCamel } from './snakeToCamel';

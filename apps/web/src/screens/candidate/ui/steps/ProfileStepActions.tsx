@@ -40,7 +40,6 @@ export const ProfileStepActions = ({
           <Button
             type="button"
             variant="ghost"
-            size="lg"
             disabled={busy}
             onClick={() => onStepChange(previous.id)}
           >
@@ -52,7 +51,6 @@ export const ProfileStepActions = ({
           <Button
             type="button"
             variant={isFormStep ? 'outline' : 'default'}
-            size="lg"
             disabled={
               busy || (step === 'consents' && !processing && !profileExists)
             }

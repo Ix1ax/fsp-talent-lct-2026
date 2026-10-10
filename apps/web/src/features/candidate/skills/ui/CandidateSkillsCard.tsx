@@ -50,8 +50,8 @@ export const CandidateSkillsCard = (props: CandidateSkillsCardProps) => {
           }
           onAdd={actions.add}
         />
-        <div className="flex flex-col gap-2">
-          <p role="alert" className="min-h-5 text-sm text-destructive">
+        <div className="flex flex-col gap-2 border-t border-border/60 pt-5">
+          <p role="alert" className="text-sm text-destructive empty:hidden">
             {actions.message}
           </p>
           <p className="text-sm text-muted-foreground">

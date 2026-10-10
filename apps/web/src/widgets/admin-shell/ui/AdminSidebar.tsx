@@ -91,7 +91,7 @@ export const AdminSidebar = ({
                     aria-label={label}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'relative isolate flex min-h-14 min-w-0 rounded-md flex-col items-center justify-center gap-1 whitespace-nowrap px-0.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring lg:min-h-11 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3',
+                      'relative isolate flex min-h-14 min-w-0 rounded-lg flex-col items-center justify-center gap-1 whitespace-nowrap px-0.5 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-ring lg:min-h-11 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-3',
                       active
                         ? 'text-brand-text'
                         : 'text-muted-foreground hover:bg-muted',
@@ -101,7 +101,7 @@ export const AdminSidebar = ({
                     {active && (
                       <AnimatedIndicator
                         layoutId={MOTION_LAYOUT_IDS.ADMIN_SIDEBAR_ACTIVE}
-                        className="absolute inset-0 -z-10 rounded-md bg-accent"
+                        className="absolute inset-0 -z-10 rounded-lg bg-accent"
                       />
                     )}
                     <Icon size={18} className="shrink-0" />

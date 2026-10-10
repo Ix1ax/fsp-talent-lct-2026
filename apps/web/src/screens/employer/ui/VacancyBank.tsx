@@ -21,7 +21,6 @@ import { NEED_STATUS_LABELS } from '@/entities/employer-need';
 import {
   ArchiveNeedDialog,
   emptyNeed,
-  NeedActions,
   NeedFlowEditor,
 } from '@/features/employer-need';
 import {
@@ -31,10 +30,10 @@ import {
   loadStatusVacancies,
   type VacancyFilters as Filters,
 } from '@/features/employer-search';
-import { MatchTable } from '@/widgets/need-matches';
 
 import type { EmployerGateway } from '../lib';
 import type { EmployerBoard } from '../model';
+import { NeedDetail } from './NeedDetail';
 import { VacancyCard } from './VacancyCard';
 import { VacancyFilters } from './VacancyFilters';
 
@@ -120,7 +119,7 @@ export const VacancyBank = ({
 
   if (composer || board.selectedId)
     return (
-      <div className="mx-auto grid w-full min-w-0 max-w-5xl gap-5">
+      <div className="grid w-full min-w-0 gap-5">
         {composer ? (
           <NeedFlowEditor
             active={active}
@@ -153,63 +152,32 @@ export const VacancyBank = ({
             />
           </>
         ) : need ? (
-          <>
-            <NeedFlowEditor
-              active={active}
-              key={`${need.id}-${need.status === 'archived'}`}
-              initial={need}
-              initialStep={created ? 1 : 0}
-              catalogs={catalogs}
-              skills={skills}
-              readonly={!canWrite || need.status === 'archived'}
-              pending={board.pending}
-              error={board.saveError}
-              onSave={(value) => board.save(value, false)}
-              onBack={onBack}
-              onDirtyChange={onDirtyChange}
-            />
-            <NeedActions
-              status={need.status}
-              canWrite={canWrite}
-              pending={board.pending}
-              dirty={dirty}
-              onFind={() =>
-                document
-                  .getElementById('vacancy-matches')
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-              onRestore={() => void board.restore().catch(() => {})}
-              onArchive={() => onArchiveConfirm(true)}
-              onDuplicate={() =>
-                guard(() => {
-                  void board.duplicate().catch(() => {});
-                })
-              }
-            />
-            {need.status === 'active' && (
-              <div id="vacancy-matches" className="scroll-mt-24">
-                <MatchTable
-                  key={`${need.id}-${board.revision}`}
-                  companyId={board.companyId}
-                  needId={need.id}
-                  catalogs={catalogs}
-                  load={api.recommendations}
-                  onOpenCandidate={onCandidate}
-                />
-              </div>
-            )}
-            {need.status === 'draft' && (
-              <AsyncState
-                title="Подбор появится после активации"
-                description="Добавьте навыки и форматы работы, затем активируйте потребность на шаге «Готовность»."
-              />
-            )}
-            {board.saveError && (
-              <p role="alert" className="text-sm text-destructive">
-                {board.saveError}
-              </p>
-            )}
-          </>
+          <NeedDetail
+            key={need.id}
+            need={need}
+            companyId={board.companyId}
+            catalogs={catalogs}
+            skills={skills}
+            active={active}
+            created={!!created}
+            canWrite={canWrite}
+            pending={board.pending}
+            dirty={dirty}
+            revision={board.revision}
+            saveError={board.saveError}
+            loadRecommendations={api.recommendations}
+            onSave={(value) => board.save(value, false)}
+            onBack={onBack}
+            onDirtyChange={onDirtyChange}
+            onCandidate={onCandidate}
+            onRestore={() => void board.restore().catch(() => {})}
+            onArchive={() => onArchiveConfirm(true)}
+            onDuplicate={() =>
+              guard(() => {
+                void board.duplicate().catch(() => {});
+              })
+            }
+          />
         ) : null}
         <ArchiveNeedDialog
           open={archiveConfirm}
@@ -240,10 +208,7 @@ export const VacancyBank = ({
       <aside
         id="vacancy-filters"
         aria-label="Фильтры потребностей"
-        className={cn(
-          'min-w-0 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto',
-          !filtersOpen && 'hidden lg:block',
-        )}
+        className={cn('min-w-0', !filtersOpen && 'hidden lg:block')}
       >
         <VacancyFilters
           value={filters}
@@ -257,7 +222,7 @@ export const VacancyBank = ({
         <form
           role="search"
           aria-label="Поиск потребностей"
-          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-2xl border border-border/60 bg-card p-4 sm:flex sm:p-5"
+          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl border border-border bg-card p-4 sm:flex sm:p-5"
           onSubmit={(event) => {
             event.preventDefault();
             updateFilters({ query: searchDraft.trim() });
@@ -274,13 +239,13 @@ export const VacancyBank = ({
               value={searchDraft}
               onChange={(event) => setSearchDraft(event.target.value)}
               disabled={board.pending}
-              className="h-11 border-0 bg-muted/60 pl-9"
+              className="pl-9"
             />
           </div>
           <Button
             type="submit"
             disabled={board.pending}
-            className="h-11 w-11 px-0 sm:w-auto sm:px-4"
+            className="w-10 px-0 sm:w-auto sm:px-4"
           >
             <SearchIcon />
             <span className="sr-only sm:not-sr-only">Найти</span>
@@ -291,7 +256,7 @@ export const VacancyBank = ({
               variant="outline"
               disabled={board.pending}
               onClick={onCreate}
-              className="col-span-2 h-11"
+              className="col-span-2"
             >
               <PlusIcon />
               Создать потребность
@@ -361,8 +326,8 @@ export const VacancyBank = ({
             aria-label="Загрузка потребностей"
             className="grid gap-4"
           >
-            <Skeleton className="h-56 rounded-2xl" />
-            <Skeleton className="h-56 rounded-2xl" />
+            <Skeleton className="h-56 rounded-xl" />
+            <Skeleton className="h-56 rounded-xl" />
           </div>
         ) : error ? (
           <AsyncState
@@ -370,14 +335,13 @@ export const VacancyBank = ({
             title="Не удалось загрузить потребности"
             description={error}
             onRetry={filtered ? complete.retry : board.reload}
-            className="rounded-2xl bg-card"
+            className="rounded-xl bg-card"
           />
         ) : items.length && board.company ? (
           items.map((item) => (
             <VacancyCard
               key={item.id}
               need={item}
-              company={board.company!}
               catalogs={catalogs}
               skills={skills}
               busy={board.pending}
@@ -385,7 +349,7 @@ export const VacancyBank = ({
             />
           ))
         ) : (
-          <div className="grid justify-items-center gap-3 rounded-2xl border border-dashed bg-card p-8 text-center sm:p-12">
+          <div className="grid justify-items-center gap-3 rounded-xl border border-dashed bg-card p-8 text-center sm:p-12">
             <SearchIcon className="size-8 text-muted-foreground" />
             <h2 className="text-lg font-semibold">
               {filtered

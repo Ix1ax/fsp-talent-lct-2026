@@ -6,7 +6,6 @@ import type { NeedStatus } from '@/entities/employer-need';
 import type { NeedList as List } from '../model';
 import { CountTabs } from './CountTabs';
 import { NeedListItem } from './NeedListItem';
-import { NewNeedTemplate } from './NewNeedTemplate';
 
 interface NeedListProps {
   list: List;
@@ -15,7 +14,6 @@ interface NeedListProps {
   detail: boolean;
   composer: boolean;
   onStatus: (status: NeedStatus) => void;
-  onCreate: () => void;
   onSelect: (id: string) => void;
   onPage: (offset: number) => void;
 }
@@ -27,31 +25,19 @@ export const NeedList = ({
   detail,
   composer,
   onStatus,
-  onCreate,
   onSelect,
   onPage,
 }: NeedListProps) => (
   <aside
     className={cn(
-      'min-w-0 border-r border-border bg-card',
+      'flex min-w-0 flex-col gap-2 rounded-xl border border-border bg-card p-2',
       detail && 'max-md:hidden',
     )}
     aria-label="Список потребностей"
   >
-    <div className="px-4 pb-4 pt-6 xl:px-5">
-      <h1 className="text-[28px] font-extrabold leading-none tracking-tight xl:text-[32px]">
-        Потребности
-      </h1>
-      <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-        Вакансии команды и подбор кандидатов.
-      </p>
-    </div>
     <CountTabs value={list.status} disabled={list.pending} onChange={onStatus}>
-      {canWrite && (
-        <NewNeedTemplate disabled={list.pending} onClick={onCreate} />
-      )}
       {!canWrite && (
-        <p className="border-b border-border p-4 text-xs text-muted-foreground">
+        <p className="px-3 py-2 text-xs text-muted-foreground">
           Вы наблюдатель: потребности доступны для просмотра.
         </p>
       )}
@@ -62,11 +48,11 @@ export const NeedList = ({
           aria-label="Загрузка потребностей"
         >
           {[1, 2, 3].map((v) => (
-            <Skeleton key={v} className="h-28 rounded-none" />
+            <Skeleton key={v} className="h-24 rounded-lg" />
           ))}
         </div>
       ) : list.listError ? (
-        <div className="p-4">
+        <div className="p-2">
           <AsyncState
             error
             title="Не удалось загрузить потребности"
@@ -85,7 +71,7 @@ export const NeedList = ({
           />
         ))
       ) : (
-        <div className="p-4">
+        <div className="p-2">
           <AsyncState
             title={
               list.status === 'active'
@@ -105,9 +91,10 @@ export const NeedList = ({
         </div>
       )}
       {(list.offset > 0 || list.hasMore) && !list.loading && (
-        <div className="flex justify-between gap-3 p-4">
+        <div className="flex justify-between gap-3 p-2">
           <Button
             variant="outline"
+            size="sm"
             disabled={!list.offset || list.pending}
             onClick={() => onPage(Math.max(0, list.offset - 20))}
           >
@@ -115,6 +102,7 @@ export const NeedList = ({
           </Button>
           <Button
             variant="outline"
+            size="sm"
             disabled={!list.hasMore || list.pending}
             onClick={() => onPage(list.offset + 20)}
           >

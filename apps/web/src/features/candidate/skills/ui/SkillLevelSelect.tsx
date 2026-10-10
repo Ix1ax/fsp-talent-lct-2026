@@ -28,11 +28,7 @@ export const SkillLevelSelect = ({
     disabled={disabled}
     onValueChange={(next) => onChange(Number(next) as ClaimedLevel)}
   >
-    <SelectTrigger
-      id={id}
-      aria-label={label}
-      className="w-full min-w-28 data-[size=default]:h-11"
-    >
+    <SelectTrigger id={id} aria-label={label} className="w-full min-w-28">
       <SelectValue />
     </SelectTrigger>
     <SelectContent>

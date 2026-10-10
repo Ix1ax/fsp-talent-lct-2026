@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckIcon } from 'lucide-react';
+import { ArrowLeftIcon, CheckIcon } from 'lucide-react';
 
 import {
   DYNAMIC_ROUTES,
@@ -36,11 +36,12 @@ export const ProfileStepNavigation = ({
   const { reducedMotion, transition } = useMotionSettings();
   const index = PROFILE_STEPS.findIndex((item) => item.id === step);
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 sm:p-4">
       <Link
         href={STATIC_ROUTES.CANDIDATE}
-        className="flex min-h-11 items-center self-start text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+        className="flex min-h-11 items-center gap-2 self-start text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
       >
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
         Обзор кабинета
       </Link>
       <p className="pr-7 text-sm font-medium" aria-live="polite">
@@ -88,7 +89,7 @@ export const ProfileStepNavigation = ({
               if (busy) event.preventDefault();
             }}
             className={cn(
-              'relative isolate flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-md px-3 py-3 text-sm whitespace-normal transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+              'relative isolate flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg px-3 py-3 text-sm whitespace-normal transition-colors focus-visible:outline-2 focus-visible:outline-ring',
               item.id === step ? 'text-brand-text' : 'hover:bg-accent/70',
               busy && 'cursor-not-allowed opacity-60',
             )}
@@ -96,7 +97,7 @@ export const ProfileStepNavigation = ({
             {item.id === step && (
               <AnimatedIndicator
                 layoutId={MOTION_LAYOUT_IDS.CANDIDATE_PROFILE_STEP}
-                className="absolute inset-0 -z-10 rounded-md bg-accent"
+                className="absolute inset-0 -z-10 rounded-lg bg-accent"
               />
             )}
             <span>
