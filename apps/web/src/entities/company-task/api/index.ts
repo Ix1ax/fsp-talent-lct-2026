@@ -12,7 +12,13 @@ export type {
   CompanyTaskFilters,
   CreateCompanyTaskInput,
 } from './employerTasks';
-export { createCompanyTask, listCompanyTasks } from './employerTasks';
+export {
+  closeCompanyTask,
+  createCompanyTask,
+  downloadCompanyTask,
+  getCompanyTask,
+  listCompanyTasks,
+} from './employerTasks';
 export type { SubmissionFilters, TaskFilters } from './tasks';
 export {
   downloadMyTaskSolution,

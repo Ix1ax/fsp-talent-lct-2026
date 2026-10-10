@@ -1,3 +1,4 @@
+import { normalizePage } from '@/shared/api';
 import { clientApi } from '@/shared/api/client';
 import type { Page } from '@/shared/api/types';
 
@@ -14,12 +15,14 @@ export const getCompanyOffers = async (
   offset = 0,
   signal?: AbortSignal,
 ) =>
-  (
-    await clientApi.get<Page<CandidateOffer>>(
-      `/v1/companies/${companyId}/offers`,
-      { params: { status, limit: 20, offset }, signal },
-    )
-  ).data;
+  normalizePage(
+    (
+      await clientApi.get<Page<CandidateOffer>>(
+        `/v1/companies/${companyId}/offers`,
+        { params: { status, limit: 21, offset }, signal },
+      )
+    ).data,
+  );
 export const getCompanyOffer = async (
   companyId: string,
   id: string,

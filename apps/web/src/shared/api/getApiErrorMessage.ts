@@ -2,6 +2,10 @@ import { ApiError } from './errors';
 
 export const getApiErrorMessage = (error: unknown): string => {
   if (error instanceof ApiError) {
+    if (error.code === 'company_blocked')
+      return 'Компания заблокирована. Обратитесь к администратору для восстановления доступа.';
+    if (error.code === 'verification_evidence_required')
+      return 'Укажите ИНН в профиле компании и загрузите хотя бы один готовый документ компании. Логотип не учитывается.';
     if (error.code === 'user_inactive')
       return 'Учётная запись заблокирована или удалена.';
     if (error.code === 'invitation_invalid')

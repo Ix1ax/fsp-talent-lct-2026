@@ -1,3 +1,4 @@
+import { normalizePage } from '@/shared/api';
 import { clientApi } from '@/shared/api/client';
 import type { Page } from '@/shared/api/types';
 
@@ -18,12 +19,14 @@ export const getCompanyFiles = async (
   offset = 0,
   signal?: AbortSignal,
 ) =>
-  (
-    await clientApi.get<Page<CompanyFile>>(`${path(id)}/files`, {
-      params: { limit: 20, offset },
-      signal,
-    })
-  ).data;
+  normalizePage(
+    (
+      await clientApi.get<Page<CompanyFile>>(`${path(id)}/files`, {
+        params: { limit: 21, offset },
+        signal,
+      })
+    ).data,
+  );
 export const uploadCompanyFile = async (
   id: string,
   file: File,
@@ -57,12 +60,14 @@ export const getCompanyMembers = async (
   offset = 0,
   signal?: AbortSignal,
 ) =>
-  (
-    await clientApi.get<Page<CompanyMember>>(`${path(id)}/members`, {
-      params: { limit: 20, offset },
-      signal,
-    })
-  ).data;
+  normalizePage(
+    (
+      await clientApi.get<Page<CompanyMember>>(`${path(id)}/members`, {
+        params: { limit: 21, offset },
+        signal,
+      })
+    ).data,
+  );
 export const updateCompanyMember = async (
   id: string,
   userId: string,
@@ -81,12 +86,14 @@ export const getCompanyInvitations = async (
   offset = 0,
   signal?: AbortSignal,
 ) =>
-  (
-    await clientApi.get<Page<CompanyInvitation>>(`${path(id)}/invitations`, {
-      params: { limit: 20, offset },
-      signal,
-    })
-  ).data;
+  normalizePage(
+    (
+      await clientApi.get<Page<CompanyInvitation>>(`${path(id)}/invitations`, {
+        params: { limit: 21, offset },
+        signal,
+      })
+    ).data,
+  );
 export const createCompanyInvitation = async (
   id: string,
   input: { email: string; role: TeamRole },
@@ -105,3 +112,8 @@ export const acceptCompanyInvitation = async (token: string) =>
       token,
     })
   ).data;
+
+export {
+  getCompanyVerification,
+  requestCompanyVerification,
+} from './verification';

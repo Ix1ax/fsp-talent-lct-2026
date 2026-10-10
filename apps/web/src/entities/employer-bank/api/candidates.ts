@@ -1,8 +1,12 @@
-import { clientApi } from '@/shared/api/client';
+import { clientApi, ensureClientAccessToken } from '@/shared/api/client';
 import type { Page } from '@/shared/api/types';
 import type { RecommendationPage } from '@/entities/employer-need/@x/employer-bank';
 
-import type { BankCandidate, BankCandidateDetails } from '../model';
+import type {
+  BankCandidate,
+  BankCandidateDetails,
+  CandidateInteraction,
+} from '../model';
 import { bankFilterParams } from './filters';
 import type { BankFilters } from './types';
 
@@ -46,4 +50,21 @@ export const getNeedCandidates = async (
   );
 
   return data;
+};
+
+export const viewBankCandidate = async (
+  companyId: string,
+  candidateId: string,
+  signal?: AbortSignal,
+) => {
+  signal?.throwIfAborted();
+  await ensureClientAccessToken();
+  signal?.throwIfAborted();
+  return (
+    await clientApi.post<CandidateInteraction>(
+      `/v1/companies/${encodeURIComponent(companyId)}/candidates/${encodeURIComponent(candidateId)}/view`,
+      undefined,
+      { signal },
+    )
+  ).data;
 };

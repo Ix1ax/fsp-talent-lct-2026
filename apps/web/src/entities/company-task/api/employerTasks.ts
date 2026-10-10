@@ -1,4 +1,9 @@
-import { clientApi, ensureClientAccessToken } from '@/shared/api';
+import {
+  ApiError,
+  clientApi,
+  ensureClientAccessToken,
+  toApiError,
+} from '@/shared/api';
 
 import type { CompanyTask, TaskPage } from '../model';
 import type { TaskFilters } from './tasks';
@@ -52,4 +57,67 @@ export const listCompanyTasks = async (
   );
 
   return data;
+};
+
+const taskPath = (companyId: string, taskId: string) =>
+  `/v1/companies/${encodeURIComponent(companyId)}/tasks/${encodeURIComponent(taskId)}`;
+
+const authorize = async (signal?: AbortSignal) => {
+  signal?.throwIfAborted();
+  await ensureClientAccessToken();
+  signal?.throwIfAborted();
+};
+
+export const getCompanyTask = async (
+  companyId: string,
+  taskId: string,
+  signal?: AbortSignal,
+) => {
+  await authorize(signal);
+  return (
+    await clientApi.get<CompanyTask>(taskPath(companyId, taskId), { signal })
+  ).data;
+};
+
+export const closeCompanyTask = async (
+  companyId: string,
+  taskId: string,
+  signal?: AbortSignal,
+) => {
+  await authorize(signal);
+  return (
+    await clientApi.post<CompanyTask>(
+      `${taskPath(companyId, taskId)}/close`,
+      undefined,
+      { signal },
+    )
+  ).data;
+};
+
+export const downloadCompanyTask = async (
+  companyId: string,
+  taskId: string,
+  signal?: AbortSignal,
+) => {
+  await authorize(signal);
+  try {
+    return (
+      await clientApi.get<Blob>(`${taskPath(companyId, taskId)}/file`, {
+        responseType: 'blob',
+        timeout: 60_000,
+        signal,
+      })
+    ).data;
+  } catch (error) {
+    if (error instanceof ApiError && error.data instanceof Blob) {
+      let body: unknown;
+      try {
+        body = JSON.parse(await error.data.text());
+      } catch {
+        throw error;
+      }
+      throw toApiError(error.status, body, error.message, error.headers);
+    }
+    throw error;
+  }
 };

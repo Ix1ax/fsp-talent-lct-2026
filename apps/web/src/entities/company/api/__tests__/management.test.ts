@@ -43,10 +43,20 @@ describe('company management transport', () => {
     await expect(deleteCompanyFile('company', 'file')).resolves.toBeUndefined();
   });
   it('uses local user IDs for role changes, keeps pagination and accepts only the invitation token', async () => {
-    await getCompanyMembers('company', 40);
+    vi.mocked(clientApi.get).mockResolvedValue({
+      data: {
+        items: Array.from({ length: 21 }, (_, i) => ({ userId: String(i) })),
+        limit: 21,
+        offset: 40,
+      },
+    });
+    const page = await getCompanyMembers('company', 40);
+    expect(page.items).toHaveLength(20);
+    expect(page.hasMore).toBe(true);
+    expect(page.limit).toBe(20);
     expect(clientApi.get).toHaveBeenCalledWith(
       '/v1/companies/company/members',
-      { params: { limit: 20, offset: 40 }, signal: undefined },
+      { params: { limit: 21, offset: 40 }, signal: undefined },
     );
     await updateCompanyMember('company', 'local-user', 'viewer');
     expect(clientApi.patch).toHaveBeenCalledWith(

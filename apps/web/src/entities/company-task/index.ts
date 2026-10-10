@@ -7,10 +7,13 @@ export type {
   TaskFilters,
 } from './api';
 export {
+  closeCompanyTask,
   createCompanyTask,
+  downloadCompanyTask,
   downloadCompanyTaskSolution,
   downloadMyTaskSolution,
   downloadTask,
+  getCompanyTask,
   getCompanyTaskSubmission,
   getMyTaskSubmission,
   getTask,
