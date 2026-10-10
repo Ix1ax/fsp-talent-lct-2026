@@ -72,6 +72,10 @@ export const AccountsPage = () => {
                       : 'Администратор'}{' '}
                     · {new Date(account.created_at).toLocaleDateString('ru-RU')}
                   </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    ID:{' '}
+                    <span className="font-mono select-all">{account.id}</span>
+                  </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <Status value={account.status} />

@@ -1,12 +1,57 @@
 import {
   BookOpen,
+  Building2,
+  ChartNoAxesCombined,
+  ClipboardList,
   FileQuestion,
+  FileText,
+  GraduationCap,
+  History,
   Layers,
+  Send,
   ShieldCheck,
   Users,
 } from 'lucide-react';
 
 export const ADMIN_LINKS = [
+  {
+    path: 'overview',
+    mobileLabel: 'Обзор',
+    label: 'Обзор платформы',
+    icon: ChartNoAxesCombined,
+  },
+  {
+    path: 'companies',
+    mobileLabel: 'Компании',
+    label: 'Компании',
+    icon: Building2,
+  },
+  { path: 'users', mobileLabel: 'Люди', label: 'Пользователи', icon: Users },
+  {
+    path: 'needs',
+    mobileLabel: 'Потребности',
+    label: 'Потребности',
+    icon: FileText,
+  },
+  { path: 'offers', mobileLabel: 'Офферы', label: 'Предложения', icon: Send },
+  {
+    path: 'tasks',
+    mobileLabel: 'Задания',
+    label: 'Задания компаний',
+    icon: ClipboardList,
+  },
+  {
+    path: 'attempts',
+    mobileLabel: 'Попытки',
+    label: 'Попытки тестирования',
+    icon: GraduationCap,
+  },
+  {
+    path: 'audit',
+    mobileLabel: 'Журнал',
+    label: 'Журнал действий',
+    icon: History,
+  },
   {
     path: 'catalogs',
     mobileLabel: 'Каталоги',
@@ -21,7 +66,7 @@ export const ADMIN_LINKS = [
   },
   {
     path: 'questions',
-    mobileLabel: 'Задания',
+    mobileLabel: 'Вопросы',
     label: 'Банк заданий',
     icon: FileQuestion,
   },

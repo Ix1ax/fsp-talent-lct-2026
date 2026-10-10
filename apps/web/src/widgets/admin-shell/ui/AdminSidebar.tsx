@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -36,6 +37,12 @@ export const AdminSidebar = ({
   onLogout,
 }: AdminSidebarProps) => {
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    navRef.current
+      ?.querySelector('[aria-current="page"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'center' });
+  }, [pathname]);
   return (
     <aside className="fixed inset-x-0 bottom-0 z-30 flex min-w-0 flex-col border-t bg-card pb-[env(safe-area-inset-bottom)] lg:sticky lg:inset-auto lg:top-0 lg:h-dvh lg:border-t-0 lg:border-r lg:pb-0">
       <div className="flex min-w-0 flex-1 flex-col lg:min-h-0 lg:overflow-y-auto">
@@ -62,9 +69,10 @@ export const AdminSidebar = ({
           Администрирование
         </div>
         <nav
+          ref={navRef}
           aria-label="Разделы админки"
           className={cn(
-            'grid grid-flow-col auto-cols-fr gap-1 p-2 lg:grid-flow-row lg:auto-cols-auto lg:p-3 lg:pt-0',
+            'grid grid-flow-col auto-cols-[80px] gap-1 overflow-x-auto p-2 lg:grid-flow-row lg:auto-cols-auto lg:overflow-x-visible lg:p-3 lg:pt-0',
             collapsed && 'lg:px-2',
           )}
         >

@@ -16,6 +16,7 @@ import { questionContent } from '../lib';
 import type { QuestionFormValues } from '../model';
 import { useAdminSession } from '../model';
 import { useAdminMutation } from '../model/useAdminMutation';
+import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
 
@@ -107,24 +108,21 @@ export const QuestionEditor = ({
       </p>
       <form onSubmit={submit} className="grid min-w-0 gap-5">
         <fieldset disabled={mutation.busy} className="grid min-w-0 gap-5">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Controller
-                control={form.control}
-                name="skill_id"
-                render={({ field }) => (
-                  <SkillPicker
-                    approvedOnly
-                    value={field.value}
-                    onChange={field.onChange}
-                    disabled={!!question}
-                  />
-                )}
-              />
-              <p className="mt-1 min-h-5 text-sm text-destructive">
-                {form.formState.errors.skill_id?.message}
-              </p>
-            </div>
+          <AdminFieldGrid>
+            <Controller
+              control={form.control}
+              name="skill_id"
+              render={({ field }) => (
+                <SkillPicker
+                  approvedOnly
+                  error={form.formState.errors.skill_id?.message}
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={!!question}
+                />
+              )}
+            />
+
             <Field
               label="Сложность (1–5)"
               error={form.formState.errors.difficulty?.message}
@@ -137,7 +135,7 @@ export const QuestionEditor = ({
                 {...form.register('difficulty', { valueAsNumber: true })}
               />
             </Field>
-          </div>
+          </AdminFieldGrid>
           <Field label="Тип задания">
             <Controller
               control={form.control}
@@ -240,11 +238,25 @@ export const QuestionEditor = ({
                   />
                   <Input
                     aria-label={`Код варианта ${index + 1}`}
+                    aria-invalid={!!form.formState.errors.options?.[index]?.id}
+                    aria-describedby={
+                      form.formState.errors.options?.[index]?.id
+                        ? `${row.id}-code-error`
+                        : undefined
+                    }
                     className="w-full"
                     {...form.register(`options.${index}.id`)}
                   />
                   <Input
                     aria-label={`Текст варианта ${index + 1}`}
+                    aria-invalid={
+                      !!form.formState.errors.options?.[index]?.text
+                    }
+                    aria-describedby={
+                      form.formState.errors.options?.[index]?.text
+                        ? `${row.id}-text-error`
+                        : undefined
+                    }
                     className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:col-start-3 sm:row-start-1"
                     {...form.register(`options.${index}.text`)}
                   />
@@ -257,10 +269,31 @@ export const QuestionEditor = ({
                   >
                     Убрать
                   </Button>
+                  {form.formState.errors.options?.[index]?.id && (
+                    <p
+                      id={`${row.id}-code-error`}
+                      role="alert"
+                      className="col-span-full text-xs text-destructive"
+                    >
+                      Код варианта {index + 1}:{' '}
+                      {form.formState.errors.options[index]?.id?.message}
+                    </p>
+                  )}
+                  {form.formState.errors.options?.[index]?.text && (
+                    <p
+                      id={`${row.id}-text-error`}
+                      role="alert"
+                      className="col-span-full text-xs text-destructive"
+                    >
+                      Текст варианта {index + 1}:{' '}
+                      {form.formState.errors.options[index]?.text?.message}
+                    </p>
+                  )}
                 </div>
               ))}
               <p className="min-h-5 text-sm text-destructive">
-                {form.formState.errors.options?.message}
+                {form.formState.errors.options?.message ??
+                  form.formState.errors.options?.root?.message}
               </p>
               <Button
                 type="button"

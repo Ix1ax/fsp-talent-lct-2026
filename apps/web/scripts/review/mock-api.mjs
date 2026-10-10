@@ -30,6 +30,7 @@ export const createMockApi = () => {
           : {};
       if (path === '/__review/reset' && req.method === 'POST') {
         fixtures = createFixtures(body.scenario);
+        if (body.adminRole) fixtures.admin.role = body.adminRole;
         faults = [];
         requests = [];
         return json(res, 200, { ok: true });
@@ -190,6 +191,215 @@ export const createMockApi = () => {
       if (path === '/api/v1/admin/auth/logout') {
         res.writeHead(204);
         return res.end();
+      }
+      if (path === '/api/v1/admin/stats') {
+        const count = (items, status) =>
+          items.filter((item) => item.status === status).length;
+        return json(res, 200, {
+          generated_at: new Date().toISOString(),
+          users: {
+            total: fixtures.adminUsers.length,
+            active: count(fixtures.adminUsers, 'active'),
+            blocked: count(fixtures.adminUsers, 'blocked'),
+            deleted: 0,
+            candidates: fixtures.adminUsers.filter(
+              (u) => u.role === 'candidate',
+            ).length,
+            employers: fixtures.adminUsers.filter((u) => u.role === 'employer')
+              .length,
+          },
+          companies: {
+            total: fixtures.companies.length,
+            active: count(fixtures.companies, 'active'),
+            blocked: count(fixtures.companies, 'blocked'),
+            pending: fixtures.companies.filter(
+              (c) => c.verification_status === 'pending',
+            ).length,
+            verified: fixtures.companies.filter(
+              (c) => c.verification_status === 'verified',
+            ).length,
+            rejected: fixtures.companies.filter(
+              (c) => c.verification_status === 'rejected',
+            ).length,
+          },
+          needs: { total: 0, active: 0, hidden: 0 },
+          offers: { total: 0, accepted: 0, rejected: 0 },
+          tasks: { total: 0, hidden: 0, open: 0 },
+          submissions: { total: 0, reviewed: 0 },
+          attempts: { total: 0, active: 0, passed: 0, failed: 0 },
+          skills_pending: 0,
+        });
+      }
+      if (path === '/api/v1/admin/audit-events')
+        return json(
+          res,
+          200,
+          page(
+            fixtures.adminAudit.filter((event) =>
+              [
+                'entity_id',
+                'entity_type',
+                'action',
+                'source',
+                'actor_id',
+              ].every(
+                (key) =>
+                  !url.searchParams.get(key) ||
+                  event[key] === url.searchParams.get(key),
+              ),
+            ),
+          ),
+        );
+      const operation = path.match(
+        /^\/api\/v1\/admin\/(companies|users)(?:\/([^/]+))?(?:\/(status|verification|files|members|companies))?$/,
+      );
+      if (operation) {
+        const [, kind, id, action] = operation;
+        const items =
+          kind === 'companies' ? fixtures.companies : fixtures.adminUsers;
+        const invalid = (status = 400, code = 'invalid_request') =>
+          json(res, status, {
+            error: { code, message: 'Некорректное решение' },
+          });
+        if (!id) {
+          const filtered = items.filter((item) => {
+            const status = url.searchParams.get('status');
+            const access = url.searchParams.get('access_status');
+            const role = url.searchParams.get('role');
+            const q = url.searchParams.get('q')?.toLowerCase();
+            return (
+              (!status ||
+                status === 'all' ||
+                (kind === 'companies'
+                  ? item.verification_status
+                  : item.status) === status) &&
+              (!access || access === 'all' || item.status === access) &&
+              (!role || item.role === role) &&
+              (!q ||
+                (kind === 'users'
+                  ? [
+                      item.full_name,
+                      item.email,
+                      item.contact_email,
+                      item.id,
+                      item.candidate_profile_id,
+                    ]
+                  : [item.name, item.inn]
+                ).some((value) => value?.toLowerCase().includes(q)))
+            );
+          });
+          return json(res, 200, page(filtered));
+        }
+        const item = items.find((item) => item.id === id);
+        if (!item) return invalid(404, 'not_found');
+        if (kind === 'companies' && action === 'files')
+          return json(res, 200, page([]));
+        if (kind === 'companies' && action === 'members') {
+          const members = fixtures.adminMemberships
+            .filter((member) => member.company_id === id)
+            .map((member) => {
+              const user = fixtures.adminUsers.find(
+                (user) => user.id === member.user_id,
+              );
+              return {
+                ...member,
+                full_name: user.full_name,
+                full_name_source: user.full_name_source,
+                email: user.email,
+                contact_email: user.contact_email,
+                identity_updated_at: user.identity_updated_at,
+                user_role: user.role,
+                user_status: user.status,
+                user_blocked_reason: user.blocked_reason,
+                user_blocked_at: user.blocked_at,
+              };
+            });
+          return json(res, 200, page(members));
+        }
+        if (kind === 'users' && action === 'companies') {
+          const companies = fixtures.adminMemberships
+            .filter((member) => member.user_id === id)
+            .map((member) => {
+              const company = fixtures.companies.find(
+                (company) => company.id === member.company_id,
+              );
+              return {
+                company_id: company.id,
+                company_name: company.name,
+                company_status: company.status,
+                verification_status: company.verification_status,
+                role: member.role,
+                status: member.status,
+                joined_at: member.joined_at,
+              };
+            });
+          return json(res, 200, page(companies));
+        }
+        if (!action) return json(res, 200, item);
+        if (req.method !== 'PATCH') return invalid(405);
+        const reason =
+          typeof body.reason === 'string' ? body.reason.trim() : '';
+        const verification = action === 'verification';
+        if (
+          Object.keys(body).some(
+            (key) =>
+              ![
+                'status',
+                'reason',
+                ...(verification ? ['expected_version'] : []),
+              ].includes(key),
+          )
+        )
+          return invalid();
+        if (
+          (verification
+            ? !['verified', 'rejected', 'unverified'].includes(body.status)
+            : !['active', 'blocked'].includes(body.status)) ||
+          ((!verification || body.status !== 'verified') && !reason) ||
+          [...reason].length > 2000 ||
+          reason.includes('\0')
+        )
+          return invalid();
+        if (
+          kind === 'users' &&
+          (item.status === 'deleted' ||
+            (item.role === 'admin' && fixtures.admin.role !== 'superadmin'))
+        )
+          return invalid(403, 'forbidden');
+        if (verification && body.expected_version !== item.verification_version)
+          return invalid(409, 'conflict');
+        const old = verification ? item.verification_status : item.status;
+        if (old !== body.status) {
+          const date = new Date().toISOString();
+          if (verification) {
+            item.verification_status = body.status;
+            item.verification_version += 1;
+            item.verification_reason = reason || null;
+            item.verification_reviewed_at = date;
+            item.verification_reviewed_by = fixtures.admin.id;
+          } else {
+            item.status = body.status;
+            item.blocked_reason = body.status === 'blocked' ? reason : null;
+            item.blocked_at = body.status === 'blocked' ? date : null;
+            if (kind === 'users') item.updated_at = date;
+          }
+          fixtures.adminAudit.unshift({
+            source: 'operations',
+            id: fixtureId(1000 + fixtures.adminAudit.length),
+            actor_id: fixtures.admin.id,
+            actor_kind: 'admin',
+            actor_email: fixtures.admin.email,
+            actor_name: null,
+            action: `${kind === 'companies' ? 'company' : 'user'}.${verification ? 'verification_changed' : 'status_changed'}`,
+            entity_type: kind === 'companies' ? 'company' : 'user',
+            entity_id: id,
+            old_status: old,
+            new_status: body.status,
+            reason: reason || null,
+            created_at: date,
+          });
+        }
+        return json(res, 200, item);
       }
       const catalog = path.match(/^\/api\/v1\/admin\/catalogs\/([^/]+)$/);
       if (catalog)
