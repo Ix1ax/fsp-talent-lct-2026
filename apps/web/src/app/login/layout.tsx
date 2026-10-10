@@ -1,13 +1,10 @@
 import type { ReactNode } from 'react';
 
+// Вход — отдельный экран без шапки и подвала сайта.
 export default function LoginLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <div className="flex flex-1 flex-col">{children}</div>
-    </div>
-  );
+  return children;
 }

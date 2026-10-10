@@ -10,6 +10,7 @@ import {
   Label,
   OptionSelect,
   PageControls,
+  RefreshButton,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
@@ -115,13 +116,11 @@ export const CompanyTaskSubmissions = ({
             }}
           />
         </div>
-        <Button
-          variant="outline"
+        <RefreshButton
+          loading={query.loading}
           disabled={query.loading}
           onClick={query.retry}
-        >
-          Обновить
-        </Button>
+        />
       </div>
       {query.loading && !query.data && <CompanyTaskSkeleton />}
       {query.loading && query.data && (

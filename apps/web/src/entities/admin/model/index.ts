@@ -7,6 +7,7 @@ export type {
   CatalogKind,
   Page,
   Question,
+  QuestionKind,
   QuestionVersion,
   Shortage,
   Template,

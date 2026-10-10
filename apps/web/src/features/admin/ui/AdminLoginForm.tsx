@@ -1,11 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Link from 'next/link';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
 
-import { STATIC_ROUTES } from '@/shared/contants';
-import { BrandLogo, Button, FadeIn, Input, ThemeToggle } from '@/shared/ui';
+import { AuthLayout, Button, Input } from '@/shared/ui';
 import { AdminApiError } from '@/entities/admin';
 
 import { loginFormSchema } from '../constants';
@@ -43,30 +41,35 @@ export const AdminLoginForm = () => {
     }
   };
   return (
-    <div className="flex min-h-screen items-center justify-center p-5">
-      <FadeIn className="w-full max-w-md rounded-xl border bg-card p-5 sm:p-8">
-        <div className="mb-10 flex items-center justify-between">
-          <BrandLogo />
-          <ThemeToggle />
-        </div>
-        <div className="mb-6">
-          <h1 className="text-2xl font-semibold sm:text-3xl">Вход в админку</h1>
-          <p className="mt-3 text-sm text-muted-foreground">
+    <AuthLayout backLabel="На сайт">
+      <div className="grid gap-6">
+        <div className="grid gap-2">
+          <h1 className="text-2xl font-semibold">Вход в админку</h1>
+          <p className="text-sm text-muted-foreground">
             Используйте отдельный аккаунт администратора.
           </p>
         </div>
+        {/* Ошибки полей появляются только при ошибке: промежутки между полями равные. */}
         <form
           onSubmit={(event) => void form.handleSubmit(submit)(event)}
-          className="grid gap-5"
+          className="grid gap-4"
         >
-          <Field label="Почта" error={form.formState.errors.email?.message}>
+          <Field
+            label="Почта"
+            error={form.formState.errors.email?.message}
+            reserveErrorSpace={false}
+          >
             <Input
               type="email"
               autoComplete="username"
               {...form.register('email')}
             />
           </Field>
-          <Field label="Пароль" error={form.formState.errors.password?.message}>
+          <Field
+            label="Пароль"
+            error={form.formState.errors.password?.message}
+            reserveErrorSpace={false}
+          >
             <Input
               type="password"
               autoComplete="current-password"
@@ -75,19 +78,13 @@ export const AdminLoginForm = () => {
           </Field>
           <ErrorNotice error={error} />
           <Button
-            className="min-h-11"
+            className="mt-2 h-11"
             disabled={form.formState.isSubmitting || blocked}
           >
             {form.formState.isSubmitting ? 'Входим…' : 'Войти'}
           </Button>
         </form>
-        <Link
-          href={STATIC_ROUTES.HOME}
-          className="mt-6 flex min-h-11 items-center text-sm text-muted-foreground"
-        >
-          ← На сайт
-        </Link>
-      </FadeIn>
-    </div>
+      </div>
+    </AuthLayout>
   );
 };

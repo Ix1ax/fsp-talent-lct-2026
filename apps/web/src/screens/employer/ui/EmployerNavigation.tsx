@@ -2,11 +2,11 @@ import Link from 'next/link';
 import {
   BriefcaseBusinessIcon,
   Building2Icon,
-  ClipboardCheckIcon,
   FileTextIcon,
-  MailIcon,
-  SearchIcon,
+  ListTodoIcon,
+  SendIcon,
   UsersIcon,
+  UsersRoundIcon,
 } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
@@ -24,9 +24,9 @@ const ICONS = {
   documents: FileTextIcon,
   team: UsersIcon,
   vacancies: BriefcaseBusinessIcon,
-  candidates: SearchIcon,
-  offers: MailIcon,
-  tasks: ClipboardCheckIcon,
+  candidates: UsersRoundIcon,
+  offers: SendIcon,
+  tasks: ListTodoIcon,
 };
 const LABELS = {
   profile: 'Профиль',

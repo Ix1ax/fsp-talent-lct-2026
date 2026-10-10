@@ -58,6 +58,7 @@ export type {
   PreviewAnswer,
   PreviewQuestion,
   Question,
+  QuestionKind,
   QuestionVersion,
   Shortage,
   Template,

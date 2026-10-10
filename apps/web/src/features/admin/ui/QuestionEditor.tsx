@@ -1,15 +1,10 @@
-import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 
 import { useFormUnsavedChanges } from '@/shared/hooks';
 import { Button, Checkbox, Input, Textarea } from '@/shared/ui';
-import {
-  adminRequest,
-  adminSchemas,
-  kindLabels,
-  type Question,
-} from '@/entities/admin';
+import { adminRequest, adminSchemas, type Question } from '@/entities/admin';
 
 import { questionFormSchema } from '../constants';
 import { questionContent } from '../lib';
@@ -19,6 +14,9 @@ import { useAdminMutation } from '../model/useAdminMutation';
 import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
+import { DifficultyPicker, QuestionKindPicker } from './QuestionKindPicker';
+import { QuestionLivePreview } from './QuestionLivePreview';
+import { QuestionOptionsEditor } from './QuestionOptionsEditor';
 
 interface QuestionEditorProps {
   question?: Question;
@@ -61,7 +59,6 @@ export const QuestionEditor = ({
   const close = () => {
     if (!mutation.busy) unsaved.discard(onClose);
   };
-  const rows = useFieldArray({ control: form.control, name: 'options' });
   const kind = useWatch({ control: form.control, name: 'kind' });
   const grading = useWatch({ control: form.control, name: 'grading' });
   const submit = form.handleSubmit(async (values) => {
@@ -99,253 +96,170 @@ export const QuestionEditor = ({
     });
   });
   return (
-    <AdminPanel>
-      <h1 className="text-2xl font-semibold">
-        {question ? 'Новая версия задания' : 'Новое задание'}
-      </h1>
-      <p className="text-sm text-muted-foreground">
-        Сохранение создаёт черновик. Публикация доступна в карточке задания.
-      </p>
-      <form onSubmit={submit} className="grid min-w-0 gap-5">
-        <fieldset disabled={mutation.busy} className="grid min-w-0 gap-5">
-          <AdminFieldGrid>
-            <Controller
-              control={form.control}
-              name="skill_id"
-              render={({ field }) => (
-                <SkillPicker
-                  approvedOnly
-                  error={form.formState.errors.skill_id?.message}
-                  value={field.value}
-                  onChange={field.onChange}
-                  disabled={!!question}
-                />
-              )}
-            />
-
-            <Field
-              label="Сложность (1–5)"
-              error={form.formState.errors.difficulty?.message}
-            >
-              <Input
-                type="number"
-                min={1}
-                max={5}
-                readOnly={!!question}
-                {...form.register('difficulty', { valueAsNumber: true })}
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
+      <AdminPanel>
+        <div className="grid gap-1">
+          <h1 className="text-2xl font-semibold">
+            {question ? 'Новая версия задания' : 'Новое задание'}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Сохранение создаёт черновик. Публикация доступна в карточке
+            задания.
+          </p>
+        </div>
+        <form onSubmit={submit} className="grid min-w-0 gap-6">
+          <fieldset disabled={mutation.busy} className="grid min-w-0 gap-6">
+            <AdminFieldGrid>
+              <Controller
+                control={form.control}
+                name="skill_id"
+                render={({ field }) => (
+                  <SkillPicker
+                    approvedOnly
+                    error={form.formState.errors.skill_id?.message}
+                    value={field.value}
+                    onChange={field.onChange}
+                    disabled={!!question}
+                  />
+                )}
               />
-            </Field>
-          </AdminFieldGrid>
-          <Field label="Тип задания">
-            <Controller
-              control={form.control}
-              name="kind"
-              render={({ field }) => (
-                <AdminSelect
-                  label="Тип задания"
-                  value={field.value}
-                  disabled={!!question}
-                  options={Object.entries(kindLabels).map(([value, label]) => ({
-                    value,
-                    label,
-                  }))}
-                  onChange={(value) => {
-                    field.onChange(value);
-                    if (value === 'choice') form.setValue('grading', 'choice');
-                    if (value === 'short_answer')
-                      form.setValue('grading', 'text');
-                  }}
-                />
-              )}
-            />
-          </Field>
-          <Field
-            label="Текст вопроса"
-            error={form.formState.errors.text?.message}
-          >
-            <Textarea rows={4} {...form.register('text')} />
-          </Field>
-          {kind === 'code_reading' && (
-            <>
-              <Field label="Код" error={form.formState.errors.code?.message}>
-                <Textarea
-                  className="font-mono"
-                  rows={6}
-                  {...form.register('code')}
-                />
-              </Field>
               <Field
-                label="Язык (необязательно)"
-                error={form.formState.errors.language?.message}
+                label="Сложность"
+                error={form.formState.errors.difficulty?.message}
               >
-                <Input {...form.register('language')} />
-              </Field>
-              <Field label="Проверка ответа">
                 <Controller
                   control={form.control}
-                  name="grading"
+                  name="difficulty"
                   render={({ field }) => (
-                    <AdminSelect
-                      label="Проверка ответа"
+                    <DifficultyPicker
                       value={field.value}
+                      disabled={!!question}
                       onChange={field.onChange}
-                      options={[
-                        { value: 'choice', label: 'Выбор ответа' },
-                        { value: 'text', label: 'Текстовый ответ' },
-                      ]}
                     />
                   )}
                 />
               </Field>
-            </>
-          )}
-          {grading === 'choice' ? (
-            <section className="grid gap-3">
-              <h3 className="font-medium">Варианты ответа</h3>
-              <p className="text-sm text-muted-foreground">
-                Отметьте правильные ответы.
-              </p>
+            </AdminFieldGrid>
+            <div className="grid gap-2">
+              <p className="text-sm font-medium">Тип задания</p>
               <Controller
                 control={form.control}
-                name="multiple"
+                name="kind"
                 render={({ field }) => (
-                  <label className="flex min-h-11 items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                    />
-                    Несколько правильных ответов
-                  </label>
+                  <QuestionKindPicker
+                    value={field.value}
+                    disabled={!!question}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      if (value === 'choice') form.setValue('grading', 'choice');
+                      if (value === 'short_answer')
+                        form.setValue('grading', 'text');
+                    }}
+                  />
                 )}
               />
-              {rows.fields.map((row, index) => (
-                <div
-                  key={row.id}
-                  className="grid min-w-0 grid-cols-[auto_5rem_minmax(0,1fr)] items-start gap-2 sm:grid-cols-[auto_5rem_minmax(0,1fr)_auto]"
+            </div>
+            <Field
+              label="Текст вопроса"
+              error={form.formState.errors.text?.message}
+              reserveErrorSpace={false}
+            >
+              <Textarea
+                rows={3}
+                placeholder="Сформулируйте вопрос так, чтобы на него был однозначный ответ"
+                {...form.register('text')}
+              />
+            </Field>
+            {kind === 'code_reading' && (
+              <div className="grid gap-4 rounded-xl border border-border bg-muted/40 p-4">
+                <Field
+                  label="Код"
+                  error={form.formState.errors.code?.message}
+                  reserveErrorSpace={false}
                 >
-                  <Controller
-                    control={form.control}
-                    name={`options.${index}.correct`}
-                    render={({ field }) => (
-                      <label className="flex size-11 cursor-pointer items-center justify-center">
-                        <Checkbox
-                          aria-label={`Правильный ответ ${index + 1}`}
-                          checked={field.value}
-                          onCheckedChange={(v) => field.onChange(v === true)}
-                        />
-                      </label>
-                    )}
+                  <Textarea
+                    className="bg-card font-mono"
+                    rows={6}
+                    spellCheck={false}
+                    {...form.register('code')}
                   />
-                  <Input
-                    aria-label={`Код варианта ${index + 1}`}
-                    aria-invalid={!!form.formState.errors.options?.[index]?.id}
-                    aria-describedby={
-                      form.formState.errors.options?.[index]?.id
-                        ? `${row.id}-code-error`
-                        : undefined
-                    }
-                    className="w-full"
-                    {...form.register(`options.${index}.id`)}
-                  />
-                  <Input
-                    aria-label={`Текст варианта ${index + 1}`}
-                    aria-invalid={
-                      !!form.formState.errors.options?.[index]?.text
-                    }
-                    aria-describedby={
-                      form.formState.errors.options?.[index]?.text
-                        ? `${row.id}-text-error`
-                        : undefined
-                    }
-                    className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:col-start-3 sm:row-start-1"
-                    {...form.register(`options.${index}.text`)}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="col-start-3 row-start-1 justify-self-end sm:col-start-4"
-                    disabled={rows.fields.length <= 2}
-                    onClick={() => rows.remove(index)}
+                </Field>
+                <AdminFieldGrid>
+                  <Field
+                    label="Язык (необязательно)"
+                    error={form.formState.errors.language?.message}
                   >
-                    Убрать
-                  </Button>
-                  {form.formState.errors.options?.[index]?.id && (
-                    <p
-                      id={`${row.id}-code-error`}
-                      role="alert"
-                      className="col-span-full text-xs text-destructive"
-                    >
-                      Код варианта {index + 1}:{' '}
-                      {form.formState.errors.options[index]?.id?.message}
-                    </p>
-                  )}
-                  {form.formState.errors.options?.[index]?.text && (
-                    <p
-                      id={`${row.id}-text-error`}
-                      role="alert"
-                      className="col-span-full text-xs text-destructive"
-                    >
-                      Текст варианта {index + 1}:{' '}
-                      {form.formState.errors.options[index]?.text?.message}
-                    </p>
-                  )}
-                </div>
-              ))}
-              <p className="min-h-5 text-sm text-destructive">
-                {form.formState.errors.options?.message ??
-                  form.formState.errors.options?.root?.message}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={rows.fields.length >= 10}
-                onClick={() => {
-                  const ids = new Set(
-                    form.getValues('options').map((o) => o.id),
-                  );
-                  const id =
-                    'abcdefghij'.split('').find((s) => !ids.has(s)) ??
-                    `o${rows.fields.length + 1}`;
-                  rows.append({ id, text: '', correct: false });
-                }}
-              >
-                Добавить вариант
-              </Button>
-            </section>
-          ) : (
-            <>
-              <Field
-                label="Принимаемые ответы — каждый с новой строки"
-                error={form.formState.errors.accepted?.message}
-              >
-                <Textarea rows={4} {...form.register('accepted')} />
-              </Field>
-              <Controller
-                control={form.control}
-                name="case_sensitive"
-                render={({ field }) => (
-                  <label className="flex min-h-11 items-center gap-2 text-sm">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
+                    <Input
+                      placeholder="Например, go"
+                      {...form.register('language')}
                     />
-                    Учитывать регистр
-                  </label>
-                )}
-              />
-            </>
-          )}
-          <ErrorNotice error={mutation.error} />
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="outline" onClick={close}>
-              Отмена
-            </Button>
-            <Button className="min-w-44">
-              {mutation.busy ? 'Сохраняем…' : 'Сохранить черновик'}
-            </Button>
-          </div>
-        </fieldset>
-      </form>
-    </AdminPanel>
+                  </Field>
+                  <Field label="Проверка ответа">
+                    <Controller
+                      control={form.control}
+                      name="grading"
+                      render={({ field }) => (
+                        <AdminSelect
+                          label="Проверка ответа"
+                          value={field.value}
+                          onChange={field.onChange}
+                          options={[
+                            { value: 'choice', label: 'Выбор ответа' },
+                            { value: 'text', label: 'Текстовый ответ' },
+                          ]}
+                        />
+                      )}
+                    />
+                  </Field>
+                </AdminFieldGrid>
+              </div>
+            )}
+            {grading === 'choice' ? (
+              <QuestionOptionsEditor form={form} />
+            ) : (
+              <div className="grid gap-3">
+                <Field
+                  label="Принимаемые ответы — каждый с новой строки"
+                  error={form.formState.errors.accepted?.message}
+                  reserveErrorSpace={false}
+                >
+                  <Textarea
+                    rows={3}
+                    placeholder={'git rebase\nrebase'}
+                    {...form.register('accepted')}
+                  />
+                </Field>
+                <Controller
+                  control={form.control}
+                  name="case_sensitive"
+                  render={({ field }) => (
+                    <label className="flex min-h-11 items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(v === true)}
+                      />
+                      Учитывать регистр
+                    </label>
+                  )}
+                />
+              </div>
+            )}
+            <ErrorNotice error={mutation.error} />
+            <div className="sticky bottom-0 z-10 -mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t border-border bg-card/95 p-4 backdrop-blur sm:-mx-6 sm:-mb-6 sm:flex-row sm:justify-end sm:px-6 lg:-mx-8 lg:-mb-8 lg:px-8">
+              <Button type="button" variant="outline" onClick={close}>
+                Отмена
+              </Button>
+              <Button className="min-w-44">
+                {mutation.busy ? 'Сохраняем…' : 'Сохранить черновик'}
+              </Button>
+            </div>
+          </fieldset>
+        </form>
+      </AdminPanel>
+      <QuestionLivePreview
+        control={form.control}
+        skillName={question?.skill_name}
+      />
+    </div>
   );
 };

@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useTransition } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { SearchIcon } from 'lucide-react';
 
 import { useGuardedRouter, useSearch } from '@/shared/hooks';
-import { Button, Input } from '@/shared/ui';
+import { Input } from '@/shared/ui';
 import type { SkillsSearchQuery } from '@/entities/catalog';
 
 interface SkillsSearchFormProps {
@@ -54,10 +55,6 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
     }
   }, [query.q, cancelSearch, setValue]);
 
-  const clearSearch = () => {
-    searchNow('');
-  };
-
   return (
     <form
       role="search"
@@ -66,12 +63,17 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
         searchNow(value);
       }}
       aria-busy={isPending}
-      className="flex flex-wrap items-end gap-3"
+      className="flex min-w-0 flex-col gap-2"
     >
-      <div className="flex min-w-0 basis-56 flex-1 flex-col gap-2">
-        <label htmlFor="skill-search" className="text-sm font-medium">
-          Найти навык
-        </label>
+      <label htmlFor="skill-search" className="text-sm font-medium">
+        Найти навык
+      </label>
+      {/* Очистка — встроенным крестиком поля поиска, отдельная кнопка не нужна. */}
+      <div className="relative">
+        <SearchIcon
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground"
+        />
         <Input
           id="skill-search"
           name="q"
@@ -80,17 +82,9 @@ export const SkillsSearchForm = ({ query }: SkillsSearchFormProps) => {
           value={value}
           onChange={(event) => onSearch(event.target.value)}
           placeholder="Например, golang"
-          className="h-12 text-base"
+          className="h-12 pl-12 text-base"
         />
       </div>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={clearSearch}
-        disabled={!value && !query.q && !isPending}
-      >
-        Очистить
-      </Button>
     </form>
   );
 };

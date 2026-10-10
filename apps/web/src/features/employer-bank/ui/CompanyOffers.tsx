@@ -19,6 +19,7 @@ import {
   DialogTitle,
   OptionSelect,
   PageControls,
+  RefreshButton,
   RemoteState,
   toast,
 } from '@/shared/ui';
@@ -83,9 +84,9 @@ export const CompanyOffers = ({
           <CardTitle>Предложения кандидатам</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-3 text-sm">
-              Статус
+          <div className="flex items-center gap-2 sm:gap-3">
+            <label className="flex min-w-0 flex-1 items-center gap-3 text-sm sm:flex-none">
+              <span className="max-sm:sr-only">Статус</span>
               <OptionSelect
                 aria-label="Статус предложений"
                 disabled={mutation.pending}
@@ -103,13 +104,12 @@ export const CompanyOffers = ({
                 ]}
               />
             </label>
-            <Button
-              variant="outline"
+            <RefreshButton
+              label="Обновить статусы"
+              loading={remote.loading}
               disabled={mutation.pending || remote.loading}
               onClick={remote.retry}
-            >
-              Обновить статусы
-            </Button>
+            />
           </div>
           <RemoteState {...remote} />
           {remote.data && (
