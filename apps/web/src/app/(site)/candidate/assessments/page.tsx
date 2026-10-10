@@ -10,12 +10,26 @@ export const metadata: Metadata = { title: 'Тестирование · ФСП' 
 
 const Page = async () => {
   await requireRole(USER_ROLES.CANDIDATE, STATIC_ROUTES.CANDIDATE_ASSESSMENTS);
-  const [catalogs, skills] = await Promise.all([
-    getCatalogs().catch(() => undefined),
-    getAllSkills({}).catch(() => []),
+  const [catalogsResult, skillsResult] = await Promise.allSettled([
+    getCatalogs(),
+    getAllSkills({}),
   ]);
 
-  return <AssessmentsPage catalogs={catalogs} skills={skills} />;
+  const catalogs =
+    catalogsResult.status === 'fulfilled' ? catalogsResult.value : undefined;
+  const skills = skillsResult.status === 'fulfilled' ? skillsResult.value : [];
+  const catalogsError =
+    catalogsResult.status === 'rejected' || skillsResult.status === 'rejected'
+      ? 'Не удалось загрузить названия языков, специализаций и уровней. Часть названий временно заменена идентификаторами.'
+      : undefined;
+
+  return (
+    <AssessmentsPage
+      catalogs={catalogs}
+      skills={skills}
+      catalogsError={catalogsError}
+    />
+  );
 };
 
 export default Page;

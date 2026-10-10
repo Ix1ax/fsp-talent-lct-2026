@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowLeftIcon } from 'lucide-react';
 
 import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
@@ -26,12 +27,15 @@ import { StartAssessmentDialog } from './StartAssessmentDialog';
 interface AssessmentsPageProps {
   catalogs?: Catalogs;
   skills?: Skill[];
+  catalogsError?: string;
 }
 
 export const AssessmentsPage = ({
   catalogs,
   skills = [],
+  catalogsError,
 }: AssessmentsPageProps) => {
+  const router = useRouter();
   const {
     items,
     current,
@@ -59,6 +63,14 @@ export const AssessmentsPage = ({
           </Button>
         }
       />
+      {catalogsError && (
+        <AsyncState
+          error
+          title="Справочники недоступны"
+          description={catalogsError}
+          onRetry={() => router.refresh()}
+        />
+      )}
       <Tabs defaultValue="available" className="gap-6">
         <TabsList
           aria-label="Тестирование"
