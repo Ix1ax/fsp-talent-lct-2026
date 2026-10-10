@@ -155,11 +155,12 @@ services:
       KC_HOSTNAME: http://localhost:8180
       JAVA_OPTS_KC_HEAP: "-Xms128m -Xmx384m"
       API_PUBLIC_URL: http://localhost:8080
-      WEB_PUBLIC_URL: http://localhost:3000
+      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-http://localhost:5173}
     ports:
       - 127.0.0.1:8180:8080
     volumes:
       - ./infra/keycloak/local:/opt/keycloak/data/import:ro
+      - ./infra/keycloak/themes/fsp-scout:/opt/keycloak/themes/fsp-scout:ro
     depends_on:
       keycloak-db:
         condition: service_healthy

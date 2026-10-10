@@ -1,5 +1,5 @@
 SHELL := /bin/sh
-.PHONY: setup infra up down logs api web migrate test check fmt smoke integration auth-smoke
+.PHONY: setup infra up down logs api web migrate test check fmt smoke integration auth-smoke keycloak-theme
 setup:
 	@test -f .env || cp .env.example .env
 	@test -f apps/api/.env || cp apps/api/.env.example apps/api/.env
@@ -7,8 +7,10 @@ setup:
 	cd apps/api && go mod download
 infra:
 	docker compose up -d postgres redis s3 keycloak-db mailpit keycloak
+	sh scripts/keycloak-theme.sh
 up:
 	docker compose --profile app up -d --build --wait --wait-timeout 360
+	sh scripts/keycloak-theme.sh
 down:
 	docker compose --profile app down
 logs:
@@ -40,6 +42,11 @@ integration:
 		go test -race -tags=integration ./internal/platform ./tests/integration
 auth-smoke:
 	sh scripts/keycloak-smoke.sh
+keycloak-theme:
+	docker compose up -d --wait --wait-timeout 360 keycloak
+	docker compose restart keycloak
+	docker compose up -d --wait --wait-timeout 360 keycloak
+	sh scripts/keycloak-theme.sh
 
 .PHONY: matching-evaluation
 matching-evaluation:
