@@ -49,7 +49,11 @@ describe('saving imported records', () => {
     const write = vi.fn(async () => ({ id: 'saved' }));
     expect(await saver.save(0, write)).toBe(true);
     saver.dismiss(0);
-    expect(options.onStatus).toHaveBeenLastCalledWith(0, { savedId: 'saved' });
+    expect(options.onStatus).toHaveBeenLastCalledWith(0, {
+      savedId: 'saved',
+      error:
+        'Запись сохранена, но не удалось обновить профиль. Обновите страницу.',
+    });
     expect(await saver.save(0, write)).toBe(false);
     expect(write).toHaveBeenCalledOnce();
   });

@@ -41,6 +41,11 @@ const CandidateProfileLayout = async ({
             : undefined
         }
         loadError={loadError}
+        catalogsError={
+          catalogsResult.status === 'rejected'
+            ? 'Не удалось загрузить форматы работы. Повторите загрузку справочника.'
+            : undefined
+        }
       />
       {children}
     </>

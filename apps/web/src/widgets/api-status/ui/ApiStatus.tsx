@@ -7,7 +7,7 @@ export const ApiStatus = async () => {
     const info = await getAPIInfo();
     status = `${info.name} · v${info.version} · доступен`;
   } catch {
-    // keep fallback message
+    status = 'API недоступен. Проверьте запуск бекенда.';
   }
 
   return (

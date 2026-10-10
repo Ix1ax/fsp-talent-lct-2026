@@ -103,7 +103,12 @@ export const useAssessments = () => {
             return;
           }
         } catch {
-          // Keep the start error when the recovery check also fails.
+          setErrorType('start');
+          setError(
+            `${getAssessmentStartError(err)} Не удалось проверить, запустилась ли попытка. Обновите страницу перед повторным запуском.`,
+          );
+          setSelected(undefined);
+          return;
         }
       }
       setErrorType('start');

@@ -123,7 +123,7 @@ export const useNeedFlowEditor = ({
       onDirtyChange(false);
       if (advance) setStep(Math.min(NEED_FLOW_LAST_STEP, step + 1));
     } catch {
-      /* Parent displays the API error. */
+      setSaved(false);
     }
   };
   return {

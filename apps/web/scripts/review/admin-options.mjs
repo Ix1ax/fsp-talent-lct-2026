@@ -190,7 +190,9 @@ try {
             ],
           }),
         )
-        .catch(() => {});
+        .catch((error) => {
+          console.error('Failed to fulfill intercepted review request', error);
+        });
       return;
     }
     if (url.pathname.includes('/skills/')) {
@@ -215,7 +217,9 @@ try {
         body: Buffer.from(JSON.stringify(body)).toString('base64'),
         responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
       })
-      .catch(() => {});
+      .catch((error) => {
+        console.error('Failed to fulfill intercepted review request', error);
+      });
   });
   await p.call('Fetch.enable', {
     patterns: [

@@ -51,9 +51,23 @@ const eslintConfig = [
         },
       ],
       'simple-import-sort/exports': 'error',
+      'no-empty': ['error', { allowEmptyCatch: false }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'CatchClause > BlockStatement[body.length=0]',
+          message:
+            'Пустой catch запрещён, в том числе с комментариями. Нужна явная обработка ошибки.',
+        },
+        {
+          selector:
+            'CallExpression[callee.type="MemberExpression"][callee.property.name="catch"] > :matches(ArrowFunctionExpression, FunctionExpression) > BlockStatement[body.length=0]',
+          message:
+            'Обработчик ошибки не должен быть пустым: обработайте ошибку, выберите fallback или передайте её выше.',
+        },
+      ],
     },
   },
-  // Границы FSD для кабинета работодателя. Внутри слайса — относительные импорты.
   {
     files: [
       'src/entities/company/**/*.{ts,tsx}',

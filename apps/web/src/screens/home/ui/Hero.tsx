@@ -23,7 +23,7 @@ export const Hero = () => {
 
   useEffect(() => {
     if (visible && !reduced && !paused && desktop) {
-      void video.current?.play().catch(() => {});
+      void video.current?.play().catch(() => setPlaying(false));
     } else {
       video.current?.pause();
     }
@@ -144,7 +144,8 @@ export const Hero = () => {
               type="button"
               onClick={() => {
                 setPaused(playing);
-                if (!playing) void video.current?.play().catch(() => {});
+                if (!playing)
+                  void video.current?.play().catch(() => setPlaying(false));
               }}
               aria-label={
                 playing ? 'Приостановить видео' : 'Воспроизвести видео'

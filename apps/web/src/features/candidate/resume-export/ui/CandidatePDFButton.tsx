@@ -34,7 +34,7 @@ export const CandidatePDFButton = ({
       anchor.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
-      /* The mutation exposes the error inline. */
+      return false;
     }
   };
   const hint = !profileExists

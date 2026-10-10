@@ -116,7 +116,12 @@ export const CompanyDocuments = ({
         url = URL.createObjectURL(blob);
         setLogo({ fileId: company.logoFileId!, url });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setLogo({ fileId: company.logoFileId!, url: '' });
+          toast.error('Не удалось загрузить логотип компании.');
+        }
+      });
     return () => {
       controller.abort();
       if (url) URL.revokeObjectURL(url);

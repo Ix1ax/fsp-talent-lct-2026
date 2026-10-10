@@ -115,7 +115,7 @@ export const CompanyProfileForm = ({
               onDirtyChange(false);
               onSaved(savedCompany);
             } catch {
-              /* Keep the draft on error. */
+              onDirtyChange(true);
             }
           })}
         >

@@ -28,7 +28,10 @@ export const CompanyLogo = ({ company, api }: CompanyLogoProps) => {
         objectUrl = URL.createObjectURL(blob);
         setImage({ companyId: company.id, fileId, url: objectUrl });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setImage({ companyId: company.id, fileId, url: '' });
+      });
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);

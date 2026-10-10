@@ -6,8 +6,10 @@ import {
   SlidersHorizontalIcon,
 } from 'lucide-react';
 
+import { getApiErrorMessage } from '@/shared/api';
 import { confirmUnsavedChanges, useRemoteData } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
+import { toast } from '@/shared/ui';
 import {
   AsyncState,
   Button,
@@ -170,11 +172,17 @@ export const VacancyBank = ({
             onBack={onBack}
             onDirtyChange={onDirtyChange}
             onCandidate={onCandidate}
-            onRestore={() => void board.restore().catch(() => {})}
+            onRestore={() =>
+              void board.restore().catch((error: unknown) => {
+                toast.error(getApiErrorMessage(error));
+              })
+            }
             onArchive={() => onArchiveConfirm(true)}
             onDuplicate={() =>
               guard(() => {
-                void board.duplicate().catch(() => {});
+                void board.duplicate().catch((error: unknown) => {
+                  toast.error(getApiErrorMessage(error));
+                });
               })
             }
           />

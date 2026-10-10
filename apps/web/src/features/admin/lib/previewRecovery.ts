@@ -13,8 +13,8 @@ export const getPreviewRecovery = (
     const parsed = recoverySchema.safeParse(JSON.parse(saved ?? '{}'));
     if (parsed.success) recovery = parsed.data;
   } catch {
-    /* Ignore corrupt storage. */
+    recovery = {};
   }
-  // Explicit URLs must be read, never silently replaced with a fresh start.
+
   return { ...recovery, id: urlId ?? recovery.id };
 };

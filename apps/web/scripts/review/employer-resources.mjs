@@ -149,7 +149,9 @@ const fulfill = (p, requestId, body, status = 200) =>
       responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
       body: Buffer.from(JSON.stringify(body)).toString('base64'),
     })
-    .catch(() => {});
+    .catch((error) => {
+      console.error('Failed to fulfill intercepted review request', error);
+    });
 try {
   await post('/__review/reset', { scenario: 'filled' });
   const p = await createPage();

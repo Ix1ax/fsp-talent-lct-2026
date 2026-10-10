@@ -10,9 +10,15 @@ vi.mock('@/shared/api', async () => {
   const { attachErrorInterceptor, createApi } =
     await import('@/shared/api/base');
   const errors = await import('@/shared/api/errors');
+  const { normalizeApiError } = await import('@/shared/api/normalizeApiError');
   const clientApi = createApi({ adapter });
   attachErrorInterceptor(clientApi);
-  return { ...errors, clientApi, ensureClientAccessToken: ensure };
+  return {
+    normalizeApiError,
+    ...errors,
+    clientApi,
+    ensureClientAccessToken: ensure,
+  };
 });
 
 import {

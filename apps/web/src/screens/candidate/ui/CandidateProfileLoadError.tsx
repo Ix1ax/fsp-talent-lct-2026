@@ -5,10 +5,12 @@ import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/ui';
 
 interface CandidateProfileLoadErrorProps {
   error: string;
+  title?: string;
 }
 
 export const CandidateProfileLoadError = ({
   error,
+  title = 'Профиль недоступен',
 }: CandidateProfileLoadErrorProps) => {
   const router = useRouter();
   const [refreshing, startTransition] = useTransition();
@@ -16,7 +18,7 @@ export const CandidateProfileLoadError = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Профиль недоступен</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p role="alert">{error}</p>

@@ -20,7 +20,7 @@ export const GalleryClip = ({ index }: GalleryClipProps) => {
       !reduced &&
       window.matchMedia('(min-width: 768px)').matches
     ) {
-      void video.play().catch(() => {});
+      void video.play().catch(() => video.pause());
     } else {
       video.pause();
     }

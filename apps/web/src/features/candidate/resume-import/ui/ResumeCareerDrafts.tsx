@@ -121,6 +121,11 @@ export const ResumeCareerDrafts = (props: ResumeCareerDraftsProps) => {
           className="rounded-lg border border-border p-4 text-sm"
         >
           Запись {index + 1} сохранена. Повторно добавляться не будет.
+          {status.error && (
+            <span role="alert" className="mt-2 block text-destructive">
+              {status.error}
+            </span>
+          )}
         </p>
       );
     return <div key={index}>{form}</div>;

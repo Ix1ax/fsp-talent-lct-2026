@@ -1,3 +1,5 @@
+import { getApiErrorMessage } from '@/shared/api';
+import { toast } from '@/shared/ui';
 import {
   Button,
   Dialog,
@@ -52,7 +54,9 @@ export const ArchiveNeedDialog = ({
           onClick={() => {
             void onConfirm()
               .then(() => onOpenChange(false))
-              .catch(() => {});
+              .catch((error: unknown) => {
+                toast.error(getApiErrorMessage(error));
+              });
           }}
         >
           {pending ? 'Сохраняем…' : 'В архив'}

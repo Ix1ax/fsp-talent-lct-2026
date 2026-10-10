@@ -1,6 +1,8 @@
 import { ArrowLeftIcon } from 'lucide-react';
 
+import { getApiErrorMessage } from '@/shared/api';
 import { cn } from '@/shared/lib/utils';
+import { toast } from '@/shared/ui';
 import { Button, Skeleton } from '@/shared/ui';
 import { AsyncState } from '@/shared/ui/AsyncState';
 import type { Catalogs } from '@/entities/catalog';
@@ -102,7 +104,9 @@ export const EmployerNeedPane = ({
                 dirty={dirty}
                 onFind={onFind}
                 onRestore={() => {
-                  void board.restore().catch(() => {});
+                  void board.restore().catch((error: unknown) => {
+                    toast.error(getApiErrorMessage(error));
+                  });
                 }}
                 onArchive={onArchive}
                 onDuplicate={onDuplicate}

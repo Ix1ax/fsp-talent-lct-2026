@@ -19,10 +19,12 @@ interface CandidateHomePageProps {
   initialFullProfile?: CandidateFullProfile;
   workFormats?: CatalogItem[];
   loadError?: string;
+  catalogsError?: string;
 }
 
 export const CandidateHomePage = ({
   loadError,
+  catalogsError,
   ...options
 }: CandidateHomePageProps) => {
   const workspace = useCandidateWorkspace(options);
@@ -60,6 +62,12 @@ export const CandidateHomePage = ({
           <CandidateProfileLoadError error={loadError} />
         ) : (
           <>
+            {catalogsError && (
+              <CandidateProfileLoadError
+                error={catalogsError}
+                title="Справочник недоступен"
+              />
+            )}
             <CandidateResumeImport workspace={workspace} />
             <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
               <div

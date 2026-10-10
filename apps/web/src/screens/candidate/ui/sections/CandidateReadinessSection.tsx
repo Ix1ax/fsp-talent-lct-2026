@@ -13,7 +13,7 @@ export const CandidateReadinessSection = ({
   const {
     fullProfile,
     busy,
-    refreshFullProfile,
+    refreshAfterSave,
     changeStep,
     dataRefreshing,
     refreshError,
@@ -30,7 +30,7 @@ export const CandidateReadinessSection = ({
         busy={busy}
         refreshing={dataRefreshing}
         error={refreshError}
-        onRefresh={() => void refreshFullProfile().catch(() => {})}
+        onRefresh={refreshAfterSave}
         onGoToProfile={() => changeStep('profile')}
         onGoToConsents={() => changeStep('consents')}
         onSelectItem={navigateFromReadiness}
