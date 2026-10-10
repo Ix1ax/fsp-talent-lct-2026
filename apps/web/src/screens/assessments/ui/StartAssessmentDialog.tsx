@@ -8,9 +8,14 @@ import {
   DialogTitle,
 } from '@/shared/ui';
 import type { AvailableAssessment } from '@/entities/assessment';
+import type { Catalogs, Skill } from '@/entities/catalog';
+
+import { getAssessmentTitle } from '../lib';
 
 interface StartAssessmentDialogProps {
   test?: AvailableAssessment;
+  catalogs?: Catalogs;
+  skills?: Skill[];
   busy: boolean;
   onClose: () => void;
   onStart: () => Promise<void>;
@@ -18,6 +23,8 @@ interface StartAssessmentDialogProps {
 
 export const StartAssessmentDialog = ({
   test,
+  catalogs,
+  skills = [],
   busy,
   onClose,
   onStart,
@@ -32,6 +39,11 @@ export const StartAssessmentDialog = ({
       <DialogContent showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle>Начать тест?</DialogTitle>
+          {test && (
+            <p className="text-sm font-medium">
+              {getAssessmentTitle(test, catalogs, skills)}
+            </p>
+          )}
           <DialogDescription>
             Таймер запустится сразу. На выполнение —{' '}
             {Math.ceil((test?.timeLimitSec ?? 0) / 60)} мин. Одновременно можно

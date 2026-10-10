@@ -17,7 +17,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '@/shared/ui';
-import type { Catalogs } from '@/entities/catalog';
+import type { Catalogs, Skill } from '@/entities/catalog';
 
 import { useAssessments } from '../model';
 import { AssessmentHistory } from './AssessmentHistory';
@@ -26,9 +26,13 @@ import { StartAssessmentDialog } from './StartAssessmentDialog';
 
 interface AssessmentsPageProps {
   catalogs?: Catalogs;
+  skills?: Skill[];
 }
 
-export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
+export const AssessmentsPage = ({
+  catalogs,
+  skills = [],
+}: AssessmentsPageProps) => {
   const {
     items,
     current,
@@ -136,6 +140,7 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
                     <AvailableAssessmentCard
                       test={test}
                       catalogs={catalogs}
+                      skills={skills}
                       disabled={busy || !!current}
                       onSelect={select}
                     />
@@ -153,6 +158,8 @@ export const AssessmentsPage = ({ catalogs }: AssessmentsPageProps) => {
       </Tabs>
       <StartAssessmentDialog
         test={selected}
+        catalogs={catalogs}
+        skills={skills}
         busy={busy}
         onClose={close}
         onStart={start}
