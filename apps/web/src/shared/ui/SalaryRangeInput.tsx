@@ -2,10 +2,12 @@
 import { useId } from 'react';
 
 import { Input } from './Input';
-export interface SalaryRange {
+
+export type SalaryRange = {
   from: number | null;
   to: number | null;
-}
+};
+
 interface SalaryRangeInputProps extends SalaryRange {
   onChange: (range: SalaryRange) => void;
   errors?: Partial<Record<keyof SalaryRange, string>>;

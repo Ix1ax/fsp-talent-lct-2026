@@ -7,9 +7,7 @@ interface EmployerLayoutProps {
   children: ReactNode;
 }
 
-export default async function EmployerLayout({
-  children,
-}: EmployerLayoutProps) {
+const EmployerLayout = async ({ children }: EmployerLayoutProps) => {
   const session = await loadSession();
 
   if (session.kind !== 'user') {
@@ -28,4 +26,6 @@ export default async function EmployerLayout({
       {children}
     </>
   );
-}
+};
+
+export default EmployerLayout;

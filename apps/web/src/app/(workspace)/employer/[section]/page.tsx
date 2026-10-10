@@ -8,13 +8,13 @@ import {
   getEmployerSection,
 } from '@/screens/employer';
 
-export default async function Page({
+const Page = async ({
   params,
   searchParams,
 }: {
   params: Promise<{ section: string }>;
   searchParams: Promise<EmployerSearchParams>;
-}) {
+}) => {
   const { section } = await params;
 
   if (getEmployerSection(section) === 'overview') notFound();
@@ -26,4 +26,6 @@ export default async function Page({
   );
 
   return null;
-}
+};
+
+export default Page;

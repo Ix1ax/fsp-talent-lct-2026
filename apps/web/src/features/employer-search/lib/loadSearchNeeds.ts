@@ -3,15 +3,15 @@ type SearchPage = {
   items: EmployerNeed[];
   hasMore?: boolean;
 };
-export interface NeedsSearchApi {
+export type NeedsSearchApi = {
   needs: (
     companyId: string,
     status: NeedStatus,
     offset: number,
     signal?: AbortSignal,
   ) => Promise<SearchPage>;
-}
-/** Временный поиск по компании до появления серверного индекса. */
+};
+
 export const loadSearchNeeds = async (
   api: NeedsSearchApi,
   companyId: string,

@@ -10,9 +10,9 @@ import { CandidateHomePage } from '@/screens/candidate';
 
 export const metadata: Metadata = { title: 'Профиль кандидата · ФСП' };
 
-export default async function CandidateProfileLayout({
+const CandidateProfileLayout = async ({
   children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<{ children: ReactNode }>) => {
   const user = await requireRole(USER_ROLES.CANDIDATE, STATIC_ROUTES.CANDIDATE);
   const [fullProfileResult, catalogsResult] = await Promise.allSettled([
     getCandidateFullProfile(),
@@ -45,4 +45,6 @@ export default async function CandidateProfileLayout({
       {children}
     </>
   );
-}
+};
+
+export default CandidateProfileLayout;

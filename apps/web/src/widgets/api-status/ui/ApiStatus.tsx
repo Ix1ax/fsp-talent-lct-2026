@@ -1,6 +1,6 @@
 import { getAPIInfo } from '@/shared/api/info';
 
-export async function ApiStatus() {
+export const ApiStatus = async () => {
   let status = 'API недоступен. Проверьте запуск бекенда.';
 
   try {
@@ -18,4 +18,4 @@ export async function ApiStatus() {
       {status}
     </p>
   );
-}
+};

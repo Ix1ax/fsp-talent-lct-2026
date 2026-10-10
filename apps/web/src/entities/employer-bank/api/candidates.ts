@@ -60,11 +60,11 @@ export const viewBankCandidate = async (
   signal?.throwIfAborted();
   await ensureClientAccessToken();
   signal?.throwIfAborted();
-  return (
-    await clientApi.post<CandidateInteraction>(
-      `/v1/companies/${encodeURIComponent(companyId)}/candidates/${encodeURIComponent(candidateId)}/view`,
-      undefined,
-      { signal },
-    )
-  ).data;
+  const { data } = await clientApi.post<CandidateInteraction>(
+    `/v1/companies/${encodeURIComponent(companyId)}/candidates/${encodeURIComponent(candidateId)}/view`,
+    undefined,
+    { signal },
+  );
+
+  return data;
 };

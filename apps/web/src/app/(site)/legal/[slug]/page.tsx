@@ -22,9 +22,11 @@ export const generateMetadata = async ({
   return { title: `${doc?.title ?? 'Документы'} · ФСП Скаут` };
 };
 
-export default async function Page({ params }: PageProps) {
+const Page = async ({ params }: PageProps) => {
   const doc = findDocument((await params).slug);
   if (!doc) notFound();
 
   return <LegalDocumentPage slug={doc.slug} />;
-}
+};
+
+export default Page;

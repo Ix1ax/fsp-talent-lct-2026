@@ -16,8 +16,11 @@ export const getCompanyVerification = async (
   signal?: AbortSignal,
 ) => {
   await authorize(signal);
-  return (await clientApi.get<CompanyVerification>(path(companyId), { signal }))
-    .data;
+  const { data } = await clientApi.get<CompanyVerification>(path(companyId), {
+    signal,
+  });
+
+  return data;
 };
 
 export const requestCompanyVerification = async (
@@ -25,11 +28,11 @@ export const requestCompanyVerification = async (
   signal?: AbortSignal,
 ) => {
   await authorize(signal);
-  return (
-    await clientApi.post<CompanyVerification>(
-      `${path(companyId)}/request`,
-      undefined,
-      { signal },
-    )
-  ).data;
+  const { data } = await clientApi.post<CompanyVerification>(
+    `${path(companyId)}/request`,
+    undefined,
+    { signal },
+  );
+
+  return data;
 };

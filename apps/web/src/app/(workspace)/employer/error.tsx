@@ -7,7 +7,7 @@ interface ErrorProps {
   reset: () => void;
 }
 
-export default function EmployerError({ error, reset }: ErrorProps) {
+const EmployerError = ({ error, reset }: ErrorProps) => {
   const isTimeout = /timeout/i.test(error.message);
   const title = isTimeout
     ? 'Превышено время ожидания'
@@ -25,4 +25,6 @@ export default function EmployerError({ error, reset }: ErrorProps) {
       />
     </main>
   );
-}
+};
+
+export default EmployerError;

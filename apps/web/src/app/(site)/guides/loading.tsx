@@ -1,6 +1,6 @@
 import { Skeleton } from '@/shared/ui';
 
-export default function Loading() {
+const Loading = () => {
   return (
     <main
       className="container-page page-rhythm flex flex-1 flex-col gap-8"
@@ -29,4 +29,6 @@ export default function Loading() {
       </div>
     </main>
   );
-}
+};
+
+export default Loading;

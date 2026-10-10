@@ -74,9 +74,12 @@ export const getCompanyTask = async (
   signal?: AbortSignal,
 ) => {
   await authorize(signal);
-  return (
-    await clientApi.get<CompanyTask>(taskPath(companyId, taskId), { signal })
-  ).data;
+  const { data } = await clientApi.get<CompanyTask>(
+    taskPath(companyId, taskId),
+    { signal },
+  );
+
+  return data;
 };
 
 export const closeCompanyTask = async (
@@ -85,13 +88,13 @@ export const closeCompanyTask = async (
   signal?: AbortSignal,
 ) => {
   await authorize(signal);
-  return (
-    await clientApi.post<CompanyTask>(
-      `${taskPath(companyId, taskId)}/close`,
-      undefined,
-      { signal },
-    )
-  ).data;
+  const { data } = await clientApi.post<CompanyTask>(
+    `${taskPath(companyId, taskId)}/close`,
+    undefined,
+    { signal },
+  );
+
+  return data;
 };
 
 export const downloadCompanyTask = async (
@@ -101,13 +104,16 @@ export const downloadCompanyTask = async (
 ) => {
   await authorize(signal);
   try {
-    return (
-      await clientApi.get<Blob>(`${taskPath(companyId, taskId)}/file`, {
+    const { data } = await clientApi.get<Blob>(
+      `${taskPath(companyId, taskId)}/file`,
+      {
         responseType: 'blob',
         timeout: 60_000,
         signal,
-      })
-    ).data;
+      },
+    );
+
+    return data;
   } catch (error) {
     if (error instanceof ApiError && error.data instanceof Blob) {
       let body: unknown;

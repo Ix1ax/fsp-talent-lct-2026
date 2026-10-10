@@ -7,8 +7,10 @@ import { IncomingOffers } from '@/features/candidate';
 
 export const metadata: Metadata = { title: 'Входящие предложения · ФСП' };
 
-export default async function CandidateOffersPage() {
+const CandidateOffersPage = async () => {
   await requireRole(USER_ROLES.CANDIDATE, STATIC_ROUTES.OFFERS);
 
   return <IncomingOffers />;
-}
+};
+
+export default CandidateOffersPage;
