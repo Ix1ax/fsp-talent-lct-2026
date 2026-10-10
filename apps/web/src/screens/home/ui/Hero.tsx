@@ -36,8 +36,14 @@ export const Hero = () => {
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.4]);
 
   const handleNavigateClick: MouseEventHandler<HTMLAnchorElement> = (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+      return;
+    const target = document.getElementById('manifest');
+    if (!target) return;
+
     event.preventDefault();
-    document.getElementById('manifest')?.scrollIntoView({
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({
       behavior: reduced ? 'instant' : 'smooth',
       block: 'start',
     });

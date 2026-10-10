@@ -4,6 +4,7 @@ import { RevealWords } from '../motion';
 export const ManifestSection = () => (
   <section
     id="manifest"
+    tabIndex={-1}
     data-landing={LANDING_ELEMENTS.SECTION}
     className="container-page [padding-block:clamp(72px,_9vw,_140px)]"
     aria-labelledby="manifest-title"
