@@ -125,6 +125,14 @@ export const EmployerOverview = ({
               >
                 Потребности
               </Button>
+              <Button
+                variant="link"
+                disabled={busy}
+                onClick={() => onOpenCompany(company.id, 'tasks')}
+                className="h-auto p-0 text-sm text-brand-text"
+              >
+                Задания
+              </Button>
             </div>
           </div>
         </article>

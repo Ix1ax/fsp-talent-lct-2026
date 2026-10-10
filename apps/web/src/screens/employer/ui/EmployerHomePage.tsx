@@ -13,6 +13,7 @@ import {
   CompanyProfileForm,
   CompanyTeam,
 } from '@/features/company';
+import { CompanyTaskSolutions } from '@/features/company-task-review';
 import {
   CandidateBank,
   CandidateDetails,
@@ -71,6 +72,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
     teamDirtyChanged,
     documentsDirtyChanged,
     invitationDirtyChanged,
+    tasksDirtyChanged,
     busyChanged,
     archiveConfirm,
     setArchiveConfirm,
@@ -401,6 +403,13 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
                         <CompanyOffers
                           company={company}
                           api={api}
+                          onBusyChange={busyChanged}
+                        />
+                      )}
+                      {section === 'tasks' && (
+                        <CompanyTaskSolutions
+                          company={company}
+                          onDirtyChange={tasksDirtyChanged}
                           onBusyChange={busyChanged}
                         />
                       )}

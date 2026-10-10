@@ -30,6 +30,7 @@ export const STATIC_ROUTES = {
   EMPLOYER_VACANCIES: '/employer/vacancies',
   EMPLOYER_CANDIDATES: '/employer/candidates',
   EMPLOYER_OFFERS: '/employer/offers',
+  EMPLOYER_TASKS: '/employer/tasks',
   EMPLOYER_INVITATION: '/employer/invitation',
   GUIDES: '/guides',
   LEGAL: '/legal',
