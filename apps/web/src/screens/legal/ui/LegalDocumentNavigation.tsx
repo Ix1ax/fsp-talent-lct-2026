@@ -17,7 +17,7 @@ export const LegalDocumentNavigation = ({
   return (
     <nav
       aria-label="Документы"
-      className="flex flex-col gap-0.5 rounded-xl border border-border bg-card p-2"
+      className="flex flex-col gap-0.5 rounded-xl border border-border bg-card p-2 md:sticky md:top-40 md:max-h-[calc(100dvh-11rem)] md:overflow-y-auto lg:top-24 lg:max-h-[calc(100dvh-7rem)]"
     >
       {LEGAL_DOCUMENTS.map((doc) => (
         <Link
@@ -25,9 +25,8 @@ export const LegalDocumentNavigation = ({
           href={DYNAMIC_ROUTES.LEGAL(doc.slug)}
           aria-current={doc.slug === slug ? 'page' : undefined}
           className={cn(
-            'rounded-lg px-3 py-3 text-sm font-medium transition-colors hover:bg-hover',
-            doc.slug === slug &&
-              'bg-accent font-semibold text-brand-text hover:bg-accent',
+            'rounded-lg px-3 py-3 text-sm font-semibold transition-colors hover:bg-hover',
+            doc.slug === slug && 'bg-accent text-brand-text hover:bg-accent',
           )}
         >
           {doc.title}
