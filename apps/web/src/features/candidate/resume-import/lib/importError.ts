@@ -5,7 +5,7 @@ export const getResumeImportError = (error: unknown): string => {
     const messages: Record<string, string> = {
       consent_required:
         'Для импорта нужно активное согласие на обработку данных.',
-      resume_too_large: 'Размер PDF должен быть не больше 5 МиБ.',
+      resume_too_large: 'Размер PDF должен быть не больше 5 МБ.',
       resume_unrecognized:
         'Не удалось распознать резюме. Загрузите PDF с текстовым слоем, скачанный с hh.ru, до 10 страниц.',
       import_busy:

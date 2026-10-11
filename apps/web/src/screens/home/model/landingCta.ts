@@ -1,5 +1,9 @@
 import { STATIC_ROUTES } from '@/shared/contants';
-import { type SessionState, USER_ROLES } from '@/entities/session';
+import {
+  type SessionState,
+  USER_ROLES,
+  type UserRole,
+} from '@/entities/session';
 
 type LandingCta = { label: string; href: string; forGuest: boolean };
 
@@ -8,8 +12,15 @@ type LandingCta = { label: string; href: string; forGuest: boolean };
  * `forGuest` — показывать ссылку «Ищу специалистов»: только когда сессия
  * проверена и это гость (пока она грузится, `session` — null).
  */
-export const getLandingCta = (session: SessionState | null): LandingCta => {
-  const role = session?.kind === 'user' ? session.user.role : undefined;
+export const getLandingCta = (
+  session: SessionState | null,
+  /** Роль последнего входа — пока сессия проверяется (`session` — null). */
+  roleHint?: UserRole | null,
+): LandingCta => {
+  const role =
+    session?.kind === 'user'
+      ? session.user.role
+      : (session === null && roleHint) || undefined;
   if (role === USER_ROLES.CANDIDATE)
     return {
       label: 'Мой кабинет',

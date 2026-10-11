@@ -1,6 +1,6 @@
 import { ArrowLeftIcon } from 'lucide-react';
 
-import { Button, RemoteState, Skeleton } from '@/shared/ui';
+import { Button, RemoteState } from '@/shared/ui';
 import type { Skill } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 import { AcceptInvitation, CompanyProfileForm } from '@/features/company';
@@ -11,6 +11,7 @@ import type { employerGateway } from '../lib';
 import type { EmployerBoard, EmployerWorkspace } from '../model';
 import { EmployerCompanyOnboarding } from './EmployerCompanyOnboarding';
 import { EmployerCompanySections } from './EmployerCompanySections';
+import { EmployerWorkspaceSkeleton } from './EmployerWorkspaceSkeleton';
 
 interface EmployerWorkspaceContentProps {
   user: SessionUser;
@@ -55,12 +56,7 @@ export const EmployerWorkspaceContent = ({
         retry={board.retry}
         errorTitle="Не удалось открыть кабинет"
         loadingLabel="Загрузка кабинета"
-        loadingContent={
-          <div className="grid gap-4">
-            <Skeleton className="h-12 w-64" />
-            <Skeleton className="h-64" />
-          </div>
-        }
+        loadingContent={<EmployerWorkspaceSkeleton section={section} />}
       />
     );
   }

@@ -118,7 +118,12 @@ export const AdminSidebar = ({
                     </span>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
+                {/* Подсказка нужна только свёрнутому меню: иначе подпись видна. */}
+                {collapsed && (
+                  <TooltipContent side="right" className="max-lg:hidden">
+                    {label}
+                  </TooltipContent>
+                )}
               </Tooltip>
             );
           })}

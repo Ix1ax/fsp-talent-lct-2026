@@ -41,4 +41,14 @@ describe('cooldown messages', () => {
       'Повторный запрос временно недоступен. Подождите и попробуйте ещё раз.',
     );
   });
+  it('translates browser timeout and network errors', () => {
+    expect(
+      getApiErrorMessage(new DOMException('signal timed out', 'TimeoutError')),
+    ).toBe(
+      'Сервер не ответил вовремя. Проверьте подключение и попробуйте ещё раз.',
+    );
+    expect(getApiErrorMessage(new TypeError('Failed to fetch'))).toBe(
+      'Не удалось связаться с сервером. Проверьте соединение.',
+    );
+  });
 });

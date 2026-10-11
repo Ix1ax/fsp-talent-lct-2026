@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { ShieldCheckIcon } from 'lucide-react';
+import {
+  CircleDashedIcon,
+  CircleXIcon,
+  ClockIcon,
+  ShieldCheckIcon,
+} from 'lucide-react';
 
 import { ApiError } from '@/shared/api';
 import { useAsyncMutation, useRemoteData } from '@/shared/hooks';
@@ -53,6 +58,14 @@ export const CompanyVerificationCard = ({
     (verification?.status === 'unverified' ||
       verification?.status === 'rejected');
 
+  const statusView = {
+    unverified: { variant: 'secondary', icon: CircleDashedIcon },
+    pending: { variant: 'secondary', icon: ClockIcon },
+    verified: { variant: 'success', icon: ShieldCheckIcon },
+    rejected: { variant: 'destructive', icon: CircleXIcon },
+  } as const;
+  const status = statusView[verification?.status ?? 'unverified'];
+
   const requestLabel =
     verification?.status === 'rejected'
       ? 'Отправить повторно'
@@ -102,10 +115,14 @@ export const CompanyVerificationCard = ({
           <>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <Badge
-                variant={
-                  verification.status === 'verified' ? 'success' : 'secondary'
+                variant={status.variant}
+                className={
+                  verification.status === 'pending'
+                    ? 'bg-accent text-brand-text'
+                    : undefined
                 }
               >
+                <status.icon aria-hidden="true" />
                 {VERIFICATION_LABELS[verification.status]}
               </Badge>
               <Button

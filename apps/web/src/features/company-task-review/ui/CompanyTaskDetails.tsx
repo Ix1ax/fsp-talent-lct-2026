@@ -1,7 +1,7 @@
 import { ArrowLeftIcon, DownloadIcon, LoaderCircleIcon } from 'lucide-react';
 
 import { Badge, Button, ConfirmDeleteDialog, RemoteState } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { formatDate, formatFileSize } from '@/shared/utils';
 import { type Catalogs } from '@/entities/catalog';
 import { type Company } from '@/entities/company';
 import { type CompanyTask } from '@/entities/company-task';
@@ -111,11 +111,7 @@ export const CompanyTaskDetails = ({
             )}
             <div className="grid gap-3 border-t pt-4">
               <p className="break-all text-sm text-muted-foreground">
-                {task.file.originalName} ·{' '}
-                {(task.file.sizeBytes / 1024).toLocaleString('ru-RU', {
-                  maximumFractionDigits: 1,
-                })}{' '}
-                КиБ
+                {task.file.originalName} · {formatFileSize(task.file.sizeBytes)}
               </p>
               <div className="flex flex-wrap gap-3">
                 <Button

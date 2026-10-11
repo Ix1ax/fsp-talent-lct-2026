@@ -8,6 +8,7 @@ import {
   type EmployerNeed,
   NEED_DETAIL_STATUS_LABELS,
   type NeedInput,
+  type Recommendation,
 } from '@/entities/employer-need';
 import {
   NeedActions,
@@ -35,7 +36,7 @@ interface NeedDetailProps {
   onSave: (value: NeedInput) => Promise<void>;
   onBack: () => void;
   onDirtyChange: (value: boolean) => void;
-  onCandidate: (id: string) => void;
+  onCandidate: (id: string, recommendation?: Recommendation) => void;
   onRestore: () => void;
   onArchive: () => void;
   onDuplicate: () => void;

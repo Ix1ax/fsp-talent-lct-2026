@@ -32,7 +32,7 @@ export const avatarSchema = z.object({
     )
     .refine(
       (file) => file.size <= 2 * 1024 * 1024,
-      'Размер изображения не должен превышать 2 МиБ.',
+      'Размер изображения не должен превышать 2 МБ.',
     )
     .refine(
       (file) => ['image/jpeg', 'image/png'].includes(file.type),

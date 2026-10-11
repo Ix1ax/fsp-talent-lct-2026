@@ -50,6 +50,7 @@ export const CompanyTeam = ({
     handleRoleChange,
     handleFormSubmit,
     handleCopyInvitation,
+    invitationLink,
     handleRemove,
     handleCloseRemove,
     handleConfirmRemove,
@@ -112,6 +113,7 @@ export const CompanyTeam = ({
           setInvitationOffset={setInvitationOffset}
           handleFormSubmit={handleFormSubmit}
           handleCopyInvitation={handleCopyInvitation}
+          invitationLink={invitationLink}
           handleRemove={handleRemove}
         />
       )}

@@ -1,7 +1,10 @@
 'use client';
 import { PageControls } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
-import { getRecommendations } from '@/entities/employer-need';
+import {
+  getRecommendations,
+  type Recommendation,
+} from '@/entities/employer-need';
 
 import { useNeedMatches } from '../model';
 import { MatchTableContent } from './MatchTableContent';
@@ -44,7 +47,7 @@ interface MatchTableProps {
   needId: string;
   catalogs: Catalogs;
   load?: typeof getRecommendations;
-  onOpenCandidate?: (id: string) => void;
+  onOpenCandidate?: (id: string, recommendation?: Recommendation) => void;
 }
 
 export const MatchTable = ({

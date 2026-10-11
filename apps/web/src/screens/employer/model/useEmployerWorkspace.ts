@@ -3,6 +3,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { useGuardedRouter, useUnsavedGuard } from '@/shared/hooks';
+import type { Recommendation } from '@/entities/employer-need';
 
 import type { EmployerSection } from '../constants';
 import { getEmployerHref, getEmployerSectionHref } from '../lib';
@@ -63,6 +64,11 @@ export const useEmployerWorkspace = ({
   const busyChanged = useCallback((value: boolean) => setChildBusy(value), []);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [candidateId, setCandidateId] = useState('');
+  const [recommendation, setRecommendation] = useState<Recommendation>();
+  const openCandidate = (id: string, match?: Recommendation) => {
+    setRecommendation(match);
+    setCandidateId(id);
+  };
   const [offer, setOffer] = useState(false);
   const unsaved = useUnsavedGuard(dirty, busy, false);
   const needUnsaved = useUnsavedGuard(drafts.vacancies ?? false, busy, false);
@@ -120,6 +126,8 @@ export const useEmployerWorkspace = ({
     setArchiveConfirm,
     candidateId,
     setCandidateId,
+    recommendation,
+    openCandidate,
     offer,
     setOffer,
     guardNeed,

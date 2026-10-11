@@ -47,6 +47,7 @@ export const EmployerCompanySections = ({
     setComposer,
     setCreatedNeed,
     setCandidateId,
+    openCandidate,
     profileDirtyChanged,
     documentsDirtyChanged,
     teamDirtyChanged,
@@ -196,7 +197,7 @@ export const EmployerCompanySections = ({
                 setCreatedNeed(true);
                 setComposer(false);
               }}
-              onCandidate={setCandidateId}
+              onCandidate={openCandidate}
             />
           </section>
           {section === 'candidates' && (
@@ -222,7 +223,7 @@ export const EmployerCompanySections = ({
             <CompanyTaskSolutions
               company={company}
               catalogs={board.catalogs}
-              onOpenCandidate={setCandidateId}
+              onOpenCandidate={openCandidate}
               onDirtyChange={tasksDirtyChanged}
               onBusyChange={busyChanged}
             />

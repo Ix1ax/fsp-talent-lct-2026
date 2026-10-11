@@ -27,6 +27,7 @@ export const EmployerCandidateDialogs = ({
           company={company}
           catalogs={board.catalogs}
           candidateId={candidateId}
+          recommendation={workspace.recommendation}
           api={api}
           busy={busy}
           onClose={() => setCandidateId('')}

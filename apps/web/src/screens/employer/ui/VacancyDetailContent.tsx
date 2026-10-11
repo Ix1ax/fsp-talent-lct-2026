@@ -3,6 +3,7 @@ import { ArrowLeftIcon } from 'lucide-react';
 import { getApiErrorMessage } from '@/shared/api';
 import { AsyncState, Button, Skeleton, toast } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
+import type { Recommendation } from '@/entities/employer-need';
 import { emptyNeed, NeedFlowEditor } from '@/features/employer-need';
 
 import type { EmployerGateway } from '../lib';
@@ -21,7 +22,7 @@ interface VacancyDetailContentProps {
   onBack: () => void;
   onDirtyChange: (value: boolean) => void;
   onCreated: () => void;
-  onCandidate: (id: string) => void;
+  onCandidate: (id: string, recommendation?: Recommendation) => void;
   guard: (action: () => void) => void;
   active: boolean;
   need: EmployerBoard['selected'];

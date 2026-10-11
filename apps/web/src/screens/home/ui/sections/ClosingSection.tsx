@@ -4,14 +4,22 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { useClientSession, USER_ROLES } from '@/entities/session';
+import {
+  useClientSession,
+  useLastKnownRole,
+  USER_ROLES,
+} from '@/entities/session';
 
 import { LANDING_ELEMENTS } from '../../constants';
 import { PointerSurface } from '../PointerSurface';
 
 export const ClosingSection = () => {
   const session = useClientSession();
-  const role = session?.kind === 'user' ? session.user.role : undefined;
+  const roleHint = useLastKnownRole();
+  const role =
+    session?.kind === 'user'
+      ? session.user.role
+      : (session === null && roleHint) || undefined;
   return (
     <section
       data-landing={LANDING_ELEMENTS.START_SECTION}

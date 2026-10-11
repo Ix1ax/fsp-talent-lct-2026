@@ -38,6 +38,17 @@ describe('logoutSession', () => {
     expect(signoutRedirect).toHaveBeenCalledWith({ id_token_hint: 'id-token' });
   });
 
+  it('prefers the id_token kept by the server, so Keycloak does not ask to confirm', async () => {
+    fetchMock.mockResolvedValue(
+      Response.json({ ok: true, idTokenHint: 'server-id-token' }),
+    );
+    getUser.mockResolvedValue(null);
+    await logoutSession();
+    expect(signoutRedirect).toHaveBeenCalledWith({
+      id_token_hint: 'server-id-token',
+    });
+  });
+
   it('allows logout when the OIDC user is missing', async () => {
     fetchMock.mockResolvedValue(Response.json({ ok: true }));
     getUser.mockResolvedValue(null);

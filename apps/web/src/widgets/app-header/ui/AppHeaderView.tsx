@@ -10,8 +10,10 @@ import {
 } from '@/shared/ui';
 import {
   getRoleHomeRoute,
+  RememberRole,
   type SessionState,
   USER_ROLES,
+  type UserRole,
 } from '@/entities/session';
 import { OffersNotification } from '@/features/candidate';
 
@@ -57,15 +59,25 @@ interface AppHeaderViewProps {
   session: SessionState;
   /** Сессия ещё проверяется в браузере: на месте аккаунта — скелетон. */
   pending?: boolean;
+  /** Роль последнего входа: пока сессия проверяется, разделы уже на месте. */
+  roleHint?: UserRole | null;
 }
 
-export const AppHeaderView = ({ session, pending }: AppHeaderViewProps) => {
-  const role = session.kind === 'user' ? session.user.role : undefined;
+export const AppHeaderView = ({
+  session,
+  pending,
+  roleHint,
+}: AppHeaderViewProps) => {
+  const role =
+    session.kind === 'user'
+      ? session.user.role
+      : (pending && roleHint) || undefined;
   const items = getHeaderNavItems(role);
   const hasNav = items.length > 0;
 
   return (
     <AppHeaderPosition>
+      {session.kind === 'user' && <RememberRole role={session.user.role} />}
       <HeaderBar
         brand={
           role ? (
@@ -92,9 +104,14 @@ export const AppHeaderView = ({ session, pending }: AppHeaderViewProps) => {
               <ThemeToggle />
             </span>
             {pending ? (
+              // Размер как у того, что появится: аватар с меню или «Войти».
               <Skeleton
                 aria-label="Проверяем вход"
-                className="h-11 w-24 rounded-lg"
+                className={
+                  role
+                    ? 'h-10 w-[66px] rounded-lg 2xl:w-44'
+                    : 'h-9 w-18 rounded-lg'
+                }
               />
             ) : (
               <HeaderAccount session={session} />

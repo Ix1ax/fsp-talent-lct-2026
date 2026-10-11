@@ -1,5 +1,4 @@
 import { TIMEZONE_LABELS } from '@/shared/contants';
-import { briefTokenClassName } from '@/shared/ui';
 import { formatSalaryRange, pluralizeRu } from '@/shared/utils';
 import type { Catalogs, Skill } from '@/entities/catalog';
 import type { NeedInput } from '@/entities/employer-need';
@@ -17,7 +16,13 @@ interface SummaryTokenProps {
 
 const SummaryToken = ({ value, fallback }: SummaryTokenProps) => {
   return (
-    <span className={briefTokenClassName(!value)}>{value || fallback}</span>
+    <span
+      className={
+        value ? 'font-medium text-foreground' : 'text-muted-foreground'
+      }
+    >
+      {value || fallback}
+    </span>
   );
 };
 
@@ -61,7 +66,7 @@ export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {
     : null;
 
   return (
-    <p className="text-xl leading-[2.6rem] text-pretty">
+    <p className="text-base leading-8 text-pretty text-muted-foreground">
       Ищем специалиста{' '}
       <SummaryToken value={specialization} fallback="специализация" /> уровня{' '}
       <SummaryToken value={grade} fallback="любой грейд" />, формат —{' '}

@@ -50,16 +50,24 @@ export const NeedAdvancedFields = ({
         </div>
       )}
       {value.skills.length > 0 && (
-        <div className="grid gap-3">
-          <p className="text-sm text-muted-foreground">
-            Обязательность и приоритет навыков
-          </p>
+        <div className="grid max-w-3xl gap-3">
+          <div className="grid gap-1">
+            <h3 className="text-sm font-semibold">Приоритет навыков</h3>
+            <p className="text-sm text-muted-foreground">
+              Отметьте обязательные навыки. Вес влияет на оценку совпадения: 2 —
+              вдвое важнее, чем 1.
+            </p>
+          </div>
           {value.skills.map((skill) => (
             <div
-              className="grid grid-cols-[1fr_100px] items-center gap-3"
+              className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-4 rounded-xl border bg-muted/30 p-3 sm:grid-cols-[minmax(0,1fr)_auto_6rem]"
               key={skill.skillId}
             >
-              <label className="flex min-w-0 items-center gap-2 text-sm">
+              <span className="min-w-0 font-medium [overflow-wrap:anywhere]">
+                {skills.find((s) => s.id === skill.skillId)?.name ??
+                  'Выбранный навык'}
+              </span>
+              <label className="col-start-1 row-start-2 flex items-center gap-2 text-sm text-muted-foreground sm:col-auto sm:row-auto">
                 <Checkbox
                   aria-label={`Обязательный навык ${skills.find((s) => s.id === skill.skillId)?.name ?? 'из справочника'}`}
                   checked={skill.required}
@@ -73,12 +81,9 @@ export const NeedAdvancedFields = ({
                     })
                   }
                 />
-                <span className="truncate">
-                  {skills.find((s) => s.id === skill.skillId)?.name ??
-                    'Выбранный навык'}
-                </span>
+                Обязательный
               </label>
-              <label className="grid gap-1 text-xs text-muted-foreground">
+              <label className="col-start-2 row-span-2 row-start-1 grid gap-1 text-xs text-muted-foreground sm:col-auto sm:row-auto">
                 Вес
                 <Input
                   aria-label={`Вес навыка ${skills.find((s) => s.id === skill.skillId)?.name ?? ''}`}

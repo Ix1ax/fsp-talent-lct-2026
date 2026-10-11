@@ -53,7 +53,7 @@ export const HeaderMenu = ({ className, nav, extra }: HeaderMenuProps) => {
       <SheetTrigger asChild>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
           className={cn('size-10', className)}
           aria-label="Открыть меню разделов"

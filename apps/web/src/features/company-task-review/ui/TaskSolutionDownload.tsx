@@ -3,6 +3,7 @@ import { LoaderCircleIcon } from 'lucide-react';
 
 import { ApiError } from '@/shared/api';
 import { Button } from '@/shared/ui';
+import { formatFileSize } from '@/shared/utils';
 import {
   downloadCompanyTaskSolution,
   type TaskSubmission,
@@ -83,10 +84,7 @@ export const TaskSolutionDownload = ({
       </Button>
       <p className="break-all text-sm text-muted-foreground">
         {submission.file.originalName} ·{' '}
-        {(submission.file.sizeBytes / 1024).toLocaleString('ru-RU', {
-          maximumFractionDigits: 1,
-        })}{' '}
-        КиБ
+        {formatFileSize(submission.file.sizeBytes)}
       </p>
       {error && (
         <p role="alert" className="text-sm text-destructive">

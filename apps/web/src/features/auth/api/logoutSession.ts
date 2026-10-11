@@ -5,6 +5,7 @@ import {
   createOidcManager,
 } from '@/shared/auth';
 import { approveUnsavedUnload } from '@/shared/hooks/navigation';
+import { rememberRole } from '@/entities/session';
 
 export const logoutSession = async (): Promise<void> => {
   const config = await getAuthConfig();
@@ -17,12 +18,18 @@ export const logoutSession = async (): Promise<void> => {
   if (!response.ok)
     throw new Error('Не удалось завершить сессию. Попробуйте ещё раз.');
 
+  const { idTokenHint } = (await response.json().catch(() => ({}))) as {
+    idTokenHint?: string | null;
+  };
   clearClientAccessToken();
+  rememberRole(undefined);
   const user = await manager.getUser();
   await clearOidcUser();
   const cancelApproval = approveUnsavedUnload();
   try {
-    await manager.signoutRedirect({ id_token_hint: user?.id_token });
+    await manager.signoutRedirect({
+      id_token_hint: idTokenHint ?? user?.id_token,
+    });
   } catch (error) {
     cancelApproval();
     throw error;

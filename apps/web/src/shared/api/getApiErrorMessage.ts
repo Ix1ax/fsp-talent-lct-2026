@@ -33,6 +33,15 @@ export const getApiErrorMessage = (error: unknown): string => {
     if (!error.status)
       return 'Не удалось связаться с сервером. Проверьте соединение.';
   }
+  // Ошибки браузера приходят на английском («signal timed out», «Failed to
+  // fetch») — пользователю показываем русский текст.
+  if (error instanceof Error && error.name === 'TimeoutError')
+    return 'Сервер не ответил вовремя. Проверьте подключение и попробуйте ещё раз.';
+  if (
+    error instanceof TypeError &&
+    /fetch|network|load failed/i.test(error.message)
+  )
+    return 'Не удалось связаться с сервером. Проверьте соединение.';
   return error instanceof Error
     ? error.message
     : 'Не удалось выполнить действие. Попробуйте ещё раз.';

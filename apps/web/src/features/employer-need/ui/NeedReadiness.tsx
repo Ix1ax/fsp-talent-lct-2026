@@ -1,7 +1,6 @@
 import { CheckIcon, MinusIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
-import { MetaLabel } from '@/shared/ui/MetaLabel';
 import { getMissingNeedFields, type NeedInput } from '@/entities/employer-need';
 
 interface NeedReadinessProps {
@@ -15,7 +14,7 @@ export const NeedReadiness = ({ value }: NeedReadinessProps) => {
       className="grid gap-3 rounded-xl border border-border/60 bg-muted/60 p-4"
       aria-label="Готовность потребности к активации"
     >
-      <MetaLabel>Чтобы начать поиск</MetaLabel>
+      <p className="text-sm font-semibold">Готовность к подбору</p>
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {[
           'название',
@@ -30,8 +29,8 @@ export const NeedReadiness = ({ value }: NeedReadinessProps) => {
             <li key={label} className="flex items-center gap-2 text-sm">
               <span
                 className={cn(
-                  'flex size-5 shrink-0 items-center justify-center rounded-md border border-input bg-card text-caption',
-                  ready && 'border-success bg-success-soft text-success',
+                  'flex size-5 shrink-0 items-center justify-center rounded-full border border-input bg-card text-caption',
+                  ready && 'border-transparent bg-success-soft text-success',
                 )}
               >
                 <Icon className="size-3" />

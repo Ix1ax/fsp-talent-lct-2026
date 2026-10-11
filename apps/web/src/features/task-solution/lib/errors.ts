@@ -10,7 +10,7 @@ export const taskErrorMessage = (error: unknown): string => {
     task_closed: 'Приём решений завершён. Отправить файл больше нельзя.',
     consent_required:
       'Для отправки нужны согласия на обработку данных и публикацию профиля.',
-    file_too_large: 'Файл должен быть не больше 10 МиБ.',
+    file_too_large: 'Файл должен быть не больше 10 МБ.',
     unsupported_file_type: 'Допустимы PDF, JPEG, PNG, ZIP, TXT и Markdown.',
     invalid_file:
       'Файл пустой, повреждён или не соответствует ограничениям. Выберите другой файл.',

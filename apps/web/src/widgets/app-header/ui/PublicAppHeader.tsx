@@ -1,6 +1,6 @@
 'use client';
 
-import { useClientSession } from '@/entities/session';
+import { useClientSession, useLastKnownRole } from '@/entities/session';
 
 import { AppHeaderView } from './AppHeaderView';
 
@@ -10,7 +10,12 @@ import { AppHeaderView } from './AppHeaderView';
  */
 export const PublicAppHeader = () => {
   const session = useClientSession();
+  const roleHint = useLastKnownRole();
   return (
-    <AppHeaderView session={session ?? { kind: 'guest' }} pending={!session} />
+    <AppHeaderView
+      session={session ?? { kind: 'guest' }}
+      pending={!session}
+      roleHint={roleHint}
+    />
   );
 };

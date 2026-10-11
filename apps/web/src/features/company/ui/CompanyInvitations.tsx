@@ -33,6 +33,7 @@ interface CompanyInvitationsProps {
   setInvitationOffset: (offset: number) => void;
   handleFormSubmit: ReturnType<typeof useCompanyTeam>['handleFormSubmit'];
   handleCopyInvitation: () => void;
+  invitationLink: string;
   handleRemove: ReturnType<typeof useCompanyTeam>['handleRemove'];
 }
 export const CompanyInvitations = ({
@@ -45,6 +46,7 @@ export const CompanyInvitations = ({
   setInvitationOffset,
   handleFormSubmit,
   handleCopyInvitation,
+  invitationLink,
   handleRemove,
 }: CompanyInvitationsProps) => {
   return (
@@ -118,13 +120,14 @@ export const CompanyInvitations = ({
           >
             <p className="font-medium">Передайте приглашение сотруднику</p>
             <p className="text-sm text-muted-foreground">
-              Письмо автоматически не отправляется. Сохраните ссылку сейчас:
-              токен доступен только после создания.
+              Письмо автоматически не отправляется. Сохраните ссылку сейчас: она
+              показывается только один раз.
             </p>
             <Input
-              aria-label="Токен приглашения"
+              aria-label="Ссылка-приглашение"
               readOnly
-              value={created.token}
+              value={invitationLink}
+              onFocus={(event) => event.currentTarget.select()}
             />
             <Button
               variant="outline"

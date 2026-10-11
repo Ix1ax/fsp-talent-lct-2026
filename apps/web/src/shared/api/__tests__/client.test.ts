@@ -29,6 +29,7 @@ describe('client session refresh', () => {
     vi.mocked(getClientSessionRevision).mockReturnValue(0);
   });
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.unstubAllGlobals();
     clientApi.defaults.adapter = originalAdapter;
   });
@@ -139,9 +140,44 @@ describe('client session refresh', () => {
     expect(setClientAccessToken).not.toHaveBeenCalled();
   });
 
+  it('bounds waiting for another tab and allows retry without dropping the session', async () => {
+    const controller = new AbortController();
+    vi.spyOn(AbortSignal, 'timeout').mockReturnValue(controller.signal);
+    const lock = vi.fn(
+      (_name, options, callback) =>
+        new Promise((_resolve, reject) => {
+          void callback;
+          options.signal.addEventListener(
+            'abort',
+            () => reject(options.signal.reason),
+            { once: true },
+          );
+        }),
+    );
+    vi.stubGlobal('navigator', { locks: { request: lock } });
+    const request = ensureClientAccessToken();
+    const assertion = expect(request).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+    controller.abort(
+      new DOMException('Timed out waiting for auth lock', 'TimeoutError'),
+    );
+    await assertion;
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(clearClientAccessToken).not.toHaveBeenCalled();
+    vi.mocked(AbortSignal.timeout).mockReturnValue(
+      new AbortController().signal,
+    );
+    lock.mockImplementation(async (_name, _options, callback) => callback());
+    fetchMock.mockResolvedValue(Response.json({ accessToken: 'new' }));
+    expect(await ensureClientAccessToken()).toBe('new');
+  });
+
   it('shares a single refresh even when browser locks are available', async () => {
     vi.stubGlobal('navigator', {
-      locks: { request: vi.fn(async (_name, callback) => callback()) },
+      locks: {
+        request: vi.fn(async (_name, _options, callback) => callback()),
+      },
     });
     fetchMock.mockResolvedValue(Response.json({ accessToken: 'new' }));
     expect(

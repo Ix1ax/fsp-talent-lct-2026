@@ -54,7 +54,7 @@ describe('avatar validation', () => {
     const file = new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'large.png', {
       type: 'image/png',
     });
-    expect(await validateAvatar(file)).toContain('2 МиБ');
+    expect(await validateAvatar(file)).toContain('2 МБ');
   });
   it('rejects unsupported types', async () => {
     expect(

@@ -4,7 +4,10 @@ import { confirmUnsavedChanges } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
 import { Button, OptionSelect, PageControls } from '@/shared/ui';
 import { type Catalogs, type Skill } from '@/entities/catalog';
-import { NEED_STATUS_LABELS } from '@/entities/employer-need';
+import {
+  NEED_STATUS_LABELS,
+  type Recommendation,
+} from '@/entities/employer-need';
 import { ArchiveNeedDialog } from '@/features/employer-need';
 import { type VacancyFilters as Filters } from '@/features/employer-search';
 
@@ -31,7 +34,7 @@ interface VacancyBankProps {
   onBack: () => void;
   onDirtyChange: (value: boolean) => void;
   onCreated: () => void;
-  onCandidate: (id: string) => void;
+  onCandidate: (id: string, recommendation?: Recommendation) => void;
   guard: (action: () => void) => void;
 }
 

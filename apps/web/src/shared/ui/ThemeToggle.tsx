@@ -18,7 +18,7 @@ export const ThemeToggle = () => {
       type="button"
       size="icon"
       className="size-10"
-      variant="outline"
+      variant="ghost"
       aria-label="Сменить тему"
       title="Сменить тему"
       onClick={toggle}

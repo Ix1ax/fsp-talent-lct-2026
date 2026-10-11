@@ -2,6 +2,7 @@
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react';
 
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -103,9 +104,9 @@ export const NeedFlowEditor = ({
           <CardHeader>
             <CardTitle>{isNew ? 'Новая потребность' : value.title}</CardTitle>
             {!isNew && (
-              <p className="text-sm font-medium text-brand-text">
+              <Badge variant="secondary">
                 {NEED_DETAIL_STATUS_LABELS[value.status]}
-              </p>
+              </Badge>
             )}
             <CardDescription>
               {readonly
@@ -165,13 +166,20 @@ export const NeedFlowEditor = ({
               )}
               {!readonly && (
                 <div className="flex flex-wrap gap-3">
-                  <Button type="submit" size="lg" disabled={pending}>
+                  <Button
+                    type="submit"
+                    variant={
+                      step === LAST_STEP && value.status === 'draft' && !isNew
+                        ? 'outline'
+                        : 'default'
+                    }
+                    disabled={pending}
+                  >
                     {getNeedSaveLabel(pending, step)}
                   </Button>
                   {step === LAST_STEP && value.status === 'draft' && !isNew && (
                     <Button
                       type="button"
-                      size="lg"
                       disabled={pending}
                       onClick={() => void submit('active')}
                     >

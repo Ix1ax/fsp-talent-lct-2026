@@ -7,13 +7,13 @@ import { ArrowDown, ArrowUpRight, Pause, Play } from 'lucide-react';
 
 import { useMediaQuery } from '@/shared/hooks';
 import { buttonVariants } from '@/shared/ui';
-import { useClientSession } from '@/entities/session';
+import { useClientSession, useLastKnownRole } from '@/entities/session';
 
 import { LANDING_ANCHORS, LANDING_ELEMENTS } from '../constants';
 import { getLandingCta } from '../model';
 
 export const Hero = () => {
-  const cta = getLandingCta(useClientSession());
+  const cta = getLandingCta(useClientSession(), useLastKnownRole());
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)', true);
@@ -64,6 +64,11 @@ export const Hero = () => {
     >
       <motion.div
         data-landing={LANDING_ELEMENTS.HERO_FILM}
+        style={{
+          backgroundImage: 'url("/hero-poster.svg")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
         className="absolute h-full [color:#efefef] [background:#1b1c21] [animation:enter_1.2s_cubic-bezier(0.2,_0.7,_0.2,_1)_both] [--tw-enter-opacity:0] [--tw-enter-translate-y:32px] inset-0 [z-index:-1] [&_video]:absolute [&_video]:inset-0 [&_video]:w-full [&_video]:h-full [&_video]:object-cover"
       >
         <motion.video
@@ -73,7 +78,7 @@ export const Hero = () => {
           loop
           playsInline
           preload="none"
-          poster="/hero-poster.svg"
+          poster="/hero-poster.jpg"
           aria-hidden="true"
           onPlay={() => setPlaying(true)}
           onPause={() => setPlaying(false)}

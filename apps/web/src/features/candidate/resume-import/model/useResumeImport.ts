@@ -96,7 +96,7 @@ export const useResumeImport = (props: ResumeImportOptions) => {
     }
 
     if (file.size > RESUME_MAX_BYTES) {
-      setMessage('Размер PDF должен быть не больше 5 МиБ.');
+      setMessage('Размер PDF должен быть не больше 5 МБ.');
       return;
     }
 

@@ -36,7 +36,7 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex flex-col">
       <EmployerHeader
         user={user}
         section={section}

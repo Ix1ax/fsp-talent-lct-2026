@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
@@ -6,7 +7,10 @@ import { Badge, Button, PageControls, RemoteState } from '@/shared/ui';
 import { type Catalogs, type Skill } from '@/entities/catalog';
 import { type Company } from '@/entities/company';
 import { type EmployerBankApi } from '@/entities/employer-bank';
-import { type EmployerNeed } from '@/entities/employer-need';
+import {
+  type EmployerNeed,
+  type Recommendation,
+} from '@/entities/employer-need';
 
 import { filtersForNeed } from '../lib';
 import { useCandidateBank } from '../model';
@@ -37,6 +41,7 @@ export const CandidateBank = ({
   revision,
   onNeeds,
 }: CandidateBankProps) => {
+  const [recommendation, setRecommendation] = useState<Recommendation>();
   const {
     filters,
     setFilters,
@@ -182,7 +187,10 @@ export const CandidateBank = ({
                   candidate={candidate}
                   catalogs={catalogs}
                   position={offset + index + 1}
-                  onOpen={() => setCandidateId(candidate.id)}
+                  onOpen={() => {
+                    setRecommendation(candidate);
+                    setCandidateId(candidate.id);
+                  }}
                 />
               ))}
               {bank?.items.map((candidate) => (
@@ -190,7 +198,10 @@ export const CandidateBank = ({
                   key={candidate.id}
                   candidate={candidate}
                   catalogs={catalogs}
-                  onOpen={() => setCandidateId(candidate.id)}
+                  onOpen={() => {
+                    setRecommendation(undefined);
+                    setCandidateId(candidate.id);
+                  }}
                 />
               ))}
 
@@ -210,6 +221,7 @@ export const CandidateBank = ({
           company={company}
           catalogs={catalogs}
           candidateId={candidateId}
+          recommendation={recommendation}
           api={api}
           busy={busy}
           onClose={() => setCandidateId('')}

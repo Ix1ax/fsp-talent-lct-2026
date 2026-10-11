@@ -7,5 +7,12 @@ export type {
   SessionUser,
   UserRole,
 } from './model';
-export { getRoleHomeRoute, USER_ROLES } from './model';
+export {
+  getRoleHomeRoute,
+  readLastKnownRole,
+  rememberRole,
+  USER_ROLES,
+} from './model';
 export { useClientSession } from './model/useClientSession';
+export { useLastKnownRole } from './model/useLastKnownRole';
+export { RememberRole } from './ui/RememberRole';

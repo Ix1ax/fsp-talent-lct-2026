@@ -34,7 +34,7 @@ const CRITERION_VIEW: Record<
   partial: {
     label: 'частично',
     icon: MinusIcon,
-    className: 'bg-warning-soft text-warning',
+    className: 'bg-accent text-brand-text',
   },
   mismatched: {
     label: 'не совпадает',

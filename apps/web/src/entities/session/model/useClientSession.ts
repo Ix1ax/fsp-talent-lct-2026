@@ -6,6 +6,7 @@ import { ensureClientAccessToken } from '@/shared/api';
 import { getTokenDisplayName } from '@/shared/auth/getTokenDisplayName';
 
 import { getMeClient } from '../api';
+import { rememberRole } from './lastKnownRole';
 import type { SessionState } from './sessionState';
 
 /**
@@ -27,9 +28,13 @@ export const useClientSession = (): SessionState | null => {
 
   useEffect(() => {
     let active = true;
-    sessionRequest ??= loadClientSession().catch((): SessionState => ({
-      kind: 'guest',
-    }));
+    // Роль запоминаем только по ответу сервера: сбой сети её не стирает.
+    sessionRequest ??= loadClientSession()
+      .then((next) => {
+        rememberRole(next.kind === 'user' ? next.user.role : undefined);
+        return next;
+      })
+      .catch((): SessionState => ({ kind: 'guest' }));
     sessionRequest.then((next) => {
       if (active) setSession(next);
     });

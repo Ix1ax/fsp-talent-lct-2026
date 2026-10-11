@@ -1,5 +1,4 @@
-import { Button, OptionSelect } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { Badge, Button, OptionSelect } from '@/shared/ui';
 import { type CompanyMember, MEMBER_ROLE_LABELS } from '@/entities/company';
 
 interface MemberItemProps {
@@ -25,15 +24,21 @@ export const MemberItem = ({
         <p className="font-medium">
           {member.userId === userId ? 'Вы' : 'Сотрудник'}
         </p>
-        <p className="mt-1 break-all text-xs text-muted-foreground">
-          ID: {member.userId}
-        </p>
+        {member.userId !== userId && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            Сотрудник · {member.userId.slice(0, 8)}
+          </p>
+        )}
       </div>
-      <p className="text-sm text-muted-foreground">
-        {MEMBER_ROLE_LABELS[member.role]} ·{' '}
-        {member.status === 'active' ? 'Активен' : 'Отключён'} · В команде с{' '}
-        {formatDate(member.joinedAt)}
-      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge variant="secondary">{MEMBER_ROLE_LABELS[member.role]}</Badge>
+        <Badge variant={member.status === 'active' ? 'success' : 'secondary'}>
+          {member.status === 'active' ? 'Активен' : 'Отключён'}
+        </Badge>
+        <span className="text-xs text-muted-foreground">
+          В команде с {new Date(member.joinedAt).toLocaleDateString('ru-RU')}
+        </span>
+      </div>
       {owner && member.role !== 'owner' && member.status === 'active' && (
         <div className="flex flex-wrap gap-3">
           <label className="flex items-center gap-2 text-sm">

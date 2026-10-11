@@ -138,8 +138,8 @@ export const TaskSolutionForm = ({
           )}
         />
         <p id="solution-file-help" className="text-sm text-muted-foreground">
-          До 10 МиБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
-          мегапикселей. ZIP — до 1000 файлов и 100 МиБ суммарного размера. Текст
+          До 10 МБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
+          мегапикселей. ZIP — до 1000 файлов и 100 МБ суммарного размера. Текст
           — UTF-8.
         </p>
         <p
