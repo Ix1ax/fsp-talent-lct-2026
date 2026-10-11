@@ -1,4 +1,4 @@
-export { getNeedSaveLabel, getNeedStatusLabel } from './getNeedEditorLabels';
+export { getNeedSaveLabel } from './getNeedEditorLabels';
 export { getNeedValidationStep } from './getNeedValidationStep';
 export {
   changedNeedFields,

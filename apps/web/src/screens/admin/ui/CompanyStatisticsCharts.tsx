@@ -25,13 +25,13 @@ export const CompanyStatisticsCharts = ({
             {
               label: 'Активные',
               value: stats.companies.active,
-              color: STATISTICS_COLORS.success,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/companies?access_status=active',
             },
             {
               label: 'Заблокированные',
               value: stats.companies.blocked,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/companies?access_status=blocked',
             },
           ]}
@@ -49,19 +49,19 @@ export const CompanyStatisticsCharts = ({
             {
               label: 'Активные',
               value: stats.users.active,
-              color: STATISTICS_COLORS.primary,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/users?status=active',
             },
             {
               label: 'Заблокированные',
               value: stats.users.blocked,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/users?status=blocked',
             },
             {
               label: 'Удалённые',
               value: stats.users.deleted,
-              color: STATISTICS_COLORS.muted,
+              color: STATISTICS_COLORS.neutral,
               href: '/admin/users?status=deleted',
             },
           ]}
@@ -79,19 +79,19 @@ export const CompanyStatisticsCharts = ({
             {
               label: 'Подтверждены',
               value: stats.companies.verified,
-              color: STATISTICS_COLORS.success,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/companies?status=verified',
             },
             {
               label: 'Ожидают проверки',
               value: stats.companies.pending,
-              color: STATISTICS_COLORS.warning,
+              color: STATISTICS_COLORS.progress,
               href: '/admin/companies?status=pending',
             },
             {
               label: 'Отклонены',
               value: stats.companies.rejected,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/companies?status=rejected',
             },
             {
@@ -102,7 +102,7 @@ export const CompanyStatisticsCharts = ({
                 stats.companies.pending,
                 stats.companies.rejected,
               ),
-              color: STATISTICS_COLORS.muted,
+              color: STATISTICS_COLORS.neutral,
               href: '/admin/companies?status=unverified',
             },
           ]}

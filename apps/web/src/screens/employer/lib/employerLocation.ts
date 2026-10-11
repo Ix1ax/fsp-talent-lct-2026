@@ -38,3 +38,9 @@ export const getEmployerHref = (
   else query.delete('company');
   return getEmployerReturnPath(section, Object.fromEntries(query));
 };
+
+/** Раздел шапки открывается с чистого листа: сохраняется только компания. */
+export const getEmployerSectionHref = (
+  section: EmployerSection,
+  companyId: string,
+) => getEmployerReturnPath(section, companyId ? { company: companyId } : {});

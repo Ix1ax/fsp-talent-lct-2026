@@ -67,7 +67,7 @@ export const UserMenu = ({
       <DropdownMenuTrigger asChild {...(triggerId ? { id: triggerId } : {})}>
         <Button
           type="button"
-          variant={compact ? 'ghost' : 'outline'}
+          variant="ghost"
           className={compact ? 'size-10 p-0' : 'h-10 gap-2 pr-3 pl-1.5'}
           aria-label={`Аккаунт: ${displayName}`}
           disabled={pending}
@@ -76,7 +76,7 @@ export const UserMenu = ({
             <AccountAvatar name={displayName} src={avatarUrl} />
           ) : (
             <>
-              <Avatar size="sm">
+              <Avatar size="sm" className="bg-accent text-brand-text">
                 <AvatarImage src={avatarUrl} alt="" />
                 <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
               </Avatar>

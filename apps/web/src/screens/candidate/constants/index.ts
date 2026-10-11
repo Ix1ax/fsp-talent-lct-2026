@@ -1,3 +1,4 @@
+export { CANDIDATE_PAGE_HEADERS } from './pageHeaders';
 export type { ReadinessTarget } from './readinessTargets';
 export { READINESS_TARGETS } from './readinessTargets';
 export { PROFILE_STEP_DESCRIPTIONS } from './stepDescriptions';

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 import { useGuardedRouter } from '@/shared/hooks';
 import { Button, StaggerItem } from '@/shared/ui';
+import { formatPercent } from '@/shared/utils';
 import {
   type AdminAssessmentAttempt,
   type AdminCompany,
@@ -166,7 +167,7 @@ export const OperationsPage = ({ section }: OperationsPageProps) => {
                       Результат:{' '}
                       {item.score_percent === null
                         ? 'ещё нет'
-                        : `${item.score_percent}%`}
+                        : formatPercent(item.score_percent)}
                     </p>
                   )}
                   {'blocked_reason' in item && item.status === 'blocked' && (

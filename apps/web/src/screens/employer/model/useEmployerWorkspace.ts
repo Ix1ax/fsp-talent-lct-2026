@@ -3,9 +3,10 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 import { useGuardedRouter, useUnsavedGuard } from '@/shared/hooks';
+import type { Recommendation } from '@/entities/employer-need';
 
 import type { EmployerSection } from '../constants';
-import { getEmployerHref } from '../lib';
+import { getEmployerHref, getEmployerSectionHref } from '../lib';
 import type { useEmployerBoard } from './useEmployerBoard';
 
 type EmployerWorkspaceOptions = {
@@ -63,6 +64,11 @@ export const useEmployerWorkspace = ({
   const busyChanged = useCallback((value: boolean) => setChildBusy(value), []);
   const [archiveConfirm, setArchiveConfirm] = useState(false);
   const [candidateId, setCandidateId] = useState('');
+  const [recommendation, setRecommendation] = useState<Recommendation>();
+  const openCandidate = (id: string, match?: Recommendation) => {
+    setRecommendation(match);
+    setCandidateId(id);
+  };
   const [offer, setOffer] = useState(false);
   const unsaved = useUnsavedGuard(dirty, busy, false);
   const needUnsaved = useUnsavedGuard(drafts.vacancies ?? false, busy, false);
@@ -72,28 +78,39 @@ export const useEmployerWorkspace = ({
   const href = (next: EmployerSection, companyId = board.companyId) => {
     return getEmployerHref(next, companyId, searchParams.toString());
   };
-  const navigate = (next: EmployerSection) => {
+  const sectionHref = (next: EmployerSection) =>
+    getEmployerSectionHref(next, board.companyId);
+  const openHref = (target: string) =>
+    router.navigate(target, () => window.history.pushState(null, '', target));
+  const go = (next: EmployerSection, target: string) => {
     if (busy) return;
     const action = () => {
       setCreateCompany(false);
       setCandidateId('');
       setOffer(false);
       board.clearError();
-      router.push(href(next), { scroll: false });
+      // Sections are already mounted in the shared employer layout.
+      // Native history updates Next's pathname without waiting for another SSR request.
+      window.history.pushState(null, '', target);
     };
     if (createCompany || next === 'invitation') guard(action);
-    else router.navigate(href(next), action);
+    else router.navigate(target, action);
   };
+  /** Вкладки настроек компании: выбор потребности и страница сохраняются. */
+  const navigate = (next: EmployerSection) => go(next, href(next));
+  /** Пункты шапки: раздел открывается заново, сохраняется только компания. */
+  const openSection = (next: EmployerSection) => go(next, sectionHref(next));
   const startCompany = () =>
     guard(() => {
       setCreateCompany(true);
       setComposer(false);
       board.clearError();
-      router.push(href('profile'), { scroll: false });
+      window.history.pushState(null, '', href('profile'));
     });
   const refreshCompanies = async (id?: string) => board.refreshCompanies(id);
   return {
     router,
+    openHref,
     drafts,
     createCompany,
     setCreateCompany,
@@ -114,12 +131,16 @@ export const useEmployerWorkspace = ({
     setArchiveConfirm,
     candidateId,
     setCandidateId,
+    recommendation,
+    openCandidate,
     offer,
     setOffer,
     guardNeed,
     guard,
     href,
     navigate,
+    sectionHref,
+    openSection,
     startCompany,
     refreshCompanies,
   };

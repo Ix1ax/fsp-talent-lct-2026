@@ -1,5 +1,6 @@
 import { FileTextIcon } from 'lucide-react';
 
+import { formatFileSize } from '@/shared/utils';
 import { type CompanyTask, downloadTask } from '@/entities/company-task';
 
 import { TaskFileDownload } from './TaskFileDownload';
@@ -33,10 +34,7 @@ export const TaskCondition = ({ task }: TaskConditionProps) => {
           <div>
             <h3 className="font-medium">Файл условия</h3>
             <p className="text-sm text-muted-foreground">
-              {(task.file.sizeBytes / 1024).toLocaleString('ru-RU', {
-                maximumFractionDigits: 1,
-              })}{' '}
-              КиБ
+              {formatFileSize(task.file.sizeBytes)}
             </p>
           </div>
         </div>

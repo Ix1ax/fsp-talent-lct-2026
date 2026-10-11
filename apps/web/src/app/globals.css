@@ -119,11 +119,12 @@
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
-  --chart-1: var(--primary);
-  --chart-2: var(--success);
-  --chart-3: var(--warning);
-  --chart-4: var(--caption);
-  --chart-5: var(--brand-red);
+  /* Диаграммы — палитра бренда: синий ФСП, светлый синий, красный ФСП, серый. */
+  --chart-1: #402fff;
+  --chart-2: #a79fff;
+  --chart-3: #ec1d35;
+  --chart-4: #c9cacd;
+  --chart-5: var(--caption);
 }
 .dark {
   color-scheme: dark;
@@ -141,6 +142,10 @@
   --destructive: #ff8d98;
   --caption: #7f8494;
   --inactive: #4a4e5a;
+  --chart-1: #6a5dff;
+  --chart-2: #b9b2ff;
+  --chart-3: #ff4f63;
+  --chart-4: #3a3d47;
   --token: rgba(64, 47, 255, 0.18);
   --success: #86ddb3;
   --success-foreground: #0f1014;

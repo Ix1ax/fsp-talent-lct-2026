@@ -1,4 +1,4 @@
-import { CheckIcon, EyeIcon, MailIcon, XIcon } from 'lucide-react';
+import { CheckIcon, ClockIcon, EyeIcon, MailIcon, XIcon } from 'lucide-react';
 
 import { Badge } from '@/shared/ui';
 import type { OfferStatus } from '@/entities/candidate-offers';
@@ -10,6 +10,7 @@ const STATUS_PRESENTATION = {
   viewed: { variant: 'outline', icon: EyeIcon },
   accepted: { variant: 'success', icon: CheckIcon },
   rejected: { variant: 'secondary', icon: XIcon },
+  expired: { variant: 'secondary', icon: ClockIcon },
 } as const;
 
 interface OfferStatusBadgeProps {

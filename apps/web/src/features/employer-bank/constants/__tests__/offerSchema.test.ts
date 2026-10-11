@@ -12,6 +12,10 @@ const input = {
   needId: null,
 };
 describe('offer salary and anonymous recipient', () => {
+  it('explains an empty salary field in Russian', () => {
+    const result = offerSchema.safeParse({ ...input, salaryFromRub: NaN });
+    expect(result.error?.issues[0]?.message).toBe('Укажите зарплату от');
+  });
   it('requires both positive integer salary boundaries', () => {
     expect(offerSchema.safeParse(input).success).toBe(true);
     for (const salaryFromRub of [0, -1, 1.5, 1000000001, NaN])

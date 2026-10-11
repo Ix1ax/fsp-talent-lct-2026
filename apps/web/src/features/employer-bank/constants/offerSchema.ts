@@ -13,11 +13,15 @@ export const offerSchema = z
       .min(1, 'Укажите условия предложения')
       .max(10000),
     salaryFromRub: z
-      .number()
+      .number({ error: 'Укажите зарплату от' })
       .int()
       .min(1, 'Укажите зарплату от 1 ₽')
       .max(1000000000),
-    salaryToRub: z.number().int().min(1, 'Укажите зарплату до').max(1000000000),
+    salaryToRub: z
+      .number({ error: 'Укажите зарплату до' })
+      .int()
+      .min(1, 'Укажите зарплату до')
+      .max(1000000000),
     contactEmail: z.email('Укажите контактный email').max(254),
     contactUrl: contactUrlSchema.nullable().optional(),
   })

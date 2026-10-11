@@ -152,9 +152,9 @@ export const CompanyTaskCreateForm = ({
             )}
           />
           <p id="new-task-file-help" className="text-sm text-muted-foreground">
-            До 10 МиБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
-            Мп. ZIP — до 1000 записей и 100 МиБ суммарного размера. Текст —
-            UTF-8 без NUL. Содержимое проверяется при загрузке.
+            До 10 МБ: PDF, JPEG, PNG, ZIP, TXT или Markdown. Изображения — до 4
+            Мп. ZIP — до 1000 записей и 100 МБ суммарного размера. Текст — UTF-8
+            без NUL. Содержимое проверяется при загрузке.
           </p>
           {errors.file && (
             <p

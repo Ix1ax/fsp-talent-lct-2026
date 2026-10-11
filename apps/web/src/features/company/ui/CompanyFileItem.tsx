@@ -1,5 +1,6 @@
 import { FILE_STATUS } from '@/shared/contants';
 import { Button } from '@/shared/ui';
+import { formatFileSize } from '@/shared/utils';
 import { type CompanyFile } from '@/entities/company';
 
 import { type useCompanyDocuments } from '../model';
@@ -29,8 +30,7 @@ export const CompanyFileItem = ({
         <p className="break-all font-medium">{item.originalName}</p>
         <p className="mt-1 text-sm text-muted-foreground">
           {item.purpose === 'company_logo' ? 'Логотип' : 'Документ'} ·{' '}
-          {(item.sizeBytes / 1024 / 1024).toFixed(1)} МБ ·{' '}
-          {FILE_STATUS[item.status]}
+          {formatFileSize(item.sizeBytes)} · {FILE_STATUS[item.status]}
         </p>
       </div>
       <Button

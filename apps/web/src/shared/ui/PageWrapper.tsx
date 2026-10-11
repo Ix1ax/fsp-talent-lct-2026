@@ -8,7 +8,7 @@ const PAGE_WRAPPER_VARIANTS = {
   auth: 'w-full rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8',
   login:
     'container-page flex flex-1 items-center justify-center py-12 md:py-24',
-  workspace: 'container-page page-rhythm flex-1',
+  workspace: 'container-page pt-6 pb-8 md:pt-10 md:pb-10',
 } as const;
 
 interface PageWrapperProps extends ComponentProps<'main'> {

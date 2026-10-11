@@ -58,8 +58,9 @@ export const OfferComposer = ({
       needId: need?.id ?? null,
       title: need?.title ?? '',
       description: need?.description ?? '',
-      salaryFromRub: need?.salaryFromRub ?? 0,
-      salaryToRub: need?.salaryToRub ?? 0,
+      // Без вилки в потребности поля остаются пустыми, а не «0 ₽».
+      salaryFromRub: need?.salaryFromRub ?? need?.salaryToRub ?? undefined,
+      salaryToRub: need?.salaryToRub ?? need?.salaryFromRub ?? undefined,
       contactEmail: company.contactEmail,
       contactUrl: company.contactUrl,
     },
@@ -150,6 +151,9 @@ export const OfferComposer = ({
                       min={1}
                       max={1000000000}
                       step={1}
+                      placeholder={
+                        key === 'salaryFromRub' ? '150000' : '200000'
+                      }
                       {...form.register(key, { valueAsNumber: true })}
                       aria-invalid={!!form.formState.errors[key]}
                     />

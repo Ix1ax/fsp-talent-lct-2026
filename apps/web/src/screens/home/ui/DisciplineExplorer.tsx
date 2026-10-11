@@ -33,7 +33,7 @@ export const DisciplineExplorer = () => {
     >
       <div
         data-landing={LANDING_ELEMENTS.DISCIPLINE_STAGE}
-        className="sticky [top:40px] h-[600px] rounded-xl bg-primary text-primary-foreground overflow-hidden flex flex-col justify-between p-8 [&::before]:[content:''] [&::before]:absolute [&::before]:[width:360px] [&::before]:[height:360px] [&::before]:[border:1px_solid_rgb(255_255_255_/_15%)] [&::before]:rounded-full [&::before]:[top:60px] [&::before]:[left:50%] [&::before]:[transform:translateX(-50%)] [&_>_span]:relative [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.14em] [&_>_strong]:[font-size:clamp(130px,_17vw,_240px)] [&_>_strong]:[line-height:0.9] [&_>_strong]:[letter-spacing:-0.08em] [&_>_strong]:font-[450] [&_>_strong]:absolute [&_>_strong]:[left:20px] [&_>_strong]:[bottom:80px] [&_>_strong]:[opacity:0.12] [&_>_p]:relative [&_>_p]:[font-size:13px] [&_>_p]:[line-height:1.6] [&_>_p]:[max-width:240px] [@media((max-width:1000px))]:p-6 [@media((max-width:767px))]:relative [@media((max-width:767px))]:[top:auto] max-md:h-[560px] [@media((max-width:767px))]:[&_>_strong]:[font-size:180px] [@media((max-width:767px))]:[&_>_strong]:[bottom:50px]"
+        className="sticky [top:40px] h-[600px] rounded-xl bg-primary text-primary-foreground overflow-hidden flex flex-col justify-between p-8 [&::before]:[content:''] [&::before]:absolute [&::before]:[width:360px] [&::before]:[height:360px] [&::before]:[border:1px_solid_rgb(255_255_255_/_15%)] [&::before]:rounded-full [&::before]:[top:60px] [&::before]:[left:50%] [&::before]:[transform:translateX(-50%)] [&_>_span]:relative [&_>_span]:[font-size:12px] [&_>_span]:[letter-spacing:0.1em] [&_>_strong]:[font-size:clamp(130px,_17vw,_240px)] [&_>_strong]:[line-height:0.9] [&_>_strong]:[letter-spacing:-0.08em] [&_>_strong]:font-[450] [&_>_strong]:absolute [&_>_strong]:[left:20px] [&_>_strong]:[bottom:80px] [&_>_strong]:[opacity:0.12] [&_>_p]:relative [&_>_p]:[font-size:13px] [&_>_p]:[line-height:1.6] [&_>_p]:[max-width:240px] [@media((max-width:1000px))]:p-6 [@media((max-width:767px))]:relative [@media((max-width:767px))]:[top:auto] max-md:h-[560px] [@media((max-width:767px))]:[&_>_strong]:[font-size:180px] [@media((max-width:767px))]:[&_>_strong]:[bottom:50px]"
       >
         <span>ФСП / {selected.code} — 05</span>
         <strong aria-hidden="true">{selected.code}</strong>
@@ -48,7 +48,7 @@ export const DisciplineExplorer = () => {
         </p>
         <div
           data-landing={LANDING_ELEMENTS.EXPLORER_CONTROLS}
-          className="relative flex items-center justify-between gap-3 mt-6 [&_button]:grid [&_button]:place-items-center [&_button]:[width:44px] [&_button]:[height:44px] [&_button]:[border:1px_solid_rgb(255_255_255_/_45%)] [&_button]:rounded-full [&_button]:cursor-pointer [&_button]:[transition:background_0.2s] [&_button:hover]:[background:rgb(255_255_255_/_15%)] [&_span]:[font-size:10px]"
+          className="relative flex items-center justify-between gap-3 mt-6 [&_button]:grid [&_button]:place-items-center [&_button]:[width:44px] [&_button]:[height:44px] [&_button]:[border:1px_solid_rgb(255_255_255_/_45%)] [&_button]:rounded-full [&_button]:cursor-pointer [&_button]:[transition:background_0.2s] [&_button:hover]:[background:rgb(255_255_255_/_15%)] [&_span]:[font-size:12px]"
         >
           <button
             type="button"

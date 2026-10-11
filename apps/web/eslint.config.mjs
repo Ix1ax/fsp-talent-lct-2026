@@ -64,6 +64,7 @@ const eslintConfig = [
   {
     ignores: [
       '.next*/**',
+      '**/*.local.tsx',
       'dist/**',
       'node_modules/**',
       'out/**',

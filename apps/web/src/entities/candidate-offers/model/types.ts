@@ -1,4 +1,5 @@
-export type OfferStatus = 'sent' | 'viewed' | 'accepted' | 'rejected';
+export type OfferStatus =
+  'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
 export type OfferDecision = Extract<OfferStatus, 'accepted' | 'rejected'>;
 
 export type IncomingOffer = {

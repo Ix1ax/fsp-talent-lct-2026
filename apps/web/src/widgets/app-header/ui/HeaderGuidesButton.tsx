@@ -19,7 +19,7 @@ export const HeaderGuidesButton = ({
   return (
     <Button
       asChild
-      variant="outline"
+      variant="ghost"
       size={labeled ? 'default' : 'icon'}
       className={cn(
         labeled ? 'h-10 max-sm:w-10 max-sm:px-0' : 'size-10',

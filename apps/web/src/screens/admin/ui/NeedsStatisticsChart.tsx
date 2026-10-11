@@ -28,13 +28,13 @@ export const NeedsStatisticsChart = ({ stats }: NeedsStatisticsChartProps) => {
             {
               label: 'Активные',
               value: stats.needs.active,
-              color: STATISTICS_COLORS.primary,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/needs?status=active',
             },
             {
               label: 'Скрыты модерацией',
               value: stats.needs.hidden,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
             },
           ]}
         />

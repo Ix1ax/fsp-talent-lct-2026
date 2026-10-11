@@ -27,12 +27,16 @@ const loadProfile = async (signal: AbortSignal) => {
 
 interface CandidateProfileGateProps {
   children: ReactNode;
+  /** Каркас страницы на время проверки профиля, чтобы не мигал общий скелетон. */
+  fallback?: ReactNode;
 }
 
 export const CandidateProfileGate = ({
   children,
+  fallback,
 }: CandidateProfileGateProps) => {
   const query = useRemoteData(loadProfile);
+  if (query.loading && fallback) return fallback;
   if (query.loading || query.error) {
     return (
       <RemoteState

@@ -30,19 +30,19 @@ export const AssessmentStatisticsCharts = ({
             {
               label: 'Тест пройден',
               value: stats.attempts.passed,
-              color: STATISTICS_COLORS.success,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/attempts?status=passed',
             },
             {
               label: 'Тест не пройден',
               value: stats.attempts.failed,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/attempts?status=failed',
             },
             {
               label: 'В процессе',
               value: stats.attempts.active,
-              color: STATISTICS_COLORS.primary,
+              color: STATISTICS_COLORS.progress,
               href: '/admin/attempts?status=active',
             },
             {
@@ -53,7 +53,7 @@ export const AssessmentStatisticsCharts = ({
                 stats.attempts.failed,
                 stats.attempts.active,
               ),
-              color: STATISTICS_COLORS.muted,
+              color: STATISTICS_COLORS.neutral,
               href: '/admin/attempts?status=expired',
             },
           ]}
@@ -71,14 +71,20 @@ export const AssessmentStatisticsCharts = ({
             {
               label: 'Приняты',
               value: stats.offers.accepted,
-              color: STATISTICS_COLORS.success,
+              color: STATISTICS_COLORS.positive,
               href: '/admin/offers?status=accepted',
             },
             {
               label: 'Отклонены',
               value: stats.offers.rejected,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/offers?status=rejected',
+            },
+            {
+              label: 'Истекли',
+              value: stats.offers.expired,
+              color: STATISTICS_COLORS.neutral,
+              href: '/admin/offers?status=expired',
             },
             {
               label: 'Без решения',
@@ -86,8 +92,9 @@ export const AssessmentStatisticsCharts = ({
                 stats.offers.total,
                 stats.offers.accepted,
                 stats.offers.rejected,
+                stats.offers.expired,
               ),
-              color: STATISTICS_COLORS.primary,
+              color: STATISTICS_COLORS.progress,
             },
           ]}
         />

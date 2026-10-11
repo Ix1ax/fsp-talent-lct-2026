@@ -98,7 +98,7 @@ export type AdminOffer = {
   description: string;
   salary_from_rub: number;
   salary_to_rub: number;
-  status: 'sent' | 'viewed' | 'accepted' | 'rejected';
+  status: 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
   created_at: string;
   viewed_at: string | null;
   responded_at: string | null;
@@ -209,6 +209,7 @@ export type AdminStats = {
     total: number;
     accepted: number;
     rejected: number;
+    expired: number;
   };
   tasks: {
     total: number;

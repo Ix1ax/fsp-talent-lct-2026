@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   ensure: vi.fn(),
   subscribe: vi.fn(),
   unsubscribe: vi.fn(),
-  warning: vi.fn(),
+  error: vi.fn(),
   push: vi.fn(),
   pathname: '/',
   revision: 0,
@@ -22,7 +22,7 @@ vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
   useRouter: () => ({ push: mocks.push }),
 }));
-vi.mock('sonner', () => ({ toast: { warning: mocks.warning } }));
+vi.mock('sonner', () => ({ toast: { error: mocks.error } }));
 vi.mock('@/shared/api', () => ({ ensureClientAccessToken: mocks.ensure }));
 vi.mock('@/shared/auth', () => ({
   clearOidcUser: mocks.clear,
@@ -58,7 +58,7 @@ describe('AuthBootstrap lifecycle', () => {
       else mocks.ensure.mockRejectedValueOnce(error);
       const cleanup = mount();
       await settle();
-      expect(mocks.warning).toHaveBeenCalledOnce();
+      expect(mocks.error).toHaveBeenCalledOnce();
       cleanup();
       mocks.pathname = '/guides';
       const cleanupNext = mount();
@@ -81,7 +81,7 @@ describe('AuthBootstrap lifecycle', () => {
     await settle();
     expect(mocks.clear).toHaveBeenCalledOnce();
     expect(mocks.ensure).toHaveBeenCalledOnce();
-    expect(mocks.warning).not.toHaveBeenCalled();
+    expect(mocks.error).not.toHaveBeenCalled();
     nextCleanup();
     expect(mocks.unsubscribe).toHaveBeenCalledTimes(3);
   });
@@ -90,7 +90,7 @@ describe('AuthBootstrap lifecycle', () => {
     mount()();
     const cleanup = mount();
     await settle();
-    expect(mocks.warning).toHaveBeenCalledOnce();
+    expect(mocks.error).toHaveBeenCalledOnce();
     cleanup();
     window.dispatchEvent(new Event('online'));
     await settle();

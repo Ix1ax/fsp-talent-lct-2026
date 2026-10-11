@@ -1,22 +1,19 @@
 'use client';
 import { PageControls } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
-import { getRecommendations } from '@/entities/employer-need';
+import {
+  getRecommendations,
+  type Recommendation,
+} from '@/entities/employer-need';
 
 import { useNeedMatches } from '../model';
 import { MatchTableContent } from './MatchTableContent';
 
-const getMatchingModeLabel = (mode: string) => {
-  if (mode === 'similarity') {
-    return 'Сходство с требованиями';
-  }
-
-  if (mode === 'conditions_only') {
-    return 'Совпадение условий работы';
-  }
-
-  return 'Подборка по данным сервера';
-};
+/** Пояснение к режиму подбора — только когда он отличается от обычного. */
+const getMatchingModeNote = (mode: string) =>
+  mode === 'conditions_only'
+    ? 'Подбор только по условиям работы — навыки не сравнивались.'
+    : null;
 
 const CRITERIA_LABELS: Record<string, string> = {
   specialization: 'специализация',
@@ -28,12 +25,29 @@ const CRITERIA_LABELS: Record<string, string> = {
   timezone: 'часовой пояс',
 };
 
+interface MatchingNoteProps {
+  mode: string;
+  unassessed: string[];
+}
+
+const MatchingNote = ({ mode, unassessed }: MatchingNoteProps) => {
+  const note = getMatchingModeNote(mode);
+  if (!note && unassessed.length === 0) return null;
+  return (
+    <p className="px-5 pt-4 text-sm text-muted-foreground">
+      {note}{' '}
+      {unassessed.length > 0 &&
+        `Не оценены: ${unassessed.map((criterion) => CRITERIA_LABELS[criterion] ?? criterion).join(', ')}.`}
+    </p>
+  );
+};
+
 interface MatchTableProps {
   companyId: string;
   needId: string;
   catalogs: Catalogs;
   load?: typeof getRecommendations;
-  onOpenCandidate?: (id: string) => void;
+  onOpenCandidate?: (id: string, recommendation?: Recommendation) => void;
 }
 
 export const MatchTable = ({
@@ -81,12 +95,11 @@ export const MatchTable = ({
           />
         </div>
       )}
-      {data && (
-        <p className="px-5 pt-4 text-sm text-muted-foreground">
-          Режим: {getMatchingModeLabel(data.matchingMode)}.{' '}
-          {data.unassessedCriteria.length > 0 &&
-            `Не оценены: ${data.unassessedCriteria.map((criterion) => CRITERIA_LABELS[criterion] ?? criterion).join(', ')}`}
-        </p>
+      {data && data.total > 0 && (
+        <MatchingNote
+          mode={data.matchingMode}
+          unassessed={data.unassessedCriteria}
+        />
       )}
       <p className="px-5 py-4 text-sm leading-relaxed text-muted-foreground">
         Профили обезличены. Оценка совпадения показывает сходство с

@@ -6,6 +6,7 @@ import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import { useAsyncMutation } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
+  Badge,
   Button,
   Card,
   CardContent,
@@ -23,6 +24,12 @@ import {
   toast,
 } from '@/shared/ui';
 import { formatDate, formatSalaryRange } from '@/shared/utils';
+import {
+  formatOfferWaiting,
+  getOfferWaitingDays,
+  isOfferStale,
+  OFFER_STALE_DAYS,
+} from '@/entities/candidate-offers';
 import type { Company } from '@/entities/company';
 import type {
   CandidateOfferContacts,
@@ -41,6 +48,7 @@ const STATUS = {
   viewed: 'Просмотрено',
   accepted: 'Принято',
   rejected: 'Отклонено',
+  expired: 'Истекло',
 };
 
 export const CompanyOffers = ({
@@ -118,32 +126,51 @@ export const CompanyOffers = ({
           />
           {remote.data && (
             <>
-              {remote.data.items.map((item) => (
-                <article
-                  key={item.id}
-                  className="grid gap-2 rounded-lg border p-4"
-                >
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Кандидат {item.candidateId.slice(0, 8)} ·{' '}
-                    {STATUS[item.status]} · {formatDate(item.createdAt)}
-                  </p>
-                  <p className="text-sm">
-                    {formatSalaryRange(item.salaryFromRub, item.salaryToRub)}
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="justify-self-start"
-                    onClick={() => {
-                      setId(item.id);
-                      setContacts(null);
-                      mutation.clearError();
-                    }}
+              {remote.data.items.map((item) => {
+                const waitingDays = getOfferWaitingDays(item);
+                const stale = isOfferStale(waitingDays);
+                return (
+                  <article
+                    key={item.id}
+                    className="grid gap-2 rounded-lg border p-4"
                   >
-                    Открыть предложение
-                  </Button>
-                </article>
-              ))}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{item.title}</p>
+                      {stale && (
+                        <Badge variant="outline" className="text-warning">
+                          Давно без ответа
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Кандидат {item.candidateId.slice(0, 8)} ·{' '}
+                      {STATUS[item.status]} · {formatDate(item.createdAt)}
+                      {waitingDays !== null &&
+                        ` · ждёт ответа ${formatOfferWaiting(waitingDays)}`}
+                    </p>
+                    {stale && (
+                      <p className="text-xs text-muted-foreground">
+                        Кандидат не отвечает больше {OFFER_STALE_DAYS} дней —
+                        посмотрите других кандидатов в подборке потребности.
+                      </p>
+                    )}
+                    <p className="text-sm">
+                      {formatSalaryRange(item.salaryFromRub, item.salaryToRub)}
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="justify-self-start"
+                      onClick={() => {
+                        setId(item.id);
+                        setContacts(null);
+                        mutation.clearError();
+                      }}
+                    >
+                      Открыть предложение
+                    </Button>
+                  </article>
+                );
+              })}
               <PageControls
                 offset={offset}
                 count={remote.data.items.length}
@@ -235,7 +262,9 @@ export const CompanyOffers = ({
                   )}
                 {offer.status !== 'accepted' && (
                   <p className="text-sm text-muted-foreground">
-                    Контакты откроются после принятия предложения кандидатом.
+                    {offer.status === 'expired'
+                      ? 'Срок предложения истёк. Контакты кандидата недоступны.'
+                      : 'Контакты откроются после принятия предложения кандидатом.'}
                   </p>
                 )}
               </div>

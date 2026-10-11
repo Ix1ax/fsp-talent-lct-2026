@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { getEmployerHref, getEmployerReturnPath } from '../employerLocation';
+import {
+  getEmployerHref,
+  getEmployerReturnPath,
+  getEmployerSectionHref,
+} from '../employerLocation';
 describe('employer navigation state', () => {
   it('preserves all supported state through authentication for root and sections', () => {
     const params = {
@@ -39,5 +43,11 @@ describe('employer navigation state', () => {
     expect(
       getEmployerHref('profile', 'B', '?company=A&tab=draft&need=N&offset=20'),
     ).toBe('/employer/profile?company=B&tab=draft');
+  });
+  it('opens a header section from scratch, keeping only the company', () => {
+    expect(getEmployerSectionHref('vacancies', 'A')).toBe(
+      '/employer/vacancies?company=A',
+    );
+    expect(getEmployerSectionHref('overview', '')).toBe('/employer');
   });
 });

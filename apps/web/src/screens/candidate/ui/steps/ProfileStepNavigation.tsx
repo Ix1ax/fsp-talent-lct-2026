@@ -9,16 +9,10 @@ import {
 } from '@/shared/contants';
 import { useMotionSettings } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import {
-  AnimatedIndicator,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui';
+import { AnimatedIndicator } from '@/shared/ui';
 
 import { PROFILE_STEPS, type ProfileStep } from '../../constants';
+import { ProfileStepChips } from './ProfileStepChips';
 
 interface ProfileStepNavigationProps {
   step: ProfileStep;
@@ -47,31 +41,16 @@ export const ProfileStepNavigation = ({
       <p className="pr-7 text-sm font-medium" aria-live="polite">
         Шаг {index + 1} из {PROFILE_STEPS.length} · {PROFILE_STEPS[index].title}
       </p>
-      <Select
-        value={step}
-        disabled={busy}
-        onValueChange={(next) => {
-          const item = PROFILE_STEPS.find((item) => item.id === next);
-          if (item) onStepChange(item.id);
-        }}
-      >
-        <SelectTrigger
-          className="h-11! w-full text-base sm:hidden"
-          aria-label="Перейти к шагу настройки профиля"
-        >
-          <SelectValue>{PROFILE_STEPS[index].title}</SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {PROFILE_STEPS.map((item, position) => (
-            <SelectItem key={item.id} value={item.id}>
-              {position + 1}. {item.title}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {/* До lg — лента шагов в строку; вертикальный список — когда он стоит сбоку от формы. */}
+      <ProfileStepChips
+        step={step}
+        busy={busy}
+        savedSteps={savedSteps}
+        onStepChange={onStepChange}
+      />
       <nav
         aria-label="Разделы профиля"
-        className="hidden w-full flex-col gap-1 sm:flex"
+        className="hidden w-full flex-col gap-1 lg:flex"
       >
         {PROFILE_STEPS.map((item, position) => (
           <Link

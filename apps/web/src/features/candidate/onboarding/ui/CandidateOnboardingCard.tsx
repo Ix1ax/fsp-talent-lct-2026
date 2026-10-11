@@ -8,6 +8,7 @@ import {
   Button,
   FadeIn,
   RemoteState,
+  Skeleton,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -27,11 +28,19 @@ export const CandidateOnboardingCard = () => {
         loading={query.loading}
         error={query.error}
         retry={query.retry}
+        loadingLabel="Загружаем следующий шаг"
+        loadingContent={
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-5 w-40 max-w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        }
       />
       {action && (
         <FadeIn className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <p className="text-xs font-medium text-muted-foreground">
                 Следующий шаг
               </p>
@@ -40,7 +49,8 @@ export const CandidateOnboardingCard = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8"
+                    // Зона нажатия 32px, но иконка визуально рядом с подписью.
+                    className="-my-2 -ml-1.5 size-8"
                     aria-label="Как определяется следующий шаг"
                   >
                     <InfoIcon aria-hidden="true" className="size-4" />

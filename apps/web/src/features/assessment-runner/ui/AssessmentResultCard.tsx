@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { formatDate, formatPercent } from '@/shared/utils';
 import type { AssessmentResult } from '@/entities/assessment';
 
 import { useAssessmentResultSync } from '../model';
@@ -30,8 +30,10 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <p className="text-3xl font-semibold">{result.scorePercent}%</p>
-          <p>Проходной балл: {result.passScore}%</p>
+          <p className="text-3xl font-semibold">
+            {formatPercent(result.scorePercent)}
+          </p>
+          <p>Проходной балл: {formatPercent(result.passScore)}</p>
           {result.category && (
             <p>
               Подтверждённая категория:{' '}
@@ -62,7 +64,7 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
                 <div className="min-w-0 wrap-anywhere">
                   <p className="font-medium">{skill.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Результат: {skill.percent}%
+                    Результат: {formatPercent(skill.percent)}
                   </p>
                 </div>
                 {skill.confirmed ? (

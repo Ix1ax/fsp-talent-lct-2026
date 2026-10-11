@@ -26,9 +26,9 @@ describe('candidate incoming offers', () => {
       params: { status: undefined, limit: 20, offset: 0 },
       signal,
     });
-    await getIncomingOffers('accepted', 40, signal);
+    await getIncomingOffers('expired', 40, signal);
     expect(clientApi.get).toHaveBeenLastCalledWith('/v1/me/offers', {
-      params: { status: 'accepted', limit: 20, offset: 40 },
+      params: { status: 'expired', limit: 20, offset: 40 },
       signal,
     });
   });

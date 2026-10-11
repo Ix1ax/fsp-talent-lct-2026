@@ -4,7 +4,12 @@ import { ArrowRightIcon, Building2Icon, SparklesIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui';
 import { formatDate, formatSalaryRange } from '@/shared/utils';
-import type { IncomingOffer } from '@/entities/candidate-offers';
+import {
+  formatOfferWaiting,
+  getOfferWaitingDays,
+  type IncomingOffer,
+  isOfferStale,
+} from '@/entities/candidate-offers';
 
 import { OFFER_CARD_STYLES } from '../constants';
 import { OfferStatusBadge } from './OfferStatusBadge';
@@ -26,6 +31,7 @@ export const IncomingOfferCard = ({
   onOpen,
 }: IncomingOfferCardProps) => {
   const awaiting = isAwaiting(offer);
+  const waitingDays = getOfferWaitingDays(offer);
 
   return (
     <article
@@ -59,6 +65,18 @@ export const IncomingOfferCard = ({
           <p className="text-sm text-muted-foreground">
             {offer.companyName} · {formatDate(offer.createdAt)}
           </p>
+          {waitingDays !== null && (
+            <p
+              className={cn(
+                'text-xs',
+                isOfferStale(waitingDays)
+                  ? 'font-medium text-warning'
+                  : 'text-muted-foreground',
+              )}
+            >
+              Работодатель ждёт ответа {formatOfferWaiting(waitingDays)}
+            </p>
+          )}
         </div>
         <OfferStatusBadge status={offer.status} />
       </div>

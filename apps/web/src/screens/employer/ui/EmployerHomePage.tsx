@@ -36,14 +36,14 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
   );
 
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className="flex flex-col">
       <EmployerHeader
         user={user}
         section={section}
         busy={workspace.busy}
         hasCompany={!!board.company}
-        href={workspace.href}
-        onNavigate={workspace.navigate}
+        href={workspace.sectionHref}
+        onNavigate={workspace.openSection}
       />
       <PageWrapper
         variant="workspace"

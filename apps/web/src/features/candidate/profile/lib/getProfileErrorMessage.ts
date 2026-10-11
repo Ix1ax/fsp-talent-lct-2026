@@ -11,7 +11,7 @@ export const getProfileErrorMessage = (error: unknown): string => {
     case 403:
       return 'Действие недоступно для вашего аккаунта.';
     case 413:
-      return 'Размер запроса не должен превышать 2 МиБ.';
+      return 'Размер запроса не должен превышать 2 МБ.';
     case 415:
       return 'Выберите изображение JPEG или PNG.';
     case 400:

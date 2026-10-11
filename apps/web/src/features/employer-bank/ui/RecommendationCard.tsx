@@ -7,6 +7,7 @@ import { Button } from '@/shared/ui';
 import type { Catalogs } from '@/entities/catalog';
 import type { Recommendation } from '@/entities/employer-need';
 
+import { formatUnknownConditions } from '../lib';
 import {
   CriteriaPills,
   MATCH_CONDITION_LABELS,
@@ -18,6 +19,7 @@ interface RecommendationCardProps {
   candidate: Recommendation;
   catalogs: Catalogs;
   position: number;
+  heading?: string;
   onOpen?: () => void;
 }
 
@@ -29,7 +31,7 @@ interface MetricProps {
 
 const Metric = ({ label, value, muted }: MetricProps) => {
   return (
-    <div className="grid gap-0.5 rounded-lg bg-muted/60 px-3 py-2">
+    <div className="grid gap-0.5 border-l border-border pl-3 first:border-0 first:pl-0">
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd
         className={cn(
@@ -55,6 +57,7 @@ export const RecommendationCard = ({
   candidate,
   catalogs,
   position,
+  heading,
   onOpen,
 }: RecommendationCardProps) => {
   const location = [
@@ -77,21 +80,24 @@ export const RecommendationCard = ({
   ]
     .filter(Boolean)
     .join(' · ');
-  const unknownConditions = candidate.unknownConditions
-    .map((condition) =>
-      (MATCH_CONDITION_LABELS[condition] ?? condition).toLowerCase(),
-    )
-    .join(', ');
+  const unknownConditions = formatUnknownConditions(
+    candidate.unknownConditions,
+    MATCH_CONDITION_LABELS,
+    candidate.skills,
+  );
 
   return (
-    <article className="grid min-w-0 gap-5 rounded-2xl border border-border bg-card p-5 transition-shadow hover:shadow-sm sm:p-6">
+    <article className="grid min-w-0 gap-4 rounded-xl border border-border bg-card p-5 transition-shadow hover:shadow-sm sm:p-6">
       <header className="flex items-start gap-4">
         {candidate.matchScore !== undefined && (
-          <MatchScoreRing value={candidate.matchScore} />
+          <div className="grid shrink-0 justify-items-center gap-1">
+            <MatchScoreRing value={candidate.matchScore} />
+            <span className="text-xs text-muted-foreground">Совпадение</span>
+          </div>
         )}
         <div className="grid min-w-0 flex-1 gap-1.5">
           <h3 className="text-lg leading-tight font-semibold">
-            Кандидат {position}
+            {heading ?? `Кандидат ${position}`}
           </h3>
           <p className="flex min-w-0 items-center gap-1.5 text-sm text-muted-foreground">
             <MapPinIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -114,7 +120,7 @@ export const RecommendationCard = ({
         )}
       </header>
 
-      <dl className="grid grid-cols-3 gap-2">
+      <dl className="grid max-w-xl grid-cols-3 gap-4">
         <Metric
           label="Тест"
           value={formatPercent(candidate.testScorePercent, 'не пройден')}
@@ -177,7 +183,7 @@ export const RecommendationCard = ({
         >
           {unknownConditions && (
             <p className="text-xs text-muted-foreground">
-              Кандидат не указал: {unknownConditions}
+              Нет данных для сравнения: {unknownConditions}
             </p>
           )}
           {onOpen && (

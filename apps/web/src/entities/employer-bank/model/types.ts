@@ -51,7 +51,8 @@ export type BankCandidateDetails = BankCandidate & {
     place: number | null;
   }[];
 };
-export type OfferStatus = 'sent' | 'viewed' | 'accepted' | 'rejected';
+export type OfferStatus =
+  'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
 export type CandidateOffer = {
   candidateId: string;
   needId: string | null;

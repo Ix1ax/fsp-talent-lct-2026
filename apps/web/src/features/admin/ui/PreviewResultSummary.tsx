@@ -1,3 +1,4 @@
+import { formatPercent } from '@/shared/utils';
 import type { Preview } from '@/entities/admin';
 
 const getPreviewAnswerResult = (
@@ -37,7 +38,7 @@ export const PreviewResultSummary = ({
   return (
     <div className="grid min-w-0 gap-3 rounded-lg border bg-muted p-4 wrap-anywhere">
       <h2 className="text-lg font-semibold">
-        Результат: {result.score_percent}% ·{' '}
+        Результат: {formatPercent(result.score_percent)} ·{' '}
         {result.passed ? 'Тест пройден' : 'Тест не пройден'}
       </h2>
       <p className="text-sm">
@@ -50,7 +51,7 @@ export const PreviewResultSummary = ({
           <li key={skill.skill_id}>
             {preview.questions.find((q) => q.skill_id === skill.skill_id)
               ?.skill_name ?? skill.skill_id}
-            : {skill.percent}%
+            : {formatPercent(skill.percent)}
           </li>
         ))}
       </ul>

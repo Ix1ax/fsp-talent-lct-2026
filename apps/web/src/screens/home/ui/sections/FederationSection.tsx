@@ -20,7 +20,7 @@ export const FederationSection = () => {
       >
         <div
           data-landing={LANDING_ELEMENTS.SECTION_LABEL}
-          className="[font-size:11px] font-medium [line-height:1.6] [letter-spacing:0.09em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:9px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
+          className="[font-size:12px] font-medium [line-height:1.6] [letter-spacing:0.08em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:11px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
         >
           <span>02 / ДАННЫЕ ФЕДЕРАЦИИ</span>
           <span>ТВОЙ СПОРТИВНЫЙ ОПЫТ В ПРОФИЛЕ</span>
@@ -36,7 +36,7 @@ export const FederationSection = () => {
         >
           <div
             data-landing={LANDING_ELEMENTS.RECORD}
-            className="rounded-xl p-8 [border:1px_solid_var(--border)] bg-background relative [&_>_svg]:text-brand-text [&_>_svg]:mb-5 [&_>_span]:block [&_>_span]:[font-size:10px] [&_>_span]:[letter-spacing:0.1em] [&_h3]:[font-size:36px] [&_h3]:[line-height:1.1] [&_h3]:[letter-spacing:-0.05em] [&_h3]:[margin-block:28px_18px] [&_p]:[max-width:380px] [&_p]:[font-size:14px] [&_p]:[line-height:1.7] [&_p]:text-muted-foreground [&_dl]:[margin-block:24px] [&_dl_>_div]:flex [&_dl_>_div]:justify-between [&_dl_>_div]:gap-4 [&_dl_>_div]:[padding-block:14px] [&_dl_>_div]:[border-top:1px_solid_var(--border)] [&_dl_>_div]:[font-size:13px] [&_dt]:text-muted-foreground [&_small]:block [&_small]:[font-size:11px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [@media((max-width:767px))]:p-6"
+            className="rounded-xl p-8 [border:1px_solid_var(--border)] bg-background relative [&_>_svg]:text-brand-text [&_>_svg]:mb-5 [&_>_span]:block [&_>_span]:[font-size:12px] [&_>_span]:[letter-spacing:0.08em] [&_h3]:[font-size:36px] [&_h3]:[line-height:1.1] [&_h3]:[letter-spacing:-0.05em] [&_h3]:[margin-block:28px_18px] [&_p]:[max-width:380px] [&_p]:[font-size:14px] [&_p]:[line-height:1.7] [&_p]:text-muted-foreground [&_dl]:[margin-block:24px] [&_dl_>_div]:flex [&_dl_>_div]:justify-between [&_dl_>_div]:gap-4 [&_dl_>_div]:[padding-block:14px] [&_dl_>_div]:[border-top:1px_solid_var(--border)] [&_dl_>_div]:[font-size:13px] [&_dt]:text-muted-foreground [&_small]:block [&_small]:[font-size:12px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [@media((max-width:767px))]:p-6"
           >
             <Trophy size={32} strokeWidth={1} />
             <span>ДОСТИЖЕНИЯ ФСП</span>
@@ -73,7 +73,7 @@ export const FederationSection = () => {
           </div>
           <div
             data-landing={LANDING_ELEMENTS.FEDERATION_ACTION}
-            className="[&_small]:block [&_small]:[font-size:11px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [&_small]:[grid-column:1/-1] [grid-column:1/-1] grid [grid-template-columns:1fr_auto] [gap:24px_80px] items-center pt-6 [border-top:1px_solid_var(--border)] [&_p]:[font-size:22px] [&_p]:[line-height:1.5] [&_p]:[max-width:600px] [@media((max-width:767px))]:[grid-template-columns:1fr] [@media((max-width:767px))]:gap-6"
+            className="[&_small]:block [&_small]:[font-size:12px] [&_small]:text-muted-foreground [&_small]:[line-height:1.7] [&_small]:[grid-column:1/-1] [grid-column:1/-1] grid [grid-template-columns:1fr_auto] [gap:24px_80px] items-center pt-6 [border-top:1px_solid_var(--border)] [&_p]:[font-size:22px] [&_p]:[line-height:1.5] [&_p]:[max-width:600px] [@media((max-width:767px))]:[grid-template-columns:1fr] [@media((max-width:767px))]:gap-6"
           >
             <p>
               Свяжи профиль с ФСП и дополни профессиональную историю данными

@@ -4,13 +4,17 @@ import { ArrowUpRight } from 'lucide-react';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { buttonVariants } from '@/shared/ui';
 
-import { LANDING_ELEMENTS } from '../../constants';
+import { LANDING_ANCHORS, LANDING_ELEMENTS } from '../../constants';
+import { employerSteps } from '../../model';
+import { CandidatePreviewCard } from '../CandidatePreviewCard';
 
 export const EmployerSection = () => {
   return (
     <section
+      id={LANDING_ANCHORS.EMPLOYERS}
+      tabIndex={-1}
       data-landing={LANDING_ELEMENTS.EMPLOYER_NEW}
-      className="bg-background [&_h2]:[max-width:950px]"
+      className="bg-background scroll-mt-16 outline-none [&_h2]:[max-width:950px]"
       aria-labelledby="employer-title"
     >
       <div
@@ -19,7 +23,7 @@ export const EmployerSection = () => {
       >
         <p
           data-landing={LANDING_ELEMENTS.EYEBROW}
-          className="[font-size:11px] font-medium [line-height:1.6] [letter-spacing:0.09em] mb-8"
+          className="[font-size:12px] font-medium [line-height:1.6] [letter-spacing:0.08em] mb-8"
         >
           05 / ДЛЯ РАБОТОДАТЕЛЕЙ
         </p>
@@ -32,31 +36,38 @@ export const EmployerSection = () => {
         </h2>
         <div
           data-landing={LANDING_ELEMENTS.EMPLOYER_BOTTOM}
-          className="flex justify-between items-center gap-12 [margin-block:40px_64px] [&_p]:[max-width:580px] [&_p]:[font-size:18px] [&_p]:[line-height:1.7] [&_p]:text-muted-foreground [@media((max-width:767px))]:flex-col [@media((max-width:767px))]:items-start [@media((max-width:767px))]:gap-6 [@media((max-width:767px))]:mb-10"
+          className="mt-12 grid items-start gap-12 lg:grid-cols-[minmax(0,_1fr)_minmax(0,_440px)] lg:gap-18"
         >
-          <p>
-            Ищите по навыкам и опыту. Учитывайте достижения ФСП. Приглашайте к
-            разговору людей, которым подходят ваши задачи.
-          </p>
-          <Link
-            href={STATIC_ROUTES.EMPLOYER}
-            data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
-            className={buttonVariants({
-              className:
-                'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
-            })}
-          >
-            Перейти к поиску <ArrowUpRight size={20} />
-          </Link>
-        </div>
-        <div
-          data-landing={LANDING_ELEMENTS.EMPLOYER_WORDS}
-          className="flex justify-between gap-6 pt-7 [border-top:1px_solid_var(--border)] [font-size:clamp(20px,_3vw,_40px)] [letter-spacing:-0.04em] text-brand-text [@media((max-width:767px))]:[font-size:17px] [@media((max-width:767px))]:gap-3"
-          aria-hidden="true"
-        >
-          <span>ЗАДАЧА</span>
-          <span>ЧЕЛОВЕК</span>
-          <span>КОМАНДА ↗</span>
+          <div className="grid gap-10">
+            <p className="max-w-[580px] text-lg leading-[1.7] text-muted-foreground">
+              Ищите по навыкам и опыту. Учитывайте достижения ФСП. Приглашайте к
+              разговору людей, которым подходят ваши задачи.
+            </p>
+            <ol className="grid gap-0 [&_li]:flex [&_li]:gap-6 [&_li]:border-t [&_li]:py-6 [&_li_>_span]:w-6 [&_li_>_span]:shrink-0 [&_li_>_span]:text-xs [&_li_>_span]:text-brand-text [&_h3]:mb-2 [&_h3]:text-[22px] [&_h3]:tracking-[-0.04em] [&_p]:text-[15px] [&_p]:leading-[1.7] [&_p]:text-muted-foreground">
+              {employerSteps.map(({ number, title, text }) => (
+                <li key={number}>
+                  <span>{number}</span>
+                  <div>
+                    <h3>{title}</h3>
+                    <p>{text}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <Link
+              href={STATIC_ROUTES.EMPLOYER}
+              data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
+              className={buttonVariants({
+                className:
+                  'h-auto min-h-11 justify-self-start justify-between gap-6 px-6 py-4 [&_svg]:size-5',
+              })}
+            >
+              Перейти к поиску <ArrowUpRight size={20} />
+            </Link>
+          </div>
+          <div className="lg:sticky lg:top-28">
+            <CandidatePreviewCard />
+          </div>
         </div>
       </div>
     </section>

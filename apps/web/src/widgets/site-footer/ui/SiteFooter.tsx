@@ -36,6 +36,10 @@ export const SiteFooter = () => {
             className="flex flex-[0_1_180px] flex-col gap-2.5"
           >
             <span className={headingClassName}>Сервис</span>
+            {/* Из кабинета логотип ведёт в кабинет — здесь явный путь на лендинг. */}
+            <Link href={STATIC_ROUTES.HOME} className={linkClassName}>
+              О платформе
+            </Link>
             <Link href={STATIC_ROUTES.CANDIDATE} className={linkClassName}>
               Кандидатам
             </Link>

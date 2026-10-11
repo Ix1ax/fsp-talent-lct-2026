@@ -8,6 +8,7 @@ import {
   Users,
 } from 'lucide-react';
 
+import { pluralizeRu } from '@/shared/utils';
 import { type AdminStats } from '@/entities/admin';
 import { AdminPanel } from '@/features/admin';
 
@@ -43,7 +44,7 @@ export const StatisticsSummary = ({ stats }: StatisticsSummaryProps) => {
           {
             label: 'Пользователи',
             value: stats.users.total,
-            note: `${adminNumber(stats.users.candidates)} кандидатов · ${adminNumber(stats.users.employers)} работодателей`,
+            note: `${pluralizeRu(stats.users.candidates, ['кандидат', 'кандидата', 'кандидатов'])} · ${pluralizeRu(stats.users.employers, ['работодатель', 'работодателя', 'работодателей'])}`,
             href: '/admin/users',
             icon: Users,
           },
@@ -57,14 +58,14 @@ export const StatisticsSummary = ({ stats }: StatisticsSummaryProps) => {
           {
             label: 'Активные потребности',
             value: stats.needs.active,
-            note: `из ${adminNumber(stats.needs.total)} потребностей`,
+            note: `из ${pluralizeRu(stats.needs.total, ['потребности', 'потребностей', 'потребностей'])}`,
             href: '/admin/needs?status=active',
             icon: FileText,
           },
           {
             label: 'Попытки тестирования',
             value: stats.attempts.total,
-            note: `${adminNumber(stats.attempts.passed)} тестов пройдено`,
+            note: `Пройдено: ${adminNumber(stats.attempts.passed)}`,
             href: '/admin/attempts',
             icon: GraduationCap,
           },

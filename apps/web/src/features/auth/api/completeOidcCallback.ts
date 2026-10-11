@@ -38,6 +38,7 @@ const runOidcCallback = async (
         accessToken: user.access_token,
         refreshToken: user.refresh_token ?? '',
         expiresIn: user.expires_in,
+        idToken: user.id_token,
       }),
     });
 

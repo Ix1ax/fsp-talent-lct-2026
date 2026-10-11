@@ -20,13 +20,17 @@ export const clientApi = createApi({
 let refreshPromise: Promise<string | null> | null = null;
 let refreshRevision = -1;
 
-const runRefreshRequest = async (revision: number): Promise<string | null> => {
+const runRefreshRequest = async (
+  revision: number,
+  signal: AbortSignal,
+): Promise<string | null> => {
+  signal.throwIfAborted();
   if (revision !== getClientSessionRevision())
     throw new DOMException('Auth state changed', 'AbortError');
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'same-origin',
-    signal: AbortSignal.timeout(12_000),
+    signal,
   });
 
   if (revision !== getClientSessionRevision())
@@ -71,13 +75,14 @@ const refreshClientAccessToken = async (): Promise<string | null> => {
   const revision = getClientSessionRevision();
   if (!refreshPromise || refreshRevision !== revision) {
     refreshRevision = revision;
+    const signal = AbortSignal.timeout(12_000);
     const request = async (): Promise<string | null> => {
       if (typeof navigator !== 'undefined' && navigator.locks?.request) {
-        return await navigator.locks.request('auth-refresh', () =>
-          runRefreshRequest(revision),
+        return await navigator.locks.request('auth-refresh', { signal }, () =>
+          runRefreshRequest(revision, signal),
         );
       }
-      return runRefreshRequest(revision);
+      return runRefreshRequest(revision, signal);
     };
     const pending = request().finally(() => {
       if (refreshPromise === pending) refreshPromise = null;

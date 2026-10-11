@@ -68,7 +68,7 @@ export const CookieNotice = () => {
         </Link>
         .
       </p>
-      <div>
+      <div className="flex justify-end">
         <Button size="sm" onClick={acknowledge}>
           Понятно
         </Button>

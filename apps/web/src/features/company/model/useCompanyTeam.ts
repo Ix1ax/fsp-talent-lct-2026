@@ -137,15 +137,17 @@ export const useCompanyTeam = ({
     });
   };
 
+  // Ссылка, по которой сотрудник принимает приглашение одним кликом.
+  const invitationLink = created?.token
+    ? `${window.location.origin}${STATIC_ROUTES.EMPLOYER_INVITATION}?token=${encodeURIComponent(created.token)}`
+    : '';
+
   const handleCopyInvitation = () => {
-    const token = created?.token;
-    if (!token) return;
+    if (!invitationLink) return;
 
     void mutation
       .run(async () => {
-        await navigator.clipboard.writeText(
-          `${window.location.origin}${STATIC_ROUTES.EMPLOYER_INVITATION}?token=${encodeURIComponent(token)}`,
-        );
+        await navigator.clipboard.writeText(invitationLink);
         toast.success('Ссылка скопирована');
       })
       .catch(handleOperationError);
@@ -197,6 +199,7 @@ export const useCompanyTeam = ({
     handleRoleChange,
     handleFormSubmit,
     handleCopyInvitation,
+    invitationLink,
     handleRemove,
     handleCloseRemove,
     handleConfirmRemove,

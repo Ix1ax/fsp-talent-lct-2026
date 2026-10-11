@@ -6,3 +6,4 @@ export {
   type HeaderNavItem,
 } from './model';
 export { HeaderGuidesButton, HeaderMenuExtra, HeaderNavLabel } from './ui';
+export { PublicAppHeader } from './ui/PublicAppHeader';

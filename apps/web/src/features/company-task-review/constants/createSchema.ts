@@ -27,7 +27,7 @@ export const companyTaskSchema = z.object({
       if (file.size > 10 * 1024 * 1024)
         context.addIssue({
           code: 'custom',
-          message: 'Файл должен быть не больше 10 МиБ.',
+          message: 'Файл должен быть не больше 10 МБ.',
         });
     }),
 });

@@ -5,13 +5,13 @@ import {
   AsyncState,
   Button,
   RemoteState,
-  Skeleton,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
 
 import type { useAssessments } from '../model';
+import { AssessmentCardSkeleton } from './AssessmentCardSkeleton';
 import { AvailableAssessmentCard } from './AvailableAssessmentCard';
 
 interface AvailableAssessmentsProps {
@@ -73,8 +73,8 @@ export const AvailableAssessments = ({
         emptyDescription="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
         loadingContent={
           <div className="grid gap-4">
-            <Skeleton className="h-36 w-full" />
-            <Skeleton className="h-36 w-full" />
+            <AssessmentCardSkeleton />
+            <AssessmentCardSkeleton />
           </div>
         }
       />

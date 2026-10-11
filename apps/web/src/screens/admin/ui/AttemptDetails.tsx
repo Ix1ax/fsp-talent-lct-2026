@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 import { Button } from '@/shared/ui';
+import { formatPercent } from '@/shared/utils';
 import { adminAssessmentAttemptSchema } from '@/entities/admin';
 import {
   AdminPanel,
@@ -52,7 +53,7 @@ export const AttemptDetails = ({ id }: AttemptDetailsProps) => {
               <p className="mt-2 text-3xl font-semibold tabular-nums">
                 {attempt.score_percent === null
                   ? 'Ещё нет'
-                  : `${attempt.score_percent}%`}
+                  : formatPercent(attempt.score_percent)}
               </p>
             </div>
             <div className="rounded-xl border bg-muted/30 p-5">

@@ -5,7 +5,10 @@ import { clearAuthTokens } from '@/shared/auth/server';
 import { GET, POST } from '../route';
 
 vi.mock('server-only', () => ({}));
-vi.mock('@/shared/auth/server', () => ({ clearAuthTokens: vi.fn() }));
+vi.mock('@/shared/auth/server', () => ({
+  clearAuthTokens: vi.fn(),
+  getIdToken: vi.fn(async () => 'id-token'),
+}));
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -23,6 +26,10 @@ describe('logout boundary', () => {
     );
     expect(response.status).toBe(200);
     expect(clearAuthTokens).toHaveBeenCalledOnce();
+    expect(await response.json()).toEqual({
+      ok: true,
+      idTokenHint: 'id-token',
+    });
   });
 
   it.each([undefined, 'null', 'https://evil.test'])(

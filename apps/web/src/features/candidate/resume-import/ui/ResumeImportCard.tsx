@@ -60,7 +60,7 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
       <CardHeader>
         <CardTitle>Импорт резюме с hh.ru</CardTitle>
         <CardDescription>
-          Загрузите PDF с текстовым слоем: до 5 МиБ и 10 страниц. Проверьте
+          Загрузите PDF с текстовым слоем: до 5 МБ и 10 страниц. Проверьте
           распознанные данные перед сохранением.
         </CardDescription>
       </CardHeader>
@@ -102,7 +102,7 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
               setPending(undefined);
               setMessage(
                 next && next.size > RESUME_MAX_BYTES
-                  ? 'Размер PDF должен быть не больше 5 МиБ.'
+                  ? 'Размер PDF должен быть не больше 5 МБ.'
                   : '',
               );
             }}
@@ -132,7 +132,7 @@ export const ResumeImportCard = (props: ResumeImportCardProps) => {
             )}
           </Button>
           <p className="max-w-xl text-sm text-muted-foreground">
-            PDF с текстовым слоем, до 5 МиБ и 10 страниц. Импорт не сохраняет
+            PDF с текстовым слоем, до 5 МБ и 10 страниц. Импорт не сохраняет
             файл; черновики доступны, пока открыта эта страница.
           </p>
         </div>

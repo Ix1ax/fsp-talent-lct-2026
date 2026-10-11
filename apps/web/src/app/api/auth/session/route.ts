@@ -8,6 +8,7 @@ type SessionBody = {
   accessToken: string;
   refreshToken: string;
   expiresIn?: number;
+  idToken?: string;
 };
 
 const isSessionBody = (body: unknown): body is SessionBody => {
@@ -20,6 +21,12 @@ const isSessionBody = (body: unknown): body is SessionBody => {
     )
       return false;
   }
+  if (
+    body.idToken !== undefined &&
+    (typeof body.idToken !== 'string' ||
+      /[\u0000-\u0020\u007f]/.test(body.idToken))
+  )
+    return false;
   if (body.expiresIn === undefined) return true;
   return (
     typeof body.expiresIn === 'number' &&
@@ -59,6 +66,7 @@ export const POST = async (request: NextRequest): Promise<Response> => {
     accessToken: body.accessToken,
     refreshToken: body.refreshToken,
     expiresIn: body.expiresIn,
+    idToken: body.idToken || undefined,
   });
 
   return NextResponse.json({ ok: true });

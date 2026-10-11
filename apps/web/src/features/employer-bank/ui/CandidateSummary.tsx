@@ -1,3 +1,4 @@
+import { Badge } from '@/shared/ui';
 import { pluralizeRu } from '@/shared/utils';
 import type { Catalogs } from '@/entities/catalog';
 import type { BankCandidate } from '@/entities/employer-bank';
@@ -28,41 +29,41 @@ export const CandidateSummary = ({
               .join(' · ')
           : 'Категория не указана'}
       </p>
-      <p
-        className={
-          candidate.gradeStatus === 'confirmed'
-            ? 'text-sm text-success'
-            : 'text-sm text-muted-foreground'
+      <Badge
+        variant={
+          candidate.gradeStatus === 'confirmed' ? 'success' : 'secondary'
         }
       >
         {candidate.gradeStatus === 'confirmed'
           ? 'Грейд подтверждён тестом'
           : 'Грейд не подтверждён · самооценка'}
-      </p>
-      <p className="text-sm text-muted-foreground">
-        Опыт: {pluralizeRu(years, ['год', 'года', 'лет'])} ·{' '}
-        {candidate.searchStatus === 'open'
-          ? 'Активно ищет работу'
-          : 'Рассматривает предложения'}
-      </p>
-      <p className="text-sm">
-        {candidate.city ?? 'Город не указан'} ·{' '}
-        {candidate.timezone ?? 'Часовой пояс не указан'}
-      </p>
-      <p className="text-sm">
-        {candidate.salaryMinRub === null
-          ? 'Зарплата не указана'
-          : `От ${candidate.salaryMinRub.toLocaleString('ru-RU')} ₽/мес`}
-      </p>
-      <p className="text-sm text-muted-foreground">
-        {candidate.workFormatIds
-          .map(
-            (id) =>
-              catalogs.workFormats.find((f) => f.id === id)?.name ??
-              `Формат #${id}`,
-          )
-          .join(', ') || 'Формат не указан'}
-      </p>
+      </Badge>
+      <div className="grid gap-x-6 gap-y-2 sm:grid-cols-2">
+        <p className="text-sm text-muted-foreground">
+          Опыт: {pluralizeRu(years, ['год', 'года', 'лет'])} ·{' '}
+          {candidate.searchStatus === 'open'
+            ? 'Активно ищет работу'
+            : 'Рассматривает предложения'}
+        </p>
+        <p className="text-sm">
+          {candidate.city ?? 'Город не указан'} ·{' '}
+          {candidate.timezone ?? 'Часовой пояс не указан'}
+        </p>
+        <p className="text-sm">
+          {candidate.salaryMinRub === null
+            ? 'Зарплата не указана'
+            : `От ${candidate.salaryMinRub.toLocaleString('ru-RU')} ₽/мес`}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          {candidate.workFormatIds
+            .map(
+              (id) =>
+                catalogs.workFormats.find((f) => f.id === id)?.name ??
+                `Формат #${id}`,
+            )
+            .join(', ') || 'Формат не указан'}
+        </p>
+      </div>
       {candidate.achievementsCount > 0 && (
         <p className="text-sm">Достижения ФСП: {candidate.achievementsCount}</p>
       )}

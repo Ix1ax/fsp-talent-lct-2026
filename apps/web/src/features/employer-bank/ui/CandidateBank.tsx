@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { SlidersHorizontalIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
@@ -6,7 +7,10 @@ import { Badge, Button, PageControls, RemoteState } from '@/shared/ui';
 import { type Catalogs, type Skill } from '@/entities/catalog';
 import { type Company } from '@/entities/company';
 import { type EmployerBankApi } from '@/entities/employer-bank';
-import { type EmployerNeed } from '@/entities/employer-need';
+import {
+  type EmployerNeed,
+  type Recommendation,
+} from '@/entities/employer-need';
 
 import { filtersForNeed } from '../lib';
 import { useCandidateBank } from '../model';
@@ -37,6 +41,7 @@ export const CandidateBank = ({
   revision,
   onNeeds,
 }: CandidateBankProps) => {
+  const [recommendation, setRecommendation] = useState<Recommendation>();
   const {
     filters,
     setFilters,
@@ -136,6 +141,10 @@ export const CandidateBank = ({
                 ? 'Требования потребности применены. Изменение фильтров снимет привязку к потребности.'
                 : 'Выберите потребность или задайте условия поиска в фильтрах.'}
             </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Открытые и приглашённые кандидаты на время скрываются из подборки
+              вашей компании, чтобы не получать повторные контакты подряд.
+            </p>
             {selectedNeed && (
               <>
                 <div className="flex flex-wrap gap-2">
@@ -164,7 +173,7 @@ export const CandidateBank = ({
               loading={remote.loading || (!!needId && needs.loading)}
               empty={remote.data?.items.length === 0}
               emptyTitle="Кандидаты не найдены"
-              emptyDescription="Измените фильтры или вернитесь позже."
+              emptyDescription="Измените фильтры или вернитесь позже. Недавно открытые и приглашённые кандидаты временно скрыты."
             />
           )}
           {remote.data && (
@@ -178,7 +187,10 @@ export const CandidateBank = ({
                   candidate={candidate}
                   catalogs={catalogs}
                   position={offset + index + 1}
-                  onOpen={() => setCandidateId(candidate.id)}
+                  onOpen={() => {
+                    setRecommendation(candidate);
+                    setCandidateId(candidate.id);
+                  }}
                 />
               ))}
               {bank?.items.map((candidate) => (
@@ -186,7 +198,10 @@ export const CandidateBank = ({
                   key={candidate.id}
                   candidate={candidate}
                   catalogs={catalogs}
-                  onOpen={() => setCandidateId(candidate.id)}
+                  onOpen={() => {
+                    setRecommendation(undefined);
+                    setCandidateId(candidate.id);
+                  }}
                 />
               ))}
 
@@ -206,6 +221,7 @@ export const CandidateBank = ({
           company={company}
           catalogs={catalogs}
           candidateId={candidateId}
+          recommendation={recommendation}
           api={api}
           busy={busy}
           onClose={() => setCandidateId('')}

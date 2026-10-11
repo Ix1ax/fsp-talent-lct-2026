@@ -66,7 +66,7 @@ export const AuthBootstrap = ({ children }: AuthBootstrapProps) => {
       void current.promise.then(() => {
         if (active && current.failed && !current.notified) {
           current.notified = true;
-          toast.warning(
+          toast.error(
             'Не удалось восстановить сессию. Проверьте подключение и обновите страницу.',
           );
         }

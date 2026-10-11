@@ -8,7 +8,7 @@ import {
   headerNavItemClassName,
   ThemeToggle,
 } from '@/shared/ui';
-import type { SessionUser } from '@/entities/session';
+import { RememberRole, type SessionUser } from '@/entities/session';
 import { UserMenu } from '@/features/auth';
 import {
   EMPLOYER_NAV_FROM,
@@ -86,39 +86,42 @@ export const EmployerHeader = ({
     </>
   );
   return (
-    <HeaderBar
-      navLabel="Основная навигация кабинета"
-      brand={
-        <Link
-          data-preserve-draft
-          href={STATIC_ROUTES.EMPLOYER}
-          className="flex min-h-11 items-center"
-          aria-label="ФСП Скаут — главная кабинета"
-          onNavigate={(e) => {
-            e.preventDefault();
-            onNavigate('overview');
-          }}
-          onClick={(e) => {
-            if (busy) e.preventDefault();
-          }}
-        >
-          <BrandLogo />
-        </Link>
-      }
-      nav={renderItems(EMPLOYER_NAV_ITEMS)}
-      navFrom={EMPLOYER_NAV_FROM}
-      tabs={renderItems(EMPLOYER_NAV_ITEMS)}
-      menuExtra={<HeaderMenuExtra />}
-      actions={
-        <>
-          {/* На телефоне справочник и тема — в меню-бургере. */}
-          <HeaderGuidesButton className="max-sm:hidden" />
-          <span className="contents max-sm:hidden">
-            <ThemeToggle />
-          </span>
-          <UserMenu user={user} />
-        </>
-      }
-    />
+    <>
+      <RememberRole role={user.role} />
+      <HeaderBar
+        navLabel="Основная навигация кабинета"
+        brand={
+          <Link
+            data-preserve-draft
+            href={STATIC_ROUTES.EMPLOYER}
+            className="flex min-h-11 items-center"
+            aria-label="ФСП Скаут — главная кабинета"
+            onNavigate={(e) => {
+              e.preventDefault();
+              onNavigate('overview');
+            }}
+            onClick={(e) => {
+              if (busy) e.preventDefault();
+            }}
+          >
+            <BrandLogo />
+          </Link>
+        }
+        nav={renderItems(EMPLOYER_NAV_ITEMS)}
+        navFrom={EMPLOYER_NAV_FROM}
+        tabs={renderItems(EMPLOYER_NAV_ITEMS)}
+        menuExtra={<HeaderMenuExtra />}
+        actions={
+          <>
+            {/* На телефоне справочник и тема — в меню-бургере. */}
+            <HeaderGuidesButton className="max-sm:hidden" />
+            <span className="contents max-sm:hidden">
+              <ThemeToggle />
+            </span>
+            <UserMenu user={user} triggerId="employer-account-menu-trigger" />
+          </>
+        }
+      />
+    </>
   );
 };

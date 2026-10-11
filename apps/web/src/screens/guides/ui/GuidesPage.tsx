@@ -1,5 +1,5 @@
 import { PageHeader, PageWrapper } from '@/shared/ui';
-import type { Catalogs, Skill, SkillsSearchQuery } from '@/entities/catalog';
+import type { Catalogs, Skill } from '@/entities/catalog';
 
 import { CatalogsSection } from './CatalogsSection';
 import { SkillsSection } from './SkillsSection';
@@ -7,14 +7,12 @@ import { SkillsSection } from './SkillsSection';
 interface GuidesPageProps {
   catalogs?: Catalogs;
   skills?: Skill[];
-  query: SkillsSearchQuery;
   skillsError?: string;
 }
 
 export const GuidesPage = ({
   catalogs,
   skills,
-  query,
   skillsError,
 }: GuidesPageProps) => {
   return (
@@ -31,7 +29,7 @@ export const GuidesPage = ({
         </PageHeader.Row>
       </PageHeader>
       <CatalogsSection catalogs={catalogs} />
-      <SkillsSection skills={skills} query={query} error={skillsError} />
+      <SkillsSection skills={skills} error={skillsError} />
     </PageWrapper>
   );
 };

@@ -1,3 +1,5 @@
+import { CircleAlertIcon } from 'lucide-react';
+
 import { Button } from '@/shared/ui';
 import { AdminApiError } from '@/entities/admin';
 
@@ -12,25 +14,35 @@ export const ErrorNotice = ({ error, onRetry }: ErrorNoticeProps) => {
   return (
     <div
       role="alert"
-      className="rounded-lg border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive wrap-anywhere"
+      className="flex flex-col gap-3 rounded-xl bg-destructive/5 p-4 text-sm wrap-anywhere sm:flex-row sm:items-center sm:justify-between"
     >
-      {message}
+      <div className="flex min-w-0 gap-3">
+        <CircleAlertIcon
+          aria-hidden="true"
+          className="mt-0.5 size-4 shrink-0 text-destructive"
+        />
+        <div className="grid min-w-0 gap-1">
+          <p className="text-foreground">{message}</p>
+          {error instanceof AdminApiError && error.status === 429 && (
+            <p className="text-muted-foreground">
+              Повторите вход позже. Пауза: {error.retryAfter ?? '900'} секунд.
+            </p>
+          )}
+          {error instanceof AdminApiError && error.requestId && (
+            <p className="text-xs text-muted-foreground">
+              Код запроса: {error.requestId}
+            </p>
+          )}
+        </div>
+      </div>
       {onRetry && (
         <Button
           variant="outline"
-          className="mt-3 min-h-11 w-fit bg-background text-foreground"
+          className="min-h-11 w-fit shrink-0 bg-background"
           onClick={onRetry}
         >
           Повторить загрузку
         </Button>
-      )}
-      {error instanceof AdminApiError && error.requestId && (
-        <div className="mt-2 text-xs">Код запроса: {error.requestId}</div>
-      )}
-      {error instanceof AdminApiError && error.status === 429 && (
-        <div className="mt-2">
-          Повторите вход позже. Пауза: {error.retryAfter ?? '900'} секунд.
-        </div>
       )}
     </div>
   );

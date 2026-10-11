@@ -29,7 +29,7 @@ const TaskSubmissionsContent = () => {
   const query = useTaskQuery(load);
 
   return (
-    <TasksShell title="Мои решения" history>
+    <>
       <div className="grid gap-4 rounded-xl border bg-card p-5 sm:p-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="submission-status">Статус решения</Label>
@@ -99,14 +99,17 @@ const TaskSubmissionsContent = () => {
           />
         </>
       )}
-    </TasksShell>
+    </>
   );
 };
 
+// Шапка вне проверки профиля: пока она идёт, скелетон остаётся в контейнере страницы.
 export const TaskSubmissionsPage = () => {
   return (
-    <CandidateProfileGate>
-      <TaskSubmissionsContent />
-    </CandidateProfileGate>
+    <TasksShell title="Мои решения" history>
+      <CandidateProfileGate>
+        <TaskSubmissionsContent />
+      </CandidateProfileGate>
+    </TasksShell>
   );
 };

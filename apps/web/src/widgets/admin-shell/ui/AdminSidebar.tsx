@@ -82,7 +82,7 @@ export const AdminSidebar = ({
             const active =
               pathname === DYNAMIC_ROUTES.ADMIN(path) ||
               pathname.startsWith(`${DYNAMIC_ROUTES.ADMIN(path)}/`) ||
-              (path === 'catalogs' && pathname === STATIC_ROUTES.ADMIN);
+              (path === 'overview' && pathname === STATIC_ROUTES.ADMIN);
             return (
               <Tooltip key={path}>
                 <TooltipTrigger asChild>
@@ -118,7 +118,12 @@ export const AdminSidebar = ({
                     </span>
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent side="right">{label}</TooltipContent>
+                {/* Подсказка нужна только свёрнутому меню: иначе подпись видна. */}
+                {collapsed && (
+                  <TooltipContent side="right" className="max-lg:hidden">
+                    {label}
+                  </TooltipContent>
+                )}
               </Tooltip>
             );
           })}
