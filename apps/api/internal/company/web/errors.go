@@ -25,9 +25,13 @@ func (h companiesHandler) fail(c *gin.Context, err error) {
 	case errors.As(err, &validation):
 		abortError(c, 400, "validation_error", validation.Message)
 	case errors.Is(err, entity.ErrNotFound):
-		abortError(c, 404, "not_found", "Компания или файл не найдены")
+		abortError(c, 404, "not_found", "Запись не найдена или недоступна")
 	case errors.Is(err, entity.ErrForbidden):
-		abortError(c, 403, "forbidden", "Изменять компанию и файлы может только её владелец")
+		abortError(c, 403, "forbidden", "Недостаточно прав для этого действия")
+	case errors.Is(err, entity.ErrMemberConflict):
+		abortError(c, 409, "member_conflict", entity.ErrMemberConflict.Error())
+	case errors.Is(err, entity.ErrInvitationInvalid):
+		abortError(c, 400, "invitation_invalid", entity.ErrInvitationInvalid.Error())
 	case errors.Is(err, entity.ErrConflict):
 		abortError(c, 409, "company_exists", "Компания с таким ИНН уже существует")
 	case errors.Is(err, files.ErrSize) || errors.As(err, &maxBytes):

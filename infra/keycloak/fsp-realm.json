@@ -1,6 +1,7 @@
 {
   "realm": "fsp",
   "displayName": "FSP Talent",
+  "loginTheme": "fsp-scout",
   "enabled": true,
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,

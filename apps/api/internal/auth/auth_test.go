@@ -36,6 +36,8 @@ func TestTokenValidation(t *testing.T) {
 		{"истёкший токен", func(c map[string]any) { c["exp"] = time.Now().Add(-time.Hour).Unix() }, 401},
 		{"неподтверждённая почта", func(c map[string]any) { c["email_verified"] = false }, 401},
 		{"нет subject", func(c map[string]any) { delete(c, "sub") }, 401},
+		{"нет почты", func(c map[string]any) { delete(c, "email") }, 401},
+		{"некорректная почта", func(c map[string]any) { c["email"] = "Поддельное имя <user@example.test>" }, 401},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			claims := map[string]any{"iss": "https://issuer.test", "aud": "fsp-api", "sub": "candidate-1", "exp": time.Now().Add(time.Hour).Unix(), "email": "candidate@example.test", "email_verified": true}
@@ -57,6 +59,22 @@ func TestTokenValidation(t *testing.T) {
 	}
 	for _, header := range []string{"", "Basic abc", "Bearer", "Bearer invalid", "Bearer a b"} {
 		checkRequest(t, verifier, header, 401)
+	}
+}
+
+func TestClaimsDisplayName(t *testing.T) {
+	for _, tc := range []struct {
+		claims Claims
+		name   string
+	}{
+		{Claims{Name: "  Иван Иванов  ", GivenName: "Другое"}, "Иван Иванов"},
+		{Claims{GivenName: " Иван ", FamilyName: " Петров "}, "Иван Петров"},
+		{Claims{FamilyName: "Петров"}, "Петров"},
+		{Claims{}, ""},
+	} {
+		if got := tc.claims.DisplayName(); got != tc.name {
+			t.Fatalf("Имя: %q вместо %q", got, tc.name)
+		}
 	}
 }
 

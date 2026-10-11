@@ -1,4 +1,4 @@
-package httpapi
+package httpapi_test
 
 import (
 	"context"
@@ -8,6 +8,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 )
 
 type checker struct{ err error }
@@ -27,7 +29,7 @@ func TestRoutes(t *testing.T) {
 		{"missing", "/missing", nil, 404},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			r := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{tc.dependencyError}, nil)
+			r := httpapi.New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{tc.dependencyError}, nil)
 			w := httptest.NewRecorder()
 			r.ServeHTTP(w, httptest.NewRequest("GET", tc.path, nil))
 			if w.Code != tc.status {
@@ -42,7 +44,7 @@ func TestRoutes(t *testing.T) {
 
 // Страница возврата после входа через Keycloak подключает скрипт; без него Swagger остаётся с белым экраном.
 func TestSwaggerOAuthRedirectScript(t *testing.T) {
-	r := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, nil)
+	r := httpapi.New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, nil)
 	page := httptest.NewRecorder()
 	r.ServeHTTP(page, httptest.NewRequest("GET", "/docs/oauth2-redirect.html", nil))
 	if page.Code != 200 || !strings.Contains(page.Body.String(), `src="assets/oauth2-redirect.js"`) {

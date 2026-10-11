@@ -28,6 +28,11 @@ func JSON(c *gin.Context, target any) error {
 		if errors.As(err, &tooLarge) {
 			return err
 		}
+		// Ошибка из UnmarshalJSON поля (например, неверный месяц) уже содержит понятное сообщение.
+		var detailed interface{ ValidationMessage() string }
+		if errors.As(err, &detailed) {
+			return &ValidationError{Message: detailed.ValidationMessage()}
+		}
 		return &ValidationError{Message: "Некорректный JSON или неизвестное поле"}
 	}
 	var extra any

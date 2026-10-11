@@ -3,22 +3,23 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/entity"
 )
 
-const needColumns = `n.id::text,n.company_id::text,n.created_by::text,n.specialization_id,n.grade_id,n.title,n.description,n.salary_from_rub,n.salary_to_rub,n.city,n.timezone,n.status,n.created_at,
+const needColumns = `n.id::text,n.company_id::text,n.created_by::text,n.specialization_id,n.grade_id,n.title,n.description,n.salary_from_rub,n.salary_to_rub,n.city,n.timezone,n.status,n.created_at,n.moderation_status,
  COALESCE((SELECT jsonb_agg(jsonb_build_object('skill_id',s.skill_id::text,'required',s.required,'weight',s.weight) ORDER BY s.skill_id) FROM need_skills s WHERE s.need_id=n.id),'[]'::jsonb),
  ARRAY(SELECT f.work_format_id FROM need_work_formats f WHERE f.need_id=n.id ORDER BY f.work_format_id)`
-const needAccess = ` FROM employer_needs n JOIN company_members m ON m.company_id=n.company_id JOIN users u ON u.id=m.user_id
- WHERE m.user_id=$1 AND n.company_id=$2 AND m.status='active' AND u.status='active' AND u.role='employer'`
+const needAccess = ` FROM employer_needs n JOIN companies c ON c.id=n.company_id JOIN company_members m ON m.company_id=n.company_id JOIN users u ON u.id=m.user_id
+ WHERE m.user_id=$1 AND n.company_id=$2 AND c.status='active' AND m.status='active' AND u.status='active' AND u.role='employer'`
 
 func scanNeed(row pgx.Row) (entity.Need, error) {
 	var n entity.Need
 	var skills []byte
-	err := row.Scan(&n.ID, &n.CompanyID, &n.CreatedBy, &n.SpecializationID, &n.GradeID, &n.Title, &n.Description, &n.SalaryFromRUB, &n.SalaryToRUB, &n.City, &n.Timezone, &n.Status, &n.CreatedAt, &skills, &n.WorkFormatIDs)
+	err := row.Scan(&n.ID, &n.CompanyID, &n.CreatedBy, &n.SpecializationID, &n.GradeID, &n.Title, &n.Description, &n.SalaryFromRUB, &n.SalaryToRUB, &n.City, &n.Timezone, &n.Status, &n.CreatedAt, &n.ModerationStatus, &skills, &n.WorkFormatIDs)
 	if err != nil {
 		return n, dbError(err)
 	}
@@ -37,16 +38,16 @@ func needWriter(ctx context.Context, tx pgx.Tx, user, company string) error {
 	}
 	return nil
 }
-func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput) error {
+func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput, currentID any) error {
 	var found bool
-	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations WHERE id=$1 AND active)`, in.SpecializationID).Scan(&found); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM specializations s WHERE id=$1 AND (active OR EXISTS(SELECT 1 FROM employer_needs n WHERE n.id=$2 AND n.specialization_id=s.id)) FOR SHARE OF s)`, in.SpecializationID, currentID).Scan(&found); err != nil {
 		return err
 	}
 	if !found {
 		return validationError("Специализация не существует или отключена")
 	}
 	if in.GradeID != nil {
-		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM grades WHERE id=$1)`, *in.GradeID).Scan(&found); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM grades g WHERE id=$1 AND (active OR EXISTS(SELECT 1 FROM employer_needs n WHERE n.id=$2 AND n.grade_id=g.id)) FOR SHARE OF g)`, *in.GradeID, currentID).Scan(&found); err != nil {
 			return err
 		}
 		if !found {
@@ -58,13 +59,13 @@ func needReferences(ctx context.Context, tx pgx.Tx, in entity.NeedInput) error {
 		skillIDs = append(skillIDs, s.SkillID)
 	}
 	var count int
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM skills WHERE id=ANY($1::uuid[]) AND active`, skillIDs).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM (SELECT s.id FROM skills s WHERE id=ANY($1::uuid[]) AND moderation_status='approved' AND (active OR EXISTS(SELECT 1 FROM need_skills ns WHERE ns.need_id=$2 AND ns.skill_id=s.id)) ORDER BY s.id FOR SHARE OF s) selected`, skillIDs, currentID).Scan(&count); err != nil {
 		return err
 	}
 	if count != len(skillIDs) {
 		return validationError("Один из навыков не существует или отключён")
 	}
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM work_formats WHERE id=ANY($1::smallint[])`, in.WorkFormatIDs).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM (SELECT f.id FROM work_formats f WHERE id=ANY($1::smallint[]) AND (active OR EXISTS(SELECT 1 FROM need_work_formats nf WHERE nf.need_id=$2 AND nf.work_format_id=f.id)) ORDER BY f.id FOR SHARE OF f) selected`, in.WorkFormatIDs, currentID).Scan(&count); err != nil {
 		return err
 	}
 	if count != len(in.WorkFormatIDs) {
@@ -97,10 +98,13 @@ func (r *Repository) CreateNeed(ctx context.Context, user, company string, in en
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
-	if err = needReferences(ctx, tx, in); err != nil {
+	if err = needReferences(ctx, tx, in, nil); err != nil {
 		return entity.Need{}, err
 	}
 	var id string
@@ -121,24 +125,36 @@ func (r *Repository) CreateNeed(ctx context.Context, user, company string, in en
 func (r *Repository) GetNeed(ctx context.Context, user, company, id string) (entity.Need, error) {
 	return scanNeed(r.db.QueryRow(ctx, `SELECT `+needColumns+needAccess+` AND n.id=$3`, user, company, id))
 }
-func (r *Repository) ListNeeds(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, error) {
+
+// ListNeeds возвращает страницу потребностей компании и их общее число с учётом фильтра по статусу.
+func (r *Repository) ListNeeds(ctx context.Context, user, company, status string, limit, offset int) ([]entity.Need, int64, error) {
 	if _, err := r.Get(ctx, user, company); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	rows, err := r.db.Query(ctx, `SELECT `+needColumns+needAccess+` AND ($3='' OR n.status=$3) ORDER BY n.created_at DESC,n.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
+	tx, err := r.readTx(ctx)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	defer tx.Rollback(ctx)
+	const filter = ` AND ($3='' OR n.status=$3)`
+	var total int64
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+needAccess+filter, user, company, status).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+	rows, err := tx.Query(ctx, `SELECT `+needColumns+needAccess+filter+` ORDER BY n.created_at DESC,n.id DESC LIMIT $4 OFFSET $5`, user, company, status, limit, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 	result := []entity.Need{}
 	for rows.Next() {
 		n, err := scanNeed(rows)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		result = append(result, n)
 	}
-	return result, rows.Err()
+	return result, total, rows.Err()
 }
 func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, patch map[string]json.RawMessage) (entity.Need, error) {
 	tx, err := r.db.Begin(ctx)
@@ -146,6 +162,9 @@ func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, p
 		return entity.Need{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = catalog.LockSkillChanges(ctx, tx); err != nil {
+		return entity.Need{}, err
+	}
 	if err = needWriter(ctx, tx, user, company); err != nil {
 		return entity.Need{}, err
 	}
@@ -153,11 +172,14 @@ func (r *Repository) UpdateNeed(ctx context.Context, user, company, id string, p
 	if err != nil {
 		return n, err
 	}
+	if n.ModerationStatus == "hidden" {
+		return n, entity.ErrForbidden
+	}
 	in, err := entity.ApplyNeedPatch(n, patch)
 	if err != nil {
 		return n, err
 	}
-	if err = needReferences(ctx, tx, in); err != nil {
+	if err = needReferences(ctx, tx, in, id); err != nil {
 		return n, err
 	}
 	_, err = tx.Exec(ctx, `UPDATE employer_needs SET specialization_id=$2,grade_id=$3,title=$4,description=$5,salary_from_rub=$6,salary_to_rub=$7,city=$8,timezone=$9,status=$10 WHERE id=$1`, id, in.SpecializationID, in.GradeID, in.Title, in.Description, in.SalaryFromRUB, in.SalaryToRUB, in.City, in.Timezone, in.Status)

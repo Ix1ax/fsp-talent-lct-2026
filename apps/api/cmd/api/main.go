@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	fspregistry "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/registry"
+	fsprepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/repository"
+	fspservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/fsp/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -12,20 +15,43 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	adminrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/repository"
+	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
+	admincatalogrepo "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/repository"
+	admincatalogservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admincatalog/service"
+	opsrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/repository"
+	opsservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/service"
+	assessmentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/repository"
+	assessmentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/assessment/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/auth"
 	candidaterepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/repository"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/resume"
 	candidateservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidate/service"
+	bankrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/repository"
+	bankservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/catalog"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/repository"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/config"
+	consentrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/repository"
+	consentservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/consent/service"
+	taskrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/repository"
+	taskservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/dailytask/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
+	offerrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/repository"
+	offerservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/service"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/platform"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
 func main() {
+	// Тот же бинарник служит изолированным разборщиком PDF-резюме: родитель запускает его с RESUME_PARSE_CHILD=1.
+	// Конфигурацию, базу и сеть дочерний процесс не трогает.
+	if resume.IsChild() {
+		resume.RunChild()
+		return
+	}
 	log := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	if err := run(log); err != nil {
 		log.Error("API остановлен из-за ошибки", "error", err)
@@ -60,15 +86,31 @@ func run(log *slog.Logger) error {
 	srv := &http.Server{
 		Addr: c.Addr,
 		Handler: httpapi.New(log, deps, verifier, httpapi.Options{
-			CORSOrigins: c.CORSOrigins,
-			OIDCIssuer:  c.OIDCIssuer,
-			Users:       user.NewService(user.NewRepository(deps.DB)),
-			Companies:   service.NewCompanyService(companyRepo),
-			Candidates:  candidateservice.NewProfileService(candidateRepo),
-			Avatars:     candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Documents:   service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
-			Needs:       service.NewNeedsService(companyRepo),
-			Catalogs:    catalog.NewService(catalog.NewRepository(deps.DB)),
+			FSP:                fspservice.New(fsprepo.New(deps.DB), fspregistry.Mock{}),
+			Admins:             adminservice.New(adminrepository.New(deps.DB)),
+			AdminOperations:    opsservice.New(opsrepository.New(deps.DB), files.NewS3(deps.Objects), log),
+			AdminCatalogs:      admincatalogservice.New(admincatalogrepo.New(deps.DB)),
+			Assessments:        assessmentservice.New(assessmentrepository.New(deps.DB)),
+			AssessmentAttempts: assessmentservice.NewAttempts(assessmentrepository.New(deps.DB), c.AssessmentRetakeDays),
+			CORSOrigins:        c.CORSOrigins,
+			OIDCIssuer:         c.OIDCIssuer,
+			Users:              user.NewService(user.NewRepository(deps.DB)),
+			Companies:          service.NewCompanyService(companyRepo),
+			Candidates:         candidateservice.NewProfileService(candidateRepo),
+			CandidateContacts:  candidateservice.NewContactsService(candidateRepo),
+			CandidateSkills:    candidateservice.NewSkillsService(candidateRepo),
+			CandidateFull:      candidateservice.NewFullProfileService(candidateRepo, c.PrivacyPolicyVersion),
+			CandidateCareer:    candidateservice.NewCareerService(candidateRepo, time.Now),
+			CandidateResume:    candidateservice.NewResumeImportService(candidateRepo, time.Now).UseIsolatedParser(),
+			Avatars:            candidateservice.NewAvatarService(candidateRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Documents:          service.NewDocumentService(companyRepo, files.NewS3(deps.Objects), deps.Bucket, log),
+			Needs:              service.NewNeedsService(companyRepo),
+			Members:            service.NewMemberService(companyRepo),
+			Catalogs:           catalog.NewService(catalog.NewRepository(deps.DB)),
+			Offers:             offerservice.New(offerrepository.New(deps.DB)),
+			CandidateBank:      bankservice.New(bankrepository.New(deps.DB)),
+			DailyTasks:         taskservice.New(taskrepository.New(deps.DB), files.NewS3(deps.Objects), deps.Bucket, log),
+			Consents:           consentservice.NewService(consentrepository.NewRepository(deps.DB), c.PrivacyPolicyVersion),
 		}),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second,

@@ -1,4 +1,4 @@
-package httpapi
+package httpapi_test
 
 import (
 	"io"
@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/httpapi"
 )
 
 func TestCORSPreflightAndProtectedRoute(t *testing.T) {
@@ -19,7 +21,7 @@ func TestCORSPreflightAndProtectedRoute(t *testing.T) {
 		{"https://allowed.example", "https://allowed.example", 204, "https://allowed.example"},
 		{"https://allowed.example", "https://other.example", 403, ""},
 	} {
-		router := New(log, checker{}, nil, Options{CORSOrigins: tc.origins})
+		router := httpapi.New(log, checker{}, nil, httpapi.Options{CORSOrigins: tc.origins})
 		request := httptest.NewRequest("OPTIONS", "/api/v1/me", nil)
 		request.Header.Set("Origin", tc.origin)
 		request.Header.Set("Access-Control-Request-Method", "GET")
@@ -35,7 +37,7 @@ func TestCORSPreflightAndProtectedRoute(t *testing.T) {
 }
 
 func TestSwaggerUsesPublicIssuer(t *testing.T) {
-	router := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, nil, Options{CORSOrigins: "*", OIDCIssuer: "https://auth.example/realms/fsp"})
+	router := httpapi.New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, nil, httpapi.Options{CORSOrigins: "*", OIDCIssuer: "https://auth.example/realms/fsp"})
 	for _, path := range []string{"/docs/", "/docs/oauth2-redirect.html", "/docs/assets/swagger-ui.css", "/openapi.yaml", "/api/v1/auth/config"} {
 		response := httptest.NewRecorder()
 		router.ServeHTTP(response, httptest.NewRequest("GET", path, nil))

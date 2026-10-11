@@ -1,0 +1,102 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
+	"github.com/jackc/pgx/v5"
+)
+
+// Recommend ранжирует по сходству, подтверждённому профилю и давности взаимодействия. По умолчанию действует срок 30 дней.
+// ФСП меняет порядок только при равном сходстве внутри одной подтверждённой категории; затем учитывается давность.
+func (r *Repository) Recommend(ctx context.Context, userID, companyID, needID string, filter entity.Filter) (entity.RecommendationPage, error) {
+	page := entity.RecommendationPage{Items: []entity.Recommendation{}, Limit: filter.Limit, Offset: filter.Offset, NeedID: needID, MatchingMode: "similarity", UnassessedCriteria: []string{}}
+	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead})
+	if err != nil {
+		return page, err
+	}
+	defer tx.Rollback(ctx)
+	if err = authorize(ctx, tx, userID, companyID); err != nil {
+		return page, err
+	}
+	var salary *int64
+	var city, timezone *string
+	var formats []int16
+	var specialization int16
+	var grade *int16
+	err = tx.QueryRow(ctx, `SELECT n.salary_to_rub,n.city,n.timezone,n.specialization_id,n.grade_id,
+ ARRAY(SELECT work_format_id FROM need_work_formats WHERE need_id=n.id ORDER BY work_format_id)
+ FROM employer_needs n WHERE n.id=$1 AND n.company_id=$2 AND n.status='active' FOR SHARE OF n`, needID, companyID).Scan(&salary, &city, &timezone, &specialization, &grade, &formats)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return page, entity.ErrNotFound
+	}
+	if err != nil {
+		return page, err
+	}
+	if err = validateFilter(ctx, tx, filter); err != nil {
+		return page, err
+	}
+	selected := filter.WorkFormatIDs
+	if selected == nil {
+		selected = []int16{}
+	}
+	args := []any{filter.ExperienceMinMonths, filter.ExperienceMaxMonths, filter.SalaryMaxRUB, selected}
+	extra, extraArgs := qualificationConditions(filter, len(args))
+	args = append(args, extraArgs...)
+	companyParameter := len(args) + 1
+	args = append(args, companyID, filter.HasOffer, filter.Viewed, filter.InteractionStatus)
+	conditions := companyVisible(companyParameter) + filterConditions + extra + interactionConditions(companyParameter)
+	if err = tx.QueryRow(ctx, `SELECT count(*)`+conditions, args...).Scan(&page.Total); err != nil {
+		return page, err
+	}
+	// Параметры потребности участвуют только в оценке, а не в WHERE.
+	args = append(args, needID, formats, salary, specialization, grade, city, timezone, filter.Limit, filter.Offset)
+	signals := `CASE WHEN cardinality($15::smallint[])>0 AND EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id) THEN EXISTS(SELECT 1 FROM candidate_work_formats w WHERE w.candidate_id=p.id AND w.work_format_id=ANY($15::smallint[])) END AS format_match,
+ CASE WHEN $16::bigint IS NOT NULL THEN p.salary_min_rub <= $16 END AS salary_match,
+ CASE WHEN $19::text IS NOT NULL THEN lower(trim(p.city))=lower(trim($19)) END AS city_match,
+ CASE WHEN $20::text IS NOT NULL THEN p.timezone=$20 END AS timezone_match,
+ COALESCE(category.specialization_id,declared.specialization_id)=$17::smallint AS specialization_match,
+ CASE WHEN $18::smallint IS NOT NULL THEN COALESCE(category.grade_id,declared.grade_id)=$18 END AS grade_match`
+	query := `WITH matched AS (SELECT ` + columns + `,` + interactionColumns + `,p.created_at AS profile_created_at,` + lastInteraction + ` AS last_interaction_at,` + signals + `,category.score_percent::float8 AS test_score,` + skillMatches + ` AS skills ` + conditions + `),
+ scored AS (SELECT matched.*,` + weightedSkillScore + ` AS skill_score FROM matched),
+ ranked AS (SELECT scored.*,` + similarityScore + ` AS match_score,` + similarityCriteria + ` AS criteria FROM scored)
+  , positioned AS (SELECT ranked.*,row_number() OVER(ORDER BY match_score DESC,(grade_status='confirmed') DESC,test_score DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS base_position FROM ranked),
+ slots AS (SELECT positioned.*,
+ array_agg(base_position) OVER(PARTITION BY match_score,CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY base_position ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS group_slots,
+ row_number() OVER(PARTITION BY match_score,CASE WHEN grade_status='confirmed' THEN category::text ELSE id END ORDER BY test_score+fsp_bonus DESC NULLS LAST,last_interaction_at ASC NULLS FIRST,profile_created_at,id) AS group_position FROM positioned)
+ SELECT ` + cardResultColumns + `,
+ format_match,salary_match,city_match,timezone_match,specialization_match,grade_match,test_score,skills,skill_score,match_score,criteria
+ FROM slots ORDER BY group_slots[group_position::int]
+ LIMIT $21 OFFSET $22`
+	rows, err := tx.Query(ctx, query, args...)
+	if err != nil {
+		return page, err
+	}
+	for rows.Next() {
+		var card entity.Card
+		var fm, sm, cm, tm, specMatch, gradeMatch *bool
+		var skills []entity.SkillMatch
+		var score, testScore *float64
+		var matchScore float64
+		var criteria []entity.MatchCriterion
+		err = rows.Scan(&card.ID, &card.City, &card.Timezone, &card.ExperienceMonths, &card.SalaryMinRUB, &card.SearchStatus, &card.WorkFormatIDs, &card.Category, &card.DeclaredCategory, &card.GradeStatus, &card.AchievementsCount, &card.FSPBonus, &card.HasOffer, &card.Viewed, &card.LastViewedAt, &card.LastOfferedAt, &card.NextAvailableAt,
+			&fm, &sm, &cm, &tm, &specMatch, &gradeMatch, &testScore, &skills, &score, &matchScore, &criteria)
+		if err != nil {
+			rows.Close()
+			return page, err
+		}
+		item := entity.Explain(card, fm, sm, cm, tm)
+		item.Skills, item.SkillMatchScore, item.TestScorePercent, item.MatchScore, item.Criteria = skills, score, testScore, matchScore, criteria
+		item.ExplainQualification(specMatch, gradeMatch, grade != nil)
+		if card.FSPBonus > 0 {
+			item.Reasons = append(item.Reasons, "Достижения ФСП повышают приоритет внутри подтверждённой категории")
+		}
+		page.Items = append(page.Items, item)
+	}
+	err = rows.Err()
+	rows.Close()
+	if err != nil {
+		return page, err
+	}
+	return page, tx.Commit(ctx)
+}

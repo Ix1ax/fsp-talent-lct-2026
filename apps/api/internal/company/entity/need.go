@@ -34,7 +34,8 @@ type Need struct {
 	CompanyID string `json:"company_id"`
 	CreatedBy string `json:"created_by"`
 	NeedInput
-	CreatedAt time.Time `json:"created_at"`
+	CreatedAt        time.Time `json:"created_at"`
+	ModerationStatus string    `json:"moderation_status"`
 }
 
 func (in *NeedInput) Normalize() error {

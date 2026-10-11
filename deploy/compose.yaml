@@ -60,6 +60,8 @@ services:
     entrypoint:
       - migrate
     environment:
+      ADMIN_BOOTSTRAP_EMAIL: ${ADMIN_BOOTSTRAP_EMAIL:-}
+      ADMIN_BOOTSTRAP_PASSWORD: ${ADMIN_BOOTSTRAP_PASSWORD:-}
       DATABASE_URL: postgres://fsp:${POSTGRES_PASSWORD}@postgres:5432/fsp?sslmode=disable
     depends_on:
       postgres:
@@ -157,6 +159,7 @@ services:
       - "8081:8080"
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+      - ./keycloak-themes/fsp-scout:/opt/keycloak/themes/fsp-scout:ro
     depends_on:
       keycloak-db:
         condition: service_healthy

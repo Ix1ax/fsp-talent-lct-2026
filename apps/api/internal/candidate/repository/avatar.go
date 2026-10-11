@@ -51,6 +51,9 @@ func (r *Repository) CompleteAvatar(ctx context.Context, userID, fileID string) 
 		return nil, entity.Profile{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = lockActiveCandidate(ctx, tx, userID); err != nil {
+		return nil, entity.Profile{}, err
+	}
 	var profileID string
 	var oldID *string
 	if err = tx.QueryRow(ctx, `SELECT p.id::text,p.avatar_file_id::text`+ownerFilter+` FOR UPDATE OF p FOR SHARE OF u`, userID).Scan(&profileID, &oldID); err != nil {
@@ -99,6 +102,9 @@ func (r *Repository) DetachAvatar(ctx context.Context, userID string) (files.Fil
 		return files.File{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err = lockActiveCandidate(ctx, tx, userID); err != nil {
+		return files.File{}, err
+	}
 	var profileID string
 	var fileID *string
 	if err = tx.QueryRow(ctx, `SELECT p.id::text,p.avatar_file_id::text`+ownerFilter+` FOR UPDATE OF p FOR SHARE OF u`, userID).Scan(&profileID, &fileID); err != nil {

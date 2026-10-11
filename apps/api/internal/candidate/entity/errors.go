@@ -3,14 +3,26 @@ package entity
 import "errors"
 
 var (
-	ErrNotFound       = errors.New("профиль кандидата не найден")
-	ErrAvatarNotFound = errors.New("аватар не найден")
-	ErrForbidden      = errors.New("профилем может управлять только активный кандидат")
-	ErrConflict       = errors.New("профиль кандидата уже создан")
-	ErrFileNotPending = errors.New("файл уже не ожидает загрузки")
+	ErrNotFound         = errors.New("профиль кандидата не найден")
+	ErrAvatarNotFound   = errors.New("аватар не найден")
+	ErrForbidden        = errors.New("профилем может управлять только активный кандидат")
+	ErrConflict         = errors.New("профиль кандидата уже создан")
+	ErrFileNotPending   = errors.New("файл уже не ожидает загрузки")
+	ErrSkillNotFound    = errors.New("навык не найден в списке кандидата")
+	ErrContactsNotFound = errors.New("контакты кандидата не найдены")
+	ErrConsentRequired  = errors.New("нужно согласие на обработку персональных данных")
 )
 
 type ValidationError struct{ Message string }
 
 func (e *ValidationError) Error() string { return e.Message }
-func invalid(message string) error       { return &ValidationError{message} }
+
+// ValidationMessage отдаёт сообщение для пользователя: его используют разборщики тела запроса.
+func (e *ValidationError) ValidationMessage() string { return e.Message }
+func invalid(message string) error                   { return &ValidationError{message} }
+
+var (
+	ErrExperienceNotFound = errors.New("место работы не найдено")
+	ErrEducationNotFound  = errors.New("запись об образовании не найдена")
+	ErrLimitReached       = errors.New("достигнут предел числа записей")
+)

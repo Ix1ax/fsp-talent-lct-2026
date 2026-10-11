@@ -18,7 +18,7 @@ type DocumentStore interface {
 	ReserveFile(context.Context, string, string, files.File) (files.File, error)
 	CompleteFile(context.Context, string, string, string) (files.File, error)
 	File(context.Context, string, string, string) (files.File, error)
-	ListFiles(context.Context, string, string, int, int) ([]files.File, error)
+	ListFiles(context.Context, string, string, int, int) ([]files.File, int64, error)
 	MarkDeleting(context.Context, string, string, string) (files.File, error)
 	FinishDelete(context.Context, string) error
 }
@@ -32,11 +32,14 @@ type DocumentService struct {
 func NewDocumentService(store DocumentStore, objects files.Objects, bucket string, log *slog.Logger) *DocumentService {
 	return &DocumentService{store, objects, bucket, log}
 }
-func (s *DocumentService) ListFiles(ctx context.Context, user, id string, limit, offset int) ([]files.File, error) {
+func (s *DocumentService) ListFiles(ctx context.Context, user, id string, limit, offset int) ([]files.File, int64, error) {
 	return s.store.ListFiles(ctx, user, id, limit, offset)
 }
 
 func (s *DocumentService) Upload(ctx context.Context, user, id, name, purpose string, data []byte) (files.File, error) {
+	if purpose != "company_document" && purpose != "company_logo" {
+		return files.File{}, files.ErrInvalid
+	}
 	f, err := files.Prepare(name, purpose, data)
 	if err != nil {
 		return f, err

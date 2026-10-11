@@ -2,6 +2,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -16,13 +17,14 @@ type Repository struct{ db *pgxpool.Pool }
 
 func NewRepository(db *pgxpool.Pool) *Repository { return &Repository{db} }
 
-const companyColumns = `c.id::text,c.name,c.description,c.inn,c.contact_email,c.contact_url,c.logo_file_id::text,c.verification_status,c.created_at,m.role`
-const memberJoin = ` FROM companies c JOIN company_members m ON m.company_id=c.id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND m.status='active' AND u.status='active' AND u.role='employer'`
+const companyColumns = `c.id::text,c.name,c.description,c.inn,c.contact_email,c.contact_url,c.logo_file_id::text,c.verification_status,c.created_at,m.role,c.status,c.blocked_reason,c.blocked_at`
+const profileMemberJoin = ` FROM companies c JOIN company_members m ON m.company_id=c.id JOIN users u ON u.id=m.user_id WHERE m.user_id=$1 AND m.status='active' AND u.status='active' AND u.role='employer'`
+const memberJoin = profileMemberJoin + ` AND c.status='active'`
 const fileColumns = `f.id::text,f.owner_user_id::text,f.bucket,f.object_key,f.purpose,f.original_name,f.media_type,f.size_bytes,f.checksum_sha256,f.status,f.created_at`
 
 func scanCompany(row pgx.Row) (entity.Company, error) {
 	var c entity.Company
-	err := row.Scan(&c.ID, &c.Name, &c.Description, &c.INN, &c.ContactEmail, &c.ContactURL, &c.LogoFileID, &c.VerificationStatus, &c.CreatedAt, &c.MemberRole)
+	err := row.Scan(&c.ID, &c.Name, &c.Description, &c.INN, &c.ContactEmail, &c.ContactURL, &c.LogoFileID, &c.VerificationStatus, &c.CreatedAt, &c.MemberRole, &c.Status, &c.BlockedReason, &c.BlockedAt)
 	return c, dbError(err)
 }
 func scanFile(row pgx.Row) (files.File, error) {
@@ -42,3 +44,8 @@ func dbError(err error) error {
 }
 
 func validationError(message string) error { return &entity.ValidationError{Message: message} }
+
+// readTx открывает согласованный снимок только для чтения: страница и общее число читаются из одного состояния данных.
+func (r *Repository) readTx(ctx context.Context) (pgx.Tx, error) {
+	return r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+}

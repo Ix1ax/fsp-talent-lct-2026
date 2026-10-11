@@ -24,6 +24,7 @@ func (h companiesHandler) create(c *gin.Context) {
 	c.JSON(201, result)
 }
 func (h companiesHandler) get(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
 	u, _ := middleware.UserFrom(c)
 	result, err := h.service.Get(c.Request.Context(), u.ID, c.Param("company_id"))
 	if err != nil {
@@ -33,18 +34,19 @@ func (h companiesHandler) get(c *gin.Context) {
 	c.JSON(200, result)
 }
 func (h companiesHandler) list(c *gin.Context) {
+	c.Header("Cache-Control", "private, no-store")
 	limit, offset, err := request.Page(c)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
 	u, _ := middleware.UserFrom(c)
-	items, err := h.service.List(c.Request.Context(), u.ID, limit, offset)
+	items, total, err := h.service.List(c.Request.Context(), u.ID, limit, offset)
 	if err != nil {
 		h.fail(c, err)
 		return
 	}
-	c.JSON(200, gin.H{"items": items, "limit": limit, "offset": offset})
+	c.JSON(200, gin.H{"items": items, "total": total, "limit": limit, "offset": offset})
 }
 func (h companiesHandler) update(c *gin.Context) {
 	var patch entity.Patch

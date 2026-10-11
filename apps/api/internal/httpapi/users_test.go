@@ -1,127 +1,23 @@
-package httpapi
+package httpapi_test
 
 import (
-	"context"
-	"crypto"
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
-	"io"
-	"log/slog"
-	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/gin-gonic/gin"
-	"github.com/go-jose/go-jose/v4"
-
-	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/company/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/testutil"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/user"
 )
 
-const testIssuer = "https://issuer.test"
-
-type memStore struct{ users map[string]user.User }
-
-func (m *memStore) FindByIdentity(_ context.Context, issuer, subject string) (user.User, error) {
-	if u, ok := m.users[issuer+"|"+subject]; ok {
-		return u, nil
-	}
-	return user.User{}, user.ErrNotFound
-}
-
-func (m *memStore) Create(_ context.Context, issuer, subject, role string) (user.User, error) {
-	key := issuer + "|" + subject
-	if _, ok := m.users[key]; ok {
-		return user.User{}, user.ErrExists
-	}
-	u := user.User{ID: "id-" + subject, Role: role, Status: user.StatusActive}
-	m.users[key] = u
-	return u, nil
-}
-
-type authEnv struct {
-	router *gin.Engine
-	store  *memStore
-	signer jose.Signer
-}
-
-func newAuthEnv(t *testing.T, companies ...*service.CompanyService) *authEnv {
-	opts := Options{}
-	if len(companies) > 0 {
-		opts.Companies = companies[0]
-	}
-	return newAuthEnvWithOptions(t, opts)
-}
-
-func newAuthEnvWithOptions(t *testing.T, opts Options) *authEnv {
-	t.Helper()
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		t.Fatal(err)
-	}
-	signer, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: key}, nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-	verifier := oidc.NewVerifier(testIssuer, &oidc.StaticKeySet{PublicKeys: []crypto.PublicKey{&key.PublicKey}}, &oidc.Config{ClientID: "fsp-api"})
-	store := &memStore{users: map[string]user.User{}}
-	opts.CORSOrigins = "*"
-	opts.Users = user.NewService(store)
-	router := New(slog.New(slog.NewTextHandler(io.Discard, nil)), checker{}, verifier, opts)
-	return &authEnv{router: router, store: store, signer: signer}
-}
-
-func (e *authEnv) token(t *testing.T, sub string) string {
-	t.Helper()
-	payload, _ := json.Marshal(map[string]any{"iss": testIssuer, "aud": "fsp-api", "sub": sub, "exp": time.Now().Add(time.Hour).Unix(), "email": sub + "@example.test", "email_verified": true})
-	signed, err := e.signer.Sign(payload)
-	if err != nil {
-		t.Fatal(err)
-	}
-	s, err := signed.CompactSerialize()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return s
-}
-
-func (e *authEnv) do(t *testing.T, method, path, token, body string) *httptest.ResponseRecorder {
-	t.Helper()
-	req := httptest.NewRequest(method, path, strings.NewReader(body))
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	e.router.ServeHTTP(w, req)
-	return w
-}
-
-func errorCode(t *testing.T, w *httptest.ResponseRecorder) string {
-	t.Helper()
-	var body struct {
-		Error struct{ Code, Message string }
-	}
-	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
-		t.Fatalf("не JSON: %s", w.Body)
-	}
-	if body.Error.Message == "" {
-		t.Fatalf("нет сообщения об ошибке: %s", w.Body)
-	}
-	return body.Error.Code
-}
-
 func TestRegistrationFlow(t *testing.T) {
-	e := newAuthEnv(t)
-	token := e.token(t, "alice")
+	e := testutil.NewAuthEnv(t)
+	token := e.Token(t, "alice")
 
-	if w := e.do(t, "GET", "/api/v1/me", token, ""); w.Code != 404 || errorCode(t, w) != "not_registered" {
+	if w := e.Do(t, "GET", "/api/v1/me", token, ""); w.Code != 404 || testutil.ErrorCode(t, w) != "not_registered" {
 		t.Fatalf("до регистрации ожидали 404 not_registered: %d %s", w.Code, w.Body)
 	}
-	w := e.do(t, "POST", "/api/v1/me/register", token, `{"role":"employer"}`)
+	w := e.Do(t, "POST", "/api/v1/me/register", token, `{"role":"employer"}`)
 	if w.Code != 201 {
 		t.Fatalf("регистрация: %d %s", w.Code, w.Body)
 	}
@@ -130,61 +26,95 @@ func TestRegistrationFlow(t *testing.T) {
 	if created["role"] != "employer" || created["status"] != "active" || created["email"] != "alice@example.test" || created["id"] == "" {
 		t.Fatalf("неверный ответ: %v", created)
 	}
-	w = e.do(t, "GET", "/api/v1/me", token, "")
+	w = e.Do(t, "GET", "/api/v1/me", token, "")
 	if w.Code != 200 || !strings.Contains(w.Body.String(), `"role":"employer"`) {
 		t.Fatalf("после регистрации: %d %s", w.Code, w.Body)
 	}
-	if w := e.do(t, "POST", "/api/v1/me/register", token, `{"role":"candidate"}`); w.Code != 409 || errorCode(t, w) != "already_registered" {
+	if w := e.Do(t, "POST", "/api/v1/me/register", token, `{"role":"candidate"}`); w.Code != 409 || testutil.ErrorCode(t, w) != "already_registered" {
 		t.Fatalf("повторная регистрация: %d %s", w.Code, w.Body)
 	}
-	if e.store.users[testIssuer+"|alice"].Role != "employer" {
+	if e.Store.Users[testutil.Issuer+"|alice"].Role != "employer" {
 		t.Fatal("повторная регистрация изменила роль")
 	}
 }
 
 func TestRegistrationValidation(t *testing.T) {
-	e := newAuthEnv(t)
-	token := e.token(t, "bob")
+	e := testutil.NewAuthEnv(t)
+	token := e.Token(t, "bob")
 	for name, body := range map[string]string{"admin": `{"role":"admin"}`, "пустая роль": `{"role":""}`, "нет поля": `{}`, "не JSON": `oops`, "чужая роль": `{"role":"root"}`} {
-		w := e.do(t, "POST", "/api/v1/me/register", token, body)
+		w := e.Do(t, "POST", "/api/v1/me/register", token, body)
 		if w.Code != 400 {
 			t.Fatalf("%s: ожидали 400, получили %d %s", name, w.Code, w.Body)
 		}
-		errorCode(t, w)
+		testutil.ErrorCode(t, w)
 	}
-	if len(e.store.users) != 0 {
+	if len(e.Store.Users) != 0 {
 		t.Fatal("при ошибке валидации пользователь не должен создаваться")
 	}
-	if w := e.do(t, "POST", "/api/v1/me/register", "", `{"role":"candidate"}`); w.Code != 401 {
+	if w := e.Do(t, "POST", "/api/v1/me/register", "", `{"role":"candidate"}`); w.Code != 401 {
 		t.Fatalf("без токена ожидали 401, получили %d", w.Code)
 	}
 }
 
 func TestBlockedUser(t *testing.T) {
-	e := newAuthEnv(t)
-	e.store.users[testIssuer+"|eve"] = user.User{ID: "1", Role: "candidate", Status: "blocked"}
-	w := e.do(t, "GET", "/api/v1/me", e.token(t, "eve"), "")
-	if w.Code != 403 || errorCode(t, w) != "user_inactive" {
-		t.Fatalf("заблокированный пользователь: %d %s", w.Code, w.Body)
+	e := testutil.NewAuthEnv(t)
+	reason := "Нарушение правил платформы"
+	date := time.Now().UTC()
+	for _, role := range []string{"candidate", "employer"} {
+		e.Store.Users[testutil.Issuer+"|eve"] = user.User{ID: "1", Role: role, Status: "blocked", BlockedReason: &reason, BlockedAt: &date}
+		token := e.Token(t, "eve")
+		w := e.Do(t, "GET", "/api/v1/me", token, "")
+		if w.Code != 200 || !strings.Contains(w.Body.String(), reason) || w.Header().Get("Cache-Control") != "private, no-store" {
+			t.Fatalf("Причина блокировки: %d %s", w.Code, w.Body)
+		}
+		for _, route := range e.Router.Routes() {
+			if !strings.HasPrefix(route.Path, "/api/v1/me") || route.Path == "/api/v1/me/register" || route.Path == "/api/v1/me" {
+				continue
+			}
+			w = e.Do(t, route.Method, route.Path, token, `{}`)
+			if w.Code != 403 || testutil.ErrorCode(t, w) != "user_inactive" || !strings.Contains(w.Body.String(), reason) {
+				t.Fatalf("Обход блокировки: %s %s %d %s", route.Method, route.Path, w.Code, w.Body)
+			}
+		}
+		w = e.Do(t, "POST", "/api/v1/me/register", token, `{"role":"candidate"}`)
+		if w.Code != 409 {
+			t.Fatalf("Повторная регистрация: %d %s", w.Code, w.Body)
+		}
+	}
+	e.Store.Users[testutil.Issuer+"|eve"] = user.User{ID: "1", Role: "candidate", Status: "deleted"}
+	w := e.Do(t, "GET", "/api/v1/me", e.Token(t, "eve"), "")
+	if w.Code != 403 || testutil.ErrorCode(t, w) != "user_inactive" {
+		t.Fatalf("Удалённый аккаунт: %d %s", w.Code, w.Body)
 	}
 }
 
-func TestRequireRole(t *testing.T) {
-	r := gin.New()
-	r.GET("/", func(c *gin.Context) { c.Set(userKey, user.User{Role: c.Query("role")}) }, requireRole("employer"), func(c *gin.Context) { c.Status(200) })
-	for role, status := range map[string]int{"employer": 200, "candidate": 403, "admin": 403} {
-		w := httptest.NewRecorder()
-		r.ServeHTTP(w, httptest.NewRequest("GET", "/?role="+role, nil))
-		if w.Code != status {
-			t.Fatalf("%s: ожидали %d, получили %d", role, status, w.Code)
+func TestCompanyBlockCoversEveryCompanyRoute(t *testing.T) {
+	e := testutil.NewAuthEnv(t)
+	id := "a0000000-0000-4000-8000-000000000001"
+	reason := "Нарушение правил компании"
+	e.Store.Users[testutil.Issuer+"|owner"] = user.User{ID: "1", Role: "employer", Status: "active", BlockedCompanies: []user.CompanyBlock{{ID: id, Name: "Компания", Reason: reason, BlockedAt: time.Now().UTC()}}}
+	token := e.Token(t, "owner")
+	checked := 0
+	for _, route := range e.Router.Routes() {
+		if !strings.HasPrefix(route.Path, "/api/v1/companies/:company_id") || route.Method == "GET" && route.Path == "/api/v1/companies/:company_id" {
+			continue
 		}
+		path := strings.ReplaceAll(route.Path, ":company_id", id)
+		w := e.Do(t, route.Method, path, token, `{}`)
+		if w.Code != 403 || testutil.ErrorCode(t, w) != "company_blocked" || !strings.Contains(w.Body.String(), reason) {
+			t.Fatalf("Обход блокировки компании: %s %s %d %s", route.Method, path, w.Code, w.Body)
+		}
+		checked++
 	}
-	// Без currentUser в контексте доступа быть не должно.
-	r2 := gin.New()
-	r2.GET("/", requireRole("employer"), func(c *gin.Context) { c.Status(200) })
-	w := httptest.NewRecorder()
-	r2.ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
-	if w.Code != 401 {
-		t.Fatalf("без пользователя ожидали 401, получили %d", w.Code)
+	if checked < 25 {
+		t.Fatalf("Проверено слишком мало маршрутов: %d", checked)
+	}
+	wUpper := e.Do(t, "GET", "/api/v1/companies/"+strings.ToUpper(id)+"/tasks", token, "")
+	if wUpper.Code != 403 || testutil.ErrorCode(t, wUpper) != "company_blocked" {
+		t.Fatal("Регистр UUID обошёл блокировку", wUpper.Body)
+	}
+	w := e.Do(t, "GET", "/api/v1/me", token, "")
+	if w.Code != 200 || !strings.Contains(w.Body.String(), reason) {
+		t.Fatalf("Статус компании в профиле: %d %s", w.Code, w.Body)
 	}
 }
