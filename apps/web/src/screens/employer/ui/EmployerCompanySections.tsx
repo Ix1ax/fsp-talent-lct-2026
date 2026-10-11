@@ -35,7 +35,7 @@ export const EmployerCompanySections = ({
   loadActiveNeeds,
 }: EmployerCompanySectionsProps) => {
   const {
-    router,
+    openHref,
     drafts,
     busy,
     guard,
@@ -76,7 +76,7 @@ export const EmployerCompanySections = ({
               setCandidateId('');
               if (id !== board.companyId) board.chooseCompany(id);
               else board.select('');
-              router.push(href(nextSection, id), { scroll: false });
+              openHref(href(nextSection, id));
             })
           }
         />
@@ -119,7 +119,7 @@ export const EmployerCompanySections = ({
                   setComposer(false);
                   setCreatedNeed(false);
                   board.chooseStatus('active');
-                  router.push(href('vacancies'), { scroll: false });
+                  openHref(href('vacancies'));
                 });
               }}
               onOpenNeed={(need) => {
@@ -127,7 +127,7 @@ export const EmployerCompanySections = ({
                   setComposer(false);
                   setCreatedNeed(false);
                   board.openNeed(need);
-                  router.push(href('vacancies'), { scroll: false });
+                  openHref(href('vacancies'));
                 });
               }}
             />

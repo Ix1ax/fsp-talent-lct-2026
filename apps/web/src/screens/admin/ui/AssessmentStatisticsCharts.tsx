@@ -81,11 +81,18 @@ export const AssessmentStatisticsCharts = ({
               href: '/admin/offers?status=rejected',
             },
             {
+              label: 'Истекли',
+              value: stats.offers.expired,
+              color: STATISTICS_COLORS.neutral,
+              href: '/admin/offers?status=expired',
+            },
+            {
               label: 'Без решения',
               value: getStatisticsRemainder(
                 stats.offers.total,
                 stats.offers.accepted,
                 stats.offers.rejected,
+                stats.offers.expired,
               ),
               color: STATISTICS_COLORS.progress,
             },

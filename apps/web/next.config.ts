@@ -11,6 +11,13 @@ const monorepoRoot = path.join(
 
 const nextConfig: NextConfig = {
   output: 'standalone',
+  // Production must not validate stale routes from other running dev servers.
+  typescript: {
+    tsconfigPath:
+      process.env.NODE_ENV === 'development'
+        ? 'tsconfig.json'
+        : 'tsconfig.build.json',
+  },
   // Dev и production-сборка не должны перезаписывать файлы друг друга.
   distDir:
     process.env.NODE_ENV === 'development'

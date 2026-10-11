@@ -10,6 +10,8 @@ export const getApiErrorMessage = (error: unknown): string => {
         return `Повторите запрос через ${error.retryAfter} сек.`;
       return 'Повторный запрос временно недоступен. Подождите и попробуйте ещё раз.';
     }
+    if (error.code === 'offer_expired')
+      return 'Срок предложения истёк. Ответить на него нельзя.';
     if (error.code === 'company_blocked')
       return 'Компания заблокирована. Обратитесь к администратору для восстановления доступа.';
     if (error.code === 'verification_evidence_required')

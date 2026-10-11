@@ -95,16 +95,16 @@ export const CandidateDetails = ({
       }}
     >
       <DialogContent
-        className="max-h-[90dvh] gap-0 overflow-hidden p-0 [overflow-wrap:anywhere] sm:max-w-4xl"
+        className="flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0 [overflow-wrap:anywhere] sm:max-w-4xl"
         showCloseButton={!busy}
       >
-        <DialogHeader className="border-b px-6 py-5 pr-12">
+        <DialogHeader className="shrink-0 border-b px-6 py-5 pr-12">
           <DialogTitle>Профиль кандидата</DialogTitle>
           <DialogDescription>
             Обезличенный профиль. Контакты доступны после принятия предложения.
           </DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 overflow-y-auto p-5 sm:p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-6">
           <RemoteState {...remote} />
           {candidate && (
             <div className="grid min-w-0 gap-5">
@@ -236,7 +236,7 @@ export const CandidateDetails = ({
           )}
         </div>
         {candidate && company.memberRole !== 'viewer' && (
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-card px-6 py-4">
+          <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t bg-card px-6 py-4">
             <p className="text-xs text-muted-foreground">
               Контакты откроются после принятия предложения
             </p>

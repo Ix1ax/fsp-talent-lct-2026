@@ -80,6 +80,8 @@ export const useEmployerWorkspace = ({
   };
   const sectionHref = (next: EmployerSection) =>
     getEmployerSectionHref(next, board.companyId);
+  const openHref = (target: string) =>
+    router.navigate(target, () => window.history.pushState(null, '', target));
   const go = (next: EmployerSection, target: string) => {
     if (busy) return;
     const action = () => {
@@ -87,7 +89,9 @@ export const useEmployerWorkspace = ({
       setCandidateId('');
       setOffer(false);
       board.clearError();
-      router.push(target, { scroll: false });
+      // Sections are already mounted in the shared employer layout.
+      // Native history updates Next's pathname without waiting for another SSR request.
+      window.history.pushState(null, '', target);
     };
     if (createCompany || next === 'invitation') guard(action);
     else router.navigate(target, action);
@@ -101,11 +105,12 @@ export const useEmployerWorkspace = ({
       setCreateCompany(true);
       setComposer(false);
       board.clearError();
-      router.push(href('profile'), { scroll: false });
+      window.history.pushState(null, '', href('profile'));
     });
   const refreshCompanies = async (id?: string) => board.refreshCompanies(id);
   return {
     router,
+    openHref,
     drafts,
     createCompany,
     setCreateCompany,

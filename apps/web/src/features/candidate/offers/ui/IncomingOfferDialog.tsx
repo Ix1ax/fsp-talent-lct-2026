@@ -80,8 +80,26 @@ export const IncomingOfferDialog = ({
             );
           }
         } catch (error) {
-          if (error instanceof ApiError && error.code === 'response_conflict') {
-            const current = await getIncomingOffer(id);
+          if (
+            error instanceof ApiError &&
+            error.code === 'offer_expired' &&
+            offer
+          ) {
+            const expired: IncomingOffer = {
+              ...offer,
+              status: 'expired',
+              respondedAt: null,
+            };
+            setSaved(expired);
+            onUpdate(expired);
+          }
+          if (
+            error instanceof ApiError &&
+            ['response_conflict', 'offer_expired'].includes(error.code ?? '')
+          ) {
+            const current = await getIncomingOffer(id).catch(() => {
+              throw error;
+            });
             setSaved(current);
             setViewRevision((value) => value + 1);
             onUpdate(current);
@@ -184,6 +202,11 @@ export const IncomingOfferDialog = ({
                   </Button>
                 </div>
               </>
+            )}
+            {offer.status === 'expired' && (
+              <p className="text-sm text-muted-foreground">
+                Срок предложения истёк. Ответить на него нельзя.
+              </p>
             )}
             {mutation.error && (
               <p role="alert" className="text-sm text-destructive">

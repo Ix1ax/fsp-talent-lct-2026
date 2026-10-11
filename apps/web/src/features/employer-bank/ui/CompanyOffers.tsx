@@ -48,6 +48,7 @@ const STATUS = {
   viewed: 'Просмотрено',
   accepted: 'Принято',
   rejected: 'Отклонено',
+  expired: 'Истекло',
 };
 
 export const CompanyOffers = ({
@@ -261,7 +262,9 @@ export const CompanyOffers = ({
                   )}
                 {offer.status !== 'accepted' && (
                   <p className="text-sm text-muted-foreground">
-                    Контакты откроются после принятия предложения кандидатом.
+                    {offer.status === 'expired'
+                      ? 'Срок предложения истёк. Контакты кандидата недоступны.'
+                      : 'Контакты откроются после принятия предложения кандидатом.'}
                   </p>
                 )}
               </div>

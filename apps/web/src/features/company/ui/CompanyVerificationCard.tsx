@@ -19,7 +19,6 @@ import {
   RemoteState,
   toast,
 } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
 import { type Company, VERIFICATION_LABELS } from '@/entities/company';
 
 import type { CompanyManagementApi } from '../model';
@@ -99,59 +98,77 @@ export const CompanyVerificationCard = ({
   };
 
   return (
-    <Card>
+    <Card className="gap-4">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheckIcon className="size-5 text-primary" /> Проверка компании
-        </CardTitle>
-        <CardDescription>
-          Подтвердите реквизиты компании. Проверка не ограничивает работу в
-          кабинете.
-        </CardDescription>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <CardTitle className="flex items-center gap-2">
+                <ShieldCheckIcon
+                  aria-hidden="true"
+                  className="size-5 text-primary"
+                />{' '}
+                Проверка компании
+              </CardTitle>
+              {verification && (
+                <Badge
+                  variant={status.variant}
+                  className={
+                    verification.status === 'pending'
+                      ? 'bg-accent text-brand-text'
+                      : undefined
+                  }
+                >
+                  <status.icon aria-hidden="true" />
+                  {VERIFICATION_LABELS[verification.status]}
+                </Badge>
+              )}
+            </div>
+            <CardDescription>
+              {verification?.status === 'pending'
+                ? 'Заявка у модератора. После рассмотрения здесь появится результат.'
+                : 'Подтвердите реквизиты компании. Проверка не ограничивает работу в кабинете.'}
+            </CardDescription>
+          </div>
+          {verification && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy || remote.loading}
+              onClick={() => void act(false)}
+            >
+              Обновить статус
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4">
         <RemoteState {...remote} />
         {verification && (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Badge
-                variant={status.variant}
-                className={
-                  verification.status === 'pending'
-                    ? 'bg-accent text-brand-text'
-                    : undefined
-                }
-              >
-                <status.icon aria-hidden="true" />
-                {VERIFICATION_LABELS[verification.status]}
-              </Badge>
-              <Button
-                variant="outline"
-                disabled={busy || remote.loading}
-                onClick={() => void act(false)}
-              >
-                Обновить статус
-              </Button>
-            </div>
-            {verification.status === 'pending' && (
-              <p className="text-sm text-muted-foreground">
-                Заявка у модератора. После рассмотрения здесь появится
-                результат.
-              </p>
-            )}
             {verification.reason && (
               <p className="whitespace-pre-wrap rounded-lg border bg-muted/50 p-4 text-sm [overflow-wrap:anywhere]">
                 Комментарий модератора: {verification.reason}
               </p>
             )}
-            <div className="grid gap-2 text-sm text-muted-foreground">
+            <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
               {verification.requestedAt && (
                 <div>
-                  Заявка отправлена: {formatDate(verification.requestedAt)}
+                  Заявка отправлена:{' '}
+                  {new Date(verification.requestedAt).toLocaleString('ru-RU', {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  })}
                 </div>
               )}
               {verification.reviewedAt && (
-                <div>Рассмотрена: {formatDate(verification.reviewedAt)}</div>
+                <div>
+                  Рассмотрена:{' '}
+                  {new Date(verification.reviewedAt).toLocaleString('ru-RU', {
+                    dateStyle: 'short',
+                    timeStyle: 'short',
+                  })}
+                </div>
               )}
               {verification.documentIds.length > 0 && (
                 <div>

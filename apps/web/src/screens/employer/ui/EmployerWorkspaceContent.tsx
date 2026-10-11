@@ -43,7 +43,7 @@ export const EmployerWorkspaceContent = ({
     createCompany,
     profileDirtyChanged,
     setCreateCompany,
-    router,
+    openHref,
     href,
     startCompany,
   } = workspace;
@@ -108,7 +108,7 @@ export const EmployerWorkspaceContent = ({
             profileDirtyChanged(false);
             setCreateCompany(false);
             // Сразу к первому полезному действию; проверку компании можно пройти позже.
-            router.push(href('vacancies', savedCompany.id), { scroll: false });
+            openHref(href('vacancies', savedCompany.id));
           }}
         />
       </div>

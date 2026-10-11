@@ -27,3 +27,16 @@ it('does not insert a detail from another page or decrement its total', () => {
     ),
   ).toBe(page);
 });
+
+it('removes an expired offer from the waiting filter without counting it as a rejection', () => {
+  const expired = { ...offer, status: 'expired' as const, respondedAt: null };
+  expect(updateIncomingOffersPage(page, expired, 'sent')).toEqual({
+    ...page,
+    items: [other],
+    total: 41,
+  });
+  expect(updateIncomingOffersPage(page, expired)).toEqual({
+    ...page,
+    items: [expired, other],
+  });
+});

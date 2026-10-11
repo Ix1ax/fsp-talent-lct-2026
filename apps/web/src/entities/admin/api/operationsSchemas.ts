@@ -112,7 +112,7 @@ export const adminOfferSchema = z.object({
   description: z.string(),
   salary_from_rub: z.number().int(),
   salary_to_rub: z.number().int(),
-  status: z.enum(['sent', 'viewed', 'accepted', 'rejected']),
+  status: z.enum(['sent', 'viewed', 'accepted', 'rejected', 'expired']),
   created_at: z.string(),
   viewed_at: z.string().nullable(),
   responded_at: z.string().nullable(),
@@ -230,6 +230,7 @@ export const adminStatsSchema = z.object({
     total: z.number().int().min(0),
     accepted: z.number().int().min(0),
     rejected: z.number().int().min(0),
+    expired: z.number().int().min(0).default(0),
   }),
   tasks: z.object({
     total: z.number().int().min(0),

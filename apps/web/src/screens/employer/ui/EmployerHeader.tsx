@@ -118,7 +118,7 @@ export const EmployerHeader = ({
             <span className="contents max-sm:hidden">
               <ThemeToggle />
             </span>
-            <UserMenu user={user} />
+            <UserMenu user={user} triggerId="employer-account-menu-trigger" />
           </>
         }
       />

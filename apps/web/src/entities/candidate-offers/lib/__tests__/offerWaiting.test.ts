@@ -33,6 +33,15 @@ describe('offer waiting time', () => {
     ).toBeNull();
   });
 
+  it('does not count an expired offer as waiting or stale', () => {
+    const days = getOfferWaitingDays(
+      { status: 'expired', createdAt: '2026-09-01T00:00:00Z' },
+      now,
+    );
+    expect(days).toBeNull();
+    expect(isOfferStale(days)).toBe(false);
+  });
+
   it('marks an offer stale after a week without an answer', () => {
     expect(isOfferStale(6)).toBe(false);
     expect(isOfferStale(7)).toBe(true);
