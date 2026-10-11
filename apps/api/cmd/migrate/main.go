@@ -13,6 +13,7 @@ import (
 
 	adminrepository "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/repository"
 	adminservice "github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/admin/service"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/demoseed"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/migrations"
 )
 
@@ -51,5 +52,13 @@ func main() {
 		if err = adminservice.New(adminrepository.New(pool)).Bootstrap(ctx, os.Getenv("ADMIN_BOOTSTRAP_EMAIL"), os.Getenv("ADMIN_BOOTSTRAP_PASSWORD")); err != nil {
 			log.Fatal("Не удалось настроить суперадмина: ", err)
 		}
+	}
+	if command == "up" {
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+		defer cancel()
+		if err := demoseed.Apply(ctx, db); err != nil {
+			log.Fatal("Не удалось подготовить демо-набор: ", err)
+		}
+		log.Print("Демонстрационные аккаунты, данные и файлы готовы")
 	}
 }

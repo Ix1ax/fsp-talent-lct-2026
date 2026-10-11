@@ -1,5 +1,5 @@
 SHELL := /bin/sh
-.PHONY: setup infra up down logs api web migrate test check fmt smoke integration auth-smoke keycloak-theme
+.PHONY: demo-seed setup infra up down logs api web migrate test check fmt smoke integration auth-smoke keycloak-theme
 setup:
 	@test -f .env || cp .env.example .env
 	@test -f apps/api/.env || cp apps/api/.env.example apps/api/.env
@@ -21,7 +21,8 @@ api:
 web:
 	npm run dev
 migrate:
-	cd apps/api && set -a && . ./.env && set +a && go run ./cmd/migrate up
+	docker compose up -d --wait --wait-timeout 360 postgres s3 keycloak
+	docker compose --profile app run --build --rm migrate up
 test:
 	cd apps/api && go test -race ./...
 check:
@@ -54,3 +55,6 @@ keycloak-theme:
 .PHONY: matching-evaluation
 matching-evaluation:
 	sh scripts/evaluate-matching.sh
+
+# Синтетический набор для жюри; настройки берутся из корневого .env.
+demo-seed: migrate
