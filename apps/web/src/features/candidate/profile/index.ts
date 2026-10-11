@@ -1,3 +1,3 @@
 export { toProfileFormValues } from './lib';
 export type { ProfileFormValues } from './model';
-export { CandidateProfileForm } from './ui';
+export { CandidateProfileForm, CandidateProfileGate } from './ui';

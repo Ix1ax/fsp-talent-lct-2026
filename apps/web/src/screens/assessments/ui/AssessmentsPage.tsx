@@ -16,23 +16,24 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 import type { Catalogs, Skill } from '@/entities/catalog';
+import { CandidateProfileGate } from '@/features/candidate/profile';
 
 import { useAssessments } from '../model';
 import { AssessmentHistory } from './AssessmentHistory';
 import { AvailableAssessments } from './AvailableAssessments';
 import { StartAssessmentDialog } from './StartAssessmentDialog';
 
-interface AssessmentsPageProps {
+interface AssessmentsContentProps {
   catalogs?: Catalogs;
   skills?: Skill[];
   catalogsError?: string;
 }
 
-export const AssessmentsPage = ({
+const AssessmentsContent = ({
   catalogs,
   skills = [],
   catalogsError,
-}: AssessmentsPageProps) => {
+}: AssessmentsContentProps) => {
   const router = useRouter();
   const state = useAssessments();
   const { selected, busy, close, start } = state;
@@ -102,5 +103,15 @@ export const AssessmentsPage = ({
         onStart={start}
       />
     </PageWrapper>
+  );
+};
+
+type AssessmentsPageProps = AssessmentsContentProps;
+
+export const AssessmentsPage = (props: AssessmentsPageProps) => {
+  return (
+    <CandidateProfileGate>
+      <AssessmentsContent {...props} />
+    </CandidateProfileGate>
   );
 };
