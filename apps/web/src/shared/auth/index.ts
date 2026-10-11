@@ -6,6 +6,7 @@ export {
   getClientSessionRevision,
   onSessionExpired,
   setClientAccessToken,
+  setSigningOut,
 } from './session.client';
 export type { AuthTokens, TokenRefreshResult } from './tokens';
 export {

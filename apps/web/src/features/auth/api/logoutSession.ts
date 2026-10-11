@@ -3,6 +3,7 @@ import {
   clearClientAccessToken,
   clearOidcUser,
   createOidcManager,
+  setSigningOut,
 } from '@/shared/auth';
 import { approveUnsavedUnload } from '@/shared/hooks/navigation';
 import { rememberRole } from '@/entities/session';
@@ -10,13 +11,16 @@ import { rememberRole } from '@/entities/session';
 export const logoutSession = async (): Promise<void> => {
   const config = await getAuthConfig();
   const manager = createOidcManager(config.issuer, config.clientId);
+  setSigningOut(true);
   const response = await fetch('/api/auth/logout', {
     method: 'POST',
     credentials: 'same-origin',
   });
 
-  if (!response.ok)
+  if (!response.ok) {
+    setSigningOut(false);
     throw new Error('Не удалось завершить сессию. Попробуйте ещё раз.');
+  }
 
   const { idTokenHint } = (await response.json().catch(() => ({}))) as {
     idTokenHint?: string | null;
@@ -32,6 +36,7 @@ export const logoutSession = async (): Promise<void> => {
     });
   } catch (error) {
     cancelApproval();
+    setSigningOut(false);
     throw error;
   }
 };

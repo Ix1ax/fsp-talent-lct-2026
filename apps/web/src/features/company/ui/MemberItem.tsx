@@ -26,7 +26,7 @@ export const MemberItem = ({
         </p>
         {member.userId !== userId && (
           <p className="mt-1 text-xs text-muted-foreground">
-            Сотрудник · {member.userId.slice(0, 8)}
+            Сотрудник · {member.userId.slice(-8)}
           </p>
         )}
       </div>

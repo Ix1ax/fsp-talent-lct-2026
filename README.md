@@ -1,1258 +1,801 @@
-# ФСП · ЛЦТ 2026
+# ФСП Скаут · ЛЦТ 2026
 
-Монорепозиторий: Go/Gin, React/Next.js, Postgres, Redis, S3 (SeaweedFS) и Keycloak.
-Реализованы профили, потребности компаний, банк кандидатов, приглашения, тестирование,
-ежедневные задания и административные методы.
-Комментарии и сообщения приложения пишем на русском.
+Платформа поиска работы и подбора IT-специалистов для трека ФСП на «Лидерах цифровой трансформации 2026». Кандидат собирает профиль, подтверждает квалификацию тестами и получает предложения компаний. Работодатель формирует потребности, подбирает кандидатов и проверяет решения своих заданий. Администратор управляет справочниками, тестами и модерацией.
 
-Общее описание бэкенда от подбора кандидатов до админки:
-[docs/backend-hiring-and-admin.md](docs/backend-hiring-and-admin.md).
+Монорепозиторий содержит **фронтенд Next.js, бэкенд Go**, общий OpenAPI, миграции, локальную инфраструктуру и серверный деплой. Документация сверена с `main` 11 октября 2026 года.
 
-## Запуск и разработка
+## Материалы сдачи
 
-Нужны Docker и Compose. Для разработки на хосте — Go 1.26 и Node 24.
+| Материал | Ссылка |
+| --- | --- |
+| Развёрнутый прототип | [89.104.69.242:3000](http://89.104.69.242:3000/) |
+| Сопроводительная документация по ТЗ (8 пунктов) | [PDF](docs/submission/fsp-scout-documentation.pdf) · [Markdown](docs/submission/documentation.md) |
+| Презентация | `docs/submission/` — _будет добавлена_ |
+| Скринкаст | `docs/submission/` — _будет добавлен_ |
+| Swagger / OpenAPI | [Swagger](http://89.104.69.242:8080/docs/) · [api/openapi.yaml](api/openapi.yaml) |
+| Демо-аккаунты и маршрут проверки для жюри | [ниже](#тестовые-аккаунты-и-доступы) · [docs/jury-demo.md](docs/jury-demo.md) |
+
+Все материалы сдачи лежат в [docs/submission](docs/submission). GitHub не принимает файлы больше 100 МБ: видео тяжелее этого публикуется через Git LFS или внешнюю ссылку.
+
+## Содержание
+
+- [Материалы сдачи](#материалы-сдачи)
+- [Адреса сервера и localhost](#адреса-сервера-и-localhost)
+- [Тестовые аккаунты и доступы](#тестовые-аккаунты-и-доступы)
+- [Возможности и роли](#возможности-и-роли)
+- [Архитектура и структура](#архитектура-и-структура)
+- [Запуск в Docker](#запуск-в-docker)
+- [Разработка на хосте](#разработка-на-хосте)
+- [Переменные окружения](#переменные-окружения)
+- [Keycloak, регистрация и почта](#keycloak-регистрация-и-почта)
+- [Админка приложения](#админка-приложения)
+- [API и документация эндпоинтов](#api-и-документация-эндпоинтов)
+- [Основные сценарии и ограничения](#основные-сценарии-и-ограничения)
+- [Тесты и проверки](#тесты-и-проверки)
+- [Сервер и CI/CD](#сервер-и-cicd)
+- [Диагностика](#диагностика)
+- [Подробная документация](#подробная-документация)
+
+## Адреса сервера и localhost
+
+Сервер команды: **`89.104.69.242`**, стенд работает по HTTP, без домена и TLS. Локально в браузере и настройках OIDC используем **`localhost`**: Keycloak настроен на этот hostname, замена его IP-адресом нарушает согласованность issuer и redirect URI.
+
+| Сервис / страница | Сервер | Локально, Docker |
+| --- | --- | --- |
+| Сайт | [Открыть](http://89.104.69.242:3000/) | [localhost:3000](http://localhost:3000/) |
+| Вход кандидата / работодателя | [Вход](http://89.104.69.242:3000/login) | [Вход](http://localhost:3000/login) |
+| Кабинет кандидата | [Кандидат](http://89.104.69.242:3000/candidate) | [Кандидат](http://localhost:3000/candidate) |
+| Кабинет работодателя | [Работодатель](http://89.104.69.242:3000/employer) | [Работодатель](http://localhost:3000/employer) |
+| Админка приложения | [Админка](http://89.104.69.242:3000/admin) | [Админка](http://localhost:3000/admin) |
+| Swagger UI | [Swagger](http://89.104.69.242:8080/docs/) | [Swagger](http://localhost:8080/docs/) |
+| OpenAPI YAML | [Спецификация](http://89.104.69.242:8080/openapi.yaml) | [Спецификация](http://localhost:8080/openapi.yaml) |
+| API: процесс | [healthz](http://89.104.69.242:8080/healthz) | [healthz](http://localhost:8080/healthz) |
+| API: Postgres, Redis, S3 | [readyz](http://89.104.69.242:8080/readyz) | [readyz](http://localhost:8080/readyz) |
+| API: информация | [info](http://89.104.69.242:8080/api/v1/info) | [info](http://localhost:8080/api/v1/info) |
+| API: настройки входа | [auth/config](http://89.104.69.242:8080/api/v1/auth/config) | [auth/config](http://localhost:8080/api/v1/auth/config) |
+| Тестовая почта Mailpit | [Письма](http://89.104.69.242:8025/) | [Письма](http://localhost:8025/) |
+| Keycloak: аккаунт пользователя | [Account](http://89.104.69.242:8081/realms/fsp/account/) | [Account](http://localhost:8180/realms/fsp/account/) |
+| Keycloak: OIDC discovery | [Discovery](http://89.104.69.242:8081/realms/fsp/.well-known/openid-configuration) | [Discovery](http://localhost:8180/realms/fsp/.well-known/openid-configuration) |
+| Keycloak: административная консоль | [Admin Console¹](http://89.104.69.242:8081/admin/master/console/) | [Admin Console](http://localhost:8180/admin/master/console/) |
+
+¹ Realm `master` сохраняет требование HTTPS для внешнего входа. Публичный HTTP-адрес консоли не гарантирует возможность входа; серверным Keycloak управляем через Admin CLI по SSH, как описано ниже.
+
+При `npm run dev` фронт открывается на **[localhost:5173](http://localhost:5173/)**, админка — **[localhost:5173/admin](http://localhost:5173/admin)**. Все фронтенд-пути из таблицы сохраняются; API, Keycloak и Mailpit остаются на 8080, 8180 и 8025. Продуктовый API доступен и через фронт: `http://localhost:3000/api/v1/...` или `http://localhost:5173/api/v1/...`. Swagger и `/openapi.yaml` открываем непосредственно на порту API.
+
+На 11.10.2026 сайт, `/admin`, `/healthz`, `/readyz`, `/api/v1/info`, Swagger и OpenAPI серверного стенда отвечали `200`; Mailpit без авторизации — `401`. Это проверка доступности; вход и сценарии аккаунтов требуют отдельной проверки.
+
+## Тестовые аккаунты и доступы
+
+### Серверный стенд
+
+Сайт: [89.104.69.242:3000](http://89.104.69.242:3000/). Пользователи входят кнопкой «Войти», администраторы — на [/admin](http://89.104.69.242:3000/admin).
+
+| Роль | Логин | Пароль | Где входить | Что проверять |
+| --- | --- | --- | --- | --- |
+| Кандидат с заполненным профилем | `candidate@demo.fsp.test` | `1234` | [Вход](http://89.104.69.242:3000/login) | Профиль, подтверждённый Junior Go, история теста, ФСП, предложения, задания и решения |
+| Новый кандидат | `new-candidate@demo.fsp.test` | `1234` | [Вход](http://89.104.69.242:3000/login) | Путь с нуля: согласия, профиль или импорт PDF, контакты, опрос, тест, публикация |
+| Работодатель — владелец | `employer@demo.fsp.test` | `1234` | [Вход](http://89.104.69.242:3000/login) | Четыре компании, документы, команда, потребности, подбор, предложения, задания |
+| Рекрутер | `recruiter@demo.fsp.test` | `1234` | [Вход](http://89.104.69.242:3000/login) | Подбор, предложения и решения в «Демо · Скаут Технологии» |
+| Наблюдатель (права просмотра) | `viewer@demo.fsp.test` | `1234` | [Вход](http://89.104.69.242:3000/login) | Только чтение кабинета «Демо · Скаут Технологии» |
+| Администратор | `admin@demo.fsp.test` | `adminadminadmin` | [Админка](http://89.104.69.242:3000/admin) | Справочники, модерация, проверка компаний, пользователи, тесты, статистика |
+| Суперадминистратор | `superadmin@fsp.local` | `adminadminadmin` | [Админка](http://89.104.69.242:3000/admin) | Всё, что администратор, плюс управление администраторами |
+| Тестовая почта Mailpit | `admin` | `admin1234` | [Письма](http://89.104.69.242:8025/) | Письма подтверждения регистрации и восстановления пароля |
+
+Аккаунты, профили, компании, потребности, предложения, задания и файлы создаёт демо-набор при первом `make up`, `make migrate` или серверном деплое; маршрут проверки и состав данных — [docs/jury-demo.md](docs/jury-demo.md). Суперадминистратор — аккаунт первоначальной активации из серверного окружения; повторные миграции его пароль не перезаписывают. Демо-администратор получает пароль `adminadminadmin`. Администратор Keycloak (`admin`, пароль из `KEYCLOAK_ADMIN_PASSWORD` серверного окружения) — инфраструктурная учётная запись, доступна только через Admin CLI по SSH и в публичные материалы не передаётся.
+
+### Локальные аккаунты
+
+| Назначение | Логин | Пароль / условие |
+| --- | --- | --- |
+| Демо-аккаунты кандидата, работодателя, рекрутера, наблюдателя и администратора | Те же, что на сервере (таблица выше) | Создаются автоматически при первом `make up` или `make migrate` |
+| Пользователь локального Keycloak | `dev@example.test` | `local-demo-only`; почта подтверждена |
+| Роль этого пользователя в приложении | Выбирается при первом входе | `make auth-smoke` регистрирует его как `candidate` |
+| Локальный суперадминистратор | `superadmin@fsp.local` | `adminadminadmin`, **если** заполнены обе `ADMIN_BOOTSTRAP_*` до миграций |
+| Локальный администратор Keycloak | `admin` | `local-keycloak-admin-change-me` из `.env.example` |
+| Локальный Mailpit | Вход не требуется | Локальный Compose не включает пароль интерфейса |
+
+Один пользователь приложения получает одну роль. Новый аккаунт регистрируется через Keycloak с выбором `candidate` или `employer`. Роли `owner`, `recruiter`, `viewer` назначаются внутри компании, не на странице регистрации.
+
+## Возможности и роли
+
+| Роль | Основные действия |
+| --- | --- |
+| Кандидат | Профиль, контакты, согласия, навыки, карьера, импорт резюме, анкета, тесты, ФСП-достижения, экспорт PDF, предложения и задания |
+| Владелец компании | Создание и редактирование компании, документы, команда, заявка на подтверждение, потребности, подбор, предложения, задания и проверка решений |
+| Рекрутер | Потребности, кандидаты, предложения и задания своей компании |
+| Наблюдатель | Чтение разрешённых данных компании; без изменений, отправки предложений и проверки решений |
+| Администратор | Справочники, модерация навыков, банк вопросов, шаблоны и предпросмотры, компании и пользователи, блокировки, статистика и журнал |
+| Суперадминистратор | Действия администратора плюс создание и управление обычными администраторами |
+
+Потребность работодателя — сущность для подбора, в интерфейсе раздел «Потребности». Публичного банка вакансий и самостоятельных откликов кандидатов нет: основной сценарий — обратный подбор, работодатель сам выходит на кандидата.
+
+Достижения ФСП поступают из **синтетического реестра `fsp_mock`**. Реальный API ФСП и подтверждение владения настоящим ФСП ID пока не подключены. Программные задания проверяются по правилам; пользовательский код на сервере не исполняется.
+
+## Архитектура и структура
+
+| Компонент | Технологии / назначение |
+| --- | --- |
+| Фронтенд | Next.js 15, React 19, TypeScript, Tailwind CSS 4, Radix/shadcn, React Hook Form, Zod |
+| Бэкенд | Go 1.26, Gin, pgx, Goose, OIDC, AWS SDK для S3 |
+| Данные приложения | PostgreSQL 17 |
+| Кеш | Redis 7.4; persistence отключён, данные восстанавливаемые |
+| Файлы | Приватный S3-совместимый SeaweedFS 4.37; метаданные в PostgreSQL |
+| Авторизация пользователей | Keycloak 26.8, отдельная PostgreSQL БД |
+| Почта | Mailpit 1.27.8 |
+| Поставка | Docker Compose, GitHub Actions, GHCR |
+
+```text
+Браузер → Next.js → Go API → PostgreSQL / Redis / SeaweedFS
+             ↕        ↕
+          Keycloak → отдельная PostgreSQL БД
+             ↓
+          Mailpit
+```
+
+Кандидат и работодатель входят через Keycloak с Authorization Code + PKCE. Next.js хранит access/refresh tokens в HttpOnly cookies, клиентский access token — в памяти. Прямые запросы в Go API авторизуются Bearer JWT. Админка использует отдельные аккаунты и сессии БД приложения.
+
+```text
+apps/api/
+  cmd/api/                    сборка зависимостей и запуск API
+  cmd/migrate/                up / status / down и bootstrap суперадмина
+  cmd/sync-user-identities/   импорт снимка идентичностей Keycloak
+  internal/                  доменные модули и подключения инфраструктуры
+  internal/httpapi/          роутер, middleware, встроенный Swagger
+  migrations/               SQL-миграции, встроенные в бинарник
+  tests/integration/        интеграционные проверки
+apps/web/
+  src/app/                  App Router, layouts, обработчики веб-сессии
+  src/screens/              композиция экранов
+  src/widgets/              оболочки кабинетов и общие блоки
+  src/features/             формы и действия пользователя
+  src/entities/             доменные модели и API-клиенты
+  src/shared/               UI, транспорт, hooks, утилиты, константы
+  public/                   бренд, шрифты, изображения и видео
+  docs/                     документация фронтенда
+api/openapi.yaml            общий контракт API
+infra/keycloak/             server/local realm и тема входа
+compose.yaml                локальный стек с профилем app
+compose.ci.yaml             интеграционное окружение
+deploy/                     серверный Compose и пример env
+scripts/                    smoke, деплой, Keycloak, QA
+docs/                       документация модулей
+.github/workflows/ci.yml     сборка и деплой main
+```
+
+Доменные модули API используют слои `entity`, `service`, `repository` и HTTP-обработчики `web`; зависимости собирает `cmd/api`. Права на запись проверяются в сервисах и SQL дополнительно к middleware. Фронтенд организован по FSD; alias `@/` указывает на `src`. Серверные API нельзя импортировать в клиентские компоненты.
+
+## Запуск в Docker
+
+Нужны Git, Docker с Compose v2 и доступ к registry образов. Команды выполняются из корня монорепозитория.
 
 ```sh
+git clone git@github.com:Ix1ax/fsp-talent-lct-2026.git
+cd fsp-talent-lct-2026
+git switch main
 cp .env.example .env
+```
+
+Для Docker-фронта задайте в `.env`:
+
+```dotenv
+WEB_PUBLIC_URL=http://localhost:3000
+ADMIN_BOOTSTRAP_EMAIL=superadmin@fsp.local
+ADMIN_BOOTSTRAP_PASSWORD=adminadminadmin
+```
+
+Остальные значения можно оставить из `.env.example`. Затем:
+
+```sh
 make up
 make smoke
 make auth-smoke
 ```
 
-| Локальный сервис | Адрес |
-| --- | --- |
-| Фронт | http://localhost:3000 |
-| API и Swagger | http://localhost:8080/docs/ |
-| Keycloak | http://localhost:8180 |
-| Тестовые письма | http://localhost:8025 |
+`make up` собирает API и фронт, запускает инфраструктуру, применяет миграции перед API и настраивает тему Keycloak. Откройте [сайт](http://localhost:3000/), [Swagger](http://localhost:8080/docs/) и [почту](http://localhost:8025/).
 
-Локальный пользователь: `dev@example.test`, пароль `local-demo-only`.
-Он и клиент входа по паролю существуют только в локальном realm.
-Администратор локального Keycloak задан в `.env.example`.
-`make down` сохраняет данные, `docker compose down -v` удаляет volumes.
+```sh
+make logs
+make down
+```
 
-Для разработки без пересборки контейнеров:
+`make down` останавливает стек и сохраняет volumes. `docker compose --profile app down -v` уничтожает локальные базы и файлы; для обычного перезапуска эта команда не нужна.
+
+## Разработка на хосте
+
+Нужны **Go 1.26**, **Node.js 24** (версия Docker-сборки; минимум `package.json` — 22.12.0) и npm. Используется **npm workspace и корневой `package-lock.json`**.
 
 ```sh
 make setup
-make infra
-make migrate
-make api   # первый терминал
-make web   # второй терминал, http://localhost:5173
 ```
 
-`make setup` создаёт `.env`, `apps/api/.env` и `apps/web/.env`, не перезаписывая существующие файлы.
-При смене локальных паролей обновляйте соответствующие env-файлы. Next.js проксирует API через
-`API_PROXY_TARGET` (по умолчанию `http://localhost:8080`). Для удалённого бека измените эту переменную
-в `apps/web/.env` и перезапустите dev-сервер; для production пересоберите приложение.
-Для обновления сессии задайте `OIDC_TOKEN_URL` и `OIDC_CLIENT_ID=fsp-web`.
-Секреты в `NEXT_PUBLIC_*` не помещаем: эти значения входят в браузерную сборку.
-Зависимости фронта добавляем из корня: `npm install <package> -w apps/web`.
+Команда создаёт `.env`, `apps/api/.env`, `apps/web/.env`, если их нет, устанавливает npm-зависимости и Go-модули. Существующие env не перезаписываются. Задайте в корневом `.env` `WEB_PUBLIC_URL=http://localhost:5173` и `ADMIN_BOOTSTRAP_*`: `make migrate` выполняется в Docker и читает корневой `.env`.
 
-## Сервер
+```sh
+make infra
+make migrate
+make api
+```
 
-HTTP, прямой доступ по IP, без Caddy, доменов и сертификатов.
+Во втором терминале:
 
-| Проверка | Адрес |
-| --- | --- |
-| Фронт и админка | http://89.104.69.242:3000 |
-| Swagger | http://89.104.69.242:8080/docs/ |
-| Процесс API | http://89.104.69.242:8080/healthz |
-| Postgres, Redis и S3 | http://89.104.69.242:8080/readyz |
-| Версия API | http://89.104.69.242:8080/api/v1/info |
-| Настройки входа | http://89.104.69.242:8080/api/v1/auth/config |
-| Настройки Keycloak | http://89.104.69.242:8081/realms/fsp/.well-known/openid-configuration |
+```sh
+make web
+```
 
-`GET /api/v1/me` принимает `Authorization: Bearer <access_token>`.
-Проверяем подпись JWT, issuer, audience `fsp-api`, срок действия, `sub`
-и подтверждённую почту. Без токена — `401`.
-Ошибки: `{"error":{"code":"unauthorized","message":"…"}}`.
-Токены, SQL, пароли и тела запросов не выводим в ответы и логи.
-`X-Request-ID` связывает запрос с JSON-логом. CORS разрешает любые origin;
-авторизация API работает без cookies.
+Откройте [localhost:5173](http://localhost:5173/). Фронт и API работают на хосте, инфраструктура — в Docker. Не запускайте одновременно Docker API и API на хосте на одном порту 8080. Зависимости фронта добавляем из корня: `npm install <package> -w apps/web`.
 
-Postgres хранит данные приложения; отдельная БД Keycloak — пользователей и вход.
-Redis — восстанавливаемый кеш, S3 — содержимое файлов. Базы, Redis и S3 наружу
-не опубликованы. Mailpit принимает тестовые письма; его интерфейс доступен
-по `http://<PUBLIC_HOST>:8025`; SMTP остаётся внутри Docker-сети. Письма сохраняются
-в volume `mailpit-data`. Для общего пароля интерфейса добавьте
-`MAILPIT_UI_AUTH=team:<отдельный пароль>` в Secret `PRODUCTION_ENV`.
-Без этой переменной веб-интерфейс открыт без авторизации.
+Для локального фронта с серверным бэкендом в `apps/web/.env.local`:
 
-Адрес сервера задаёт `PUBLIC_HOST`. Для тестового HTTP в Compose включён
-`OIDC_ALLOW_HTTP=true`. Новые адреса фронта добавляем в redirect URI и web origins
-клиента `fsp-web`. Scope `basic` должен быть Default у клиентов входа: он добавляет `sub`.
-Импорт JSON действует только при первом создании realm. Существующие настройки
-меняем через Keycloak Admin CLI по SSH, не удаляя пользователей и volumes.
-Административный realm `master` сохраняет стандартное требование HTTPS для внешних
-запросов. Для серверного управления используем `kcadm.sh` внутри контейнера
-с адресом `http://localhost:8080`; локальная админка доступна на `localhost:8180`.
+```dotenv
+API_PROXY_TARGET=http://89.104.69.242:8080
+OIDC_TOKEN_URL=http://89.104.69.242:8081/realms/fsp/protocol/openid-connect/token
+OIDC_CLIENT_ID=fsp-web
+SESSION_COOKIE_SECURE=false
+```
 
-## CI/CD
+Запустите `make web` и входите с **серверным** аккаунтом. Этот режим работает с общим стендом. Клиент `fsp-web` должен разрешать `http://localhost:5173/*`; серверный скрипт сохраняет этот redirect URI. `.env.local` имеет приоритет над `.env`: измените его при возвращении к локальному API.
 
-Один workflow `.github/workflows/ci.yml`:
+## Переменные окружения
 
-- PR: автоматические проверки отключены. Тесты и линтеры запускаем локально через `make check`.
-- Push в `main`: сборка образов API и фронта с Docker-кешем, публикация в GHCR и деплой. Оба образа получают тег SHA текущего коммита.
-- Compose обновляет изменённые контейнеры и применяет миграции перед API.
-  Проверяет `/readyz`, Swagger, главную страницу фронта и API через прокси фронта.
+### Какой файл используется
 
-Создайте GitHub environment `production` и заполните Secrets:
+| Файл / источник | Кто читает | Содержание |
+| --- | --- | --- |
+| Корневой `.env` | Локальный Compose | Пароли контейнеров, Keycloak, адрес фронта, bootstrap |
+| `apps/api/.env` | `make api`, `make integration` | Подключения Go к инфраструктуре на localhost |
+| `apps/web/.env` / `.env.local` | Next.js | Proxy API, token endpoint, cookies, origin |
+| `deploy/production.env.example` | Шаблон сервера | Имена серверных переменных |
+| GitHub environment `production` → secret `PRODUCTION_ENV` | CI/CD | Действующие серверные значения |
+| `~/fsp/.env` на сервере | Серверный Compose | Копия секрета и SHA-теги образов из CI |
 
-| Секрет | Значение |
-| --- | --- |
-| `DEPLOY_HOST` | `89.104.69.242` |
-| `DEPLOY_USER` | `fsp-deploy` |
-| `DEPLOY_SSH_KEY` | Приватный SSH-ключ пользователя деплоя |
-| `DEPLOY_KNOWN_HOSTS` | Проверенная SSH-запись сервера |
-| `PRODUCTION_ENV` | Заполненный `deploy/production.env.example` |
+Пароли PostgreSQL, Redis и S3 в корневом и API env должны совпадать. Реальные `.env` исключены из Git. `NEXT_PUBLIC_*` входит в браузерную сборку; секреты помещаем в серверные переменные.
 
-`GITHUB_TOKEN` предоставляет GitHub. PAT и `DEPLOY_ENABLED` не нужны.
-Пароли генерируем через `openssl rand -hex 32`. Смена env не меняет пароль
-уже созданной роли Postgres: для ротации отдельно обновляем роль в БД.
-Серверу нужны Docker, Compose, Python 3, доступ к GHCR и открытые порты 3000/8080/8081.
-Секреты и реальные `.env` не коммитим.
+### Полный локальный `.env` для Docker
 
-В GitHub → environment `production` → secret `PRODUCTION_ENV` укажите:
+Этот пример подходит для новой локальной установки:
+
+```dotenv
+POSTGRES_USER=fsp
+POSTGRES_PASSWORD=local-postgres-change-me
+POSTGRES_DB=fsp
+REDIS_PASSWORD=local-redis-change-me
+S3_ACCESS_KEY=local-fsp
+S3_SECRET_KEY=local-s3-change-me
+S3_BUCKET=fsp-private
+KEYCLOAK_DB_PASSWORD=local-keycloak-db-change-me
+KEYCLOAK_ADMIN_USER=admin
+KEYCLOAK_ADMIN_PASSWORD=local-keycloak-admin-change-me
+WEB_PUBLIC_URL=http://localhost:3000
+CORS_ALLOWED_ORIGINS=*
+SESSION_COOKIE_SECURE=false
+ADMIN_BOOTSTRAP_EMAIL=superadmin@fsp.local
+ADMIN_BOOTSTRAP_PASSWORD=adminadminadmin
+```
+
+Для разработки на хосте поменяйте `WEB_PUBLIC_URL` на `http://localhost:5173`. `MAILPIT_UI_AUTH` локальный Compose не использует; серверный пароль почты на локальном Mailpit не действует.
+
+### Полный `apps/api/.env` для разработки на хосте
+
+```dotenv
+APP_ENV=development
+HTTP_ADDR=:8080
+DATABASE_URL=postgres://fsp:local-postgres-change-me@localhost:5432/fsp?sslmode=disable
+REDIS_ADDR=localhost:6379
+REDIS_PASSWORD=local-redis-change-me
+S3_ENDPOINT=http://localhost:8333
+S3_REGION=us-east-1
+S3_ACCESS_KEY=local-fsp
+S3_SECRET_KEY=local-s3-change-me
+S3_BUCKET=fsp-private
+OIDC_ISSUER=http://localhost:8180/realms/fsp
+OIDC_CLIENT_ID=fsp-api
+OIDC_INTERNAL_URL=
+CORS_ALLOWED_ORIGINS=*
+ADMIN_BOOTSTRAP_EMAIL=superadmin@fsp.local
+ADMIN_BOOTSTRAP_PASSWORD=adminadminadmin
+PRIVACY_POLICY_VERSION=2026-10-07
+ASSESSMENT_RETAKE_DAYS=7
+```
+
+### Полный `apps/web/.env` для разработки на хосте
+
+```dotenv
+API_PROXY_TARGET=http://localhost:8080
+OIDC_TOKEN_URL=http://localhost:8180/realms/fsp/protocol/openid-connect/token
+OIDC_CLIENT_ID=fsp-web
+APP_ORIGIN=http://localhost:5173
+SESSION_COOKIE_SECURE=false
+```
+
+`NEXT_PUBLIC_API_URL` по умолчанию `/api`; задавать его обычно не нужно. `API_PROXY_TARGET` — origin без `/api`. После изменения env перезапустите dev-сервер; для production пересоберите приложение: rewrites формируются при сборке. `FSP_DEV_DIST_DIR` переопределяет каталог dev-сборки, по умолчанию `.next-dev`; production использует `.next`.
+
+### Серверное окружение
+
+Основа — [deploy/production.env.example](deploy/production.env.example). Текущие адреса и демо-доступы:
 
 ```dotenv
 PUBLIC_HOST=89.104.69.242
 WEB_PUBLIC_URL=http://89.104.69.242:3000
 SESSION_COOKIE_SECURE=false
+CORS_ALLOWED_ORIGINS=*
+S3_ACCESS_KEY=fsp-server
+S3_BUCKET=fsp-private
+KEYCLOAK_ADMIN_USER=admin
+MAILPIT_UI_AUTH=admin:admin1234
+ADMIN_BOOTSTRAP_EMAIL=superadmin@fsp.local
+ADMIN_BOOTSTRAP_PASSWORD=adminadminadmin
+
+# Действующие значения из PRODUCTION_ENV:
+POSTGRES_PASSWORD=<серверный пароль PostgreSQL>
+REDIS_PASSWORD=<серверный пароль Redis>
+S3_SECRET_KEY=<серверный секрет S3>
+KEYCLOAK_DB_PASSWORD=<серверный пароль БД Keycloak>
+KEYCLOAK_ADMIN_PASSWORD=<серверный пароль администратора Keycloak>
 ```
 
-`WEB_PUBLIC_URL` — один origin без завершающего `/`, не Markdown-ссылка и не список.
-Остальные пароли и настройки хранилищ оставьте действующими. `API_IMAGE` и `WEB_IMAGE`
-автоматически добавляет CI. Серверный `.env` при каждом деплое заменяется содержимым
-`PRODUCTION_ENV`, поэтому редактирование только `~/fsp/.env` не сохраняется при следующем деплое.
-Для текущего HTTP по IP требуется `SESSION_COOKIE_SECURE=false`; для HTTPS используйте `true`.
-Адрес фронта передаётся в `APP_ORIGIN`, а API и обновление токенов работают через Docker-сеть.
-На HTTP по IP браузер не предоставляет `crypto.subtle`: фронт получает одноразовую пару
-verifier/challenge из `/api/auth/pkce`. Пара создаётся криптографией Node.js без кеширования;
-в запросе входа остаётся `code_challenge_method=S256`, а при обмене кода передаётся verifier.
-На HTTPS и localhost используется обычный браузерный PKCE.
-Импорт резюме и предпросмотр теста в админке используют UUID с резервной генерацией через
-`crypto.getRandomValues`, доступный и на HTTP по IP.
-Скрипт `keycloak-web.py` добавляет публичный origin в redirect URI и web origins существующего
-клиента `fsp-web`, сохраняет ранее разрешённые адреса и доступ с localhost:5173/3000.
-Пользователи и остальные настройки Keycloak не перезаписываются.
+Подставьте действующие значения вместо `<...>` перед использованием; этот блок не готовый env для запуска. Новые инфраструктурные пароли генерируются через `openssl rand -hex 32`. `API_IMAGE` и `WEB_IMAGE` добавляет CI. Изменение env не меняет пароль уже созданной роли БД. Bootstrap Keycloak относится к первоначальному созданию его администратора.
 
-После обновления секрета и push в `main` дождитесь успешного workflow CI. На сервере:
+| Настройка | Значение / смысл |
+| --- | --- |
+| `OIDC_ISSUER` | Локально `http://localhost:8180/realms/fsp`, сервер `http://89.104.69.242:8081/realms/fsp`; совпадает с JWT `iss` |
+| `OIDC_CLIENT_ID` API | `fsp-api`, ожидаемая audience |
+| `OIDC_CLIENT_ID` фронта | `fsp-web`, публичный клиент |
+| `OIDC_INTERNAL_URL` | В Compose `http://keycloak:8080/realms/fsp`, на хосте пустой |
+| `OIDC_ALLOW_HTTP` | Для production HTTP требуется `true`; задан в серверном Compose |
+| `OIDC_TOKEN_URL` | Token endpoint; в Docker `http://keycloak:8080/realms/fsp/protocol/openid-connect/token` |
+| `APP_ORIGIN` | Один публичный origin фронта с портом; на сервере из `WEB_PUBLIC_URL` |
+| `SESSION_COOKIE_SECURE` | `false` для HTTP-стенда; для HTTPS — `true` |
+| `PRIVACY_POLICY_VERSION` | По умолчанию `2026-10-07`; версия согласия processing |
+| `ASSESSMENT_RETAKE_DAYS` | По умолчанию 7, диапазон 1–365 дней |
+| `MAILPIT_UI_AUTH` | Серверная HTTP-авторизация Mailpit, `логин:пароль` |
+
+`PRIVACY_POLICY_VERSION` и `ASSESSMENT_RETAKE_DAYS` читаются Go-процессом. Для переопределения в Docker добавьте их в `api.environment` соответствующего Compose: одного добавления в корневой `.env` недостаточно.
+
+## Keycloak, регистрация и почта
+
+### Параметры Keycloak
+
+| Параметр | Локально | Сервер |
+| --- | --- | --- |
+| Origin | `http://localhost:8180` | `http://89.104.69.242:8081` |
+| Realm | `fsp` | `fsp` |
+| Issuer | `http://localhost:8180/realms/fsp` | `http://89.104.69.242:8081/realms/fsp` |
+| Клиент фронта | `fsp-web` | `fsp-web` |
+| Клиент Swagger | `fsp-swagger` | `fsp-swagger` |
+| Audience API | `fsp-api` | `fsp-api` |
+| Клиент проверки паролем | `fsp-local-test` | Отсутствует |
+| Callback фронта | `http://localhost:5173/auth/callback` или `http://localhost:3000/auth/callback` | `http://89.104.69.242:3000/auth/callback` |
+| Callback Swagger | `http://localhost:8080/docs/oauth2-redirect.html` | `http://89.104.69.242:8080/docs/oauth2-redirect.html` |
+
+Полные OIDC endpoints:
+
+| Назначение | Сервер | Localhost |
+| --- | --- | --- |
+| Discovery | [Конфигурация](http://89.104.69.242:8081/realms/fsp/.well-known/openid-configuration) | [Конфигурация](http://localhost:8180/realms/fsp/.well-known/openid-configuration) |
+| Начало входа | [Authorization endpoint](http://89.104.69.242:8081/realms/fsp/protocol/openid-connect/auth) | [Authorization endpoint](http://localhost:8180/realms/fsp/protocol/openid-connect/auth) |
+| Обмен кода и refresh | [Token endpoint](http://89.104.69.242:8081/realms/fsp/protocol/openid-connect/token) | [Token endpoint](http://localhost:8180/realms/fsp/protocol/openid-connect/token) |
+| Ключи JWT | [JWKS](http://89.104.69.242:8081/realms/fsp/protocol/openid-connect/certs) | [JWKS](http://localhost:8180/realms/fsp/protocol/openid-connect/certs) |
+| Выход | [Logout endpoint](http://89.104.69.242:8081/realms/fsp/protocol/openid-connect/logout) | [Logout endpoint](http://localhost:8180/realms/fsp/protocol/openid-connect/logout) |
+
+Authorization и logout вызываются с параметрами OIDC, token endpoint принимает POST; открытие этих ссылок без параметров не является проверкой входа.
+
+Клиент `fsp-web` публичный, client secret не требуется, используется PKCE S256. Direct password grant включён только у локального `fsp-local-test`. API проверяет подпись JWT, issuer, срок, `sub`, audience `fsp-api` и `email_verified=true`. Scope `basic` должен входить в Default client scopes, поскольку добавляет `sub`.
+
+На HTTP по IP браузер может не предоставлять `crypto.subtle`: фронт получает PKCE verifier/challenge через свой `/api/auth/pkce`. На HTTPS и localhost используется браузерная криптография.
+
+### Регистрация
+
+1. Откройте `/login` сайта и регистрацию на странице Keycloak.
+2. Укажите отдельный email, имя и пароль. Keycloak хранит учётную запись и пароль.
+3. Откройте Mailpit того же окружения, найдите письмо по получателю и перейдите по ссылке подтверждения.
+4. Вернитесь на сайт и выберите `candidate` или `employer`. Фронт вызывает `POST /api/v1/me/register`.
+5. Кандидат даёт согласия и создаёт профиль; работодатель создаёт компанию и становится владельцем.
+
+Регистрация Keycloak и регистрация роли API — два шага. Вход сам по себе не создаёт профиль или компанию. Повтор регистрации роли возвращает `409`; смена роли этим методом не поддерживается.
+
+### Где лежат письма
+
+Письма подтверждения и восстановления пароля отправляет **Keycloak в Mailpit**, а не во внешние реальные почтовые ящики. Все тестовые получатели видны в одном интерфейсе; логин Mailpit не является email пользователя.
+
+| SMTP realm `fsp` | Тестовое значение |
+| --- | --- |
+| Host | `mailpit` внутри Docker-сети |
+| Port | `1025` |
+| From | `no-reply@fsp.local` |
+| From display name | `ФСП Скаут` |
+| SSL / STARTTLS / SMTP auth | Выключены |
+
+Локально: [localhost:8025](http://localhost:8025/), без пароля. Сервер: [89.104.69.242:8025](http://89.104.69.242:8025/), **`admin` / `admin1234`**. Серверное `MAILPIT_UI_AUTH` передаётся как `MP_UI_AUTH`.
+
+Серверная база писем — `/data/mailpit.db` контейнера, volume `mailpit-data`. Локальный Compose не настраивает постоянную БД Mailpit: сохранение писем после пересоздания не гарантируется. SMTP наружу не опубликован.
+
+### Управление realm и темой
+
+`infra/keycloak/local/fsp-realm.json` импортирует локального пользователя и тестовый клиент; `infra/keycloak/fsp-realm.json` — серверный realm без готовых пользователей. Импорт действует при первом создании realm, изменение JSON не обновляет уже существующий realm.
+
+Локально используйте [консоль](http://localhost:8180/admin/master/console/) с `admin` / `local-keycloak-admin-change-me`. На сервере:
 
 ```sh
+ssh fsp-deploy@89.104.69.242
 cd ~/fsp
-docker compose ps
-curl -fsS http://127.0.0.1:3000/ -o /dev/null
-curl -fsS http://127.0.0.1:3000/api/v1/auth/config
+docker compose exec keycloak bash
 ```
 
-Откройте `http://89.104.69.242:3000`. Если порт закрыт в firewall, разрешите входящий TCP 3000
-в настройках VPS (для активного UFW: `sudo ufw allow 3000/tcp`). Повторный запуск уже загруженного
-релиза: `sh deploy-server.sh` из `~/fsp`.
+Внутри контейнера:
 
 ```sh
-cd ~/fsp
-docker compose ps
-docker compose logs -f --tail=100 api
+/opt/keycloak/bin/kcadm.sh config credentials \
+  --server http://localhost:8080 --realm master \
+  --user "$KC_BOOTSTRAP_ADMIN_USERNAME" \
+  --password "$KC_BOOTSTRAP_ADMIN_PASSWORD"
+/opt/keycloak/bin/kcadm.sh get clients -r fsp -q clientId=fsp-web
 ```
 
-Перед миграциями существующих данных делаем резервную копию БД вне VPS.
-Файлы S3 также резервируем. Автоматических бэкапов и отказоустойчивого кластера нет.
-Для отката релиза указываем предыдущий SHA в `API_IMAGE` и `WEB_IMAGE` серверного `.env`,
-затем `docker compose pull api web && docker compose up -d --wait`.
-Миграции не откатываются; схема должна оставаться совместимой.
+Новый origin добавляется в redirect URI и web origins `fsp-web`. `scripts/keycloak-web.py` на деплое добавляет текущий origin и сохраняет прежние адреса, включая localhost:5173/3000. Тема — `infra/keycloak/themes/fsp-scout`; локальное обновление — `make keycloak-theme`. [Документация темы](docs/keycloak-design-spec.md).
 
-## Структура и правила команды
+## Админка приложения
 
-```text
-apps/api/              Go: cmd, internal, миграции и Dockerfile
-apps/web/              Next.js App Router: npm workspace и корневой package-lock.json
-api/openapi.yaml       общий контракт API
-infra/keycloak/        серверный и локальный импорт realm
-compose.yaml           локальные контейнеры
-compose.ci.yaml        готовые образы интеграционного CI
-deploy/                серверный Compose и пример окружения
-scripts/               проверки и серверный деплой
+Вход: **[сервер /admin](http://89.104.69.242:3000/admin)**, **[Docker /admin](http://localhost:3000/admin)**, **[dev /admin](http://localhost:5173/admin)**. Нужны email и пароль отдельного административного аккаунта. Демо-суперадмин: **`superadmin@fsp.local` / `adminadminadmin`**, с условиями из таблицы доступов.
+
+Аккаунты находятся в `admin_accounts`, сессии — в `admin_sessions` БД приложения. Пароли хешируются bcrypt, сервер хранит хеш токена сессии. Keycloak admin `admin` не является администратором приложения.
+
+### Первоначальная активация
+
+До миграций задайте оба значения:
+
+```dotenv
+ADMIN_BOOTSTRAP_EMAIL=superadmin@fsp.local
+ADMIN_BOOTSTRAP_PASSWORD=adminadminadmin
 ```
 
-В беке `cmd/api` собирает зависимости, `internal/httpapi` собирает маршруты,
-`internal/auth` проверяет токены, `internal/platform` подключает хранилища.
-Модуль компаний разделён по слоям:
+Docker и `make migrate` (мигратор тоже запускается в Docker) читают их из корневого `.env`. Bootstrap активирует созданного миграцией суперадмина, у которого ещё нет пароля. Повторные миграции **не меняют пароль действующего суперадмина**. Пароль создаваемого администратора должен занимать 12–72 байта.
 
-```text
-internal/company/entity/       модели, ошибки и проверка входных данных
-internal/company/service/      сценарии профиля, документов и потребностей; интерфейсы хранилищ
-internal/company/repository/   SQL-запросы и транзакции PostgreSQL
-internal/company/web/          HTTP-обработчики, маршруты и ответы об ошибках
-internal/catalog/              общие справочники, их репозиторий и сервис
-internal/catalog/web/          публичные HTTP-методы справочников
-internal/httpapi/middleware/   получение текущего пользователя и проверка роли
-internal/httpapi/request/      разбор JSON и пагинации
+Суперадмин создаёт обычного `admin` на `/admin/admins` или через `POST /api/v1/admin/admins`. Публичной регистрации администраторов нет.
+
+### Разделы
+
+Все пути доступны на origin текущего фронта:
+
+| Путь | Назначение |
+| --- | --- |
+| `/admin/overview` | Статистика платформы |
+| `/admin/companies` | Компании, документы, подтверждение и блокировка |
+| `/admin/users` | Пользователи, связанные компании и блокировка |
+| `/admin/needs` | Потребности и модерация |
+| `/admin/offers` | Предложения кандидатам |
+| `/admin/tasks` | Задания компаний и модерация |
+| `/admin/attempts` | Метаданные кандидатских попыток и итоги |
+| `/admin/audit` | Журнал действий |
+| `/admin/catalogs` | Справочники |
+| `/admin/moderation` | Предложенные навыки |
+| `/admin/questions` | Банк заданий и версии |
+| `/admin/templates` | Шаблоны и предпросмотр тестов |
+| `/admin/admins` | Управление администраторами, только superadmin |
+
+`POST /api/v1/admin/auth/login` выдаёт opaque Bearer token на **8 часов**, без refresh. Фронт хранит его в `sessionStorage` вкладки и проверяет `/auth/me`. Выход отзывает сессию, блокировка администратора — все его сессии. Ограничение входа: 10 попыток на email и 30 на IP за 15 минут; при превышении — `429`, `Retry-After: 900`.
+
+## API и документация эндпоинтов
+
+Сервер: **`http://89.104.69.242:8080/api/v1`**. Локально: **`http://localhost:8080/api/v1`**. Браузер фронта использует `/api/v1` через Next.js proxy.
+
+**Полный перечень: [153 операции API по разделам](docs/api-endpoints.md)**. DTO, параметры, ограничения и ответы — [api/openapi.yaml](api/openapi.yaml). Интерактивные запросы — [серверный Swagger](http://89.104.69.242:8080/docs/) или [локальный Swagger](http://localhost:8080/docs/).
+
+Встроенная схема `apps/api/internal/httpapi/docs/openapi.yaml` должна совпадать с общим контрактом. `/openapi.yaml` работающего API показывает контракт развёрнутого релиза. Swagger использует `fsp-swagger` и PKCE; административные запросы требуют схемы `adminSession` и токена отдельной админки.
+
+### Авторизация
+
+| Методы | Доступ |
+| --- | --- |
+| health/readiness, info, auth/config, публичные справочники, Swagger | Без авторизации |
+| `/me/register` | JWT подтверждённого пользователя Keycloak до регистрации роли |
+| `/me` | JWT; роль, статус и локальный ID |
+| Собственный профиль, тесты, предложения, решения | JWT активного кандидата, необходимые согласия |
+| Компании и их ресурсы | JWT работодателя и разрешённое членство компании |
+| `/admin/auth/login` | Email и пароль административного аккаунта |
+| Остальные `/admin/...` | Отдельный adminSession; управление администраторами — superadmin |
+
+```http
+Authorization: Bearer <access_token>
 ```
 
-`web` обращается к сервисам, сервисы работают через интерфейсы хранилищ,
-а `repository` реализует эти интерфейсы. Модели не зависят от HTTP или PostgreSQL.
-Связи между слоями собираются в `cmd/api`. Справочники вынесены из компаний,
-чтобы их могли использовать другие модули.
-Права на записи проверяем в сервисах и SQL, а не только в middleware.
+UUID пользователя, UUID профиля и `sub` Keycloak различаются. `candidate_id` в банке и предложениях — **UUID `candidate_profiles.id`**.
 
-### Расположение тестов бэкенда
+### Группы эндпоинтов
 
-- `internal/<модуль>/entity` и `service`: модели, валидация и сценарии без внешних хранилищ.
-- `internal/<модуль>/web/*_test.go`: HTTP-контракты модуля с тестовыми хранилищами
-  и настоящей проверкой синтетических JWT. Используется внешний пакет `web_test`,
-  чтобы тестовый роутер не создавал циклические импорты рабочего кода.
-- `internal/httpapi/*_test.go`: сборка роутера, CORS, Swagger, регистрация и общие
-  правила доступа ко всем маршрутам. Доменные сценарии сюда не добавляем.
-- `internal/httpapi/middleware/*_test.go`: проверки middleware, включая роли.
-- `internal/testutil`: общие помощники авторизации и запросов; специфичные для
-  модуля тестовые хранилища остаются в его тестах.
-- `tests/integration`: проверки PostgreSQL, миграций, транзакций и внешних
-  хранилищ под build tag `integration`. Тесты создают отдельные схемы БД.
+Пути относительно `/api/v1`; метод каждой операции — в [полном указателе](docs/api-endpoints.md).
 
-Из `apps/api`:
+| Группа | Маршруты |
+| --- | --- |
+| Пользователь | `/me`, `/me/register`, `/auth/config` |
+| Справочники | `/catalogs`, `/catalogs/skills` |
+| Профиль | `/me/profile`, `/me/profile/full`, `/me/profile/avatar`, `/me/profile/onboarding` |
+| Резюме | `/me/profile/import/resume`, `/me/profile/export.pdf` |
+| Контакты и согласия | `/me/contacts`, `/me/consents`, `/me/consents/{kind}` |
+| Навыки и карьера | `/me/skills`, `/me/skills/{skill_id}`, `/me/experience`, `/me/education` |
+| ФСП | `/me/fsp`, `/me/fsp/link`, `/me/fsp/sync` |
+| Тестирование | `/me/assessments/available`, `/me/assessments/history`, `/me/assessments/attempts/...` |
+| Компании | `/companies`, `/companies/{company_id}`, вложенные `/files`, `/members`, `/invitations`, `/verification` |
+| Вход в команду | `/company-invitations/accept` |
+| Потребности | `/companies/{company_id}/needs` и их карточки |
+| Подбор | `/companies/{company_id}/candidates`, `/companies/{company_id}/needs/{need_id}/candidates` |
+| Предложения | `/companies/{company_id}/offers`, `/me/offers`, `/companies/{company_id}/offers/{offer_id}/candidate-contacts` |
+| Задания и решения | `/companies/{company_id}/tasks/...`, `/tasks/...`, `/me/task-submissions/...` |
+| Админка | `/admin/auth/...`, `/admin/admins`, `/admin/catalogs/...`, `/admin/assessments/...`, компании, пользователи, потребности, предложения, задания, `/admin/stats`, `/admin/audit-events` |
 
-```sh
-# Все обычные тесты, включая HTTP-контракты модулей:
-go test -race ./...
+### Пагинация и ошибки
 
-# Только HTTP-контракты выбранного модуля:
-go test -race ./internal/candidate/web
-go test -race ./internal/assessment/web ./internal/consent/web
-
-# Интеграционные тесты; сначала задайте TEST_DATABASE_URL и нужные TEST_S3_*:
-go test -race -tags=integration ./internal/platform ./tests/integration
-```
-
-Без `TEST_DATABASE_URL` проверки БД пропускаются. Обычные HTTP-тесты не требуют
-PostgreSQL, S3 или работающего Keycloak. Полный локальный запуск с настройками
-из `apps/api/.env` также доступен через `make integration` из корня репозитория.
-
-**Постраничные списки.** Все методы со списками принимают `limit` (1–100, по умолчанию 20) и `offset` (0–10000) и отвечают одним форматом:
-`{"items": [...], "total": N, "limit": 20, "offset": 0}`. `total` это число **всех** записей, подходящих под фильтры
-(`status`, `q` и другие), без учёта `limit` и `offset`; по нему считаются страницы: `ceil(total / limit)`. Если `offset` больше
-`total`, приходит пустой `items` и настоящий `total`. Страница и `total` читаются из одного состояния данных. Новый список
-добавляем сразу с `total`. Списки с жёстким пределом без пагинации (навыки кандидата, опыт и образование) отдают `{"items": [...]}`.
-
-Одна задача — ветка и PR, второй разработчик проверяет PR. У каждого своя локальная БД.
-Общую БД меняют только миграции из `main`. Перед PR подтягиваем `main`.
-Для `main` можно оставить один review. Обязательные статусы backend/frontend/integration и «Определение изменений» нужно убрать из защиты ветки: эти jobs больше не запускаются.
-Создаём миграцию через `goose create имя sql` из `apps/api/migrations`.
-Используем временные метки. После вливания миграцию не меняем: исправление — новый файл.
-Согласуем изменения одной таблицы, проверяем миграции с нуля и поверх `main`.
-Если новая метка старше уже применённых, обновляем её до вливания.
-Сначала добавляем поля и переводим код, удаление старых полей — отдельным изменением.
-`goose down` на общей БД без согласования не запускаем.
-API-контракт меняем вместе с кодом; копию OpenAPI для Go embed проверяет `make check`.
-
-```sh
-make check        # gofmt, vet, race-тесты, линтер и сборка фронта
-make integration  # чтение и запись Postgres, Redis, S3; нужен apps/api/.env
-```
-
-### Компании и документы
-
-Сначала пользователь входит через Keycloak, подтверждает почту и регистрируется в API через
-`POST /api/v1/me/register` с `{"role":"employer"}`. Дальше во всех запросах нужен
-`Authorization: Bearer <access_token>`; локальный UUID уже предоставляет middleware.
-
-| Метод | Путь | Доступ |
-| --- | --- | --- |
-| POST | `/api/v1/companies` | Работодатель создаёт компанию и становится `owner` |
-| GET | `/api/v1/companies?limit=20&offset=0` | Только компании пользователя |
-| GET | `/api/v1/companies/{company_id}` | Активный участник |
-| PATCH | `/api/v1/companies/{company_id}` | Только владелец |
-| GET | `/api/v1/companies/{company_id}/files` | Активный участник; та же пагинация |
-| POST | `/api/v1/companies/{company_id}/files` | Только владелец, multipart |
-| GET | `/api/v1/companies/{company_id}/files/{file_id}/download` | Активный участник |
-| DELETE | `/api/v1/companies/{company_id}/files/{file_id}` | Только владелец |
-
-Минимальное тело создания: `{"name":"Компания","contact_email":"hr@example.org"}`.
-Дополнительно: `description`, `inn`, `contact_url`. В PATCH отправляйте только изменяемые поля;
-`null` очищает необязательное поле. ИНН необязателен, проверяется по контрольной сумме и уникален.
-Проверка ИНН не означает верификацию компании: она создаётся со статусом `unverified`.
-Чужая компания или файл возвращают 404, свой профиль без прав владельца — 403.
-Проверка компании и административная модерация описаны в [docs/admin-operations.md](docs/admin-operations.md).
-
-Загрузка — ровно один `file` и `purpose`: `company_document` или `company_logo`.
-Документы: PDF/JPEG/PNG до 10 МиБ; логотип: JPEG/PNG до 2 МиБ. Изображения — до 4 мегапикселей.
-Тип определяется по содержимому, изображения декодируются для проверки; антивирусного сканирования нет.
-API обрабатывает до двух загрузок одновременно; при занятости вернёт `503 upload_busy` и `Retry-After: 2`.
-Успешная загрузка логотипа автоматически обновляет `logo_file_id`; предыдущий файл остаётся
-в списке, пока владелец его не удалит. Для удаления логотипа используйте DELETE его файла.
-
-```sh
-curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/files" \
-  -H "Authorization: Bearer $TOKEN" \
-  -F 'purpose=company_document' \
-  -F 'file=@./договор.pdf'
-```
-
-В Swagger (`/docs/`) доступны авторизация, создание компании, выбор файла и скачивание.
-Фронту для показа логотипа нужен `fetch(downloadURL, {headers: {Authorization: 'Bearer ' + token}})`:
-из ответа получить `blob()`, затем `URL.createObjectURL(blob)`; при смене/размонтировании картинки
-вызвать `URL.revokeObjectURL`. Токен в URL не передавать. `Content-Disposition` доступен через CORS.
-
-В Postgres лежат `companies`, `company_members`, общая таблица `files` и связь `company_documents`.
-В приватном S3 — только содержимое файлов со случайными ключами. Прямые ссылки и ключи S3 API не выдаёт.
-Используются существующие `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY`, `S3_SECRET_KEY`, `S3_BUCKET`;
-новые GitHub Secrets не нужны. Бакет должен существовать и запрещать анонимное чтение.
-Миграция `20261006012035_companies_files.sql` применяется после `users`; старые миграции не менялись.
-
-Файл проходит состояния `pending → ready → deleting → deleted`. Скачать можно только `ready`.
-При сбое загрузки API пытается убрать файл; при недоступном S3 или аварийной остановке незавершённая
-запись остаётся видна в списке. Владелец может повторить DELETE для `pending`/`deleting`.
-Автоматического фонового удаления таких записей пока нет. После удаления метаданные сохраняются,
-содержимое S3 удаляется. На уровне компании изменения блокируются транзакцией, чтобы параллельные
-PATCH не затирали друг друга.
-
-Интеграционный тест компаний создаёт временную схему в `TEST_DATABASE_URL`, применяет и откатывает
-новую миграцию, проверяет права и реальные операции S3. Используйте отдельный тестовый бакет:
-
-```sh
-cd apps/api
-# Задайте TEST_DATABASE_URL и TEST_S3_ENDPOINT, TEST_S3_BUCKET, TEST_S3_ACCESS_KEY, TEST_S3_SECRET_KEY.
-go test -race -tags=integration ./tests/integration -run TestCompaniesAndPrivateS3
-```
-
-### Потребности работодателя
-
-Потребность привязана к компании и описывает, кого ищет команда. Это отдельная запись
-`employer_needs`: специализация, необязательный грейд, название, описание команды и задач,
-зарплатная вилка в рублях за месяц, город, часовой пояс, навыки и форматы работы.
-Навыки хранятся в `need_skills`, форматы — в `need_work_formats`.
-
-| Метод | Путь | Доступ |
-| --- | --- | --- |
-| POST | `/api/v1/companies/{company_id}/needs` | Владелец или рекрутер |
-| GET | `/api/v1/companies/{company_id}/needs` | Активный участник |
-| GET | `/api/v1/companies/{company_id}/needs/{need_id}` | Активный участник |
-| PATCH | `/api/v1/companies/{company_id}/needs/{need_id}` | Владелец или рекрутер |
-| DELETE | `/api/v1/companies/{company_id}/needs/{need_id}` | Владелец или рекрутер; архивирование |
-
-У списка есть `limit` (1–100, по умолчанию 20), `offset` (0–10000) и необязательный
-фильтр `status`. Без фильтра возвращаются все статусы. Чужая компания или потребность — 404,
-свой участник без прав записи — 403. `company_id` и `created_by` через PATCH менять нельзя.
-Создание и замена связанных навыков/форматов выполняются одной транзакцией.
-
-Для селектов фронт использует публичные справочники:
-
-- `GET /api/v1/catalogs` — специализации, грейды, форматы работы;
-- `GET /api/v1/catalogs/skills?q=golang&limit=20&offset=0` — навыки с поиском по названию,
-  коду и синонимам. Без `q` возвращается страница активных навыков.
-
-ID справочников общие с будущим модулем соискателей. В миграции уже есть начальные данные:
-направления Backend/Frontend/QA и другие, Intern/Junior/Middle/Senior, офис/гибрид/удалённо,
-16 распространённых навыков. Модуль соискателей должен переиспользовать эти таблицы, а не
-создавать второй набор справочников. Дополнение справочников — отдельной миграцией.
-
-Минимальный черновик:
+Постраничные списки принимают `limit` 1–100 (по умолчанию 20), `offset` 0–10000 (по умолчанию 0):
 
 ```json
-{
-  "specialization_id": 1,
-  "title": "Go-разработчик",
-  "description": "Разработка API. Команда из двух бэкендеров и фронтендера."
-}
+{"items": [], "total": 0, "limit": 20, "offset": 0}
 ```
 
-По умолчанию статус `draft`. Для `active` нужно выбрать хотя бы один навык и формат работы:
+`total` — все записи по фильтрам до пагинации. Списки с фиксированным пределом, например навыки, опыт и образование, могут возвращать только `items`; проверяйте конкретную схему. Неизвестные поля и параметры отвергаются там, где контракт задаёт строгую проверку.
 
 ```json
-{
-  "specialization_id": 1,
-  "grade_id": 3,
-  "title": "Go-разработчик",
-  "description": "Разработка сервисов и API платформы",
-  "salary_from_rub": 150000,
-  "salary_to_rub": 250000,
-  "city": "Москва",
-  "timezone": "Europe/Moscow",
-  "status": "active",
-  "skills": [
-    {
-      "skill_id": "00000000-0000-4000-8000-000000000001",
-      "required": true,
-      "weight": 1
-    }
-  ],
-  "work_format_ids": [3]
-}
+{"error": {"code": "validation_error", "message": "Описание ошибки на русском"}}
 ```
 
-Фронт берёт актуальные ID из справочников; UUID в примере — начальный навык Go.
-Вес навыка обязателен: 0.01–100 с точностью до двух знаков. `required` по умолчанию false.
-Нижняя граница зарплаты не может быть выше верхней; обе можно оставить незаполненными.
-Часовой пояс — IANA, например `Europe/Moscow` или `UTC`; база часовых поясов встроена в API.
+| HTTP | Значение |
+| --- | --- |
+| `400` | Валидация JSON, ID или параметров |
+| `401` | Нет действующего токена / неверный вход |
+| `403` | Недостаточно прав, блокировка или ограничение сценария |
+| `404` | Объект отсутствует или недоступен |
+| `409` | Конфликт состояния, недостающие согласия, ограничения теста |
+| `413` / `415` / `422` | Размер, неподдерживаемый файл или невозможность разбора |
+| `429` | Ограничение частоты входа |
+| `500` / `503` | Ошибка или недоступность сервиса / зависимостей |
 
-PATCH сохраняет неуказанные поля. `skills` и `work_format_ids` заменяют набор целиком,
-`[]` очищает его у черновика или архива. `null` очищает только грейд, границы зарплаты,
-город и часовой пояс. Одновременные PATCH не затирают не переданные ими поля.
+Используйте `error.code` вместе со статусом. `X-Request-ID` связывает ответ с JSON-логом API. Произвольные POST автоматически не повторяются. Админский предпросмотр поддерживает `Idempotency-Key`; повтор submit кандидатского теста возвращает сохранённый итог.
 
-DELETE переводит запись в `archived`, сохраняя ID и связи для будущих подборок и ATS.
-Повторный DELETE возвращает 204. Для восстановления используйте PATCH с `status: active`
-и необходимыми навыками/форматами. Сам расчёт рекомендаций и интеграция с ATS в этот этап не входят.
+### Примеры
 
-Новая миграция `20261006075710_employer_needs.sql` применяется после компаний, добавляет
-справочники и три таблицы потребностей. Старый API совместим с расширенной схемой.
-Новые переменные окружения и GitHub Secrets не требуются.
-
-Интеграционный тест создаёт отдельную схему в тестовом Postgres, проверяет миграцию вверх/вниз,
-права, валидацию, замену связей, архив и одновременные обновления. S3 для него не нужен:
+Получите access token через Keycloak/Swagger и задайте `ACCESS_TOKEN`; токен и API должны относиться к одному окружению.
 
 ```sh
-cd apps/api
-# Задайте TEST_DATABASE_URL для отдельного тестового Postgres.
-go test -race -tags=integration ./tests/integration -run TestCompanyNeeds
+API_URL=http://localhost:8080
+curl --fail-with-body "$API_URL/api/v1/catalogs"
+curl --fail-with-body "$API_URL/api/v1/me" \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+curl --fail-with-body -X POST "$API_URL/api/v1/me/register" \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' -d '{"role":"candidate"}'
 ```
 
-### Команда компании и приглашения
+Для сервера замените `API_URL` на `http://89.104.69.242:8080`. `make auth-smoke` получает локальный токен, проверяет claims и регистрирует candidate; password grant этого клиента на сервере отсутствует.
 
-Роль `employer` относится к пользователю приложения, а `owner/recruiter/viewer` —
-к его участию в конкретной компании. Один работодатель может участвовать в нескольких компаниях.
-Создатель компании становится владельцем. Владелец и его права через API сотрудников не меняются.
-
-| Действие | owner | recruiter | viewer |
-| --- | --- | --- | --- |
-| Читать компанию, документы, потребности и список команды | Да | Да | Да |
-| Редактировать профиль компании, загружать и удалять документы | Да | Нет | Нет |
-| Создавать, редактировать и архивировать потребности | Да | Да | Нет |
-| Приглашать, менять роли, отключать сотрудников | Да | Нет | Нет |
-| Читать и отзывать приглашения | Да | Нет | Нет |
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| GET | `/api/v1/companies/{company_id}/members` | Список сотрудников с локальными UUID, ролями и статусами |
-| PATCH | `/api/v1/companies/{company_id}/members/{user_id}` | Сменить роль: `{"role":"recruiter"}` или `viewer` |
-| DELETE | `/api/v1/companies/{company_id}/members/{user_id}` | Отключить доступ, сохранив пользователя и историю |
-| POST | `/api/v1/companies/{company_id}/invitations` | Создать приглашение: `{"email":"hr@example.org","role":"recruiter"}` |
-| GET | `/api/v1/companies/{company_id}/invitations` | Список приглашений без токенов |
-| DELETE | `/api/v1/companies/{company_id}/invitations/{invitation_id}` | Отозвать непринятое приглашение |
-| POST | `/api/v1/company-invitations/accept` | Принять приглашение: `{"token":"…"}` |
-
-Списки поддерживают `limit` (1–100, по умолчанию 20) и `offset` (0–10000).
-Без токена — 401, недостаточно прав в своей компании — 403, чужая компания — 404.
-Отключённый участник сразу теряет доступ к компании, документам и потребностям.
-Повторное отключение успешно; вернуть доступ можно только новым приглашением.
-
-При создании приглашения API один раз возвращает случайный `token`, ID и `expires_at`.
-Он действует 7 дней и привязан к email. В БД хранится только SHA-256 токена.
-Повторное ожидающее приглашение на тот же email даёт 409; старое можно отозвать,
-а после истечения срока — создать новое. Автоматической отправки письма пока нет.
-Фронт формирует ссылку на свой экран принятия, лучше передавать токен во фрагменте URL,
-не записывать его в логи и убрать из адресной строки после чтения.
-
-Получатель входит через Keycloak с подтверждённым email, регистрируется в API как
-`employer`, затем вызывает принятие с токеном. Email берётся из проверенного JWT,
-локальный `user_id` — из middleware; указать чужой ID или email в теле нельзя.
-Кандидат не становится работодателем автоматически. Одновременное принятие не создаёт дубли,
-повторный запрос того же активного сотрудника успешен. Новое приглашение активному участнику
-не меняет роль (409) — для этого владелец использует PATCH сотрудника.
-
-Миграция `20261006094000_company_invitations.sql` добавляет только таблицу приглашений
-и индексы. Старый API совместим, новые переменные окружения и Secrets не нужны.
-Модули пользователей и кандидатов не меняются.
-
-```sh
-cd apps/api
-# Задайте TEST_DATABASE_URL для отдельного тестового Postgres.
-go test -race -tags=integration ./tests/integration -run 'TestCompanyMembers|TestCompanyNeeds'
-```
-
-### Профиль кандидата
-
-Пользователь входит через Keycloak, подтверждает почту и регистрируется в API через
-`POST /api/v1/me/register` с `{"role":"candidate"}`. Дальше во всех запросах нужен
-`Authorization: Bearer <access_token>`. Методы доступны только роли `candidate`: работодатель получит 403.
-Профиль создаётся явным запросом кандидата, у одного пользователя он один. Для создания профиля нужно согласие `processing`, для публичного статуса ещё и `publication`: см. раздел «Согласия и контакты кандидата».
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| POST | `/api/v1/me/profile` | Создать свой профиль, 201 и `Location: /api/v1/me/profile` |
-| GET | `/api/v1/me/profile` | Получить свой профиль |
-| PATCH | `/api/v1/me/profile` | Изменить свой профиль |
-| PUT | `/api/v1/me/profile/avatar` | Загрузить или заменить аватар, multipart, поле `file` |
-| GET | `/api/v1/me/profile/avatar` | Получить свой аватар (картинка) |
-| DELETE | `/api/v1/me/profile/avatar` | Удалить аватар, 204 |
-
-Поля профиля, все необязательны: `headline` (до 200 символов), `summary` (до 10000), `city` (до 200),
-`timezone` (IANA, например `Europe/Moscow`), `experience_months` (0–600, по умолчанию 0),
-`salary_min_rub` (желаемая зарплата в месяц), `search_status` и `work_format_ids`.
-`search_status`: `open`, `passive` или `hidden`; по умолчанию `hidden` — профиль никому не виден,
-пока кандидат сам не выберет другой статус. `work_format_ids` берите из `GET /api/v1/catalogs`.
-Грейд и категория не задаются вручную: их подтверждает тестирование. В ответе есть `id`, `avatar_file_id`
-и `updated_at`; `user_id` наружу не отдаётся.
-
-В PATCH отправляйте только изменяемые поля: отсутствующее поле не меняется, `null` очищает необязательное
-поле. `experience_months` и `search_status` очистить нельзя. Непустой `work_format_ids` заменяет набор
-целиком, `[]` очищает его. Нельзя передавать `id`, `user_id`, `avatar_file_id`, `updated_at`: это 400.
-
-Ошибки приходят в формате `{"error":{"code","message"}}`, сообщение на русском:
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `profile_exists` | 409 | Профиль уже создан |
-| `profile_not_found` | 404 | Профиля ещё нет, создайте его через POST |
-| `avatar_not_found` | 404 | Аватар не загружен |
-| `validation_error` | 400 | Некорректный JSON, неизвестное поле, значение вне границ, неизвестный формат работы |
-| `invalid_file` | 400 | Нужен ровно один файл в поле `file`, файл пустой или повреждён |
-| `file_too_large` | 413 | Аватар больше 2 МиБ |
-| `unsupported_file_type` | 415 | Допустимы только JPEG и PNG |
-| `forbidden` / `user_inactive` | 403 | Не кандидат / учётная запись заблокирована |
-| `storage_unavailable` | 503 | Хранилище файлов недоступно |
-
-Аватар: только JPEG и PNG, до 2 МиБ и до 4 мегапикселей. Тип определяется по содержимому, не по расширению.
-Повторная загрузка заменяет аватар. **Аватар видит только сам кандидат**: карточки кандидатов для работодателей
-анонимны, и показ фото решим вместе с офферами. Для показа достаточно
-`fetch(url, {headers: {Authorization: 'Bearer ' + token}})`, затем `blob()` и `URL.createObjectURL(blob)`;
-при смене или размонтировании картинки вызывайте `URL.revokeObjectURL`. Токен в URL не передавайте.
-
-```sh
-curl --fail-with-body -X POST "$API_URL/api/v1/me/profile" \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"headline":"Go-разработчик","experience_months":30,"search_status":"open","work_format_ids":[1,3]}'
-
-curl --fail-with-body -X PUT "$API_URL/api/v1/me/profile/avatar" \
-  -H "Authorization: Bearer $TOKEN" -F 'file=@./photo.png'
-```
-
-Данные лежат в `candidate_profiles` и `candidate_work_formats`, содержимое аватара — в приватном S3 в общей
-таблице `files` с целью `candidate_avatar`. Миграция `20261006092005_candidate_profiles.sql` применяется после
-`employer_needs`. Интеграционные тесты профиля и аватара используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
-
-```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'TestCandidate'
-```
-
-### Согласия и контакты кандидата
-
-Персональные данные кандидата обрабатываются только с его согласием (152-ФЗ). Порядок для фронта:
-
-1. Вход через Keycloak и регистрация `POST /api/v1/me/register` с `{"role":"candidate"}`.
-2. `GET /api/v1/me/consents`: взять `current_policy_version`, показать кандидату текст политики этой версии.
-3. `POST /api/v1/me/consents` с `{"kind":"processing","policy_version":"<текущая версия>"}`. Без этого нельзя создать профиль и сохранить контакты (409 `consent_required`).
-4. Для публикации профиля (`search_status` `open` или `passive`) дополнительно `{"kind":"publication",...}`. Пока его нет, профиль остаётся скрытым и не попадает в банк кандидатов.
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| GET | `/api/v1/me/consents` | История согласий (новые первыми, активное имеет `revoked_at: null`) и `current_policy_version` |
-| POST | `/api/v1/me/consents` | Дать согласие: `kind`, `policy_version`, `company_id` (только для `ats_transfer`) |
-| DELETE | `/api/v1/me/consents/{kind}` | Отозвать активное согласие (для `ats_transfer` с `?company_id=`), 204 |
-| PUT | `/api/v1/me/contacts` | Сохранить свои контакты целиком |
-| GET | `/api/v1/me/contacts` | Получить свои контакты |
-| GET | `/api/v1/companies/{company_id}/offers/{offer_id}/candidate-contacts` | Для работодателя: контакты кандидата по принятому предложению |
-
-Виды согласий: `processing` (обработка персональных данных), `publication` (публикация профиля), `ats_transfer`
-(передача в ATS конкретной компании, нужен `company_id`; пока только хранится). Повторная выдача после отзыва создаёт
-новую запись, история сохраняется. Версия политики хранится на сервере (`PRIVACY_POLICY_VERSION`); если фронт передаст
-устаревшую, придёт 409 `policy_outdated`: нужно обновить текст и подтвердить заново.
-
-**Отзыв.** Отзыв `processing` отзывает все активные согласия, переводит профиль в `hidden` и закрывает контакты
-(кандидат получает 409 `consent_required`, работодатель 409 `contacts_unavailable`). Данные не удаляются.
-Отзыв `publication` только скрывает профиль. Повторная выдача согласия статус профиля не восстанавливает:
-кандидат сам возвращает `open` или `passive` через `PATCH /api/v1/me/profile`.
-
-**Контакты.** Поля: `full_name` и `email` обязательны, `phone` (5-20 символов: цифры, `+`, пробелы, скобки, дефис) и
-`telegram` (5-32 символа, латиница, цифры, `_`; ведущий `@` отбрасывается) необязательны. PUT заменяет объект целиком.
-Контакты не показываются в карточках банка кандидатов. Работодатель получает их только если он активный `owner` или
-`recruiter` компании, отправившей предложение, предложение принято (`accepted`) и у кандидата активно `processing`;
-роль `viewer`, чужая компания и другой статус дают 404. Ответы с контактами не кешируются
-(`Cache-Control: private, no-store`). Каждая выдача работодателю записывается в журнал аудита без самих контактов.
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `consent_required` | 409 | Нет нужного согласия: для профиля, публикации или контактов |
-| `consent_exists` | 409 | Такое согласие уже дано |
-| `policy_outdated` | 409 | Передана не текущая версия политики |
-| `consent_not_found` | 404 | Нет активного согласия такого вида при отзыве |
-| `company_not_found` | 404 | Компания для `ats_transfer` не найдена |
-| `contacts_not_found` | 404 | Контакты ещё не сохранены |
-| `contacts_unavailable` | 409 | Работодателю: нет активного согласия или контактов у кандидата |
-| `request_too_large` | 413 | Тело JSON больше 2 МиБ (для аватара вместо этого `file_too_large`) |
-
-```sh
-curl --fail-with-body "$API_URL/api/v1/me/consents" -H "Authorization: Bearer $TOKEN"
-
-curl --fail-with-body -X POST "$API_URL/api/v1/me/consents" \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"kind":"processing","policy_version":"2026-10-07"}'
-
-curl --fail-with-body -X PUT "$API_URL/api/v1/me/contacts" \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"full_name":"Иван Иванов","email":"ivan@example.org","phone":"+7 900 123-45-67","telegram":"@ivan_dev"}'
-```
-
-При обновлении сервера профили, которые были опубликованы до появления согласий, переводятся в `hidden`:
-кандидатам нужно дать согласия и снова выбрать `open` или `passive`. Данные лежат в `candidate_consents`,
-`candidate_contacts` и `audit_events`; миграция `*_consents_contacts.sql` применяется после `candidate_offers`.
-Интеграционные тесты используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
-
-```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'Consent|CandidateContacts'
-```
-
-### Навыки кандидата
-
-Кандидат ведёт список навыков из общего справочника (те же `skills.id`, что у потребностей работодателя) с самооценкой
-уровня. Нужен существующий профиль; отдельного согласия не требуется. Порядок для фронта:
-
-1. Показать справочник: `GET /api/v1/catalogs/skills?q=...` (поиск по коду, названию и синонимам).
-2. `PUT /api/v1/me/skills/{skill_id}` с `{"claimed_level": 1..5}`: добавляет навык или меняет его уровень.
-3. `GET /api/v1/me/skills`: список по названию. `DELETE /api/v1/me/skills/{skill_id}`: убрать навык.
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| GET | `/api/v1/me/skills` | Мои навыки: `skill_id`, `code`, `name`, `claimed_level`, `verified_level`, `source`, `confidence`, `updated_at` |
-| PUT | `/api/v1/me/skills/{skill_id}` | Добавить навык или изменить уровень, 200 |
-| DELETE | `/api/v1/me/skills/{skill_id}` | Убрать навык, 204 |
-
-`claimed_level` обязателен и целый (1-5), это самооценка, а не подтверждённый грейд. `source` и `confidence` приходят только
-в ответе: клиент их передать не может (лишнее поле даст 400). Веса источников: `claimed` 0.3, `test` 0.8, `fsp` 1.0. Источник
-выбирается автоматически: `test` с `confidence` 0.8 и `verified_level`, если навык подтверждён пройденным тестом (см. «Тестирование
-кандидата»), иначе `claimed` с 0.3; достижения ФСП добавят источник `fsp`.
-
-Правила: навык должен быть в справочнике и активен (иначе 400); не более 50 навыков (иначе 400); навык, который выключили
-в справочнике после добавления, остаётся в списке, его можно менять и удалять. Работодатели навыки кандидата пока не видят,
-фильтры банка кандидатов не учитывают их.
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `validation_error` | 400 | Неверный UUID, уровень или JSON, лишнее поле, неизвестный или выключенный навык, лимит 50 |
-| `profile_not_found` | 404 | Профиль ещё не создан |
-| `skill_not_found` | 404 | Навыка нет в списке кандидата (при удалении) |
-| `request_too_large` | 413 | Тело JSON больше 2 МиБ |
-| `forbidden` / `user_inactive` | 403 | Не кандидат / учётная запись заблокирована |
-
-```sh
-curl --fail-with-body -X PUT "$API_URL/api/v1/me/skills/$SKILL_ID" \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"claimed_level":4}'
-
-curl --fail-with-body "$API_URL/api/v1/me/skills" -H "Authorization: Bearer $TOKEN"
-```
-
-Данные лежат в `candidate_skills`; миграция `*_candidate_skills.sql` применяется после `consents_contacts`. Интеграционные тесты
-используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
-
-```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'CandidateSkills'
-```
-
-### Полный профиль кандидата
-
-`GET /api/v1/me/profile/full` отдаёт всё, что нужно экрану профиля и онбордингу, одним ответом: профиль, активные согласия,
-свои контакты, навыки и чек-лист готовности. Вызывать после входа и после каждого шага заполнения. Роль `candidate`.
-Метод всегда отвечает 200 активному кандидату, даже если профиля ещё нет (`profile: null`), поэтому отдельный запрос
-«есть ли профиль» не нужен. Ответ содержит контакты и не кешируется (`Cache-Control: private, no-store`).
-
-```json
-{
-  "profile": { "...как GET /api/v1/me/profile...": "или null" },
-  "consents": { "current_policy_version": "2026-10-07", "items": [ "только активные согласия" ] },
-  "contacts": { "...как GET /api/v1/me/contacts...": "или null" },
-  "skills": [ "как GET /api/v1/me/skills, со статусом модерации" ],
-  "category": null,  // после пройденного теста: {specialization_id, specialization, grade_id, grade, confirmed_at}
-  "achievements": [],
-  "experience": [ "места работы, как GET /api/v1/me/experience" ],
-  "education": [ "образование, как GET /api/v1/me/education" ],
-  "experience_estimated_months": 14,  // подсказка по стажу или null, если мест работы нет
-  "readiness": { "percent": 55, "ready_to_publish": true, "items": [ { "code": "profile", "title": "Профиль создан", "done": true, "required": true } ] }
-}
-```
-
-- `contacts` равен `null`, если контактов нет **или нет активного согласия `processing`**; ошибка при этом не возвращается.
-- `skills` содержит все навыки кандидата, в том числе ожидающие модерации (`moderation_status: pending`). Они засчитываются в готовность.
-- `category` равна `null`, пока кандидат не прошёл ни одного теста, затем это специализация и грейд последнего пройденного теста (см. «Тестирование кандидата»). `achievements` пока заготовка под достижения ФСП: всегда `[]`. В навыках после теста появляются `source: "test"`, `confidence: 0.8` и `verified_level`.
-- `experience` и `education` это списки из «Опыт работы и образование кандидата». `experience_estimated_months` — подсказка: стаж по местам работы в месяцах (пересекающиеся периоды не считаются дважды, текущая работа считается до текущего месяца). Поле профиля `experience_months` она не заменяет и не меняет: решать, переносить ли значение, должен кандидат. В чек-лист готовности эти разделы не входят.
-- `consents.current_policy_version` нужно показать кандидату и вернуть при выдаче согласия (`POST /api/v1/me/consents`).
-
-**Готовность** это подсказка для интерфейса, а не ограничение: условия публикации (`processing` и `publication`) по-прежнему
-проверяет сервер при смене `search_status`. `percent` это доля выполненных пунктов от всех 11 (целое 0-100),
-`ready_to_publish` истинно, когда выполнены все обязательные.
-
-| Код | Пункт | Обязательный | Выполнено, когда |
-| --- | --- | --- | --- |
-| `consent_processing` | Согласие на обработку персональных данных | да | активно `processing` |
-| `profile` | Профиль создан | да | профиль существует |
-| `contacts` | Контакты сохранены | да | контакты есть и активно `processing` |
-| `skills` | Добавлен хотя бы один навык | да | есть любой навык кандидата |
-| `work_formats` | Выбран формат работы | да | выбран хотя бы один формат |
-| `consent_publication` | Согласие на публикацию профиля | да | активно `publication` |
-| `headline` | Заголовок профиля | нет | заполнен |
-| `summary` | Описание о себе | нет | заполнено |
-| `city` | Город | нет | заполнен |
-| `salary` | Желаемая зарплата | нет | указана |
-| `avatar` | Аватар | нет | загружен |
-
-Пункты идут в фиксированном порядке (как в таблице), `title` на русском языке. Отзыв `processing` сразу отражается в ответе:
-согласий нет, профиль `hidden`, `contacts` равен `null`, готовность падает. Данные читаются одним согласованным снимком,
-поэтому части ответа не противоречат друг другу.
-
-```sh
-curl --fail-with-body "$API_URL/api/v1/me/profile/full" -H "Authorization: Bearer $TOKEN"
-```
-
-Новых таблиц и миграций нет. Интеграционные тесты используют те же `TEST_DATABASE_URL` и `TEST_S3_*`:
-
-```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'CandidateFullProfile'
-```
-
-### Опыт работы и образование кандидата
-
-Кандидат ведёт в профиле списки мест работы и образования. Роль `candidate`, нужен созданный профиль (иначе `404 profile_not_found`).
-Согласие `processing` для этих данных не требуется. Пока данные видит и меняет только сам кандидат: работодателям они не отдаются.
-Ответы не кешируются (`Cache-Control: private, no-store`).
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| GET | `/api/v1/me/experience` | Места работы: сначала текущее, затем по началу от новых к старым |
-| POST | `/api/v1/me/experience` | Добавить место работы (до 30) |
-| PUT | `/api/v1/me/experience/{id}` | Заменить запись целиком |
-| DELETE | `/api/v1/me/experience/{id}` | Удалить запись (204) |
-| GET | `/api/v1/me/education` | Образование по году окончания от новых к старым |
-| POST | `/api/v1/me/education` | Добавить запись (до 10) |
-| PUT | `/api/v1/me/education/{id}` | Заменить запись целиком |
-| DELETE | `/api/v1/me/education/{id}` | Удалить запись (204) |
-
-Списки приходят как `{"items": [...]}`. Частичных правок (PATCH) нет: PUT заменяет запись целиком.
-
-```json
-{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null,"description":"Разработка REST API"}
-{"level":"higher","institution":"Университет «Дубна»","specialty":"Программная инженерия","graduation_year":2027}
-```
-
-- Месяц передаётся и приходит строкой `ГГГГ-ММ` (`2022-11`; `2022-5` и `2022-13` дают 400). `ended_on: null` или отсутствие поля значит «по
-  настоящее время». Начало и окончание не могут быть в будущем (граница по самому восточному часовому поясу, UTC+14, чтобы кандидат в любом поясе мог указать свой текущий месяц), окончание не раньше начала.
-- Длины: `company`, `position`, `institution`, `specialty` до 200 символов (первые три обязательны), `description` до 2000. Пробелы по краям
-  обрезаются.
-- `level`: `secondary`, `vocational`, `incomplete_higher`, `higher`, `bachelor`, `master`, `phd`, `doctor`. `graduation_year` от 1950 до 2100;
-  будущий год допустим (учится сейчас).
-- Подсказка по стажу приходит в `GET /api/v1/me/profile/full` как `experience_estimated_months` (см. «Полный профиль кандидата»).
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `validation_error` | 400 | Неверное тело, месяц, уровень, длина, неизвестное поле |
-| `unauthorized` | 401 | Нет действительного токена |
-| `forbidden` | 403 | Роль не candidate |
-| `user_inactive` | 403 | Пользователь заблокирован |
-| `profile_not_found` | 404 | Профиль кандидата не создан |
-| `experience_not_found` | 404 | Место работы не найдено или чужое (в том числе неверный UUID) |
-| `education_not_found` | 404 | Запись об образовании не найдена или чужая |
-| `limit_reached` | 409 | Уже 30 мест работы или 10 записей образования |
-| `request_too_large` | 413 | Тело больше 2 МиБ |
-| `candidate_unavailable` | 503 | Сервис профилей не настроен |
-
-```sh
-curl --fail-with-body -X POST "$API_URL/api/v1/me/experience" \
-  -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
-  -d '{"company":"LazurMedia","position":"PHP-программист","started_on":"2022-11","ended_on":null}'
-```
-
-Интеграционные тесты используют `TEST_DATABASE_URL`:
-
-```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'TestCareer|TestFullProfileCareer'
-```
-
-### Импорт резюме из PDF
-
-`POST /api/v1/me/profile/import/resume` принимает PDF резюме с hh.ru и возвращает **черновик** профиля. Метод ничего не сохраняет:
-ни файл, ни разобранные данные. Фронт показывает черновик в формах, кандидат правит его и сохраняет обычными методами
-(`POST /me/profile`, `PUT /me/skills/{id}`, `PUT /me/contacts`, `POST /me/experience`, `POST /me/education`). Роль `candidate`, нужно
-активное согласие `processing` (в файле персональные данные), профиль не обязателен: импорт можно запускать при онбординге до
-создания профиля. Ответ не кешируется (`Cache-Control: private, no-store`).
-
-Запрос `multipart/form-data` с одним файлом в поле `file` и без других полей: PDF до 5 МиБ, до 10 страниц, с текстовым слоем
-(скан не читается).
-
-```json
-{
-  "draft": {
-    "headline": "Backend разработчик (Go)",
-    "city": "Тверь",
-    "summary": "Текст из блока «Обо мне»",
-    "salary_min_rub": null,
-    "work_format_ids": [3, 2],
-    "contacts": {"full_name": "Иванов Иван", "email": "ivan@example.test", "phone": "+7 (900) 000-00-00", "telegram": "@ivanov"},
-    "skills": [{"name": "PostgreSQL", "skill_id": "<uuid>"}, {"name": "ASP.NET Core", "skill_id": null}],
-    "experience": [{"company": "ООО Пример", "position": "Go-разработчик", "started_on": "2022-11", "ended_on": null, "description": "…"}],
-    "education": [{"level": "higher", "institution": "Университет «Дубна»", "specialty": "Программная инженерия", "graduation_year": 2027}],
-    "languages": [{"name": "Английский", "level": "B1"}]
-  },
-  "warnings": ["Не удалось разобрать период места работы «…»: запись пропущена"]
-}
-```
-
-- Поля, которые не удалось определить, равны `null` (строки и числа) или `[]` (списки); `warnings` всегда массив. Показывайте
-  предупреждения кандидату рядом с формами.
-- `experience` и `education` в том же формате, что тела `POST /me/experience` и `POST /me/education`: можно отправлять без преобразования
-  (месяцы `ГГГГ-ММ`, уровни образования как в схеме).
-- Навыки сопоставляются со справочником по названию, коду и алиасам без учёта регистра (только одобренные и активные).
-  `skill_id: null` значит, что такого навыка нет: предложите добавить его через `POST /me/skills` (он уйдёт на модерацию).
-  Навыки из черновика с `skill_id` добавляются через `PUT /me/skills/{skill_id}` с уровнем `claimed_level`, которого в резюме нет:
-  его выбирает кандидат.
-- `work_format_ids` соответствуют справочнику форматов работы (`GET /api/v1/catalogs`).
-- **Точность.** Должность, город, формат работы, контакты, навыки и языки распознаются надёжно. Места работы и образование
-  разбираются приблизительно, потому что макет PDF может отличаться: кандидат всегда проверяет их перед сохранением. Если
-  hh.ru изменит шаблон, часть данных не распознается и появятся предупреждения.
-- В `summary` попадает весь текст блока «Обо мне», в том числе внутренние заголовки («Ключевые навыки», «Опыт работы»):
-  это оформление самого кандидата, а не разделы резюме. Длинный текст обрезается до 10000 символов с предупреждением.
-- Из файла берётся только текст. Файл и черновик нигде не хранятся: файл читается в память и не пишется даже во временные файлы.
-- Разбор идёт в **отдельном процессе** (тот же бинарник API в служебном режиме) с ограничениями по времени, процессорному времени и
-  памяти: специально собранный PDF не может зациклить или перегрузить сервер, такой процесс просто убивается (`422`).
-
-**Ограничения.** Не больше двух разборов одновременно (слот занят только на время самого разбора): при занятости `503 import_busy` с
-заголовком `Retry-After: 5`, повторите запрос через несколько секунд. Разбор ограничен по времени (10 секунд), в документе не больше
-200 тысяч символов, повреждённый или вредоносный файл не роняет сервер.
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `validation_error` | 400 | Нет поля `file`, не multipart, лишние поля |
-| `unauthorized` | 401 | Нет действительного токена |
-| `forbidden` | 403 | Роль не candidate |
-| `user_inactive` | 403 | Пользователь заблокирован |
-| `consent_required` | 409 | Нет активного согласия `processing` |
-| `resume_too_large` | 413 | Файл больше 5 МиБ |
-| `resume_unrecognized` | 422 | Не PDF, повреждён, без текста (скан) или не похож на резюме hh.ru |
-| `import_busy` | 503 | Идут другие разборы |
-| `candidate_unavailable` | 503 | Сервис не настроен |
-
-```sh
-curl --fail-with-body -X POST "$API_URL/api/v1/me/profile/import/resume" \
-  -H "Authorization: Bearer $TOKEN" -F "file=@./resume.pdf;type=application/pdf"
-```
-
-Тестовый PDF в `apps/api/internal/candidate/resume/testdata/` синтетический (выдуманный человек), его генерирует
-`gen_fixture.py` в том же каталоге. Тесты:
-
-```sh
-cd apps/api
-go test -race ./internal/candidate/resume ./internal/candidate/service
-go test -race -tags=integration ./tests/integration -run 'TestResume'
-```
-
-### Тестирование кандидата
-
-Кандидат выбирает специализацию и грейд, проходит автопроверяемый тест из опубликованного шаблона, и результат подтверждает
-его уровень. Все методы под `/api/v1/me/assessments`, нужен токен кандидата (`Authorization: Bearer <access token>`), ответы не
-кешируются (`Cache-Control: private, no-store`). Для старта нужны профиль и активное согласие `processing`.
-
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| GET | `/available` | Тесты по парам «специализация и грейд» и их состояние: `can_start`, `reason`, `retry_at`, `confirmed` |
-| POST | `/attempts` | Начать тест: `{"specialization_id":1,"grade_id":2}`; возвращает задания без правил проверки |
-| GET | `/attempts/current` | Активная попытка с заданиями и сохранёнными ответами |
-| GET | `/attempts/{id}` | Попытка: пока активна, задания; после завершения итог в `result` |
-| PUT | `/attempts/{id}/answers/{question_id}` | Сохранить или заменить ответ (204) |
-| POST | `/attempts/{id}/submit` | Завершить и получить итог (повтор безопасен) |
-
-**Сценарий для фронта.** `GET /available` рисует список (кнопка активна при `can_start`; при `retake_cooldown` покажите
-`retry_at`). `POST /attempts` стартует таймер: `deadline_at` приходит с сервера, показывайте обратный отсчёт по нему.
-Для каждого задания вызывайте `PUT .../answers/{question_id}`: `{"selected":["a"]}` для заданий с `prompt.options`
-(несколько id, только если у задания `multiple: true`) или `{"text":"..."}` для коротких ответов (до 500 символов).
-Ответ можно менять сколько угодно раз. Если страницу перезагрузили, `GET /attempts/current` вернёт попытку с уже сохранёнными
-ответами. `POST /attempts/{id}/submit` закрывает попытку. Если дедлайн прошёл, сервер сам закроет попытку при следующем
-обращении по сохранённым ответам, а новый ответ получит `409 attempt_closed`. Итог всегда можно прочитать через
-`GET /attempts/{id}`.
-
-**Итог (`result`).** `passed`, `score_percent`, `pass_score`, разбор по навыкам (`skills`: `percent`, `confirmed`, `level`),
-`category` при успехе и `retry_at` при провале. Правильные ответы кандидату не показываются.
-
-**Правила.**
-- Оценка автоматическая: выбор верен при точном совпадении набора вариантов, текст сравнивается без учёта лишних пробелов
-  (и регистра, если задание его не требует). Частичных баллов нет. Задание стоит `weight / question_count` своей строки состава,
-  успех это `score_percent >= pass_score`.
-- Просроченная попытка оценивается по сохранённым ответам: достаточно верных ответов, и она засчитается как успешная,
-  иначе получит статус `expired`. Закрытие просроченной попытки сохраняется при любом обращении (`/available`, `/attempts/current`,
-  старт), а её `finished_at` равен дедлайну: срок пересдачи считается от него, а не от момента, когда кандидат вернулся.
-- Успех подтверждает навыки теста: навык подтверждается, если процент баллов по нему не ниже проходного. Уровень 1–5 по
-  проценту: от 40 — 2, от 55 — 3, от 70 — 4, от 85 — 5 (иначе 1). В списке навыков кандидата такой навык получает
-  `source: "test"`, `confidence: 0.8` и `verified_level`; самооценка `claimed_level` остаётся как есть. Навык теста, которого
-  не было в списке, добавляется без самооценки и не считается в лимите 50 навыков. Повторный успех не понижает уже
-  подтверждённый уровень. Навыки, которые уже не одобрены в справочнике, не подтверждаются; при слиянии навыков подтверждение
-  переезжает на целевой навык с лучшим уровнем. Если согласие `processing` отозвано, итоги не записываются (попытка закрывается
-  по сроку, а `/available` показывает `consent_required`).
-- Успех пишет запись в историю грейдов и делает пару «специализация и грейд» текущей категорией кандидата
-  (`category` в `GET /me/profile/full`).
-- Пересдача: после неудачной или просроченной попытки ту же пару можно пройти снова через `ASSESSMENT_RETAKE_DAYS` дней
-  (по умолчанию 7). После успеха тесты на тот же или более низкий грейд этой специализации закрыты (`already_confirmed`),
-  более высокий грейд и другая специализация доступны сразу.
-- Задания берутся случайно из банка при старте и копируются в попытку: правки банка идущую попытку не меняют. Если банк
-  сократился и заданий не хватает, старт даёт `409 assessment_unavailable`.
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `validation_error` | 400 | Неверное тело, UUID или форма ответа (текст вместо выбора, неизвестный вариант, слишком длинный текст) |
-| `unauthorized` | 401 | Нет действительного токена |
-| `forbidden` | 403 | Роль не candidate |
-| `user_inactive` | 403 | Пользователь заблокирован |
-| `profile_not_found` | 404 | Профиль кандидата не создан |
-| `attempt_not_found` | 404 | Нет такой попытки (или она чужая); нет активной попытки для `/current` |
-| `question_not_found` | 404 | Задание не из этой попытки |
-| `consent_required` | 409 | Нет активного согласия `processing` (на старте, при сохранении ответа и при `submit`) |
-| `attempt_active` | 409 | Уже есть активная попытка; в `error.attempt_id` её id |
-| `retake_cooldown` | 409 | Пересдача раньше срока; в `error.retry_at` время (RFC 3339) |
-| `already_confirmed` | 409 | Этот грейд (или выше) уже подтверждён |
-| `assessment_unavailable` | 409 | Нет опубликованного шаблона для пары или не хватает заданий |
-| `attempt_closed` | 409 | Попытка завершена или время вышло |
-| `request_too_large` | 413 | Тело больше 2 МиБ |
-| `assessments_unavailable` | 503 | Тестирование не настроено |
-
-Настройка сервера: `ASSESSMENT_RETAKE_DAYS` (целое от 1 до 365, по умолчанию 7).
+После профиля и processing, пример старта Backend / Go / Junior:
 
 ```sh
 curl --fail-with-body -X POST "$API_URL/api/v1/me/assessments/attempts" \
-  -H "Authorization: Bearer $ACCESS_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"specialization_id":1,"grade_id":2}'
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"specialization_id":1,"stack_skill_id":"00000000-0000-4000-8000-000000000001","grade_id":2}'
 ```
 
-Интеграционные тесты используют `TEST_DATABASE_URL`:
+В приложении берите ID из `/catalogs` и `/me/assessments/available`.
+
+Демонстрационный вход в локальную админку после bootstrap:
 
 ```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'TestStartAttempt|TestSubmit|TestLazyExpiry|TestGradeProgression|TestRetake'
+curl --fail-with-body -X POST "$API_URL/api/v1/admin/auth/login" \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"superadmin@fsp.local","password":"adminadminadmin"}'
+curl --fail-with-body "$API_URL/api/v1/admin/stats" \
+  -H "Authorization: Bearer $ADMIN_TOKEN"
 ```
 
-### Предложения кандидатам
+Для второго запроса задайте `ADMIN_TOKEN` равным `access_token` ответа входа. Внутренние `/api/auth/session`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/pkce` обслуживает Next.js, они не входят в Go OpenAPI. [Контракт веб-сессии](apps/web/docs/api-and-auth.md).
 
-Компания отправляет кандидату предложение о работе. Это отдельный сценарий от приглашения сотрудника
-в команду компании: принятие предложения не создаёт участника компании.
+## Основные сценарии и ограничения
 
-Все методы требуют Bearer-токен Keycloak с подтверждённой почтой и активного локального пользователя.
-Работодатель должен иметь роль `employer` и активное членство в компании; кандидат — роль `candidate`.
+### Профиль, согласия и резюме
 
-| Метод | Путь | Кто использует |
-| --- | --- | --- |
-| POST | `/api/v1/companies/{company_id}/offers` | `owner`, `recruiter`: отправить предложение |
-| GET | `/api/v1/companies/{company_id}/offers` | `owner`, `recruiter`, `viewer`: список компании |
-| GET | `/api/v1/companies/{company_id}/offers/{offer_id}` | `owner`, `recruiter`, `viewer`: карточка |
-| GET | `/api/v1/me/offers` | Кандидат: входящие |
-| GET | `/api/v1/me/offers/{offer_id}` | Кандидат: карточка своего предложения |
-| POST | `/api/v1/me/offers/{offer_id}/view` | Кандидат: отметить просмотр, без тела запроса |
-| POST | `/api/v1/me/offers/{offer_id}/respond` | Кандидат: принять или отклонить |
+Кандидат даёт processing, создаёт профиль, заполняет контакты, навыки, опыт, образование и анкету со специализацией, основным стеком, заявленным грейдом и soft skills. Анкета не подтверждает квалификацию.
 
-Сценарий для фронта:
+Для появления в банке нужны активный аккаунт, `search_status=open` или `passive` и действующие `processing`/`publication`. `hidden` исключает профиль. `ats_transfer` связан с конкретной компанией; контакты работодателю выдаются по принятому предложению при выполнении правил согласий.
 
-1. Работодатель выбирает кандидата. `candidate_id` — UUID из `candidate_profiles.id`, а не ID пользователя
-   или Keycloak. Для теста используйте существующий профиль с `search_status: open` или `passive`;
-   скрытому профилю новое предложение отправить нельзя.
-2. Форма содержит заголовок, описание, обе границы зарплаты в рублях за месяц и почту работодателя.
-   Можно добавить ссылку для связи и `need_id` активной потребности этой компании. Название компании
-   и автора сервер заполняет сам; название сохраняется снимком на момент отправки.
-3. После успешного POST сервер возвращает `201`, карточку предложения и заголовок `Location`.
-   На время отправки блокируйте кнопку: повторный POST создаёт новое предложение, автоматический
-   повтор после сетевой ошибки может создать дубль.
-4. Кандидат загружает входящие и открывает карточку. GET ничего не меняет; при фактическом открытии
-   карточки фронт вызывает POST `/view`. Статус меняется с `sent` на `viewed`.
-5. Кнопки «Принять» и «Отклонить» отправляют `{"status":"accepted"}` или `{"status":"rejected"}`.
-   Ответить можно и без предварительного `/view`: сервер заполнит время просмотра и ответа.
-   Повтор того же ответа успешен, противоположный ответ после принятого решения возвращает `409`.
+Импорт принимает PDF hh.ru с текстовым слоем: до **5 МБ и 10 страниц**. Возвращает черновик и предупреждения, не сохраняет файл или профиль. Кандидат проверяет поля и сохраняет их обычными API. Скан без текста не поддерживается. Собственное PDF-резюме генерируется в Go и не сохраняется в S3.
 
-Статусы: `sent` → `viewed` → `accepted` / `rejected`; также возможен прямой ответ из `sent`.
-Повторный `/view` сохраняет исходное время и не меняет окончательное решение. При параллельных
-противоположных ответах сохраняется одно решение, второй запрос получает `409`.
+### Подтверждение квалификации
 
-Оба списка принимают `status` (один из четырёх статусов), `limit` (1–100, по умолчанию 20) и
-`offset` (0–10000, по умолчанию 0). Без `status` возвращаются все статусы. Сортировка — сначала
-новые предложения, при одинаковом времени по ID. Формат ответа — `items`, `total`, `limit`, `offset`.
-Профиль без предложений получает пустой `items`; отсутствие самого профиля возвращает `404`.
-Скрытие профиля после получения предложения не убирает его из входящих.
+Выбор теста: **специализация → стек → грейд**. `stack_skill_id` обязателен при старте и в анкете. Сервер фиксирует случайные вопросы и правила, сохраняет ответы и проверяет дедлайн. Одновременно разрешена одна активная попытка.
 
-Пример отправки (переменные содержат реальные токены и UUID вашего тестового окружения):
+Успех требует общего проходного балла и проходного результата по основному стеку. Квалификации хранятся отдельно по специализации и стеку; успешный Go не подтверждает Java. Провал не понижает прежние подтверждения. Пересдача проваленной тройки — через `ASSESSMENT_RETAKE_DAYS` (7 дней по умолчанию). После успешного присвоения смена специализации/грейда ограничена отдельными 7 сутками; другой стек той же специализации и грейда можно подтвердить отдельно.
 
-```sh
-curl --fail-with-body -X POST "$API_URL/api/v1/companies/$COMPANY_ID/offers" \
-  -H "Authorization: Bearer $EMPLOYER_TOKEN" -H 'Content-Type: application/json' \
-  -d "{\"candidate_id\":\"$CANDIDATE_ID\",\"title\":\"Go-разработчик\",\"description\":\"Разработка API в нашей команде\",\"salary_from_rub\":150000,\"salary_to_rub\":200000,\"contact_email\":\"hr@example.org\"}"
+Миграции создают **56 демо-вопросов и 6 вариантов**: Backend / Go, Backend / Java, Frontend / JavaScript — каждый для Junior и Middle. Правильные ответы кандидатам не раскрываются. Опубликованные вопросы и шаблоны неизменяемы; исправление создаётся новой версией. `choice`, `short_answer`, `code_reading` проверяются автоматически без исполнения кода. Админские предпросмотры изолированы от кандидатских результатов и хранятся 7 дней. [Подробнее](docs/candidate-completion.md).
 
-curl --fail-with-body "$API_URL/api/v1/me/offers?limit=20&offset=0" \
-  -H "Authorization: Bearer $CANDIDATE_TOKEN"
+### Компания и потребности
 
-curl --fail-with-body -X POST "$API_URL/api/v1/me/offers/$OFFER_ID/view" \
-  -H "Authorization: Bearer $CANDIDATE_TOKEN"
+Создатель компании — `owner`. Он заполняет профиль, загружает документы и приглашает работодателей как `recruiter` или `viewer`. Приглашение сотрудника в команду и предложение кандидату — разные сущности.
 
-curl --fail-with-body -X POST "$API_URL/api/v1/me/offers/$OFFER_ID/respond" \
-  -H "Authorization: Bearer $CANDIDATE_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"status":"accepted"}'
-```
+Потребность содержит специализацию, необязательный грейд, описание, зарплату, город, timezone, навыки и форматы работы. Статусы: `draft`, `active`, `archived`. Для активации нужны навык и формат работы; DELETE архивирует потребность. Подборка доступна по активной потребности своей компании.
 
-Для Swagger авторизуйтесь через Authorize, затем выполняйте те же методы с аккаунтами работодателя
-и кандидата по очереди. `OFFER_ID` берите из ответа отправки или списка входящих.
+Владелец подаёт заявку подтверждения после заполнения ИНН и загрузки документа. Администратор принимает решение по версии заявки. Изменение реквизитов или удаление документа может сбросить подтверждение. Оно не является обязательным условием функций текущего MVP.
 
-| HTTP | Что означает |
+### Подбор и предложения
+
+Рейтинг использует специализацию, грейд, навыки, формат, бюджет, город и timezone. Выдача объясняет совпадения; это сходство, не вероятность найма. Бонус ФСП влияет на порядок внутри одной подтверждённой категории и не меняет `match_score` или грейд.
+
+Карточка для работодателя скрывает контакты и приватные свободные тексты. Фактический просмотр фиксируется POST; GET не меняет историю. Просмотр/отправка предложения исключают профиль из обычной выдачи этой компании на **720 часов**; история доступна с `interaction_status=all`.
+
+Предложение без ответа истекает через **336 часов (14 суток)**. Оно и связанный автоматический просмотр освобождают свой кулдаун; самостоятельный более поздний просмотр может сохранить ограничение. `viewed`/`has_offer` остаются. Принятие/отказ делает кандидат, администратор не подменяет решение. [Подбор](docs/backend-hiring-and-admin.md), [история](docs/candidate-interactions.md), [истечение](docs/offer-expiration.md).
+
+### Задания и файлы
+
+Компания публикует одно задание за календарный день **по Москве**; квота общая для владельца и рекрутеров. Кандидат отправляет одно решение, компания ставит оценку 0–100 и комментарий. Закрытие приёма не возвращает квоту. Оценка задания автоматически не меняет грейд или рейтинг.
+
+| Файл | Ограничение |
 | --- | --- |
-| 400 | Неверные поля, UUID, зарплата, фильтры или недоступная потребность |
-| 401 | Нет действительного токена или не подтверждена почта |
-| 403 | Неподходящая роль, запись от `viewer` или неактивный пользователь |
-| 404 | Объект недоступен этому пользователю, отсутствует профиль или локальная регистрация |
-| 409 | Кандидат уже дал противоположный ответ |
-| 413 | JSON превышает 2 МиБ |
-| 500 / 503 | Внутренняя ошибка / сервис недоступен |
+| Документы компании | PDF, JPEG, PNG, до 10 МБ |
+| Логотип / аватар | JPEG, PNG, до 2 МБ |
+| Задание / решение | PDF, JPEG, PNG, ZIP, TXT, MD, до 10 МБ |
+| Импорт резюме | Текстовый PDF, до 5 МБ и 10 страниц |
+| Обычный JSON-запрос | До 2 МБ |
 
-Ошибки имеют формат `{"error":{"code":"validation_error","message":"Текст на русском"}}`.
-Чужие предложения и компании не раскрываются через API.
+Файлы выдаются API после проверки прав, без публичных S3 URL. Multipart-поля смотрите в конкретной операции OpenAPI. [Контракт заданий](docs/company-daily-tasks.md).
 
-Сейчас `contact_email` и `contact_url` — контакты **работодателя**. Контакты кандидата не возвращаются
-в карточке оффера; после принятия они доступны отдельным методом
-`GET /api/v1/companies/{company_id}/offers/{offer_id}/candidate-contacts`
-с проверкой прав и действующего согласия (см. «Согласия и контакты кандидата»).
-Чат, уведомления по почте, редактирование и отзыв предложения пока не реализованы.
+### Блокировки
 
-Данные хранятся в PostgreSQL в `candidate_offers`; S3 для этого сценария не используется.
-Миграция `20261006141620_candidate_offers.sql` совместима с предыдущей версией API.
-Новые переменные окружения и GitHub Secrets не нужны.
+Блокировки аккаунта и компании независимы, сохраняют историю и проверяются API даже со старым JWT. Заблокированный пользователь может читать статус и причину через `/me`, рабочие методы закрыты. Блокировка владельца автоматически не блокирует компанию. [Блокировки](docs/account-company-blocking.md), [операционная админка](docs/admin-operations.md).
 
-Проверка прав доступа, области потребности и параллельных ответов на тестовой PostgreSQL
-с настроенной `TEST_DATABASE_URL`:
+## Тесты и проверки
 
 ```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'TestOffer'
+make check
 ```
 
-### Банк кандидатов и предварительная подборка
+Проверяет совпадение OpenAPI, gofmt, `go vet`, Go race-тесты, Vitest, TypeScript, ESLint и production-сборку фронта.
 
-Работодатель ищет кандидатов от имени компании. Доступ имеют активные участники `owner`, `recruiter`
-и `viewer` с ролью пользователя `employer`. Отсутствующее или отозванное членство возвращает `404`.
-В выдаче только активные кандидаты с `search_status: open` или `passive`; скрытые профили исключены
-также из отдельной карточки. Все методы требуют авторизации.
-
-| Метод | Путь | Назначение |
-| --- | --- | --- |
-| GET | `/api/v1/companies/{company_id}/candidates` | Каталог доступных кандидатов |
-| GET | `/api/v1/companies/{company_id}/candidates/{candidate_id}` | Безопасная карточка |
-| POST | `/api/v1/companies/{company_id}/candidates/{candidate_id}/view` | Записать явное открытие профиля |
-| GET | `/api/v1/companies/{company_id}/needs/{need_id}/candidates` | Подборка под активную потребность компании |
-
-Карточка содержит `id`, город, часовой пояс, стаж в месяцах, зарплатные ожидания, статус поиска и
-`work_format_ids`. `id` — UUID профиля кандидата; его передавайте как `candidate_id` при отправке
-оффера. Контакты, локальный ID пользователя, аватар, заголовок и свободное описание не возвращаются.
-Свободный текст исключён, поскольку кандидат может вписать туда контакты. Этот API не меняет профили.
-
-В списках, подборке и подробной карточке есть `has_offer`: `true`, если эта компания уже отправляла
-кандидату хотя бы одно приглашение через `POST /api/v1/companies/{company_id}/offers`.
-Учитывается вся история компании по всем потребностям, включая просмотренные, принятые и отклонённые
-предложения; приглашения других компаний не влияют. Признак вычисляется из сохранённых предложений,
-поэтому работает и для старых приглашений. Для поиска новых кандидатов передавайте `has_offer=false`.
-Без фильтра `has_offer` возвращаются оба варианта, но по умолчанию действует 30-дневный срок после просмотра или отправки. После отправки приглашения обновите список или карточку.
-
-Оба списка принимают одинаковые параметры. Каждый параметр передаётся один раз, пустые значения,
-неизвестные параметры и некорректные диапазоны возвращают `400`.
-
-| Параметр | Правило |
+| Команда | Назначение |
 | --- | --- |
-| `limit` | 1–100, по умолчанию 20 |
-| `offset` | 0–10000, по умолчанию 0 |
-| `work_format_ids` | До 10 уникальных ID через запятую, например `1,3`; подходит любой выбранный формат |
-| `experience_min_months` | Минимальный стаж включительно, 0–600 месяцев |
-| `experience_max_months` | Максимальный стаж включительно, 0–600; не меньше минимального |
-| `salary_max_rub` | Зарплатные ожидания не выше суммы, 0–1000000000 рублей в месяц |
-| `has_offer` | `false` — эта компания ещё не приглашала кандидата; `true` — уже приглашала; без параметра оба варианта |
-| `viewed` | `true` — компания открывала профиль или отправляла оффер; `false` — ещё не взаимодействовала |
-| `interaction_status` | `available` (по умолчанию) — новые и вернувшиеся спустя 30 дней; `cooldown` — временно скрытые; `all` — вся доступная база с историей |
+| `make test` | Go-тесты с `-race` |
+| `npm run test` | Vitest |
+| `npm run typecheck` | TypeScript |
+| `npm run lint` | ESLint и консистентность |
+| `npm run build` | Production-сборка Next.js |
+| `make integration` | БД, Redis, S3; настройки из `apps/api/.env` |
+| `make smoke` | Сайт, proxy, health, Swagger, OpenAPI, CORS, `/me` без токена |
+| `make auth-smoke` | Локальный Keycloak → JWT → регистрация candidate → API |
+| `make matching-evaluation` | Синтетическая оценка подбора на тестовой БД |
 
-ID форматов берите из общего справочника; несуществующие ID возвращают `400`. Разные условия
-объединяются через И. При явном `salary_max_rub` кандидаты без зарплатных ожиданий исключаются.
-Ответ списка: `items`, `total`, `limit`, `offset`. `total` считается после фильтрации до пагинации;
-пустая страница возвращает `items: []`. Обычный каталог сначала показывает подтверждённые категории,
-затем результат теста. Бонус ФСП меняет порядок только внутри одной подтверждённой категории.
-При равной силе профиля выше новые для компании кандидаты, затем те, с кем она взаимодействовала
-раньше; дальше дата создания профиля по возрастанию и UUID. Правки резюме не меняют дату создания.
-Для старых профилей эта дата восстановлена из даты регистрации пользователя.
-
-Подборка использует только активную потребность компании из URL. Чужая, отсутствующая, черновая
-или архивная потребность возвращает `404`. Основной порядок — `match_score` по убыванию:
-учитываются специализация, грейд, стек, формат, бюджет, город и часовой пояс. Подтверждение и результат
-теста учитываются при равном сходстве; бонус ФСП переставляет кандидатов только при равном сходстве
-внутри одной подтверждённой категории. При равной силе профиля действует порядок по давности,
-описанный выше. Несовпадение условия потребности снижает оценку, но само по себе не исключает профиль;
-исключают явные фильтры, правила приватности и 30-дневный срок. Пагинация применяется после сортировки.
-
-Ответ содержит `matching_mode: similarity`, `match_score`, `criteria`, `skills`, `reasons`,
-`mismatched_conditions`, `missing_required_skills`, `unknown_conditions` и `unassessed_criteria`.
-Неизвестные данные не выдаются за совпадение. Оценка показывает соответствие потребности, а не
-вероятность найма. Категория успешного теста и неподтверждённый выбор кандидата возвращаются раздельно.
-
-Просмотр записывается явным `POST .../candidates/{candidate_id}/view` после открытия карточки.
-Обычные GET и предзагрузка не меняют историю. Успешная отправка оффера автоматически фиксирует
-просмотр и отправку в той же транзакции. `next_available_at` = последнее взаимодействие + ровно
-720 часов. По умолчанию оба списка скрывают такого кандидата до этой даты только для этой компании.
-После истечения срока он возвращается автоматически; `viewed` и `has_offer` сохраняются.
-Повторное открытие профиля или новая отправка продлевают срок; ответ кандидата на оффер его не меняет.
-Карточка и список офферов остаются доступны в течение срока с прежними проверками прав и приватности.
-История без офферов: `?interaction_status=all&viewed=true&has_offer=false`; вся база:
-`?interaction_status=all`; только временно скрытые: `?interaction_status=cooldown`.
-Подробности и связь правил с ТЗ — [docs/candidate-interactions.md](docs/candidate-interactions.md).
-
-Сценарий фронта: выбрать компанию → открыть каталог или выбрать активную потребность → настроить
-фильтры → открыть карточку → записать просмотр POST → отправить оффер с ID кандидата и, при необходимости, `need_id`.
-В подборке просмотр доступен `viewer`, но отправка оффера — только `owner` и `recruiter`.
-При смене фильтров сбрасывайте `offset` в 0; при возвращении из карточки сохраняйте фильтры в URL.
+Проверка серверного стенда:
 
 ```sh
-curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/candidates?work_format_ids=3&experience_min_months=12&salary_max_rub=200000&limit=20&offset=0" \
-  -H "Authorization: Bearer $EMPLOYER_TOKEN"
-
-curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/needs/$NEED_ID/candidates?limit=20&offset=0" \
-  -H "Authorization: Bearer $EMPLOYER_TOKEN"
-
-curl --fail-with-body "$API_URL/api/v1/companies/$COMPANY_ID/candidates/$CANDIDATE_ID" \
-  -H "Authorization: Bearer $EMPLOYER_TOKEN"
+SMOKE_URL=http://89.104.69.242:3000 \
+SMOKE_API_URL=http://89.104.69.242:8080 make smoke
 ```
 
-В Swagger используйте Authorize с аккаунтом работодателя, затем те же методы. Ошибки возвращаются
-в общем формате `error.code` / `error.message`: `400` — параметры, `401` — авторизация,
-`403` — роль или неактивный пользователь, `404` — недоступный объект или отсутствие локальной
-регистрации, `500` — внутренняя ошибка, `503` — сервис не настроен.
-
-Модуль `internal/candidatebank` разделён на entity, repository, service и web. Миграция
-`20261009202913_company_candidate_interactions.sql` добавляет историю компании и дату создания профиля;
-она переносит историю ранее отправленных офферов. Новых переменных окружения и GitHub Secrets нет. Интеграционные проверки на тестовой PostgreSQL
-с `TEST_DATABASE_URL`:
+Обычные HTTP-тесты API используют синтетические JWT и тестовые хранилища. Интеграционные проверки под tag `integration` создают отдельные схемы; без `TEST_DATABASE_URL` проверки БД пропускаются.
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./tests/integration -run '^TestCandidate(Bank|Recommendations|Interaction|Matching)'
+go test -race ./...
+go test -race -tags=integration ./internal/platform ./tests/integration
 ```
 
-### Блокировка администраторов и серверное пробное прохождение
+Для второй команды задайте `TEST_DATABASE_URL`, при необходимости `TEST_S3_ENDPOINT`, `TEST_S3_BUCKET`, `TEST_S3_ACCESS_KEY`, `TEST_S3_SECRET_KEY`. Matching запускайте на тестовой БД по [инструкции](docs/matching-evaluation.md). [QA seed](docs/employer-pagination-qa.md) создаёт записи для пагинации, не готовые логины Keycloak.
 
-Superadmin может менять статус обычных администраторов через `PATCH /api/v1/admin/admins/{admin_id}`.
-Блокировка атомарно отзывает все их сессии. Администраторы могут проходить серверный предпросмотр
-конкретной версии шаблона через `/api/v1/admin/assessments/templates/{template_id}/previews`: вопросы
-и оценивание общие с кандидатским тестом, данные хранятся отдельно и не меняют кандидатские результаты.
-Полный контракт, таймер, Idempotency-Key, примеры и порядок миграций — [docs/admin-backend-extensions.md](docs/admin-backend-extensions.md).
+## Сервер и CI/CD
 
-### Банк заданий и шаблоны тестов (админка)
+### Инфраструктура
 
-Администратор создаёт задания и шаблоны тестов и публикует их. Кандидаты и работодатели сами задания не видят: кандидат
-проходит тест через `/api/v1/me/assessments` (см. «Тестирование кандидата»), а правила проверки ему не отдаются. Все методы под `/api/v1/admin/assessments`, нужна действующая админская
-сессия (`Authorization: Bearer <admin access token>`, как у `/api/v1/admin/catalogs`), ответы не кешируются.
+| Параметр | Значение |
+| --- | --- |
+| Хост | `89.104.69.242` |
+| SSH-пользователь | `fsp-deploy` |
+| Каталог релиза | `~/fsp` пользователя деплоя |
+| Compose | `~/fsp/compose.yaml`, исходник `deploy/compose.yaml` |
+| Env | `~/fsp/.env`, источник GitHub `PRODUCTION_ENV` |
+| Registry | `ghcr.io/ix1ax/fsp-talent-lct-2026/api:<SHA>` и `/web:<SHA>` |
+| Внешние порты | SSH для деплоя; HTTP 3000, 8080, 8081, 8025 |
+| Внутренние сервисы | Postgres 5432, Redis 6379, S3 8333, SMTP 1025; на сервере наружу не опубликованы |
+| Постоянные volumes | `postgres-data`, `keycloak-data`, `s3-data`, `mailpit-data` |
 
-| Метод | Путь | Что делает |
-| --- | --- | --- |
-| POST | `/questions` | Создать задание и версию 1 (черновик) |
-| GET | `/questions` | Список: фильтры `skill_id`, `difficulty`, `kind`, `active`, `status`, `limit`, `offset` |
-| GET | `/questions/{id}` | Задание со всеми версиями, текстами и правилами проверки |
-| POST | `/questions/{id}/versions` | Новая версия (черновик) |
-| POST | `/questions/{id}/versions/{version}/publish` | Опубликовать версию |
-| POST | `/questions/{id}/archive` | Выключить задание |
-| POST | `/templates` | Создать шаблон теста (черновик) вместе с составом |
-| GET | `/templates` | Список: фильтры `specialization_id`, `grade_id`, `status` |
-| GET | `/templates/{id}` | Шаблон с составом и числом доступных заданий по каждой строке |
-| POST | `/templates/{id}/publish` | Опубликовать шаблон |
-| POST | `/templates/{id}/archive` | Архивировать шаблон |
+Для SSH нужен ключ деплоя; пароль админки приложения не даёт доступ к серверу. Серверу нужны Docker, Compose v2, Python 3, доступ к GHCR.
 
-**Порядок работы:** создать задание, при необходимости добавить версию, опубликовать версию, затем создать шаблон с составом
-и опубликовать его. Опубликованное **не меняется**: исправление это новая версия (черновик), которую нужно опубликовать.
-Публикация новой версии архивирует предыдущую опубликованную версию этого задания. Публикация шаблона архивирует ранее
-опубликованный шаблон той же пары «специализация и грейд». Редактировать черновики на месте нельзя. Неизменяемость
-гарантирует и база данных: опубликованное содержимое не изменить даже прямым запросом.
+### Автоматический деплой
 
-**Виды заданий.** Все задания проверяются автоматически, чужой код нигде не запускается. Сложность `difficulty` от 1 до 5.
+[Workflow CI](.github/workflows/ci.yml) запускается **на push в `main`**. Собирает API/фронт, публикует SHA-образы, загружает Compose, env, realm, тему и скрипты в `~/fsp`. Сервер применяет миграции перед API, обновляет контейнеры и Keycloak, проверяет readiness, Swagger, сайт и auth/config через фронт.
 
-```json
-{"skill_id":"<uuid навыка>","difficulty":1,"kind":"choice",
- "prompt":{"text":"Какое слово запускает горутину?","options":[{"id":"a","text":"go"},{"id":"b","text":"async"}]},
- "grading_spec":{"type":"choice","correct":["a"],"multiple":false}}
-```
+Автоматических тестовых jobs на PR сейчас нет: выполняйте `make check` перед PR. Отдельные PAT и `DEPLOY_ENABLED` не нужны.
 
-```json
-{"skill_id":"<uuid навыка>","difficulty":1,"kind":"short_answer",
- "prompt":{"text":"Какая команда показывает состояние рабочего каталога?"},
- "grading_spec":{"type":"text","accepted":["git status"],"case_sensitive":false}}
-```
+GitHub → Settings → Environments → `production` → Secrets:
 
-```json
-{"skill_id":"<uuid навыка>","difficulty":2,"kind":"code_reading",
- "prompt":{"text":"Что выведет код?","code":"x := 5\ny := &x\n*y = 7\nfmt.Println(x)","language":"go"},
- "grading_spec":{"type":"text","accepted":["7"]}}
-```
+| Secret | Значение |
+| --- | --- |
+| `DEPLOY_HOST` | `89.104.69.242` |
+| `DEPLOY_USER` | `fsp-deploy` |
+| `DEPLOY_SSH_KEY` | Приватный SSH-ключ деплоя |
+| `DEPLOY_KNOWN_HOSTS` | Проверенная запись SSH host key |
+| `PRODUCTION_ENV` | Заполненный серверный env |
 
-- `choice`: нужны `options` (от 2 до 10, у каждого `id` из латиницы, цифр, дефиса или подчёркивания и `text`), правила `type: choice`;
-  при `multiple: false` правильный вариант ровно один.
-- `short_answer`: без `options`, правила `type: text`, от 1 до 20 допустимых ответов (сравнение после обрезки пробелов).
-- `code_reading`: обязателен `code`; правила либо `choice` (тогда нужны `options`), либо `text` (без `options`).
-- Правила проверки (`grading_spec`) видит только администратор: кандидату они не передаются. Лишние поля отвергаются (400).
+`GITHUB_TOKEN` предоставляет GitHub. Деплой заменяет серверный `.env` содержимым секрета и тегами образов: изменения только серверного файла не сохранятся при следующем релизе. `WEB_PUBLIC_URL` — один origin со схемой и портом, без завершающего `/`.
 
-**Шаблон теста.** `POST /templates`:
-
-```json
-{"specialization_id":1,"grade_id":2,"time_limit_sec":1800,"pass_score":60,
- "blueprint":[{"skill_id":"<uuid>","difficulty":1,"question_count":4,"weight":1},
-              {"skill_id":"<uuid>","difficulty":2,"question_count":2,"weight":2}]}
-```
-
-`time_limit_sec` от 300 до 14400, `pass_score` в процентах (1-100) от взвешенной суммы, в составе от 1 до 30 строк, пары навык
-и сложность не повторяются, `weight` от 0.01 до 100. Версия пары назначается автоматически. При публикации для каждой строки
-состава нужно не меньше `question_count` активных заданий с опубликованной версией (черновики, архивные версии и выключенные
-задания не считаются), иначе приходит 409 с перечнем нехватки:
-
-```json
-{"error":{"code":"insufficient_questions","message":"В банке не хватает опубликованных заданий для состава шаблона"},
- "shortages":[{"skill_id":"<uuid>","difficulty":1,"required":4,"available":2}]}
-```
-
-| Код | Статус | Когда |
-| --- | --- | --- |
-| `unauthorized` | 401 | Нет админской сессии |
-| `validation_error` | 400 | Неверное тело, UUID, номер версии, фильтр, неизвестный навык, специализация или грейд |
-| `assessment_not_found` | 404 | Задание, версия или шаблон не найдены |
-| `assessment_conflict` | 409 | Версия не черновик, задание выключено, шаблон не черновик, повторная архивация |
-| `insufficient_questions` | 409 | Не хватает опубликованных заданий для состава шаблона |
-| `request_too_large` | 413 | Тело больше 2 МиБ |
-| `assessments_unavailable` | 503 | Банк заданий не настроен |
-
-**Демо-банк.** Миграция создаёт два опубликованных шаблона уровня Junior и 32 задания на русском: backend (Go, SQL, Git, 30 минут,
-проходной балл 60) и frontend (JavaScript, TypeScript, React, 25 минут, проходной балл 60). Остальное создаётся через API.
-Действия администраторов пишутся в журнал `assessment_events` (без текстов заданий и правил).
+### Обслуживание и резервные копии
 
 ```sh
-curl --fail-with-body -X POST "$API_URL/api/v1/admin/assessments/questions" \
-  -H "Authorization: Bearer $ADMIN_TOKEN" -H 'Content-Type: application/json' \
-  -d '{"skill_id":"'"$SKILL_ID"'","difficulty":1,"kind":"short_answer","prompt":{"text":"Какая команда создаёт коммит?"},"grading_spec":{"type":"text","accepted":["git commit"]}}'
+ssh fsp-deploy@89.104.69.242
+cd ~/fsp
+docker compose ps
+docker compose logs -f --tail=100 api web
+curl -fsS http://localhost:8080/readyz
+curl -fsS http://localhost:3000/api/v1/auth/config
 ```
 
-Интеграционные тесты используют `TEST_DATABASE_URL`:
+Повторный запуск загруженного релиза: `sh deploy-server.sh` из `~/fsp`; он применяет конфигурацию и миграции, не скачивает исходники Git.
+
+До изменений существующих данных сохраняйте базы и S3 **вне VPS**. Пример дампов из каталога релиза:
 
 ```sh
-cd apps/api
-go test -race -tags=integration ./tests/integration -run 'TestAssessment'
+umask 077
+docker compose exec -T postgres pg_dump -U fsp -d fsp -Fc > fsp.dump
+docker compose exec -T keycloak-db pg_dump -U keycloak -d keycloak -Fc > keycloak.dump
 ```
 
-## Ежедневные задания компаний
+Эти команды копируют только базы; содержимое S3 и при необходимости Mailpit резервируется отдельно. Автоматические бэкапы и отказоустойчивый кластер не настроены.
 
-Компания может публиковать одно задание с файлом за календарный день по МСК. Квота общая для
-владельца и рекрутеров компании; другие компании независимы. Соискатели видят все задания,
-фильтруют их по компании, специализации, грейду, статусу, датам и наличию своего ответа,
-загружают одно решение на задание. Компания читает и скачивает свои ответы, ставит оценку
-0–100 и оставляет комментарий; кандидат видит результат проверки. Viewer только читает.
+Для отката задайте прежний SHA в `API_IMAGE`/`WEB_IMAGE` серверного `.env`, затем:
 
-Задание и решение: PDF/JPEG/PNG/ZIP/TXT/MD до 10 МиБ в существующем приватном S3. Для ответа
-нужны профиль и согласия processing/publication. Приём закрывается вручную или по deadline;
-квота дня от закрытия не освобождается. Новых переменных окружения нет.
+```sh
+docker compose pull api web
+docker compose up -d --wait
+```
 
-API, примеры, ограничения, связь с ТЗ, миграция и процедура проверки:
-[docs/company-daily-tasks.md](docs/company-daily-tasks.md). Маршруты описаны в OpenAPI и `/docs/`.
+Миграции автоматически не откатываются: старый код должен быть совместим со схемой. Следующий CI снова заменит env.
 
-## Операционные функции админки
+### Правила изменений
 
-Добавлены компании и их подтверждение по документам, список пользователей и блокировка,
-просмотр потребностей, приглашений и попыток тестирования, модерация ежедневных заданий и
-потребностей, сводная статистика и общий журнал действий. Работодатель подаёт заявку на
-подтверждение; администратор принимает решение по версии заявки. Изменение названия/ИНН
-или удаление документа заявки сбрасывает подтверждение. Статус проверки не ограничивает MVP.
+Одна задача — ветка и PR с проверкой другим разработчиком. Обновляйте базу из `main`, меняйте OpenAPI вместе с кодом, синхронизируйте встроенную копию и [указатель маршрутов](docs/api-endpoints.md).
 
-Доступ через отдельную админскую сессию. Фронтенд не изменён, новых переменных окружения нет.
-Подробный контракт, права, переходы, фильтры, миграция и результаты проверки:
-[docs/admin-operations.md](docs/admin-operations.md).
+Общая БД меняется миграциями из `main`. SQL-файлы имеют временные метки; применённые миграции не редактируются и не переименовываются. Проверяйте применение с нуля и поверх текущей схемы. Добавление новых полей и удаление старых разделяйте на совместимые этапы. `goose down` на общей БД без согласованного плана не применяется.
 
-### Демонстрационный набор для жюри
+## Диагностика
 
-Первый `make up`, `make migrate` или серверный деплой автоматически создаёт тестовые аккаунты всех ролей, заполненные профили и связанные данные с настоящими файлами. Повторный запуск сохраняет изменения; новых переменных в `.env` не требуется. Доступы, сценарии и порядок запуска: [docs/jury-demo.md](docs/jury-demo.md).
+| Симптом | Что проверить |
+| --- | --- |
+| Keycloak отклоняет redirect URI | Используйте localhost; WEB_PUBLIC_URL, redirect URI и web origins `fsp-web` |
+| `401` после входа | Токен нужного окружения, issuer, audience `fsp-api`, `sub`, `email_verified`, срок и JWKS |
+| «HTTPS required» в серверной консоли Keycloak | Realm `master`; используйте Admin CLI внутри контейнера по SSH |
+| Локальный фронт обращается к серверу | `.env.local` переопределяет `.env`; измените настройки и перезапустите Next.js |
+| `404` профиля после входа | Роль и профиль создаются отдельно, проверьте `/me` и создание профиля |
+| Кандидата нет в банке | Активность, search_status, processing/publication, фильтры и кулдаун этой компании |
+| Админка не принимает Keycloak admin | Нужен аккаунт `admin_accounts`, например активированный superadmin |
+| Bootstrap не поменял пароль | Активирует только запись без пароля, не является сбросом |
+| Нет письма | Правильный Mailpit, получатель, SMTP realm, контейнеры keycloak/mailpit |
+| Mailpit сервера требует вход | `admin` / `admin1234`, действующее MAILPIT_UI_AUTH |
+| `/readyz` → `503` | PostgreSQL, Redis, S3, совпадение env, bucket |
+| Нельзя начать тест | available.reason/retry_at, согласие, профиль, активная попытка, стек и опубликованный банк |
+| PostgreSQL не пускает после смены env | Пароль существующей роли БД не изменился |
+| Swagger отличается от репозитория | Контракт развёрнутого релиза и SHA образа |
+
+Локальная диагностика: `make logs`, `docker compose --profile app ps`. Для обновления realm или исправления входа не удаляйте volumes: это удаляет пользователей и данные.
+
+## Подробная документация
+
+| Документ | Содержание |
+| --- | --- |
+| [Демо-данные для жюри](docs/jury-demo.md) | Аккаунты, состав набора, маршрут проверки, повторный запуск |
+| [Сопроводительная документация](docs/submission/documentation.md) | Архитектура, механики тестирования и подбора, валидация, интеграция с ФСП, API, библиотеки, запуск — по пунктам ТЗ |
+| [Все эндпоинты](docs/api-endpoints.md) | Методы, пути, назначение, авторизация |
+| [OpenAPI](api/openapi.yaml) | DTO, параметры и ответы |
+| [Архитектурные решения](docs/architecture.md) | Слои, инструменты и связь с ТЗ |
+| [Подбор и админка](docs/backend-hiring-and-admin.md) | Сценарии компании, банка, предложений и модерации |
+| [Кандидат и тестирование](docs/candidate-completion.md) | Стек, квалификации, демобанк и PDF |
+| [ФСП](docs/fsp-integration.md) | Mock-реестр и границы интеграции |
+| [Задания компаний](docs/company-daily-tasks.md) | Файлы, квота, решения и оценка |
+| [Взаимодействия](docs/candidate-interactions.md) | Просмотры и 30-дневный кулдаун |
+| [Истечение предложений](docs/offer-expiration.md) | 14 суток и освобождение кулдауна |
+| [Операционная админка](docs/admin-operations.md) | Подтверждение, модерация, статистика и аудит |
+| [Блокировки](docs/account-company-blocking.md) | Аккаунты, компании, причины и права |
+| [Идентификация](docs/admin-user-identification.md) | Имя, почта, приватность, импорт пользователей |
+| [Предпросмотры и администраторы](docs/admin-backend-extensions.md) | Пробные тесты, статусы и сессии |
+| [Оценка подбора](docs/matching-evaluation.md) | Формула и воспроизводимость |
+| [QA пагинации](docs/employer-pagination-qa.md) | Тестовые записи и проверки |
+| [Тема Keycloak](docs/keycloak-design-spec.md) | Установка и права ресурсов |
+| [Фронтенд](apps/web/README.md) | Веб-приложение и разработка |
+| [Документация фронта](apps/web/docs/README.md) | Архитектура, дизайн, API и формы |
+| [Админка фронта](apps/web/ADMIN.md) | Сессия, версии и предпросмотры |
+
+Документы отдельных доработок описывают состояние на дату создания. Текущие поля и маршруты определяют код `main` и OpenAPI соответствующего релиза.

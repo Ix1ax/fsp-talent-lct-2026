@@ -18,6 +18,7 @@ vi.mock('@/shared/auth', () => ({
   clearClientAccessToken: vi.fn(),
   clearOidcUser: vi.fn(),
   createOidcManager: vi.fn(() => ({ signoutRedirect, getUser })),
+  setSigningOut: vi.fn(),
 }));
 const fetchMock = vi.fn();
 

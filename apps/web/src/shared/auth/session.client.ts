@@ -1,5 +1,6 @@
 let accessToken: string | null = null;
 let sessionRevision = 0;
+let signingOut = false;
 
 export const getClientSessionRevision = (): number => sessionRevision;
 
@@ -32,7 +33,16 @@ export const onSessionExpired = (
   };
 };
 
+/**
+ * Идёт выход: cookie уже очищены, браузер вот-вот уйдёт в Keycloak. Фоновые
+ * запросы получат 401 — не отправляем на /login, иначе он мелькнёт.
+ */
+export const setSigningOut = (value: boolean): void => {
+  signingOut = value;
+};
+
 export const emitSessionExpired = (): void => {
+  if (signingOut) return;
   for (const listener of sessionExpiredListeners) {
     listener();
   }

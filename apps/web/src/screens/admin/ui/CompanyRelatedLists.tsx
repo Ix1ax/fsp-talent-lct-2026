@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { StaggerItem } from '@/shared/ui';
+import { pluralizeRu } from '@/shared/utils';
 import { type AdminCompany, adminOperationsSchemas } from '@/entities/admin';
 import {
   AdminAnimatedList,
@@ -40,8 +41,13 @@ export const CompanyRelatedLists = ({ company }: CompanyRelatedListsProps) => {
       <AdminPanel className="relative">
         <h2 className="text-lg font-medium">Документы и файлы</h2>
         <p className="text-sm text-muted-foreground">
-          В текущей заявке: {company.verification_document_ids.length}{' '}
-          документов. Файлы заявки отмечены в списке.
+          В текущей заявке:{' '}
+          {pluralizeRu(company.verification_document_ids.length, [
+            'документ',
+            'документа',
+            'документов',
+          ])}
+          . Файлы заявки отмечены в списке.
         </p>
         <ErrorNotice error={files.error} onRetry={files.reload} />
         <AdminListViewport loading={files.loading}>

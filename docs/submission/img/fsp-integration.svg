@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 440" font-family="Inter, Arial, sans-serif" font-size="12.5">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B1C21"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#1B1C21;stroke-width:1.3}
+      .brand{fill:#ECEAFF;stroke:#402FFF;stroke-width:1.6}
+      .fut{fill:#fff;stroke:#EC1D35;stroke-width:1.5;stroke-dasharray:6 4}
+      .t{fill:#1B1C21;font-weight:600}
+      .s{fill:#4A4E5A;font-size:11px}
+      .h{fill:#1B1C21;font-weight:700;font-size:13px}
+      .l{stroke:#1B1C21;stroke-width:1.3;fill:none;marker-end:url(#a)}
+      .lf{stroke:#EC1D35;stroke-width:1.4;fill:none;stroke-dasharray:6 4;marker-end:url(#a)}
+      .lab{fill:#402FFF;font-size:11px}
+      .labr{fill:#EC1D35;font-size:11px}
+    </style>
+  </defs>
+  <rect width="980" height="440" fill="#fff"/>
+
+  <text class="h" x="20" y="28">СЕЙЧАС (MVP)</text>
+  <text class="h" x="20" y="258">ЦЕЛЕВАЯ ИНТЕГРАЦИЯ С ФСП</text>
+  <line x1="20" y1="236" x2="960" y2="236" stroke="#C9CACD" stroke-dasharray="3 4"/>
+
+  <!-- now -->
+  <rect class="box" x="20" y="46" width="170" height="78" rx="10"/>
+  <text class="t" x="34" y="70">Кандидат</text>
+  <text class="s" x="34" y="90">«Привязать ФСП» →</text>
+  <text class="s" x="34" y="106">«Обновить достижения»</text>
+
+  <rect class="brand" x="240" y="40" width="250" height="160" rx="12"/>
+  <text class="t" x="256" y="64">API · модуль fsp</text>
+  <text class="s" x="256" y="86">POST /me/fsp/link — привязка по паре</text>
+  <text class="s" x="256" y="102">issuer + subject из проверенного JWT</text>
+  <text class="s" x="256" y="122">POST /me/fsp/sync — полный снимок,</text>
+  <text class="s" x="256" y="138">без дублей; при сбое данные сохраняются</text>
+  <text class="s" x="256" y="158">DELETE /me/fsp — отвязка</text>
+  <text class="s" x="256" y="182">таблицы fsp_links, fsp_achievements</text>
+
+  <rect class="box" x="540" y="46" width="200" height="110" rx="10"/>
+  <text class="t" x="554" y="70">Адаптер Registry</text>
+  <text class="s" x="554" y="90">реализация Mock (fsp_mock):</text>
+  <text class="s" x="554" y="106">SHA-256(issuer+subject) →</text>
+  <text class="s" x="554" y="122">призёр / участник /</text>
+  <text class="s" x="554" y="138">нет истории</text>
+
+  <rect class="box" x="780" y="46" width="180" height="150" rx="10"/>
+  <text class="t" x="794" y="70">Работодатель</text>
+  <text class="s" x="794" y="90">видит достижения</text>
+  <text class="s" x="794" y="106">в разрешённой карточке;</text>
+  <text class="s" x="794" y="122">фильтр «есть достижения»;</text>
+  <text class="s" x="794" y="138">бонус ФСП: 5 / 3 / 1 —</text>
+  <text class="s" x="794" y="154">только внутри одной</text>
+  <text class="s" x="794" y="170">подтверждённой категории</text>
+
+  <path class="l" d="M190 85 H238"/>
+  <path class="l" d="M490 100 H538"/>
+  <path class="l" d="M490 170 C620 210 700 190 778 160"/>
+  <text class="lab" x="560" y="216">participant_id наружу не отдаётся</text>
+
+  <!-- target -->
+  <rect class="box" x="20" y="280" width="170" height="130" rx="10"/>
+  <text class="t" x="34" y="304">Кандидат</text>
+  <text class="s" x="34" y="324">входит через ФСП ID</text>
+  <text class="s" x="34" y="340">(Keycloak ФСП) или</text>
+  <text class="s" x="34" y="356">привязывает его</text>
+  <text class="s" x="34" y="372">в профиле; даёт согласие</text>
+  <text class="s" x="34" y="388">на получение данных</text>
+
+  <rect class="fut" x="240" y="276" width="250" height="140" rx="12"/>
+  <text class="t" x="256" y="300">Keycloak ФСП ID</text>
+  <text class="s" x="256" y="320">Identity Provider (брокеринг OIDC)</text>
+  <text class="s" x="256" y="336">в realm платформы: вход «через ФСП»;</text>
+  <text class="s" x="256" y="352">claim с ID участника подтверждает</text>
+  <text class="s" x="256" y="368">владение — ввод чужого ID</text>
+  <text class="s" x="256" y="384">невозможен</text>
+
+  <rect class="fut" x="540" y="276" width="200" height="140" rx="10"/>
+  <text class="t" x="554" y="300">Адаптер Registry</text>
+  <text class="s" x="554" y="320">реализация FSP API:</text>
+  <text class="s" x="554" y="336">GET участника, результаты</text>
+  <text class="s" x="554" y="352">соревнований (дисциплина,</text>
+  <text class="s" x="554" y="368">место, дата); повтор,</text>
+  <text class="s" x="554" y="384">статус «устарело»</text>
+
+  <rect class="fut" x="780" y="276" width="180" height="140" rx="10"/>
+  <text class="t" x="794" y="300">Реестр ФСП</text>
+  <text class="s" x="794" y="320">официальные результаты</text>
+  <text class="s" x="794" y="336">участника; вебхук</text>
+  <text class="s" x="794" y="352">о новых результатах</text>
+  <text class="s" x="794" y="368">(или периодическая</text>
+  <text class="s" x="794" y="384">синхронизация)</text>
+
+  <path class="lf" d="M190 345 H238"/>
+  <path class="lf" d="M490 345 H538"/>
+  <path class="lf" d="M740 345 H778"/>
+  <text class="labr" x="500" y="434">замена одной реализации интерфейса Registry; API кабинетов и хранение не меняются</text>
+</svg>

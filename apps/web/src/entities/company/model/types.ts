@@ -11,6 +11,8 @@ export type Company = {
   verificationStatus: string;
   createdAt: string;
   memberRole: MemberRole;
+  /** Доступ к платформе; заблокированная компания недоступна для работы. */
+  status?: 'active' | 'blocked';
 };
 
 export type CompanyInput = {

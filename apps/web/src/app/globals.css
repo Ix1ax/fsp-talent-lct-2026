@@ -174,16 +174,36 @@
     @apply m-0 min-h-screen bg-background text-foreground;
   }
 
-  /* Нижняя панель разделов не перекрывает конец страницы, пока она видна. */
+  /* Нижняя панель разделов не перекрывает конец страницы, пока она видна.
+     --fixed-bottom-bar и --fixed-left-bar — место под фиксированные панели:
+     плавающие блоки (уведомление cookie) отступают, только если панель есть. */
   @media (width < 80rem) {
     body:has([data-bottom-tabs='xl']) {
       padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+      --fixed-bottom-bar: 4.5rem;
     }
   }
 
   @media (width < 64rem) {
     body:has([data-bottom-tabs='lg']) {
       padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+      --fixed-bottom-bar: 4.5rem;
+    }
+
+    /* Меню админки на телефоне — снизу. */
+    body:has([data-admin-shell]) {
+      --fixed-bottom-bar: 4.5rem;
+    }
+  }
+
+  /* Меню админки на десктопе — слева. */
+  @media (width >= 64rem) {
+    body:has([data-admin-shell]) {
+      --fixed-left-bar: 260px;
+    }
+
+    body:has([data-admin-shell][data-collapsed='true']) {
+      --fixed-left-bar: 72px;
     }
   }
 

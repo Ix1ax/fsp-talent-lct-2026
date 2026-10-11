@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 470" font-family="Inter, Arial, sans-serif" font-size="12.5">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B1C21"/>
+    </marker>
+    <style>
+      .lane{fill:#F5F5F7}
+      .lt{fill:#1B1C21;font-weight:700;font-size:13px}
+      .st{fill:#fff;stroke:#1B1C21;stroke-width:1.3}
+      .key{fill:#ECEAFF;stroke:#402FFF;stroke-width:1.6}
+      .red{fill:#fff;stroke:#EC1D35;stroke-width:1.6}
+      .t{fill:#1B1C21;font-weight:600}
+      .s{fill:#4A4E5A;font-size:11px}
+      .l{stroke:#1B1C21;stroke-width:1.3;fill:none;marker-end:url(#a)}
+      .lb{stroke:#402FFF;stroke-width:1.6;fill:none;marker-end:url(#a)}
+    </style>
+  </defs>
+  <rect width="980" height="470" fill="#fff"/>
+
+  <rect class="lane" x="10" y="10" width="960" height="140" rx="12"/>
+  <text class="lt" x="26" y="34">КАНДИДАТ</text>
+  <rect class="lane" x="10" y="165" width="960" height="140" rx="12"/>
+  <text class="lt" x="26" y="189">РАБОТОДАТЕЛЬ</text>
+  <rect class="lane" x="10" y="320" width="960" height="140" rx="12"/>
+  <text class="lt" x="26" y="344">АДМИНИСТРАТОР</text>
+
+  <!-- candidate -->
+  <rect class="st" x="26" y="50" width="130" height="80" rx="10"/>
+  <text class="t" x="38" y="74">1. Регистрация</text>
+  <text class="s" x="38" y="94">подтверждение почты,</text>
+  <text class="s" x="38" y="110">роль «кандидат»</text>
+
+  <rect class="st" x="172" y="50" width="130" height="80" rx="10"/>
+  <text class="t" x="184" y="74">2. Профиль</text>
+  <text class="s" x="184" y="94">согласия, контакты,</text>
+  <text class="s" x="184" y="110">резюме: форма / PDF</text>
+
+  <rect class="st" x="318" y="50" width="130" height="80" rx="10"/>
+  <text class="t" x="330" y="74">3. Опрос</text>
+  <text class="s" x="330" y="94">специализация, стек,</text>
+  <text class="s" x="330" y="110">заявленный грейд</text>
+
+  <rect class="key" x="464" y="50" width="130" height="80" rx="10"/>
+  <text class="t" x="476" y="74">4. Тест</text>
+  <text class="s" x="476" y="94">случайный вариант</text>
+  <text class="s" x="476" y="110">по составу шаблона</text>
+
+  <rect class="key" x="610" y="50" width="150" height="80" rx="10"/>
+  <text class="t" x="622" y="74">5. Категория</text>
+  <text class="s" x="622" y="94">специализация + стек</text>
+  <text class="s" x="622" y="110">+ грейд по тесту</text>
+
+  <rect class="red" x="790" y="50" width="164" height="80" rx="10"/>
+  <text class="t" x="802" y="74">8. Ответ кандидата</text>
+  <text class="s" x="802" y="94">видит компанию и вилку;</text>
+  <text class="s" x="802" y="110">принять / отклонить</text>
+
+  <path class="l" d="M156 90 H170"/><path class="l" d="M302 90 H316"/><path class="l" d="M448 90 H462"/><path class="l" d="M594 90 H608"/>
+
+  <!-- employer -->
+  <rect class="st" x="26" y="205" width="150" height="84" rx="10"/>
+  <text class="t" x="38" y="229">A. Компания</text>
+  <text class="s" x="38" y="249">профиль, документы,</text>
+  <text class="s" x="38" y="265">команда (владелец,</text>
+  <text class="s" x="38" y="281">рекрутер, наблюдатель)</text>
+
+  <rect class="st" x="192" y="205" width="150" height="84" rx="10"/>
+  <text class="t" x="204" y="229">B. Потребность</text>
+  <text class="s" x="204" y="249">специализация, грейд,</text>
+  <text class="s" x="204" y="265">стек, формат, вилка,</text>
+  <text class="s" x="204" y="281">город, часовой пояс</text>
+
+  <rect class="key" x="358" y="205" width="180" height="84" rx="10"/>
+  <text class="t" x="370" y="229">6. Подборка и банк</text>
+  <text class="s" x="370" y="249">ранжирование + объяснение,</text>
+  <text class="s" x="370" y="265">фильтры без потери выдачи,</text>
+  <text class="s" x="370" y="281">профиль обезличен</text>
+
+  <rect class="key" x="554" y="205" width="206" height="84" rx="10"/>
+  <text class="t" x="566" y="229">7. Предложение кандидату</text>
+  <text class="s" x="566" y="249">описание, вилка от–до (₽),</text>
+  <text class="s" x="566" y="265">компания, способ связи;</text>
+  <text class="s" x="566" y="281">статусы: отправлено → …</text>
+
+  <rect class="red" x="790" y="205" width="164" height="84" rx="10"/>
+  <text class="t" x="802" y="229">9. Контакты</text>
+  <text class="s" x="802" y="249">открываются только</text>
+  <text class="s" x="802" y="265">после «принято»</text>
+
+  <path class="l" d="M176 247 H190"/><path class="l" d="M342 247 H356"/><path class="l" d="M538 247 H552"/>
+
+  <!-- cross-lane -->
+  <path class="lb" d="M685 130 V160 C685 180 448 175 448 203"/>
+  <path class="lb" d="M760 230 C800 200 830 160 860 132"/>
+  <path class="lb" d="M872 130 V203"/>
+
+  <!-- admin -->
+  <rect class="st" x="26" y="360" width="190" height="84" rx="10"/>
+  <text class="t" x="38" y="384">Справочники</text>
+  <text class="s" x="38" y="404">специализации, грейды,</text>
+  <text class="s" x="38" y="420">навыки, модерация навыков</text>
+
+  <rect class="st" x="232" y="360" width="200" height="84" rx="10"/>
+  <text class="t" x="244" y="384">Банк заданий и шаблоны</text>
+  <text class="s" x="244" y="404">вопросы с версиями, состав</text>
+  <text class="s" x="244" y="420">(навык × сложность × вес)</text>
+
+  <rect class="st" x="448" y="360" width="200" height="84" rx="10"/>
+  <text class="t" x="460" y="384">Проверка компаний</text>
+  <text class="s" x="460" y="404">подтверждение по документам,</text>
+  <text class="s" x="460" y="420">блокировки, модерация</text>
+
+  <rect class="st" x="664" y="360" width="290" height="84" rx="10"/>
+  <text class="t" x="676" y="384">Журнал и статистика</text>
+  <text class="s" x="676" y="404">аудит действий, попытки тестирования,</text>
+  <text class="s" x="676" y="420">потребности, предложения, задания</text>
+
+</svg>
