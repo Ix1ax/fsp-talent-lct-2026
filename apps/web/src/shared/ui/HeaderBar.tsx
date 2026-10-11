@@ -8,9 +8,10 @@ import { HeaderTabBar } from './HeaderTabBar';
 
 /** Пункт навигации шапки: активный — белая подложка и цвет бренда. */
 export const headerNavItemClassName = cn(
-  'flex min-h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none',
-  'hover:bg-card hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
+  'flex min-h-10 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium whitespace-nowrap text-muted-foreground transition-colors outline-none',
+  'hover:bg-accent hover:text-brand-text hover:inset-ring hover:inset-ring-brand-text/20 focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50',
   'aria-[current=page]:bg-card aria-[current=page]:text-brand-text aria-[current=page]:shadow-xs',
+  'aria-[current=page]:hover:bg-accent',
   "[&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0",
 );
 
@@ -70,6 +71,8 @@ export const HeaderBar = ({
       className={cn(
         // Полоса вокруг плашки прозрачна и пропускает клики; размыта только сама плашка.
         'pointer-events-none sticky top-0 z-40 pt-3 pb-2',
+        '[&_a]:cursor-pointer [&_button:not(:disabled)]:cursor-pointer',
+        '[&_[data-variant=ghost]:hover]:bg-accent [&_[data-variant=ghost]:hover]:text-brand-text [&_[data-variant=ghost][aria-expanded=true]]:bg-accent [&_[data-variant=ghost][aria-expanded=true]]:text-brand-text',
         className,
       )}
     >
