@@ -2,10 +2,11 @@ import { RotateCcwIcon, SlidersHorizontalIcon } from 'lucide-react';
 
 import { Button, Checkbox, Input, OptionSelect } from '@/shared/ui';
 import { type Catalogs, SkillPicker } from '@/entities/catalog';
-import type { BankFilters } from '@/entities/employer-bank';
-import type { EmployerNeed } from '@/entities/employer-need';
+import { type BankFilters } from '@/entities/employer-bank';
+import { type EmployerNeed } from '@/entities/employer-need';
 
-import { CandidateNeedHint } from './CandidateNeedHint';
+import { CandidateExperienceFilter } from './CandidateExperienceFilter';
+import { CandidateNeedFilter } from './CandidateNeedFilter';
 
 interface CandidateFiltersProps {
   filters: BankFilters;
@@ -62,34 +63,16 @@ export const CandidateFilters = ({
           <RotateCcwIcon />
         </Button>
       </div>
-      <div className="grid gap-2 border-b pb-5">
-        <label className="grid gap-2 text-sm font-medium">
-          Потребность
-          <OptionSelect
-            aria-label="Потребность для поиска соискателей"
-            value={needId}
-            disabled={busy || needsLoading || !!needsError}
-            onValueChange={onNeed}
-            options={[
-              {
-                value: '',
-                label: needsLoading
-                  ? 'Загружаем потребности…'
-                  : 'Без привязки к потребности',
-              },
-              ...needs.map((need) => ({ value: need.id, label: need.title })),
-            ]}
-          />
-        </label>
-        <CandidateNeedHint
-          needsError={needsError}
-          needsLoading={needsLoading}
-          needs={needs}
-          busy={busy}
-          onRetryNeeds={onRetryNeeds}
-          onNeeds={onNeeds}
-        />
-      </div>
+      <CandidateNeedFilter
+        needs={needs}
+        needId={needId}
+        needsLoading={needsLoading}
+        needsError={needsError}
+        busy={busy}
+        onNeed={onNeed}
+        onRetryNeeds={onRetryNeeds}
+        onNeeds={onNeeds}
+      />
       <fieldset disabled={busy} className="grid gap-5">
         <label className="grid gap-2 text-sm font-medium text-muted-foreground">
           Специализация
@@ -190,37 +173,12 @@ export const CandidateFilters = ({
             ]}
           />
         </label>
-        <div className="grid gap-3 border-t pt-5">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Опыт, лет
-          </h3>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="grid gap-2 text-xs text-muted-foreground">
-              От
-              <Input
-                aria-label="Опыт от, лет"
-                type="number"
-                min={0}
-                max={50}
-                step={0.1}
-                value={experienceMin}
-                onChange={(event) => onExperienceMin(event.target.value)}
-              />
-            </label>
-            <label className="grid gap-2 text-xs text-muted-foreground">
-              До
-              <Input
-                aria-label="Опыт до, лет"
-                type="number"
-                min={0}
-                max={50}
-                step={0.1}
-                value={experienceMax}
-                onChange={(event) => onExperienceMax(event.target.value)}
-              />
-            </label>
-          </div>
-        </div>
+        <CandidateExperienceFilter
+          experienceMin={experienceMin}
+          experienceMax={experienceMax}
+          onExperienceMin={onExperienceMin}
+          onExperienceMax={onExperienceMax}
+        />
         <label className="grid gap-2 text-sm font-medium text-muted-foreground">
           Зарплатные ожидания до, ₽
           <Input

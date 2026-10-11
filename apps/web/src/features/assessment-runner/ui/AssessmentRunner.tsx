@@ -3,23 +3,13 @@ import Link from 'next/link';
 import { CheckIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import {
-  Button,
-  Card,
-  CardContent,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  FadeIn,
-} from '@/shared/ui';
+import { Button, Card, CardContent, FadeIn } from '@/shared/ui';
 import { formatDuration } from '@/shared/utils';
-import type { AssessmentAttempt } from '@/entities/assessment';
+import { type AssessmentAttempt } from '@/entities/assessment';
 
 import { useAssessmentNavigation, useAssessmentRunner } from '../model';
 import { AssessmentAnswerReview } from './AssessmentAnswerReview';
+import { AssessmentFinishDialog } from './AssessmentFinishDialog';
 import { AssessmentFocusWarning } from './AssessmentFocusWarning';
 import { AssessmentQuestionPanel } from './AssessmentQuestionPanel';
 import { AssessmentResultCard } from './AssessmentResultCard';
@@ -208,44 +198,16 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           onReview={reviewAnswers}
         />
       )}
-      <Dialog
-        open={confirm && !locked}
-        onOpenChange={(open) => {
-          if (!busy) setConfirm(open);
-        }}
-      >
-        <DialogContent showCloseButton={!busy}>
-          <DialogHeader>
-            <DialogTitle>
-              {reviewing ? 'Завершить тест?' : 'Завершить тест досрочно?'}
-            </DialogTitle>
-            <DialogDescription>
-              Без ответа: {unanswered}. Перед завершением отправим все текущие
-              ответы. После отправки изменить их нельзя.
-            </DialogDescription>
-          </DialogHeader>
-          {error && <p role="alert">{error}</p>}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => setConfirm(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              disabled={busy}
-              onClick={() => {
-                void finish().then((done) => {
-                  if (done) setConfirm(false);
-                });
-              }}
-            >
-              {busy ? 'Отправляем…' : 'Завершить'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AssessmentFinishDialog
+        confirm={confirm}
+        locked={locked}
+        busy={busy}
+        reviewing={reviewing}
+        unanswered={unanswered}
+        error={error}
+        setConfirm={setConfirm}
+        finish={finish}
+      />
     </div>
   );
 };
