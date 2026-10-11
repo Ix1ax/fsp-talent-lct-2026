@@ -7,7 +7,7 @@ import { useFormUnsavedChanges } from '@/shared/hooks';
 import type { Skill } from '@/entities/catalog';
 import type { NeedInput, NeedStatus } from '@/entities/employer-need';
 
-import { toNeedInput, validateNeed } from '../lib';
+import { getNeedValidationStep, toNeedInput, validateNeed } from '../lib';
 import { loadNeedSkills, useNeedSkills } from './useNeedSkills';
 
 type NeedFlowEditorOptions = {
@@ -97,18 +97,7 @@ export const useNeedFlowEditor = ({
     const validation = validateNeed(next, status);
     setErrors(validation);
     if (Object.keys(validation).length) {
-      if (validation.title || validation.specializationId || validation.gradeId)
-        setStep(0);
-      else if (
-        validation.description ||
-        validation.salaryFromRub ||
-        validation.salaryToRub ||
-        validation.city ||
-        validation.timezone ||
-        validation.workFormatIds
-      )
-        setStep(1);
-      else setStep(2);
+      setStep(getNeedValidationStep(validation));
       return;
     }
     try {

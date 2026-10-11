@@ -47,9 +47,7 @@ export const ProfileStepItem = ({
           />
         </div>
         <h2 className="text-lg font-semibold">{step.title}</h2>
-        <p className="text-xs font-medium text-muted-foreground" role="status">
-          {status}
-        </p>
+        <p className="text-xs font-medium text-muted-foreground">{status}</p>
         <p className="text-sm text-muted-foreground">
           {PROFILE_STEP_DESCRIPTIONS[step.id]}
         </p>
