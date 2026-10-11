@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ApiError } from '@/shared/api';
 import {
@@ -42,6 +42,7 @@ export const useAssessments = () => {
       ]);
 
       if (controller.signal.aborted) return;
+      setError('');
       setItems(available);
       setCurrent(attempt?.id);
     };
@@ -59,12 +60,21 @@ export const useAssessments = () => {
     return () => controller.abort();
   }, [reload]);
 
+  const reloadList = useCallback(() => {
+    setLoading(true);
+    setError('');
+    setItems([]);
+    setCurrent(undefined);
+    setSelected(undefined);
+    setReload((value) => value + 1);
+  }, []);
+
   useEffect(() => {
-    const reloadList = () => setReload((value) => value + 1);
     window.addEventListener(CANDIDATE_DATA_UPDATED_EVENT, reloadList);
+
     return () =>
       window.removeEventListener(CANDIDATE_DATA_UPDATED_EVENT, reloadList);
-  }, []);
+  }, [reloadList]);
 
   const start = async () => {
     if (!selected || lock.current) return;
@@ -122,9 +132,7 @@ export const useAssessments = () => {
 
   const refresh = () => {
     if (lock.current || loading) return;
-    setLoading(true);
-    setError('');
-    setReload((value) => value + 1);
+    reloadList();
   };
 
   const select = (test: AvailableAssessment) => {

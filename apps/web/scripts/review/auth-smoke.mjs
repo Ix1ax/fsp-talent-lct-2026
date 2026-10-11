@@ -58,27 +58,35 @@ const recovery = await fetch(
   { headers: { Cookie: cookie }, redirect: 'manual' },
 );
 assert.equal(recovery.status, 307);
-assert.equal(recovery.headers.get('location'), `${base}/candidate/profile`);
+assert.equal(
+  new URL(recovery.headers.get('location'), base).href,
+  `${base}/candidate/profile`,
+);
 const external = await fetch(
   `${base}/api/auth/refresh?next=https://evil.test`,
   { headers: { Cookie: cookie }, redirect: 'manual' },
 );
-assert.equal(external.headers.get('location'), `${base}/`);
+assert.equal(new URL(external.headers.get('location'), base).href, `${base}/`);
 
-// Guest redirect preserves target route directly
+// Guest redirect preserves the target through login or session recovery.
 const guest = await fetch(`${base}/candidate/profile`, { redirect: 'manual' });
 const guestTarget = '/login?next=%2Fcandidate';
+const recoveryTarget = '/api/auth/refresh?next=%2Fcandidate';
 if (guest.status === 307) {
   assert.ok(
-    [guestTarget, `${base}${guestTarget}`].includes(
-      guest.headers.get('location'),
-    ),
+    [
+      guestTarget,
+      `${base}${guestTarget}`,
+      recoveryTarget,
+      `${base}${recoveryTarget}`,
+    ].includes(guest.headers.get('location')),
   );
 } else {
   assert.equal(guest.status, 200);
   const text = await guest.text();
   assert.ok(
-    text.includes('NEXT_REDIRECT') && text.includes('/login?next=%2Fcandidate'),
+    text.includes('NEXT_REDIRECT') &&
+      (text.includes(guestTarget) || text.includes(recoveryTarget)),
   );
 }
 
@@ -109,7 +117,7 @@ const invalidRefresh = await fetch(
 );
 assert.equal(invalidRefresh.status, 307);
 assert.equal(
-  invalidRefresh.headers.get('location'),
+  new URL(invalidRefresh.headers.get('location'), base).href,
   `${base}/login?next=%2Fcandidate%2Fprofile`,
 );
 assert.ok(
