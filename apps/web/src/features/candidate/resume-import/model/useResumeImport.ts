@@ -3,6 +3,7 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { ApiError, ensureClientAccessToken } from '@/shared/api';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useUnsavedChanges } from '@/shared/hooks';
+import { createUuid } from '@/shared/utils';
 import {
   type CandidateEducation,
   type CandidateExperience,
@@ -156,7 +157,7 @@ export const useResumeImport = (props: ResumeImportOptions) => {
 
   const handleApply = () => {
     if (!props.processing || !review) return;
-    const importId = crypto.randomUUID();
+    const importId = createUuid();
     const patches = getResumeFormPatches(review.result.draft);
     props.onApply({
       id: importId,

@@ -2,6 +2,7 @@ export { camelToSnake } from './camelToSnake';
 export { clamp } from './clamp';
 export { convertCamelToSnake } from './convertCamelToSnake';
 export { convertSnakeToCamel } from './convertSnakeToCamel';
+export { createUuid } from './createUuid';
 export { formatCalendarDate, formatDate, formatMonthYear } from './formatDate';
 export { formatDuration } from './formatDuration';
 export { formatFileSize } from './formatFileSize';

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useUnsavedChanges } from '@/shared/hooks';
+import { createUuid } from '@/shared/utils';
 import {
   AdminApiError,
   deleteAdminPreview,
@@ -137,7 +138,7 @@ export const useServerPreview = (templateId: string) => {
         accept(next);
         return;
       }
-      const key = saved.key ?? crypto.randomUUID();
+      const key = saved.key ?? createUuid();
       localStorage.setItem(storageKey, JSON.stringify({ key }));
       const next = await startAdminPreview(
         session.access_token,

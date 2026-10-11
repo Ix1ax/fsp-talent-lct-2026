@@ -12,11 +12,15 @@ import {
   REFRESH_TOKEN_COOKIE_PATH,
 } from './tokens';
 
-const baseCookie = {
+const getBaseCookie = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
+  secure:
+    process.env.SESSION_COOKIE_SECURE === 'false'
+      ? false
+      : process.env.SESSION_COOKIE_SECURE === 'true' ||
+        process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-};
+});
 
 export const getAccessToken = async (): Promise<string | undefined> =>
   (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
@@ -32,6 +36,7 @@ export const setAuthTokens = async (
   options?: { refreshMaxAge?: number },
 ): Promise<void> => {
   const jar = await cookies();
+  const baseCookie = getBaseCookie();
   const accessMaxAge = tokens.expiresIn ?? 60 * 15;
 
   jar.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
