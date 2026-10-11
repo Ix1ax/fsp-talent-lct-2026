@@ -68,10 +68,10 @@ export const Combobox = ({
           role="combobox"
           aria-expanded={open}
           aria-controls={listId}
-          className="min-h-11 w-full justify-between font-normal"
+          className="min-h-11 min-w-0 w-full justify-between font-normal"
           {...props}
         >
-          <span className="truncate">
+          <span className="min-w-0 flex-1 truncate text-left">
             {selectedLabel ?? selected?.label ?? placeholder}
           </span>
           <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
