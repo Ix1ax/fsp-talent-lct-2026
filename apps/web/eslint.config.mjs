@@ -4,6 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
+import consistency from './scripts/eslint/consistency.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -72,6 +74,7 @@ const eslintConfig = [
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
+      consistency,
     },
     rules: {
       'simple-import-sort/imports': [
@@ -102,6 +105,23 @@ const eslintConfig = [
       'no-empty': ['error', { allowEmptyCatch: false }],
       'no-nested-ternary': 'error',
       'no-restricted-syntax': ['error', ...EMPTY_CATCH_RESTRICTIONS],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/**/*.test.ts', 'src/**/*.d.ts'],
+    rules: {
+      'consistency/arrow-functions': 'error',
+      'consistency/props-interface': 'error',
+      'consistency/api-response': 'error',
+    },
+  },
+  {
+    files: ['src/{features,screens,widgets}/**/*.tsx'],
+    ignores: ['src/screens/home/**'],
+    rules: {
+      'consistency/shared-controls': 'error',
+      'consistency/semantic-colors': 'error',
     },
   },
   {

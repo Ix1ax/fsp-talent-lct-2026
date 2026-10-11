@@ -10,11 +10,13 @@ interface RecordItemProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
 }
 
+type RecordItemRootProps = RecordItemProps;
+
 const RecordItemRoot = ({
   as: Component = 'li',
   className,
   ...props
-}: RecordItemProps) => {
+}: RecordItemRootProps) => {
   return (
     <Component
       className={cn(

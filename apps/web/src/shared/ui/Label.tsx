@@ -5,10 +5,9 @@ import { Label as LabelPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Label = ({
-  className,
-  ...props
-}: ComponentProps<typeof LabelPrimitive.Root>) => {
+type LabelProps = ComponentProps<typeof LabelPrimitive.Root>;
+
+const Label = ({ className, ...props }: LabelProps) => {
   return (
     <LabelPrimitive.Root
       data-slot="label"

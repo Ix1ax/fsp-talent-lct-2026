@@ -5,6 +5,8 @@ import { Slider as SliderPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
+type SliderProps = ComponentProps<typeof SliderPrimitive.Root>;
+
 const Slider = ({
   className,
   value,
@@ -14,7 +16,7 @@ const Slider = ({
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   ...props
-}: ComponentProps<typeof SliderPrimitive.Root>) => {
+}: SliderProps) => {
   const values = value ?? defaultValue ?? [min];
 
   return (

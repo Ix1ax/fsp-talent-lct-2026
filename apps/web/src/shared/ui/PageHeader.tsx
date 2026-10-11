@@ -21,7 +21,9 @@ interface PageHeaderActionsProps extends ComponentProps<'div'> {
   children: ReactNode;
 }
 
-const PageHeaderRoot = ({ className, ...props }: PageHeaderProps) => {
+type PageHeaderRootProps = PageHeaderProps;
+
+const PageHeaderRoot = ({ className, ...props }: PageHeaderRootProps) => {
   return (
     <header
       className={cn(

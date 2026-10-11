@@ -7,32 +7,33 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/Button';
 
-const Dialog = ({ ...props }: ComponentProps<typeof DialogPrimitive.Root>) => {
+type DialogProps = ComponentProps<typeof DialogPrimitive.Root>;
+
+const Dialog = ({ ...props }: DialogProps) => {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
 };
 
-const DialogTrigger = ({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Trigger>) => {
+type DialogTriggerProps = ComponentProps<typeof DialogPrimitive.Trigger>;
+
+const DialogTrigger = ({ ...props }: DialogTriggerProps) => {
   return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />;
 };
 
-const DialogPortal = ({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Portal>) => {
+type DialogPortalProps = ComponentProps<typeof DialogPrimitive.Portal>;
+
+const DialogPortal = ({ ...props }: DialogPortalProps) => {
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />;
 };
 
-const DialogClose = ({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Close>) => {
+type DialogCloseProps = ComponentProps<typeof DialogPrimitive.Close>;
+
+const DialogClose = ({ ...props }: DialogCloseProps) => {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />;
 };
 
-const DialogOverlay = ({
-  className,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Overlay>) => {
+type DialogOverlayProps = ComponentProps<typeof DialogPrimitive.Overlay>;
+
+const DialogOverlay = ({ className, ...props }: DialogOverlayProps) => {
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
@@ -45,14 +46,18 @@ const DialogOverlay = ({
   );
 };
 
+interface DialogContentProps extends ComponentProps<
+  typeof DialogPrimitive.Content
+> {
+  showCloseButton?: boolean;
+}
+
 const DialogContent = ({
   className,
   children,
   showCloseButton = true,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content> & {
-  showCloseButton?: boolean;
-}) => {
+}: DialogContentProps) => {
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -82,7 +87,9 @@ const DialogContent = ({
   );
 };
 
-const DialogHeader = ({ className, ...props }: ComponentProps<'div'>) => {
+type DialogHeaderProps = ComponentProps<'div'>;
+
+const DialogHeader = ({ className, ...props }: DialogHeaderProps) => {
   return (
     <div
       data-slot="dialog-header"
@@ -92,14 +99,16 @@ const DialogHeader = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
+interface DialogFooterProps extends ComponentProps<'div'> {
+  showCloseButton?: boolean;
+}
+
 const DialogFooter = ({
   className,
   showCloseButton = false,
   children,
   ...props
-}: ComponentProps<'div'> & {
-  showCloseButton?: boolean;
-}) => {
+}: DialogFooterProps) => {
   return (
     <div
       data-slot="dialog-footer"
@@ -119,10 +128,9 @@ const DialogFooter = ({
   );
 };
 
-const DialogTitle = ({
-  className,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Title>) => {
+type DialogTitleProps = ComponentProps<typeof DialogPrimitive.Title>;
+
+const DialogTitle = ({ className, ...props }: DialogTitleProps) => {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
@@ -135,10 +143,11 @@ const DialogTitle = ({
   );
 };
 
-const DialogDescription = ({
-  className,
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Description>) => {
+type DialogDescriptionProps = ComponentProps<
+  typeof DialogPrimitive.Description
+>;
+
+const DialogDescription = ({ className, ...props }: DialogDescriptionProps) => {
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"

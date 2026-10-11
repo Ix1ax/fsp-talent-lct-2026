@@ -5,13 +5,11 @@ import { Avatar as AvatarPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Avatar = ({
-  className,
-  size = 'default',
-  ...props
-}: ComponentProps<typeof AvatarPrimitive.Root> & {
+interface AvatarProps extends ComponentProps<typeof AvatarPrimitive.Root> {
   size?: 'default' | 'sm' | 'lg';
-}) => {
+}
+
+const Avatar = ({ className, size = 'default', ...props }: AvatarProps) => {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
@@ -25,10 +23,9 @@ const Avatar = ({
   );
 };
 
-const AvatarImage = ({
-  className,
-  ...props
-}: ComponentProps<typeof AvatarPrimitive.Image>) => {
+type AvatarImageProps = ComponentProps<typeof AvatarPrimitive.Image>;
+
+const AvatarImage = ({ className, ...props }: AvatarImageProps) => {
   return (
     <AvatarPrimitive.Image
       data-slot="avatar-image"
@@ -41,10 +38,9 @@ const AvatarImage = ({
   );
 };
 
-const AvatarFallback = ({
-  className,
-  ...props
-}: ComponentProps<typeof AvatarPrimitive.Fallback>) => {
+type AvatarFallbackProps = ComponentProps<typeof AvatarPrimitive.Fallback>;
+
+const AvatarFallback = ({ className, ...props }: AvatarFallbackProps) => {
   return (
     <AvatarPrimitive.Fallback
       data-slot="avatar-fallback"
@@ -57,7 +53,9 @@ const AvatarFallback = ({
   );
 };
 
-const AvatarBadge = ({ className, ...props }: ComponentProps<'span'>) => {
+type AvatarBadgeProps = ComponentProps<'span'>;
+
+const AvatarBadge = ({ className, ...props }: AvatarBadgeProps) => {
   return (
     <span
       data-slot="avatar-badge"
@@ -73,7 +71,9 @@ const AvatarBadge = ({ className, ...props }: ComponentProps<'span'>) => {
   );
 };
 
-const AvatarGroup = ({ className, ...props }: ComponentProps<'div'>) => {
+type AvatarGroupProps = ComponentProps<'div'>;
+
+const AvatarGroup = ({ className, ...props }: AvatarGroupProps) => {
   return (
     <div
       data-slot="avatar-group"
@@ -86,7 +86,9 @@ const AvatarGroup = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const AvatarGroupCount = ({ className, ...props }: ComponentProps<'div'>) => {
+type AvatarGroupCountProps = ComponentProps<'div'>;
+
+const AvatarGroupCount = ({ className, ...props }: AvatarGroupCountProps) => {
   return (
     <div
       data-slot="avatar-group-count"

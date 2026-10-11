@@ -14,6 +14,9 @@
   --color-inactive: var(--inactive);
   --color-token: var(--token);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-media-overlay: var(--media-overlay);
+  --color-media-foreground: var(--media-foreground);
   --color-warning: var(--warning);
   --color-success-soft: var(--success-soft);
   --color-warning-soft: var(--warning-soft);
@@ -99,6 +102,9 @@
   --token: rgba(64, 47, 255, 0.08);
   --brand-red: #ec1d35;
   --success: #13784a;
+  --success-foreground: #ffffff;
+  --media-overlay: rgba(0, 0, 0, 0.6);
+  --media-foreground: #ffffff;
   --warning: #8a5d00;
   --success-soft: rgba(19, 120, 74, 0.08);
   --warning-soft: rgba(138, 93, 0, 0.08);
@@ -137,6 +143,7 @@
   --inactive: #4a4e5a;
   --token: rgba(64, 47, 255, 0.18);
   --success: #86ddb3;
+  --success-foreground: #0f1014;
   --warning: #e8c778;
   --success-soft: rgba(134, 221, 179, 0.12);
   --warning-soft: rgba(232, 199, 120, 0.12);

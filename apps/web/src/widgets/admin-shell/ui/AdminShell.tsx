@@ -17,7 +17,9 @@ import { AdminSidebar } from './AdminSidebar';
 interface AdminShellProps {
   children: ReactNode;
 }
-const Content = ({ children }: AdminShellProps) => {
+type ContentProps = AdminShellProps;
+
+const Content = ({ children }: ContentProps) => {
   const pathname = usePathname();
   const { session, loading, error, retry, logout } = useAdminSession();
   const { collapsed, toggle: toggleSidebar } = useSidebarCollapsed();

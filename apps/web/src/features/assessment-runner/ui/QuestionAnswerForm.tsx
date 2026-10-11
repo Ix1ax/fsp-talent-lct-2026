@@ -2,7 +2,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { useDebounce } from '@/shared/hooks';
-import { Button, Checkbox, Textarea } from '@/shared/ui';
+import { Button, Checkbox, Radio, Textarea } from '@/shared/ui';
 import type {
   AssessmentAnswer,
   AssessmentQuestion,
@@ -76,12 +76,11 @@ export const QuestionAnswerForm = ({
                 }
               />
             ) : (
-              <input
-                type="radio"
+              <Radio
                 name={`answer-${question.id}`}
                 checked={selected.includes(option.id)}
                 onChange={() => choose(option.id, true)}
-                className="mt-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                className="mt-1"
               />
             )}
             <span className="min-w-0 whitespace-pre-wrap">{option.text}</span>

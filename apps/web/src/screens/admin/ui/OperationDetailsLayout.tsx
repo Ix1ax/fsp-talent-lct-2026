@@ -102,7 +102,11 @@ export const DetailFields = ({ fields }: DetailFieldsProps) => {
     </dl>
   );
 };
-export const DescriptionPanel = ({ text }: { text: string | null }) => {
+interface DescriptionPanelProps {
+  text: string | null;
+}
+
+export const DescriptionPanel = ({ text }: DescriptionPanelProps) => {
   return text ? (
     <AdminPanel>
       <h2 className="font-medium">Описание</h2>
@@ -110,15 +114,17 @@ export const DescriptionPanel = ({ text }: { text: string | null }) => {
     </AdminPanel>
   ) : null;
 };
+interface AdminEntityLinkProps {
+  section: OperationSection;
+  id: string;
+  label?: string;
+}
+
 export const AdminEntityLink = ({
   section,
   id,
   label,
-}: {
-  section: OperationSection;
-  id: string;
-  label?: string;
-}) => {
+}: AdminEntityLinkProps) => {
   return (
     <Link
       href={`/admin/${section}/${id}`}

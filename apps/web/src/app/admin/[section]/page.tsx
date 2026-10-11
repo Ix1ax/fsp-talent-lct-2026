@@ -25,11 +25,11 @@ const pages = {
 type AdminSection = keyof typeof pages;
 const isAdminSection = (section: string): section is AdminSection =>
   Object.prototype.hasOwnProperty.call(pages, section);
-const AdminSectionPage = async ({
-  params,
-}: {
+interface AdminSectionPageProps {
   params: Promise<{ section: string }>;
-}) => {
+}
+
+const AdminSectionPage = async ({ params }: AdminSectionPageProps) => {
   const { section } = await params;
   if (isOperationSection(section))
     return (

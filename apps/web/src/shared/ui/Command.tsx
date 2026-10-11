@@ -6,10 +6,9 @@ import { SearchIcon } from 'lucide-react';
 
 import { cn } from '@/shared/lib/utils';
 
-const Command = ({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive>) => {
+type CommandProps = ComponentProps<typeof CommandPrimitive>;
+
+const Command = ({ className, ...props }: CommandProps) => {
   return (
     <CommandPrimitive
       className={cn(
@@ -21,10 +20,9 @@ const Command = ({
   );
 };
 
-const CommandInput = ({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Input>) => {
+type CommandInputProps = ComponentProps<typeof CommandPrimitive.Input>;
+
+const CommandInput = ({ className, ...props }: CommandInputProps) => {
   return (
     <div className="flex items-center gap-2 border-b px-3">
       <SearchIcon className="size-4 shrink-0 text-muted-foreground" />
@@ -39,10 +37,9 @@ const CommandInput = ({
   );
 };
 
-const CommandList = ({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.List>) => {
+type CommandListProps = ComponentProps<typeof CommandPrimitive.List>;
+
+const CommandList = ({ className, ...props }: CommandListProps) => {
   return (
     <CommandPrimitive.List
       className={cn(
@@ -54,10 +51,9 @@ const CommandList = ({
   );
 };
 
-const CommandEmpty = ({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Empty>) => {
+type CommandEmptyProps = ComponentProps<typeof CommandPrimitive.Empty>;
+
+const CommandEmpty = ({ className, ...props }: CommandEmptyProps) => {
   return (
     <CommandPrimitive.Empty
       className={cn(
@@ -69,10 +65,9 @@ const CommandEmpty = ({
   );
 };
 
-const CommandItem = ({
-  className,
-  ...props
-}: ComponentProps<typeof CommandPrimitive.Item>) => {
+type CommandItemProps = ComponentProps<typeof CommandPrimitive.Item>;
+
+const CommandItem = ({ className, ...props }: CommandItemProps) => {
   return (
     <CommandPrimitive.Item
       className={cn(

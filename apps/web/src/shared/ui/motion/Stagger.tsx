@@ -57,7 +57,9 @@ export const Stagger = ({
   );
 };
 
-export const StaggerItem = (props: HTMLMotionProps<'div'>) => {
+type StaggerItemProps = HTMLMotionProps<'div'>;
+
+export const StaggerItem = (props: StaggerItemProps) => {
   const { reducedMotion, transition } = useMotionSettings();
 
   return (

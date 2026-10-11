@@ -5,12 +5,14 @@ import { Separator as SeparatorPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
+type SeparatorProps = ComponentProps<typeof SeparatorPrimitive.Root>;
+
 const Separator = ({
   className,
   orientation = 'horizontal',
   decorative = true,
   ...props
-}: ComponentProps<typeof SeparatorPrimitive.Root>) => {
+}: SeparatorProps) => {
   return (
     <SeparatorPrimitive.Root
       data-slot="separator"

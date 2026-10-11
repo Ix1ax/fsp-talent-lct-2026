@@ -137,6 +137,8 @@ clientApi.interceptors.response.use(
 
     config.headers.Authorization = `Bearer ${token}`;
 
+    // Axios-interceptor должен вернуть полный response при повторе запроса.
+    // eslint-disable-next-line consistency/api-response
     return clientApi.request(config);
   },
 );

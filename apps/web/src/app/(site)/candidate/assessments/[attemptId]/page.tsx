@@ -5,7 +5,11 @@ import { USER_ROLES } from '@/entities/session';
 import { requireRole } from '@/entities/session/api/server';
 import { AssessmentAttemptPage } from '@/screens/assessments';
 
-const Page = async ({ params }: { params: Promise<{ attemptId: string }> }) => {
+interface PageProps {
+  params: Promise<{ attemptId: string }>;
+}
+
+const Page = async ({ params }: PageProps) => {
   const { attemptId } = await params;
 
   await requireRole(

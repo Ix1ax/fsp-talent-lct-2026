@@ -6,10 +6,9 @@ import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Checkbox = ({
-  className,
-  ...props
-}: ComponentProps<typeof CheckboxPrimitive.Root>) => {
+type CheckboxProps = ComponentProps<typeof CheckboxPrimitive.Root>;
+
+const Checkbox = ({ className, ...props }: CheckboxProps) => {
   return (
     <CheckboxPrimitive.Root
       data-slot="checkbox"

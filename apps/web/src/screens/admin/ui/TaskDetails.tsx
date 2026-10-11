@@ -17,7 +17,11 @@ import {
   OperationDetailsLayout,
 } from './OperationDetailsLayout';
 
-export const TaskDetails = ({ id }: { id: string }) => {
+interface TaskDetailsProps {
+  id: string;
+}
+
+export const TaskDetails = ({ id }: TaskDetailsProps) => {
   const query = useAdminQuery(`/tasks/${id}`, adminCompanyTaskSchema);
   const task = query.data;
   const options = useAdminOptions(['specializations', 'grades']);

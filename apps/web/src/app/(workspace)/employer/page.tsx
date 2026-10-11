@@ -5,11 +5,11 @@ import {
   getEmployerReturnPath,
 } from '@/screens/employer';
 
-const Page = async ({
-  searchParams,
-}: {
+interface PageProps {
   searchParams: Promise<EmployerSearchParams>;
-}) => {
+}
+
+const Page = async ({ searchParams }: PageProps) => {
   await requireRole(
     USER_ROLES.EMPLOYER,
     getEmployerReturnPath('overview', await searchParams),

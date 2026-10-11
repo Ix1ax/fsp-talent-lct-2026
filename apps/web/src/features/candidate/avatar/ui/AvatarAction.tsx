@@ -24,7 +24,7 @@ export const AvatarAction = ({
   return (
     <div className="group/avatar relative size-36 shrink-0 overflow-hidden rounded-full">
       {children}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full bg-black/60 opacity-0 transition-opacity group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 [@media(hover:none)]:opacity-100 motion-reduce:transition-none">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-full bg-media-overlay opacity-0 transition-opacity group-hover/avatar:opacity-100 group-focus-within/avatar:opacity-100 [@media(hover:none)]:opacity-100 motion-reduce:transition-none">
         <div
           className={
             onReplace
@@ -35,7 +35,7 @@ export const AvatarAction = ({
           <Button
             type="button"
             variant="ghost"
-            className={`${onReplace ? 'size-11' : 'size-full'} rounded-full p-0 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white`}
+            className={`${onReplace ? 'size-11' : 'size-full'} rounded-full p-0 text-media-foreground hover:bg-media-foreground/20 hover:text-media-foreground focus-visible:ring-media-foreground`}
             disabled={disabled}
             aria-label={label}
             aria-describedby={CANDIDATE_ELEMENT_IDS.avatar.hint}
@@ -52,7 +52,7 @@ export const AvatarAction = ({
             <Button
               type="button"
               variant="ghost"
-              className="size-11 rounded-full p-0 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white"
+              className="size-11 rounded-full p-0 text-media-foreground hover:bg-media-foreground/20 hover:text-media-foreground focus-visible:ring-media-foreground"
               disabled={disabled}
               aria-label="Загрузить другое фото"
               title="Загрузить другое фото"
@@ -66,7 +66,7 @@ export const AvatarAction = ({
           <Button
             type="button"
             variant="ghost"
-            className="size-11 rounded-full p-0 text-white hover:bg-white/20 hover:text-white focus-visible:ring-white"
+            className="size-11 rounded-full p-0 text-media-foreground hover:bg-media-foreground/20 hover:text-media-foreground focus-visible:ring-media-foreground"
             disabled={disabled}
             aria-label="Удалить фото"
             title="Удалить фото"

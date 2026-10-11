@@ -1,5 +1,9 @@
 import Image from 'next/image';
-export const BrandLogo = ({ compact = false }: { compact?: boolean }) => {
+interface BrandLogoProps {
+  compact?: boolean;
+}
+
+export const BrandLogo = ({ compact = false }: BrandLogoProps) => {
   return (
     <span className="inline-flex items-center">
       <Image

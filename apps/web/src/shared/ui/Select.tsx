@@ -6,14 +6,15 @@ import { Select as SelectPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Select = ({ ...props }: ComponentProps<typeof SelectPrimitive.Root>) => {
+type SelectProps = ComponentProps<typeof SelectPrimitive.Root>;
+
+const Select = ({ ...props }: SelectProps) => {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 };
 
-const SelectGroup = ({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Group>) => {
+type SelectGroupProps = ComponentProps<typeof SelectPrimitive.Group>;
+
+const SelectGroup = ({ className, ...props }: SelectGroupProps) => {
   return (
     <SelectPrimitive.Group
       data-slot="select-group"
@@ -23,20 +24,24 @@ const SelectGroup = ({
   );
 };
 
-const SelectValue = ({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Value>) => {
+type SelectValueProps = ComponentProps<typeof SelectPrimitive.Value>;
+
+const SelectValue = ({ ...props }: SelectValueProps) => {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 };
+
+interface SelectTriggerProps extends ComponentProps<
+  typeof SelectPrimitive.Trigger
+> {
+  size?: 'sm' | 'default';
+}
 
 const SelectTrigger = ({
   className,
   size = 'default',
   children,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: 'sm' | 'default';
-}) => {
+}: SelectTriggerProps) => {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
@@ -55,6 +60,12 @@ const SelectTrigger = ({
   );
 };
 
+interface SelectContentProps extends ComponentProps<
+  typeof SelectPrimitive.Content
+> {
+  viewportClassName?: string;
+}
+
 const SelectContent = ({
   className,
   viewportClassName,
@@ -62,9 +73,7 @@ const SelectContent = ({
   position = 'item-aligned',
   align = 'center',
   ...props
-}: ComponentProps<typeof SelectPrimitive.Content> & {
-  viewportClassName?: string;
-}) => {
+}: SelectContentProps) => {
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
@@ -96,10 +105,9 @@ const SelectContent = ({
   );
 };
 
-const SelectLabel = ({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Label>) => {
+type SelectLabelProps = ComponentProps<typeof SelectPrimitive.Label>;
+
+const SelectLabel = ({ className, ...props }: SelectLabelProps) => {
   return (
     <SelectPrimitive.Label
       data-slot="select-label"
@@ -109,11 +117,9 @@ const SelectLabel = ({
   );
 };
 
-const SelectItem = ({
-  className,
-  children,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Item>) => {
+type SelectItemProps = ComponentProps<typeof SelectPrimitive.Item>;
+
+const SelectItem = ({ className, children, ...props }: SelectItemProps) => {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -133,10 +139,9 @@ const SelectItem = ({
   );
 };
 
-const SelectSeparator = ({
-  className,
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Separator>) => {
+type SelectSeparatorProps = ComponentProps<typeof SelectPrimitive.Separator>;
+
+const SelectSeparator = ({ className, ...props }: SelectSeparatorProps) => {
   return (
     <SelectPrimitive.Separator
       data-slot="select-separator"
@@ -146,10 +151,14 @@ const SelectSeparator = ({
   );
 };
 
+type SelectScrollUpButtonProps = ComponentProps<
+  typeof SelectPrimitive.ScrollUpButton
+>;
+
 const SelectScrollUpButton = ({
   className,
   ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollUpButton>) => {
+}: SelectScrollUpButtonProps) => {
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
@@ -164,10 +173,14 @@ const SelectScrollUpButton = ({
   );
 };
 
+type SelectScrollDownButtonProps = ComponentProps<
+  typeof SelectPrimitive.ScrollDownButton
+>;
+
 const SelectScrollDownButton = ({
   className,
   ...props
-}: ComponentProps<typeof SelectPrimitive.ScrollDownButton>) => {
+}: SelectScrollDownButtonProps) => {
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
