@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600" font-family="Inter, Arial, sans-serif" font-size="13">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1B1C21"/>
+    </marker>
+    <style>
+      .box{fill:#fff;stroke:#1B1C21;stroke-width:1.4;rx:10}
+      .brand{fill:#ECEAFF;stroke:#402FFF;stroke-width:1.6}
+      .store{fill:#F5F5F7;stroke:#6B6F7B;stroke-width:1.2}
+      .mock{fill:#fff;stroke:#EC1D35;stroke-width:1.4;stroke-dasharray:6 4}
+      .t{fill:#1B1C21;font-weight:600}
+      .s{fill:#4A4E5A;font-size:11.5px}
+      .l{stroke:#1B1C21;stroke-width:1.3;fill:none;marker-end:url(#a)}
+      .ld{stroke:#6B6F7B;stroke-width:1.2;fill:none;stroke-dasharray:5 4;marker-end:url(#a)}
+      .lab{fill:#402FFF;font-size:11px}
+      .zone{fill:none;stroke:#C9CACD;stroke-width:1;stroke-dasharray:3 4}
+      .zt{fill:#6B6F7B;font-size:11px;letter-spacing:.06em}
+    </style>
+  </defs>
+
+  <rect x="10" y="10" width="960" height="580" fill="#fff"/>
+  <rect class="zone" x="190" y="40" width="770" height="540" rx="14"/>
+  <text class="zt" x="206" y="60">DOCKER COMPOSE · СЕРВЕР / ЛОКАЛЬНО</text>
+
+  <!-- Browser -->
+  <rect class="box" x="24" y="200" width="140" height="120" rx="10"/>
+  <text class="t" x="40" y="226">Браузер</text>
+  <text class="s" x="40" y="248">Кандидат</text>
+  <text class="s" x="40" y="266">Работодатель</text>
+  <text class="s" x="40" y="284">Администратор</text>
+  <text class="s" x="40" y="302">Жюри / гость</text>
+
+  <!-- Next.js -->
+  <rect class="box brand" x="220" y="160" width="230" height="200" rx="12"/>
+  <text class="t" x="236" y="186">Web · Next.js 15 (React 19)</text>
+  <text class="s" x="236" y="208">Лендинг, справочник, документы — SSG</text>
+  <text class="s" x="236" y="226">Кабинеты — серверный рендер (SSR)</text>
+  <text class="s" x="236" y="244">Админка /admin</text>
+  <text class="s" x="236" y="262">/api/auth/* — сессия: токены</text>
+  <text class="s" x="236" y="280">в httpOnly-cookie, PKCE</text>
+  <text class="s" x="236" y="298">/api/v1/* → прокси в Go API</text>
+  <text class="s" x="236" y="330" fill="#402FFF">:3000</text>
+
+  <!-- Go API -->
+  <rect class="box brand" x="510" y="110" width="250" height="300" rx="12"/>
+  <text class="t" x="526" y="136">API · Go 1.26 (Gin)</text>
+  <text class="s" x="526" y="158">Модульный монолит, слои</text>
+  <text class="s" x="526" y="174">web → service → repository</text>
+  <text class="s" x="526" y="200">user · auth · consent · candidate</text>
+  <text class="s" x="526" y="218">assessment — тестирование</text>
+  <text class="s" x="526" y="236">candidatebank — банк и подборка</text>
+  <text class="s" x="526" y="254">company · offer — компании, предложения</text>
+  <text class="s" x="526" y="272">dailytask — задания компаний</text>
+  <text class="s" x="526" y="290">fsp — достижения ФСП</text>
+  <text class="s" x="526" y="308">files · catalog · audit</text>
+  <text class="s" x="526" y="326">admin · admincatalog · adminops</text>
+  <text class="s" x="526" y="352">OpenAPI 3.0 · Swagger /docs</text>
+  <text class="s" x="526" y="390" fill="#402FFF">:8080</text>
+
+  <!-- Stores -->
+  <rect class="box store" x="810" y="110" width="140" height="70" rx="10"/>
+  <text class="t" x="824" y="136">PostgreSQL 17</text>
+  <text class="s" x="824" y="156">данные, миграции</text>
+  <text class="s" x="824" y="172">Goose</text>
+
+  <rect class="box store" x="810" y="200" width="140" height="62" rx="10"/>
+  <text class="t" x="824" y="226">Redis 7.4</text>
+  <text class="s" x="824" y="246">кеш (резерв)</text>
+
+  <rect class="box store" x="810" y="282" width="140" height="78" rx="10"/>
+  <text class="t" x="824" y="308">SeaweedFS (S3)</text>
+  <text class="s" x="824" y="328">приватные файлы:</text>
+  <text class="s" x="824" y="344">документы, решения</text>
+
+  <!-- Keycloak -->
+  <rect class="box" x="220" y="440" width="230" height="110" rx="12"/>
+  <text class="t" x="236" y="466">Keycloak 26.8 · realm fsp</text>
+  <text class="s" x="236" y="488">Регистрация по e-mail</text>
+  <text class="s" x="236" y="506">с подтверждением адреса</text>
+  <text class="s" x="236" y="524">OIDC, Authorization Code + PKCE</text>
+  <text class="s" x="236" y="540" fill="#402FFF">:8081 · тема fsp-scout</text>
+
+  <rect class="box store" x="500" y="470" width="130" height="52" rx="10"/>
+  <text class="t" x="514" y="494">PostgreSQL</text>
+  <text class="s" x="514" y="512">БД Keycloak</text>
+
+  <rect class="box store" x="660" y="470" width="120" height="52" rx="10"/>
+  <text class="t" x="674" y="494">Mailpit</text>
+  <text class="s" x="674" y="512">тестовая почта</text>
+
+  <rect class="box mock" x="810" y="420" width="140" height="110" rx="10"/>
+  <text class="t" x="824" y="446">Реестр ФСП</text>
+  <text class="s" x="824" y="466">сейчас — адаптер</text>
+  <text class="s" x="824" y="482">fsp_mock внутри API</text>
+  <text class="s" x="824" y="502">далее — API ФСП</text>
+  <text class="s" x="824" y="518">через ФСП ID</text>
+
+  <!-- arrows -->
+  <path class="l" d="M164 250 H218"/>
+  <text class="lab" x="168" y="242">HTTP</text>
+  <path class="l" d="M450 240 H508"/>
+  <text class="lab" x="454" y="230" font-size="10">JWT</text>
+  <path class="l" d="M760 145 H808"/>
+  <path class="l" d="M760 231 H808"/>
+  <path class="l" d="M760 321 H808"/>
+  <path class="ld" d="M760 400 C790 420 790 450 808 470"/>
+  <path class="l" d="M335 360 V438"/>
+  <text class="lab" x="342" y="404">токены, refresh</text>
+  <path class="l" d="M94 320 V495 H218"/>
+  <text class="lab" x="100" y="470">вход / регистрация</text>
+  <path class="ld" d="M635 410 C620 440 520 430 450 470"/>
+  <text class="lab" x="540" y="430">JWKS: проверка подписи</text>
+  <path class="l" d="M450 497 H498"/>
+  <path class="l" d="M450 530 C560 560 640 545 720 524"/>
+  <text class="lab" x="560" y="566">SMTP: письма подтверждения</text>
+</svg>

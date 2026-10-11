@@ -57,6 +57,8 @@ const Content = ({ children }: ContentProps) => {
 
   return (
     <div
+      data-admin-shell=""
+      data-collapsed={collapsed}
       className={`h-dvh overflow-hidden lg:grid ${collapsed ? 'lg:grid-cols-[72px_minmax(0,1fr)]' : 'lg:grid-cols-[260px_minmax(0,1fr)]'}`}
     >
       <AdminSidebar

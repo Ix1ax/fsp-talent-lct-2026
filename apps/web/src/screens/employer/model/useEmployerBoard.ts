@@ -6,7 +6,11 @@ import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 import { useCompanyActions } from '@/features/company';
 import { useNeedActions } from '@/features/employer-need';
 
-import { type EmployerGateway, employerGateway } from '../lib';
+import {
+  type EmployerGateway,
+  employerGateway,
+  getDefaultCompanyId,
+} from '../lib';
 import { getEmployerLocationState } from './getEmployerLocationState';
 import {
   loadEmployerCompanies,
@@ -24,9 +28,7 @@ export const useEmployerBoard = (
   const location = getEmployerLocationState(searchParams.toString());
   const companyId =
     resources.companies?.find((company) => company.id === location.companyId)
-      ?.id ??
-    resources.companies?.[0]?.id ??
-    '';
+      ?.id ?? getDefaultCompanyId(resources.companies);
   const { status, offset, selectedId } = location;
   const [revision, setRevision] = useState(0);
   const query = useNeedsQuery({
@@ -130,8 +132,7 @@ export const useEmployerBoard = (
       resources.updateCompanies(() => companies);
       const nextId =
         companies.find((company) => company.id === preferredId)?.id ??
-        companies[0]?.id ??
-        '';
+        getDefaultCompanyId(companies);
       syncQuery({
         companyId: nextId,
         ...(nextId !== companyId ? { selectedId: '', offset: 0 } : {}),

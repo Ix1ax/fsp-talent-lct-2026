@@ -1,3 +1,4 @@
+export { getDefaultCompanyId } from './defaultCompany';
 export type { EmployerSearchParams } from './employerLocation';
 export {
   getEmployerHref,

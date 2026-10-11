@@ -143,7 +143,7 @@ export const CompanyOffers = ({
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Кандидат {item.candidateId.slice(0, 8)} ·{' '}
+                      Кандидат {item.candidateId.slice(-8)} ·{' '}
                       {STATUS[item.status]} · {formatDate(item.createdAt)}
                       {waitingDays !== null &&
                         ` · ждёт ответа ${formatOfferWaiting(waitingDays)}`}

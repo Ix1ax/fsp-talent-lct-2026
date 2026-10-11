@@ -156,7 +156,7 @@ export const CompanyTaskSubmissions = ({
                 <article className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
                   <div className="grid min-w-0 gap-2">
                     <h3 className="font-semibold">
-                      Кандидат {submission.candidateId.slice(0, 8)}
+                      Кандидат {submission.candidateId.slice(-8)}
                     </h3>
                     <p className="break-all text-sm text-muted-foreground">
                       {submission.file.originalName}

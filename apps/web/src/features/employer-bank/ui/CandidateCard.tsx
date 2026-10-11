@@ -17,7 +17,7 @@ export const CandidateCard = ({
   return (
     <Card className="min-w-0">
       <CardHeader>
-        <CardTitle>Кандидат · {candidate.id.slice(0, 8)}</CardTitle>
+        <CardTitle>Кандидат · {candidate.id.slice(-8)}</CardTitle>
       </CardHeader>
       <CardContent className="grid gap-3">
         <CandidateSummary candidate={candidate} catalogs={catalogs} />
