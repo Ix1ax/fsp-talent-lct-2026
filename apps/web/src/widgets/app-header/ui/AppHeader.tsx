@@ -62,11 +62,7 @@ export const AppHeader = async () => {
         }
         nav={hasNav ? renderItems(items) : undefined}
         navFrom={getHeaderNavFrom(role)}
-        tabs={
-          hasNav
-            ? renderItems(items.filter((item) => !item.secondary))
-            : undefined
-        }
+        tabs={hasNav ? renderItems(items) : undefined}
         menuExtra={<HeaderMenuExtra />}
         actions={
           <>

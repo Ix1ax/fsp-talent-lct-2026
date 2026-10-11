@@ -26,8 +26,6 @@ export type HeaderNavItem = {
   exclude?: string[];
   /** Маршруты, при которых пункт тоже активен. */
   include?: string[];
-  /** Второстепенный пункт: на узких экранах только в меню, не в нижней панели. */
-  secondary?: boolean;
 };
 
 const GUIDES_ITEM: HeaderNavItem = {
@@ -111,7 +109,6 @@ export const EMPLOYER_NAV_ITEMS: HeaderNavItem[] = [
     href: STATIC_ROUTES.EMPLOYER_TASKS,
     label: 'Задания',
     icon: ListTodoIcon,
-    secondary: true,
   },
 ];
 
