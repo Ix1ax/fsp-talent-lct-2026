@@ -8,25 +8,34 @@ import { headerNavItemClassName } from './HeaderBar';
 const useThemeSwitch = () => {
   const { theme, resolvedTheme, setTheme } = useTheme();
   const dark = (resolvedTheme ?? theme) === 'dark';
-  return { dark, toggle: () => setTheme(dark ? 'light' : 'dark') };
+
+  return {
+    dark,
+    ready: resolvedTheme !== undefined,
+    toggle: () => setTheme(dark ? 'light' : 'dark'),
+  };
 };
 
 export const ThemeToggle = () => {
-  const { toggle } = useThemeSwitch();
+  const { dark, ready, toggle } = useThemeSwitch();
+  const label = dark ? 'Включить светлую тему' : 'Включить тёмную тему';
+
   return (
     <Button
       type="button"
       size="icon"
       className="size-10"
       variant="ghost"
-      aria-label="Сменить тему"
-      title="Сменить тему"
+      aria-label={ready ? label : 'Сменить тему'}
+      title={ready ? label : 'Сменить тему'}
       onClick={toggle}
     >
-      {/* Иконка — тема, на которую переключит кнопка. CSS, чтобы не было
-          расхождения с серверной разметкой до определения темы. */}
-      <MoonIcon className="dark:hidden" />
-      <SunIcon className="hidden dark:block" />
+      {ready &&
+        (dark ? (
+          <SunIcon aria-hidden="true" />
+        ) : (
+          <MoonIcon aria-hidden="true" />
+        ))}
     </Button>
   );
 };

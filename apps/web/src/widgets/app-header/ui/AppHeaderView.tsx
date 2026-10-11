@@ -36,7 +36,11 @@ interface BrandProps {
 // Шапка всегда в одну строку: разделы при нехватке места уходят в меню.
 const Brand = ({ href, label }: BrandProps) => {
   return (
-    <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
+    <Link
+      href={href}
+      className="flex min-h-11 items-center rounded-lg transition-opacity hover:opacity-70 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
+      aria-label={label}
+    >
       <BrandLogo />
     </Link>
   );
