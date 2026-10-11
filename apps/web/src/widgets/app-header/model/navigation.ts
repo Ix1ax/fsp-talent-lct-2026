@@ -46,6 +46,7 @@ const CANDIDATE_ITEMS: HeaderNavItem[] = [
     exclude: [
       STATIC_ROUTES.CANDIDATE_ASSESSMENTS,
       STATIC_ROUTES.CANDIDATE_TASKS,
+      STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS,
       STATIC_ROUTES.OFFERS,
     ],
   },
@@ -68,7 +69,7 @@ const CANDIDATE_ITEMS: HeaderNavItem[] = [
     label: 'Задания компаний',
     shortLabel: 'Задания',
     icon: ListTodoIcon,
-    secondary: true,
+    include: [STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS],
   },
 ];
 
