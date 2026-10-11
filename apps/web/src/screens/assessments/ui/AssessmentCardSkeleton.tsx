@@ -13,8 +13,10 @@ export const AssessmentCardSkeleton = () => {
           </div>
         ))}
       </div>
-      <Skeleton className="h-4 w-32" />
-      <Skeleton className="h-10 w-32" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-11 w-full sm:w-32" />
+      </div>
     </div>
   );
 };

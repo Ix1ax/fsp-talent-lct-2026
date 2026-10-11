@@ -56,21 +56,29 @@ export const AvailableAssessmentCard = ({
             <dd className="mt-1 font-medium">{test.passScore}%</dd>
           </div>
         </dl>
-        <p className="text-sm text-muted-foreground">
-          {getAssessmentReasonText(test)}
-        </p>
-        {test.reason === 'consent_required' && (
-          <Link href={STATIC_ROUTES.CANDIDATE} className="text-sm underline">
-            Настроить согласия
-          </Link>
-        )}
-        <Button
-          className="h-auto min-h-11 w-full whitespace-normal sm:w-auto sm:self-start"
-          disabled={!test.canStart || disabled}
-          onClick={() => onSelect(test)}
-        >
-          Начать тест
-        </Button>
+        {/* Статус слева, главное действие справа — как в карточках предложений. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="grid gap-1">
+            <p className="text-sm text-muted-foreground">
+              {getAssessmentReasonText(test)}
+            </p>
+            {test.reason === 'consent_required' && (
+              <Link
+                href={STATIC_ROUTES.CANDIDATE}
+                className="text-sm underline"
+              >
+                Настроить согласия
+              </Link>
+            )}
+          </div>
+          <Button
+            className="h-auto min-h-11 w-full shrink-0 whitespace-normal sm:w-auto"
+            disabled={!test.canStart || disabled}
+            onClick={() => onSelect(test)}
+          >
+            Начать тест
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

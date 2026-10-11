@@ -1,12 +1,17 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
+import { useClientSession, USER_ROLES } from '@/entities/session';
 
 import { LANDING_ELEMENTS } from '../../constants';
 import { PointerSurface } from '../PointerSurface';
 
 export const ClosingSection = () => {
+  const session = useClientSession();
+  const role = session?.kind === 'user' ? session.user.role : undefined;
   return (
     <section
       data-landing={LANDING_ELEMENTS.START_SECTION}
@@ -37,7 +42,11 @@ export const ClosingSection = () => {
                 свой опыт.
               </strong>
               <ArrowUpRight size={44} />
-              <p>Создать профиль кандидата</p>
+              <p>
+                {role === USER_ROLES.CANDIDATE
+                  ? 'Перейти в кабинет кандидата'
+                  : 'Создать профиль кандидата'}
+              </p>
             </Link>
             <Link href={STATIC_ROUTES.EMPLOYER}>
               <span>02 / ИЩУ СПЕЦИАЛИСТОВ</span>
@@ -47,7 +56,11 @@ export const ClosingSection = () => {
                 своих людей.
               </strong>
               <ArrowUpRight size={44} />
-              <p>Открыть кабинет работодателя</p>
+              <p>
+                {role === USER_ROLES.EMPLOYER
+                  ? 'Перейти в кабинет работодателя'
+                  : 'Открыть кабинет работодателя'}
+              </p>
             </Link>
           </div>
         </div>

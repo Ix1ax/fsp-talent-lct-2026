@@ -1,15 +1,43 @@
-import type { Skill, SkillsSearchQuery } from '@/entities/catalog';
+'use client';
 
+import { Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
+
+import { RemoteStateSkeleton } from '@/shared/ui';
+import type { Skill } from '@/entities/catalog';
+
+import { filterSkills, parseSkillsQuery } from '../model';
 import { SkillsResults } from './SkillsResults';
 import { SkillsSearchForm } from './SkillsSearchForm';
 
 interface SkillsSectionProps {
   skills?: Skill[];
-  query: SkillsSearchQuery;
   error?: string;
 }
 
-export const SkillsSection = ({ skills, query, error }: SkillsSectionProps) => {
+interface SkillsSearchProps {
+  skills?: Skill[];
+  error?: string;
+}
+
+// Запрос берётся из адреса в браузере: сама страница статична и
+// пересобирается раз в час, поиск по навыкам — без обращения к серверу.
+const SkillsSearch = ({ skills, error }: SkillsSearchProps) => {
+  const searchParams = useSearchParams();
+  const query = parseSkillsQuery({ q: searchParams.get('q') ?? undefined });
+  return (
+    <>
+      <SkillsSearchForm query={query} />
+      <SkillsResults
+        skills={skills && filterSkills(skills, query.q)}
+        query={query}
+        error={error}
+      />
+    </>
+  );
+};
+
+export const SkillsSection = ({ skills, error }: SkillsSectionProps) => {
   return (
     <section
       id="skills"
@@ -24,8 +52,9 @@ export const SkillsSection = ({ skills, query, error }: SkillsSectionProps) => {
           Поиск по названию, коду и синонимам.
         </p>
       </div>
-      <SkillsSearchForm query={query} />
-      <SkillsResults skills={skills} query={query} error={error} />
+      <Suspense fallback={<RemoteStateSkeleton />}>
+        <SkillsSearch skills={skills} error={error} />
+      </Suspense>
     </section>
   );
 };

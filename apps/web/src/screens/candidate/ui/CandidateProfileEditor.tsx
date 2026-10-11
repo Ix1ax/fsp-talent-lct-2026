@@ -28,7 +28,11 @@ export const CandidateProfileEditor = ({
   } = workspace;
   return (
     <div className="grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
-      <div ref={navigationRef} className="scroll-mt-24 lg:sticky lg:top-24">
+      {/* min-w-0: лента шагов прокручивается внутри, а не расширяет колонку. */}
+      <div
+        ref={navigationRef}
+        className="min-w-0 scroll-mt-24 lg:sticky lg:top-24"
+      >
         <ProfileStepNavigation
           step={step}
           busy={busy}

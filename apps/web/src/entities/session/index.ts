@@ -8,3 +8,4 @@ export type {
   UserRole,
 } from './model';
 export { getRoleHomeRoute, USER_ROLES } from './model';
+export { useClientSession } from './model/useClientSession';

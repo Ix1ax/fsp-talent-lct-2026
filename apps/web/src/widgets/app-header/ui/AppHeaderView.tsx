@@ -1,0 +1,107 @@
+import Link from 'next/link';
+
+import { STATIC_ROUTES } from '@/shared/contants';
+import {
+  BrandLogo,
+  HeaderBar,
+  HeaderNavLink,
+  Skeleton,
+  ThemeToggle,
+} from '@/shared/ui';
+import {
+  getRoleHomeRoute,
+  type SessionState,
+  USER_ROLES,
+} from '@/entities/session';
+import { OffersNotification } from '@/features/candidate';
+
+import {
+  getHeaderNavFrom,
+  getHeaderNavItems,
+  type HeaderNavItem,
+} from '../model';
+import { AppHeaderPosition } from './AppHeaderPosition';
+import { HeaderAccount } from './HeaderAccount';
+import { HeaderGuidesButton } from './HeaderGuidesButton';
+import { HeaderMenuExtra } from './HeaderMenuExtra';
+import { HeaderNavLabel } from './HeaderNavLabel';
+
+interface BrandProps {
+  href: string;
+  label: string;
+}
+
+// Шапка всегда в одну строку: разделы при нехватке места уходят в меню.
+const Brand = ({ href, label }: BrandProps) => {
+  return (
+    <Link href={href} className="flex min-h-11 items-center" aria-label={label}>
+      <BrandLogo />
+    </Link>
+  );
+};
+
+const renderItems = (items: HeaderNavItem[]) =>
+  items.map((item) => (
+    <HeaderNavLink
+      key={item.id}
+      href={item.href}
+      label={item.label}
+      exclude={item.exclude}
+      include={item.include}
+    >
+      <HeaderNavLabel item={item} />
+    </HeaderNavLink>
+  ));
+
+interface AppHeaderViewProps {
+  session: SessionState;
+  /** Сессия ещё проверяется в браузере: на месте аккаунта — скелетон. */
+  pending?: boolean;
+}
+
+export const AppHeaderView = ({ session, pending }: AppHeaderViewProps) => {
+  const role = session.kind === 'user' ? session.user.role : undefined;
+  const items = getHeaderNavItems(role);
+  const hasNav = items.length > 0;
+
+  return (
+    <AppHeaderPosition>
+      <HeaderBar
+        brand={
+          role ? (
+            <Brand href={getRoleHomeRoute(role)} label="ФСП Скаут — кабинет" />
+          ) : (
+            <Brand href={STATIC_ROUTES.HOME} label="ФСП Скаут — главная" />
+          )
+        }
+        nav={hasNav ? renderItems(items) : undefined}
+        navFrom={getHeaderNavFrom(role)}
+        tabs={hasNav ? renderItems(items) : undefined}
+        menuExtra={<HeaderMenuExtra />}
+        actions={
+          <>
+            {/* С меню справочник и тема на телефоне переезжают в него. */}
+            <HeaderGuidesButton
+              labeled={!hasNav}
+              className={hasNav ? 'max-sm:hidden' : undefined}
+            />
+            {session.kind === 'user' && role === USER_ROLES.CANDIDATE && (
+              <OffersNotification key={session.user.id} />
+            )}
+            <span className={hasNav ? 'contents max-sm:hidden' : 'contents'}>
+              <ThemeToggle />
+            </span>
+            {pending ? (
+              <Skeleton
+                aria-label="Проверяем вход"
+                className="h-11 w-24 rounded-lg"
+              />
+            ) : (
+              <HeaderAccount session={session} />
+            )}
+          </>
+        }
+      />
+    </AppHeaderPosition>
+  );
+};

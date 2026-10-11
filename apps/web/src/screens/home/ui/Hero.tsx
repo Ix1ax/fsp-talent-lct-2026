@@ -5,13 +5,15 @@ import Link from 'next/link';
 import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { ArrowDown, ArrowUpRight, Pause, Play } from 'lucide-react';
 
-import { STATIC_ROUTES } from '@/shared/contants';
 import { useMediaQuery } from '@/shared/hooks';
 import { buttonVariants } from '@/shared/ui';
+import { useClientSession } from '@/entities/session';
 
 import { LANDING_ELEMENTS } from '../constants';
+import { getLandingCta } from '../model';
 
 export const Hero = () => {
+  const cta = getLandingCta(useClientSession());
   const ref = useRef<HTMLElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const reduced = useMediaQuery('(prefers-reduced-motion: reduce)', true);
@@ -116,14 +118,14 @@ export const Hero = () => {
             Найди команду, которой нужен именно ты.
           </p>
           <Link
-            href={STATIC_ROUTES.CANDIDATE}
+            href={cta.href}
             data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
             className={buttonVariants({
               className:
                 'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
             })}
           >
-            Создать профиль <ArrowUpRight size={20} />
+            {cta.label} <ArrowUpRight size={20} />
           </Link>
         </div>
       </div>

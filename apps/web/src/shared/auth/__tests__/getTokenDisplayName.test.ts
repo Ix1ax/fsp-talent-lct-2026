@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { getTokenDisplayName } from '../getTokenDisplayName';
 
@@ -20,5 +20,14 @@ describe('getTokenDisplayName', () => {
     expect(getTokenDisplayName('invalid')).toBeUndefined();
     expect(getTokenDisplayName(token({ name: 42 }))).toBeUndefined();
     expect(getTokenDisplayName(token(null))).toBeUndefined();
+  });
+  it('decodes the name in the browser, where Buffer is unavailable', () => {
+    const value = token({ name: 'Екатерина' });
+    vi.stubGlobal('Buffer', undefined);
+    try {
+      expect(getTokenDisplayName(value)).toBe('Екатерина');
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });
