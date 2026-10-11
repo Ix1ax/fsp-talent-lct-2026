@@ -1,0 +1,114 @@
+import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowLeftIcon, CheckIcon } from 'lucide-react';
+
+import {
+  DYNAMIC_ROUTES,
+  MOTION_LAYOUT_IDS,
+  STATIC_ROUTES,
+} from '@/shared/contants';
+import { useMotionSettings } from '@/shared/hooks';
+import { cn } from '@/shared/lib/utils';
+import { AnimatedIndicator } from '@/shared/ui';
+
+import { PROFILE_STEPS, type ProfileStep } from '../../constants';
+import { ProfileStepChips } from './ProfileStepChips';
+
+interface ProfileStepNavigationProps {
+  step: ProfileStep;
+  busy: boolean;
+  savedSteps: ProfileStep[];
+  onStepChange: (step: ProfileStep) => void;
+}
+
+export const ProfileStepNavigation = ({
+  step,
+  busy,
+  savedSteps,
+  onStepChange,
+}: ProfileStepNavigationProps) => {
+  const { reducedMotion, transition } = useMotionSettings();
+  const index = PROFILE_STEPS.findIndex((item) => item.id === step);
+  return (
+    <div className="flex min-w-0 flex-col gap-3 rounded-2xl border border-border/60 bg-card p-3 sm:p-4">
+      <Link
+        href={STATIC_ROUTES.CANDIDATE}
+        className="flex min-h-11 items-center gap-2 self-start text-sm text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring"
+      >
+        <ArrowLeftIcon aria-hidden="true" className="size-4" />
+        Обзор кабинета
+      </Link>
+      <p className="pr-7 text-sm font-medium" aria-live="polite">
+        Шаг {index + 1} из {PROFILE_STEPS.length} · {PROFILE_STEPS[index].title}
+      </p>
+      {/* До lg — лента шагов в строку; вертикальный список — когда он стоит сбоку от формы. */}
+      <ProfileStepChips
+        step={step}
+        busy={busy}
+        savedSteps={savedSteps}
+        onStepChange={onStepChange}
+      />
+      <nav
+        aria-label="Разделы профиля"
+        className="hidden w-full flex-col gap-1 lg:flex"
+      >
+        {PROFILE_STEPS.map((item, position) => (
+          <Link
+            key={item.id}
+            href={DYNAMIC_ROUTES.CANDIDATE(item.id)}
+            scroll={false}
+            onNavigate={(event) => {
+              event.preventDefault();
+              onStepChange(item.id);
+            }}
+            aria-current={item.id === step ? 'page' : undefined}
+            aria-disabled={busy || undefined}
+            tabIndex={busy ? -1 : undefined}
+            onClick={(event) => {
+              if (busy) event.preventDefault();
+            }}
+            className={cn(
+              'relative isolate flex min-h-11 min-w-0 items-center justify-between gap-2 rounded-lg px-3 py-3 text-sm whitespace-normal transition-colors focus-visible:outline-2 focus-visible:outline-ring',
+              item.id === step ? 'text-brand-text' : 'hover:bg-accent/70',
+              busy && 'cursor-not-allowed opacity-60',
+            )}
+          >
+            {item.id === step && (
+              <AnimatedIndicator
+                layoutId={MOTION_LAYOUT_IDS.CANDIDATE_PROFILE_STEP}
+                className="absolute inset-0 -z-10 rounded-lg bg-accent"
+              />
+            )}
+            <span>
+              {position + 1}. {item.title}
+            </span>
+            <span className="flex size-4 shrink-0 items-center justify-center">
+              <AnimatePresence initial={false}>
+                {savedSteps.includes(item.id) && (
+                  <motion.span
+                    key="saved"
+                    className="inline-flex"
+                    initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+                    transition={transition}
+                  >
+                    <CheckIcon
+                      className="size-4 text-success"
+                      aria-label="Данные сохранены"
+                    />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </span>
+          </Link>
+        ))}
+      </nav>
+      {step !== 'readiness' && (
+        <p className="text-sm text-muted-foreground">
+          Изменения отправляются после нажатия «Сохранить».
+        </p>
+      )}
+    </div>
+  );
+};

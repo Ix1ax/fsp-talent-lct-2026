@@ -109,6 +109,8 @@ services:
       dockerfile: apps/web/Dockerfile
     environment:
       API_PROXY_TARGET: http://api:8080
+      OIDC_TOKEN_URL: http://keycloak:8080/realms/fsp/protocol/openid-connect/token
+      OIDC_CLIENT_ID: fsp-web
     ports:
       - 127.0.0.1:3000:3000
     depends_on:

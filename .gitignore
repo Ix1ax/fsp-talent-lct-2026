@@ -9,6 +9,8 @@
 node_modules/
 dist/
 .next/
+.next-dev/
+.next-preview/
 coverage/
 *.out
 bin/
@@ -16,3 +18,7 @@ bin/
 .idea/
 .tmp/
 *.tsbuildinfo
+
+# Локальные макеты, инструкции, скриншоты и демо
+/design-handoff/
+/apps/web/src/app/preview/

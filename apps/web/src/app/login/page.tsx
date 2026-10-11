@@ -1,5 +1,13 @@
-import { LoginPage } from '@/pages/login';
+import { Suspense } from 'react';
 
-export default function Page() {
-  return <LoginPage />;
-}
+import { LoginPage } from '@/screens/login';
+
+const Page = () => {
+  return (
+    <Suspense fallback={null}>
+      <LoginPage />
+    </Suspense>
+  );
+};
+
+export default Page;

@@ -6,6 +6,7 @@ import {
   clearClientAccessToken,
   emitSessionExpired,
   getClientAccessToken,
+  getClientSessionRevision,
   setClientAccessToken,
 } from '@/shared/auth';
 
@@ -17,20 +18,53 @@ export const clientApi = createApi({
 });
 
 let refreshPromise: Promise<string | null> | null = null;
+let refreshRevision = -1;
 
-const runRefreshRequest = async (): Promise<string | null> => {
+const runRefreshRequest = async (
+  revision: number,
+  signal: AbortSignal,
+): Promise<string | null> => {
+  signal.throwIfAborted();
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     credentials: 'same-origin',
+    signal,
   });
 
-  if (!response.ok) {
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
+
+  if (response.status === 401) {
     clearClientAccessToken();
     return null;
   }
+  if (!response.ok) {
+    throw new ApiError(
+      503,
+      'Не удалось обновить сессию. Попробуйте ещё раз.',
+      'auth_unavailable',
+    );
+  }
 
-  const data = (await response.json()) as { accessToken?: string };
-  const token = data.accessToken ?? null;
+  const data: unknown = await response.json().catch(() => null);
+  if (revision !== getClientSessionRevision())
+    throw new DOMException('Auth state changed', 'AbortError');
+  if (
+    !data ||
+    typeof data !== 'object' ||
+    !('accessToken' in data) ||
+    typeof data.accessToken !== 'string' ||
+    !data.accessToken.trim()
+  ) {
+    throw new ApiError(
+      503,
+      'Сервис авторизации вернул некорректный ответ',
+      'auth_unavailable',
+    );
+  }
+  const token = data.accessToken;
   setClientAccessToken(token);
   return token;
 };
@@ -38,24 +72,29 @@ const runRefreshRequest = async (): Promise<string | null> => {
 const refreshClientAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
 
-  const doRun = async () => {
-    if (!refreshPromise) {
-      refreshPromise = runRefreshRequest().finally(() => {
-        refreshPromise = null;
-      });
-    }
-    return refreshPromise;
-  };
-
-  if (typeof navigator !== 'undefined' && navigator.locks?.request) {
-    return navigator.locks.request('auth-refresh', doRun);
+  const revision = getClientSessionRevision();
+  if (!refreshPromise || refreshRevision !== revision) {
+    refreshRevision = revision;
+    const signal = AbortSignal.timeout(12_000);
+    const request = async (): Promise<string | null> => {
+      if (typeof navigator !== 'undefined' && navigator.locks?.request) {
+        return await navigator.locks.request('auth-refresh', { signal }, () =>
+          runRefreshRequest(revision, signal),
+        );
+      }
+      return runRefreshRequest(revision, signal);
+    };
+    const pending = request().finally(() => {
+      if (refreshPromise === pending) refreshPromise = null;
+    });
+    refreshPromise = pending;
   }
-
-  return doRun();
+  return refreshPromise;
 };
 
 export const ensureClientAccessToken = async (): Promise<string | null> => {
   if (typeof window === 'undefined') return null;
+
   const cached = getClientAccessToken();
   if (cached) return cached;
 
@@ -87,7 +126,12 @@ clientApi.interceptors.response.use(
     }
 
     config._retry = true;
-    const token = await refreshClientAccessToken();
+    // A delayed 401 may belong to the token already replaced by another request.
+    const currentToken = getClientAccessToken();
+    const token =
+      currentToken && config.headers.Authorization !== `Bearer ${currentToken}`
+        ? currentToken
+        : await refreshClientAccessToken();
 
     if (!token) {
       emitSessionExpired();
@@ -98,6 +142,8 @@ clientApi.interceptors.response.use(
 
     config.headers.Authorization = `Bearer ${token}`;
 
+    // Axios-interceptor должен вернуть полный response при повторе запроса.
+    // eslint-disable-next-line consistency/api-response
     return clientApi.request(config);
   },
 );

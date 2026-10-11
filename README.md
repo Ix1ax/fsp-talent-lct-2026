@@ -41,10 +41,12 @@ make api   # первый терминал
 make web   # второй терминал, http://localhost:5173
 ```
 
-`make setup` создаёт `.env` и `apps/api/.env`, не перезаписывая существующие файлы.
-При смене локальных паролей обновляйте оба файла. Vite проксирует API в локальный бек.
-Для удалённого бека задайте `VITE_API_BASE_URL=http://89.104.69.242:8080`
-в `apps/web/.env` и перезапустите Vite. Секреты в `VITE_*` не помещаем.
+`make setup` создаёт `.env`, `apps/api/.env` и `apps/web/.env`, не перезаписывая существующие файлы.
+При смене локальных паролей обновляйте соответствующие env-файлы. Next.js проксирует API через
+`API_PROXY_TARGET` (по умолчанию `http://localhost:8080`). Для удалённого бека измените эту переменную
+в `apps/web/.env` и перезапустите dev-сервер; для production пересоберите приложение.
+Для обновления сессии задайте `OIDC_TOKEN_URL` и `OIDC_CLIENT_ID=fsp-web`.
+Секреты в `NEXT_PUBLIC_*` не помещаем: эти значения входят в браузерную сборку.
 Зависимости фронта добавляем из корня: `npm install <package> -w apps/web`.
 
 ## Сервер
@@ -126,7 +128,7 @@ docker compose logs -f --tail=100 api
 
 ```text
 apps/api/              Go: cmd, internal, миграции и Dockerfile
-apps/web/              React/Vite: один npm workspace и корневой lock-файл
+apps/web/              Next.js App Router: npm workspace и корневой package-lock.json
 api/openapi.yaml       общий контракт API
 infra/keycloak/        серверный и локальный импорт realm
 compose.yaml           локальные контейнеры
@@ -203,7 +205,7 @@ PostgreSQL, S3 или работающего Keycloak. Полный локаль
 Если новая метка старше уже применённых, обновляем её до вливания.
 Сначала добавляем поля и переводим код, удаление старых полей — отдельным изменением.
 `goose down` на общей БД без согласования не запускаем.
-API-контракт меняем вместе с кодом; копию OpenAPI для Go embed проверяет CI.
+API-контракт меняем вместе с кодом; копию OpenAPI для Go embed проверяет `make check`.
 
 ```sh
 make check        # gofmt, vet, race-тесты, линтер и сборка фронта

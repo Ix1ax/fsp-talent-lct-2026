@@ -1,0 +1,104 @@
+import Link from 'next/link';
+
+import { DYNAMIC_ROUTES, STATIC_ROUTES } from '@/shared/contants';
+import {
+  AsyncState,
+  Button,
+  RemoteState,
+  Stagger,
+  StaggerItem,
+} from '@/shared/ui';
+import type { Catalogs, Skill } from '@/entities/catalog';
+
+import type { useAssessments } from '../model';
+import { AssessmentCardSkeleton } from './AssessmentCardSkeleton';
+import { AvailableAssessmentCard } from './AvailableAssessmentCard';
+
+interface AvailableAssessmentsProps {
+  state: ReturnType<typeof useAssessments>;
+  catalogs?: Catalogs;
+  skills: Skill[];
+}
+
+export const AvailableAssessments = ({
+  state,
+  catalogs,
+  skills,
+}: AvailableAssessmentsProps) => {
+  const { current, error, errorType, refresh, loading, busy, items, select } =
+    state;
+  return (
+    <div className="grid gap-6">
+      <p className="text-sm text-muted-foreground">
+        Перед тестированием можно{' '}
+        <Link
+          className="underline underline-offset-4"
+          href={STATIC_ROUTES.CANDIDATE_SURVEY}
+        >
+          выбрать направление и уровень
+        </Link>
+        .
+      </p>
+      {current && (
+        <Button asChild className="h-auto min-h-11 whitespace-normal">
+          <Link href={DYNAMIC_ROUTES.CANDIDATE_ASSESSMENT(current)}>
+            Продолжить активный тест
+          </Link>
+        </Button>
+      )}
+      {error && errorType === 'start' && (
+        <AsyncState
+          error
+          title="Не удалось начать тест"
+          description={error}
+          onRetry={refresh}
+        />
+      )}
+      <Button
+        className="min-h-11 w-fit self-start"
+        variant="outline"
+        disabled={loading || busy}
+        onClick={refresh}
+      >
+        Обновить список
+      </Button>
+      <RemoteState
+        loading={loading}
+        error={errorType === 'load' ? error : ''}
+        retry={refresh}
+        loadingLabel="Загружаем тесты"
+        errorTitle="Не удалось загрузить тесты"
+        empty={!items.length && !error}
+        emptyTitle="Доступных тестов пока нет"
+        emptyDescription="Проверьте навыки в профиле. Новые тесты появятся здесь, когда станут доступны."
+        loadingContent={
+          <div className="grid gap-4">
+            <AssessmentCardSkeleton />
+            <AssessmentCardSkeleton />
+          </div>
+        }
+      />
+      {!loading && (
+        <Stagger
+          interval={Math.min(0.04, 0.2 / Math.max(1, items.length))}
+          className="grid gap-4"
+        >
+          {items.map((test, index) => (
+            <StaggerItem
+              key={`${test.specializationId}-${test.gradeId}-${index}`}
+              className="min-w-0"
+            >
+              <AvailableAssessmentCard
+                test={test}
+                catalogs={catalogs}
+                skills={skills}
+                disabled={busy || !!current}
+                onSelect={select}
+              />
+            </StaggerItem>
+          ))}
+        </Stagger>
+      )}
+    </div>
+  );
+};

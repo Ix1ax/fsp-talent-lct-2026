@@ -2,7 +2,15 @@ import path from 'node:path';
 
 import { defineConfig } from 'vitest/config';
 
-export default defineConfig({
+// Keep JSX automatic in both Vite 7 (pnpm) and Vite 8 (npm) installations.
+const config = {
+  esbuild: {
+    include: /\.[jt]sx?$/,
+    jsx: 'automatic' as const,
+  },
+  oxc: {
+    jsx: { runtime: 'automatic' as const },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],
@@ -10,7 +18,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      '@/pages': path.resolve(__dirname, './src/screens'),
     },
   },
-});
+};
+
+export default defineConfig(config);

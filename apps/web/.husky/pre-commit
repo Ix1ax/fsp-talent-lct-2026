@@ -1,2 +1,2 @@
 cd apps/web || exit 1
-pnpm exec lint-staged
+npm exec -- lint-staged

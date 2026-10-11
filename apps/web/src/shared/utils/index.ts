@@ -1,6 +1,13 @@
 export { camelToSnake } from './camelToSnake';
+export { clamp } from './clamp';
 export { convertCamelToSnake } from './convertCamelToSnake';
 export { convertSnakeToCamel } from './convertSnakeToCamel';
+export { formatCalendarDate, formatDate, formatMonthYear } from './formatDate';
+export { formatDuration } from './formatDuration';
+export { formatFileSize } from './formatFileSize';
+export { formatPercent } from './formatPercent';
+export { formatSalaryRange } from './formatSalaryRange';
 export { isObject } from './isObject';
+export { pluralizeRu } from './pluralizeRu';
 export { sanitizeRedirectPath } from './sanitizeRedirectPath';
 export { snakeToCamel } from './snakeToCamel';

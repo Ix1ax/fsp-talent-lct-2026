@@ -1,7 +1,9 @@
+export { clearOidcUser, createOidcManager } from './oidc';
 export {
   clearClientAccessToken,
   emitSessionExpired,
   getClientAccessToken,
+  getClientSessionRevision,
   onSessionExpired,
   setClientAccessToken,
 } from './session.client';

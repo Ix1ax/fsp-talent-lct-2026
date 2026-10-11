@@ -1,0 +1,250 @@
+import { useState } from 'react';
+import Link from 'next/link';
+
+import { Button } from '@/shared/ui';
+import { adminCompanySchema } from '@/entities/admin';
+import {
+  AdminBlockNotice,
+  AdminPanel,
+  type OperationDecision,
+  OperationDecisionDialog,
+  OperationStatus,
+  useAdminQuery,
+} from '@/features/admin';
+
+import { adminDate } from '../lib';
+import { CompanyRelatedLists } from './CompanyRelatedLists';
+import {
+  DescriptionPanel,
+  DetailFields,
+  OperationDetailsLayout,
+} from './OperationDetailsLayout';
+
+interface CompanyDetailsProps {
+  id: string;
+}
+
+export const CompanyDetails = ({ id }: CompanyDetailsProps) => {
+  const query = useAdminQuery(`/companies/${id}`, adminCompanySchema);
+  const company = query.data;
+  const [relatedRevision, setRelatedRevision] = useState(0);
+  const refresh = () => {
+    setRelatedRevision((value) => value + 1);
+    query.reload();
+  };
+  const [decision, setDecision] = useState<OperationDecision | null>(null);
+  const choose = (
+    status: 'verified' | 'rejected' | 'unverified',
+    title: string,
+    description: string,
+  ) => {
+    if (company)
+      setDecision({
+        kind: 'companies',
+        subjectLabel: company.name,
+        id,
+        status,
+        title,
+        description,
+        expectedVersion: company.verification_version,
+      });
+  };
+  return (
+    <OperationDetailsLayout
+      section="companies"
+      title={company?.name}
+      hasData={!!company}
+      loading={query.loading}
+      error={query.error}
+      onReload={refresh}
+    >
+      {company && (
+        <>
+          <AdminPanel>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="font-medium">Доступ к платформе</h2>
+              <OperationStatus
+                value={company.status}
+                label={
+                  company.status === 'blocked' ? 'Заблокирована' : 'Активна'
+                }
+              />
+            </div>
+            {company.status === 'blocked' && (
+              <AdminBlockNotice
+                subject="company"
+                reason={company.blocked_reason}
+                date={adminDate(company.blocked_at)}
+              />
+            )}
+            <p className="text-sm text-muted-foreground">
+              Блокировка закрывает работу компании для всех участников, включая
+              поиск кандидатов, предложения, задания, документы и приглашения.
+              Данные и подтверждение сохраняются. Личные аккаунты участников и
+              другие компании блокируются отдельно.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={
+                  company.status === 'active' ? 'destructive' : 'default'
+                }
+                disabled={query.loading || !!query.error}
+                onClick={() =>
+                  setDecision({
+                    kind: 'companies',
+                    subjectLabel: company.name,
+                    id,
+                    status: company.status === 'active' ? 'blocked' : 'active',
+                    title:
+                      company.status === 'active'
+                        ? 'Заблокировать компанию'
+                        : 'Разблокировать компанию',
+                    description:
+                      company.status === 'active'
+                        ? `Компания «${company.name}» потеряет доступ к рабочим действиям. Её задания и предложения станут недоступны кандидатам. Укажите причину, которую увидят участники компании.`
+                        : `Доступ компании «${company.name}» будет восстановлен. Отдельные блокировки пользователей и модерация публикаций сохранятся. Укажите причину разблокировки.`,
+                  })
+                }
+              >
+                {company.status === 'active'
+                  ? 'Заблокировать компанию'
+                  : 'Разблокировать компанию'}
+              </Button>
+              <Button variant="outline" asChild>
+                <Link
+                  href={`/admin/audit?entity_type=company&entity_id=${id}&action=company.status_changed`}
+                >
+                  История доступа
+                </Link>
+              </Button>
+            </div>
+          </AdminPanel>
+          <AdminPanel>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <h2 className="font-medium">Проверка компании</h2>
+              <OperationStatus value={company.verification_status} />
+            </div>
+            <DetailFields
+              fields={[
+                { label: 'ИНН', value: company.inn },
+                { label: 'ID компании', value: id },
+                { label: 'Создана', value: adminDate(company.created_at) },
+                {
+                  label: 'Заявка подана',
+                  value: adminDate(company.verification_requested_at),
+                },
+                {
+                  label: 'Решение принято',
+                  value: adminDate(company.verification_reviewed_at),
+                },
+                {
+                  label: 'Версия проверки',
+                  value: company.verification_version,
+                },
+                {
+                  label: 'Администратор проверки',
+                  value: company.verification_reviewed_by,
+                },
+                { label: 'Почта компании', value: company.contact_email },
+                {
+                  label: 'Сайт / контактная ссылка',
+                  value: company.contact_url,
+                },
+              ]}
+            />
+            {company.verification_reason && (
+              <p className="whitespace-pre-wrap text-sm">
+                Причина решения: {company.verification_reason}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              {company.verification_status === 'pending' && (
+                <>
+                  <Button
+                    disabled={query.loading || !!query.error}
+                    onClick={() =>
+                      choose(
+                        'verified',
+                        'Подтвердить компанию',
+                        'Проверьте реквизиты и документы заявки. Компания получит статус подтверждённой.',
+                      )
+                    }
+                  >
+                    Подтвердить
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    disabled={query.loading || !!query.error}
+                    onClick={() =>
+                      choose(
+                        'rejected',
+                        'Отклонить заявку',
+                        'Укажите причину отказа. Владелец сможет подать новую заявку после исправлений.',
+                      )
+                    }
+                  >
+                    Отклонить
+                  </Button>
+                </>
+              )}
+              {company.verification_status === 'verified' && (
+                <Button
+                  variant="destructive"
+                  disabled={query.loading || !!query.error}
+                  onClick={() =>
+                    choose(
+                      'unverified',
+                      'Отозвать подтверждение',
+                      'Компания потеряет подтверждение. История проверки сохранится в журнале.',
+                    )
+                  }
+                >
+                  Отозвать подтверждение
+                </Button>
+              )}
+            </div>
+            {company.verification_status === 'unverified' && (
+              <p className="text-sm text-muted-foreground">
+                Компания ещё не подала заявку на подтверждение.
+              </p>
+            )}
+          </AdminPanel>
+          <DescriptionPanel text={company.description} />
+          <AdminPanel>
+            <h2 className="font-medium">Деятельность компании</h2>
+            <div className="flex flex-wrap gap-2">
+              {[
+                ['needs', 'Потребности'],
+                ['offers', 'Предложения'],
+                ['tasks', 'Задания'],
+              ].map(([section, label]) => (
+                <Button key={section} variant="outline" asChild>
+                  <Link href={`/admin/${section}?company_id=${id}`}>
+                    {label}
+                  </Link>
+                </Button>
+              ))}
+              <Button variant="outline" asChild>
+                <Link href={`/admin/audit?entity_id=${id}`}>
+                  Все действия с компанией
+                </Link>
+              </Button>
+            </div>
+          </AdminPanel>
+          <CompanyRelatedLists
+            key={`${id}:${company.verification_version}:${relatedRevision}`}
+            company={company}
+          />
+        </>
+      )}
+      {decision && (
+        <OperationDecisionDialog
+          decision={decision}
+          onClose={() => setDecision(null)}
+          onSaved={refresh}
+          onRefresh={refresh}
+        />
+      )}
+    </OperationDetailsLayout>
+  );
+};
