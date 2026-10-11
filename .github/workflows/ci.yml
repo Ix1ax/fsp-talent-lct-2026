@@ -87,6 +87,10 @@ jobs:
           cp infra/keycloak/fsp-realm.json deploy/keycloak/fsp-realm.json
           mkdir -p deploy/keycloak-themes
           cp -R infra/keycloak/themes/fsp-scout deploy/keycloak-themes/fsp-scout
+          # Theme resources are public. The container's keycloak user must read them;
+          # keep .env and SSH keys private under the existing umask.
+          find deploy/keycloak-themes -type d -exec chmod 755 {} +
+          find deploy/keycloak-themes -type f -exec chmod 644 {} +
           cp scripts/keycloak-theme.sh deploy/keycloak-theme.sh
           cp scripts/deploy-server.sh deploy/deploy-server.sh
       - name: Деплой бека

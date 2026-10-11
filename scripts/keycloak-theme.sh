@@ -5,6 +5,20 @@ set -eu
 docker compose "$@" exec -T keycloak /bin/bash -s <<'KEYCLOAK_SCRIPT'
 set -eu
 umask 077
+theme=/opt/keycloak/themes/fsp-scout/login
+for file in theme.properties template.ftl login.ftl messages/messages_ru.properties; do
+  if [ ! -r "$theme/$file" ]; then
+    printf 'Keycloak не может прочитать тему: %s/%s. Проверьте bind mount и права 755/644.\n' "$theme" "$file" >&2
+    exit 1
+  fi
+done
+# Check the resources named in theme.properties before selecting the theme.
+for resource in $(sed -n -e 's/^styles=//p' -e 's/^scripts=//p' -e 's/^favicons=//p' "$theme/theme.properties"); do
+  if [ ! -r "$theme/resources/$resource" ]; then
+    printf 'Keycloak не может прочитать ресурс темы: %s/resources/%s.\n' "$theme" "$resource" >&2
+    exit 1
+  fi
+done
 config=$(mktemp /tmp/fsp-theme-admin.XXXXXX)
 trap 'rm -f "$config"' EXIT
 attempt=0
