@@ -103,7 +103,7 @@ export {
 export { Radio } from './Radio';
 export { RecordItem, RecordItemActions } from './RecordItem';
 export { RefreshButton } from './RefreshButton';
-export { RemoteState } from './RemoteState';
+export { RemoteState, RemoteStateSkeleton } from './RemoteState';
 export type { SalaryRange } from './SalaryRangeInput';
 export { SalaryRangeInput } from './SalaryRangeInput';
 export { SectionTabs } from './SectionTabs';

@@ -1,14 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon } from 'lucide-react';
 
-import { STATIC_ROUTES } from '@/shared/contants';
 import {
   AsyncState,
-  Button,
-  PageHeader,
   PageWrapper,
   Tabs,
   TabsContent,
@@ -20,6 +15,8 @@ import { CandidateProfileGate } from '@/features/candidate/profile';
 
 import { useAssessments } from '../model';
 import { AssessmentHistory } from './AssessmentHistory';
+import { AssessmentsHeader } from './AssessmentsHeader';
+import { AssessmentsBodySkeleton } from './AssessmentsLoading';
 import { AvailableAssessments } from './AvailableAssessments';
 import { StartAssessmentDialog } from './StartAssessmentDialog';
 
@@ -39,24 +36,7 @@ const AssessmentsContent = ({
   const { selected, busy, close, start } = state;
 
   return (
-    <PageWrapper>
-      <PageHeader>
-        <PageHeader.Row>
-          <PageHeader.Content>
-            <PageHeader.Title>Тестирование</PageHeader.Title>
-            <PageHeader.Description>
-              Подтвердите навыки и грейд. Результаты проверяются автоматически.
-            </PageHeader.Description>
-          </PageHeader.Content>
-          <PageHeader.Actions>
-            <Button asChild variant="outline">
-              <Link href={STATIC_ROUTES.CANDIDATE}>
-                <ArrowLeftIcon aria-hidden="true" />В кабинет
-              </Link>
-            </Button>
-          </PageHeader.Actions>
-        </PageHeader.Row>
-      </PageHeader>
+    <>
       {catalogsError && (
         <AsyncState
           error
@@ -102,16 +82,20 @@ const AssessmentsContent = ({
         onClose={close}
         onStart={start}
       />
-    </PageWrapper>
+    </>
   );
 };
 
 type AssessmentsPageProps = AssessmentsContentProps;
 
+// Шапка вне проверки профиля: пока она идёт, скелетон остаётся в контейнере страницы.
 export const AssessmentsPage = (props: AssessmentsPageProps) => {
   return (
-    <CandidateProfileGate>
-      <AssessmentsContent {...props} />
-    </CandidateProfileGate>
+    <PageWrapper>
+      <AssessmentsHeader />
+      <CandidateProfileGate fallback={<AssessmentsBodySkeleton />}>
+        <AssessmentsContent {...props} />
+      </CandidateProfileGate>
+    </PageWrapper>
   );
 };

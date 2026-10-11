@@ -1,12 +1,9 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import Link from 'next/link';
 
-import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
 import {
-  Button,
   Card,
   CardContent,
   CardHeader,
@@ -14,9 +11,9 @@ import {
   FadeIn,
   OptionSelect,
   PageControls,
-  PageHeader,
   RefreshButton,
   RemoteState,
+  Skeleton,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
@@ -65,21 +62,6 @@ export const IncomingOffers = () => {
 
   return (
     <div className="grid content-start gap-8">
-      <PageHeader>
-        <PageHeader.Row>
-          <PageHeader.Content>
-            <PageHeader.Title>Входящие предложения</PageHeader.Title>
-            <PageHeader.Description>
-              Посмотрите условия работодателей и ответьте на предложение.
-            </PageHeader.Description>
-          </PageHeader.Content>
-          <PageHeader.Actions>
-            <Button asChild variant="outline">
-              <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
-            </Button>
-          </PageHeader.Actions>
-        </PageHeader.Row>
-      </PageHeader>
       <FadeIn delay={FADE_IN_DELAY}>
         <Card>
           <CardHeader>
@@ -112,6 +94,21 @@ export const IncomingOffers = () => {
             </div>
             <RemoteState
               {...remote}
+              loadingLabel="Загружаем предложения"
+              loadingContent={
+                <div className="grid gap-4">
+                  {Array.from({ length: 2 }, (_, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col gap-3 rounded-xl border bg-card p-5 sm:p-6"
+                    >
+                      <Skeleton className="h-5 w-40 max-w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                  ))}
+                </div>
+              }
               empty={remote.data?.items.length === 0}
               emptyTitle={
                 status

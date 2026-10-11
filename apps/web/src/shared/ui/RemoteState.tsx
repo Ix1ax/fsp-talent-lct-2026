@@ -19,6 +19,17 @@ interface RemoteStateProps {
   children?: ReactNode;
 }
 
+/** Нейтральный скелетон «три строки текста»: подходит в карточку, диалог и список. */
+export const RemoteStateSkeleton = () => {
+  return (
+    <div className="flex flex-col gap-3">
+      <Skeleton className="h-5 w-40 max-w-full" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-2/3" />
+    </div>
+  );
+};
+
 /** Initial loading → error → empty result → content. Background refresh stays with the caller. */
 export const RemoteState = ({
   loading,
@@ -48,12 +59,7 @@ export const RemoteState = ({
           aria-hidden="true"
           className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
         >
-          {loadingContent ?? (
-            <div className="grid gap-4">
-              <Skeleton className="h-12 w-2/3" />
-              <Skeleton className="h-48 w-full" />
-            </div>
-          )}
+          {loadingContent ?? <RemoteStateSkeleton />}
         </div>
       </div>
     );

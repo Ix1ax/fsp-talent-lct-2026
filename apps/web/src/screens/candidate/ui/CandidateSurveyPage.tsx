@@ -2,19 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeftIcon, ArrowRightIcon } from 'lucide-react';
+import { ArrowRightIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
-import {
-  Button,
-  FadeIn,
-  PageHeader,
-  PageWrapper,
-  RemoteState,
-} from '@/shared/ui';
+import { Button, FadeIn, PageWrapper, RemoteState } from '@/shared/ui';
 
+import { CANDIDATE_PAGE_HEADERS } from '../constants';
 import { loadCandidateSurvey } from '../model';
+import { CandidatePageHeader } from './CandidatePageHeader';
 import { CandidateSurveyContent } from './CandidateSurveyContent';
 
 export const CandidateSurveyPage = () => {
@@ -24,24 +20,7 @@ export const CandidateSurveyPage = () => {
 
   return (
     <PageWrapper>
-      <PageHeader>
-        <PageHeader.Row>
-          <PageHeader.Content>
-            <PageHeader.Title>Направление и уровень</PageHeader.Title>
-            <PageHeader.Description>
-              Выберите стек и оцените свой уровень. Эти данные помогут начать
-              тестирование.
-            </PageHeader.Description>
-          </PageHeader.Content>
-          <PageHeader.Actions>
-            <Button asChild variant="outline">
-              <Link href={STATIC_ROUTES.CANDIDATE}>
-                <ArrowLeftIcon aria-hidden="true" />В кабинет
-              </Link>
-            </Button>
-          </PageHeader.Actions>
-        </PageHeader.Row>
-      </PageHeader>
+      <CandidatePageHeader {...CANDIDATE_PAGE_HEADERS.survey} />
       <RemoteState
         loading={query.loading}
         error={query.error}

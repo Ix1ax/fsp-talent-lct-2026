@@ -8,6 +8,7 @@ import {
   Button,
   FadeIn,
   RemoteState,
+  Skeleton,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -27,6 +28,14 @@ export const CandidateOnboardingCard = () => {
         loading={query.loading}
         error={query.error}
         retry={query.retry}
+        loadingLabel="Загружаем следующий шаг"
+        loadingContent={
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-5 w-40 max-w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        }
       />
       {action && (
         <FadeIn className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">

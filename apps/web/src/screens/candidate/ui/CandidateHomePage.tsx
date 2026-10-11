@@ -3,12 +3,14 @@
 import { usePathname } from 'next/navigation';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import { PageHeader, PageWrapper } from '@/shared/ui';
+import { PageWrapper } from '@/shared/ui';
 import type { CandidateFullProfile } from '@/entities/candidate';
 import type { CatalogItem } from '@/entities/catalog';
 import type { SessionUser } from '@/entities/session';
 
+import { CANDIDATE_PAGE_HEADERS } from '../constants';
 import { useCandidateWorkspace } from '../model';
+import { CandidatePageHeader } from './CandidatePageHeader';
 import { CandidateProfileEditor } from './CandidateProfileEditor';
 import { CandidateProfileLoadError } from './CandidateProfileLoadError';
 import { CandidateResumeImport } from './CandidateResumeImport';
@@ -39,17 +41,7 @@ export const CandidateHomePage = ({
       className="[overflow-anchor:none]"
     >
       <div className="flex flex-col gap-8">
-        <PageHeader>
-          <PageHeader.Row>
-            <PageHeader.Content>
-              <PageHeader.Title>Мой профиль</PageHeader.Title>
-              <PageHeader.Description>
-                Расскажите об опыте и условиях работы. Публикацией профиля
-                управляете вы.
-              </PageHeader.Description>
-            </PageHeader.Content>
-          </PageHeader.Row>
-        </PageHeader>
+        <CandidatePageHeader {...CANDIDATE_PAGE_HEADERS.profile} back={false} />
         {loadError ? (
           <CandidateProfileLoadError error={loadError} />
         ) : (
