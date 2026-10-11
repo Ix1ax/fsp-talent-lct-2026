@@ -10,12 +10,13 @@
 | --- | --- |
 | Развёрнутый прототип | [89.104.69.242:3000](http://89.104.69.242:3000/) |
 | Сопроводительная документация по ТЗ (8 пунктов) | [PDF](docs/submission/fsp-scout-documentation.pdf) · [Markdown](docs/submission/documentation.md) |
-| Презентация | `docs/submission/` — _будет добавлена_ |
-| Скринкаст | `docs/submission/` — _будет добавлен_ |
+| Презентация | [PDF](docs/submission/presentation.pdf) · [PPTX](docs/submission/presentation.pptx) |
+| Скринкаст | [MP4](docs/submission/screencast.mp4) |
+| Руководство пользователя | [PDF](docs/submission/user-guide.pdf) |
 | Swagger / OpenAPI | [Swagger](http://89.104.69.242:8080/docs/) · [api/openapi.yaml](api/openapi.yaml) |
 | Демо-аккаунты и маршрут проверки для жюри | [ниже](#тестовые-аккаунты-и-доступы) · [docs/jury-demo.md](docs/jury-demo.md) |
 
-Все материалы сдачи лежат в [docs/submission](docs/submission). GitHub не принимает файлы больше 100 МБ: видео тяжелее этого публикуется через Git LFS или внешнюю ссылку.
+Все материалы сдачи лежат в [docs/submission](docs/submission).
 
 ## Содержание
 

@@ -11,7 +11,9 @@
 | Развёрнутый прототип | http://89.104.69.242:3000 |
 | Swagger UI и OpenAPI | http://89.104.69.242:8080/docs/ · http://89.104.69.242:8080/openapi.yaml |
 | Репозиторий | https://github.com/Ix1ax/fsp-talent-lct-2026 |
-| Презентация и скринкаст | папка `docs/submission` репозитория |
+| Презентация | `docs/submission/presentation.pdf` · `presentation.pptx` |
+| Скринкаст | `docs/submission/screencast.mp4` |
+| Руководство пользователя | `docs/submission/user-guide.pdf` |
 | Эта документация | `docs/submission/fsp-scout-documentation.pdf`, исходник — `docs/submission/documentation.md` |
 
 ### Демо-аккаунты
