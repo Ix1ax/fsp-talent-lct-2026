@@ -18,7 +18,7 @@
     <#if themeResources?? && themeResources.favicons?has_content>
         <@themeResourceTags.renderFavicons themeResources.favicons url.resourcesPath />
     <#else>
-        <link rel="icon" href="${url.resourcesPath}/img/favicon.ico" />
+        <link rel="icon" href="${url.resourcesPath}/img/brand-aac31e3/favicon.svg" type="image/svg+xml" />
     </#if>
     <#if themeResources?? && themeResources.stylesCommon?has_content>
         <@themeResourceTags.renderStyles themeResources.stylesCommon url.resourcesCommonPath />
@@ -102,19 +102,20 @@
 <body class="${properties.kcBodyClass!}" data-page-id="login-${pageId}" data-message-type="${(message.type)!''}"
       data-pending-login="${msg('fspPendingLogin')}" data-pending-register="${msg('fspPendingRegister')}"
       data-pending-reset="${msg('fspPendingReset')}" data-pending-save="${msg('fspPendingSave')}">
+<div class="fsp-brand-pattern" aria-hidden="true"></div>
 <div class="${properties.kcLoginClass!}">
     <#assign fspHome = properties.fspHomeUrl!'/'>
     <header class="fsp-brand-row">
         <a class="fsp-brand" href="${fspHome}" aria-label="${msg('fspHomeLabel')}">
-            <img class="fsp-logo-light" src="${url.resourcesPath}/img/scout-horizontal-on-light.svg" alt="ФСП Скаут" height="22" />
-            <img class="fsp-logo-dark" src="${url.resourcesPath}/img/scout-horizontal-on-dark.svg" alt="ФСП Скаут" height="22" />
+            <img class="fsp-logo-light" src="${url.resourcesPath}/img/brand-aac31e3/scout-horizontal-on-light.svg" alt="ФСП Скаут" height="28" />
+            <img class="fsp-logo-dark" src="${url.resourcesPath}/img/brand-aac31e3/scout-horizontal-on-dark.svg" alt="ФСП Скаут" height="28" />
         </a>
         <button id="fsp-theme-toggle" class="fsp-theme-toggle" type="button" aria-label="${msg('fspToggleTheme')}" title="${msg('fspToggleTheme')}" hidden>
             <svg class="fsp-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg>
             <svg class="fsp-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.5 8.5 0 1 0 20.5 14Z"/></svg>
         </button>
     </header>
-    <div class="${properties.kcFormCardClass!}">
+    <main class="${properties.kcFormCardClass!}" aria-labelledby="kc-page-title">
         <header class="${properties.kcFormHeaderClass!}">
             <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
                 <div class="${properties.kcLocaleMainClass!}" id="kc-locale">
@@ -239,7 +240,7 @@
       </div>
 
       <@loginFooter.content/>
-    </div>
+    </main>
     <a class="fsp-home-link" href="${fspHome}">${msg('fspBackHome')}</a>
     <div class="fsp-announcer sr-only" aria-live="polite" data-theme-light="${msg('fspLightTheme')}" data-theme-dark="${msg('fspDarkTheme')}"></div>
 
