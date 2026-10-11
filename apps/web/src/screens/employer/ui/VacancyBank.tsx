@@ -1,41 +1,19 @@
-import { useCallback, useState } from 'react';
-import {
-  ArrowLeftIcon,
-  PlusIcon,
-  SearchIcon,
-  SlidersHorizontalIcon,
-} from 'lucide-react';
+import { SlidersHorizontalIcon } from 'lucide-react';
 
-import { confirmUnsavedChanges, useRemoteData } from '@/shared/hooks';
+import { confirmUnsavedChanges } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
-import {
-  AsyncState,
-  Button,
-  Input,
-  OptionSelect,
-  PageControls,
-  Skeleton,
-} from '@/shared/ui';
-import type { Catalogs, Skill } from '@/entities/catalog';
+import { Button, OptionSelect, PageControls } from '@/shared/ui';
+import { type Catalogs, type Skill } from '@/entities/catalog';
 import { NEED_STATUS_LABELS } from '@/entities/employer-need';
-import {
-  ArchiveNeedDialog,
-  emptyNeed,
-  NeedFlowEditor,
-} from '@/features/employer-need';
-import {
-  emptyVacancyFilters,
-  filterVacancyFeed,
-  hasVacancyFilters,
-  loadStatusVacancies,
-  type VacancyFilters as Filters,
-} from '@/features/employer-search';
+import { ArchiveNeedDialog } from '@/features/employer-need';
+import { type VacancyFilters as Filters } from '@/features/employer-search';
 
-import type { EmployerGateway } from '../lib';
-import type { EmployerBoard } from '../model';
-import { NeedDetail } from './NeedDetail';
-import { VacancyCard } from './VacancyCard';
+import { type EmployerGateway } from '../lib';
+import { type EmployerBoard, useVacancySearch } from '../model';
+import { VacancyDetailContent } from './VacancyDetailContent';
+import { VacancyFeedContent } from './VacancyFeedContent';
 import { VacancyFilters } from './VacancyFilters';
+import { VacancySearchForm } from './VacancySearchForm';
 
 interface VacancyBankProps {
   board: EmployerBoard;
@@ -76,109 +54,46 @@ export const VacancyBank = ({
   onCandidate,
   guard,
 }: VacancyBankProps) => {
-  const [filters, setFilters] = useState(emptyVacancyFilters);
-  const [searchDraft, setSearchDraft] = useState('');
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [filteredOffset, setFilteredOffset] = useState(0);
-
-  const filtered = hasVacancyFilters(filters);
-  const load = useCallback(
-    (signal: AbortSignal) =>
-      filtered
-        ? loadStatusVacancies(api, board.companyId, board.status, signal)
-        : Promise.resolve([]),
-    [api, board.companyId, board.status, filtered],
-  );
-
-  const complete = useRemoteData(load, board.revision, active && filtered);
-
-  const matches = filtered
-    ? filterVacancyFeed(complete.data ?? [], filters)
-    : [];
-
-  const items = filtered
-    ? matches.slice(filteredOffset, filteredOffset + 20)
-    : board.items;
-
-  const loading = filtered ? complete.loading : board.loading;
-  const error = filtered ? complete.error : board.listError;
-
-  const updateFilters = (patch: Partial<Filters>) => {
-    setFilters((value) => ({ ...value, ...patch }));
-    setFilteredOffset(0);
-  };
-
-  const reset = () => {
-    setFilters(emptyVacancyFilters());
-    setSearchDraft('');
-    setFilteredOffset(0);
-  };
-
-  const canWrite = board.company?.memberRole !== 'viewer';
-  const need = board.selected;
-
+  const {
+    filters,
+    searchDraft,
+    setSearchDraft,
+    filtersOpen,
+    setFiltersOpen,
+    filteredOffset,
+    setFilteredOffset,
+    filtered,
+    complete,
+    matches,
+    items,
+    loading,
+    error,
+    updateFilters,
+    reset,
+    canWrite,
+    need,
+  } = useVacancySearch({ board, active, api });
   if (composer || board.selectedId)
     return (
       <div className="grid w-full min-w-0 gap-5">
-        {composer ? (
-          <NeedFlowEditor
-            active={active}
-            key="new"
-            initial={emptyNeed()}
-            isNew
-            catalogs={catalogs}
-            skills={skills}
-            pending={board.pending}
-            error={board.saveError}
-            onSave={async (input) => {
-              await board.save(input, true);
-              onCreated();
-            }}
-            onBack={onBack}
-            onDirtyChange={onDirtyChange}
-          />
-        ) : board.detailLoading ? (
-          <Skeleton className="h-96" />
-        ) : board.detailError ? (
-          <>
-            <Button variant="ghost" onClick={onBack}>
-              <ArrowLeftIcon />К списку потребностей
-            </Button>
-            <AsyncState
-              error
-              title="Потребность недоступна"
-              description={board.detailError}
-              onRetry={board.reload}
-            />
-          </>
-        ) : need ? (
-          <NeedDetail
-            key={need.id}
-            need={need}
-            companyId={board.companyId}
-            catalogs={catalogs}
-            skills={skills}
-            active={active}
-            created={!!created}
-            canWrite={canWrite}
-            pending={board.pending}
-            dirty={dirty}
-            revision={board.revision}
-            saveError={board.saveError}
-            loadRecommendations={api.recommendations}
-            onSave={(value) => board.save(value, false)}
-            onBack={onBack}
-            onDirtyChange={onDirtyChange}
-            onCandidate={onCandidate}
-            onRestore={() => void board.restore().catch(() => {})}
-            onArchive={() => onArchiveConfirm(true)}
-            onDuplicate={() =>
-              guard(() => {
-                void board.duplicate().catch(() => {});
-              })
-            }
-          />
-        ) : null}
+        <VacancyDetailContent
+          board={board}
+          active={active}
+          catalogs={catalogs}
+          skills={skills}
+          composer={composer}
+          created={created}
+          dirty={dirty}
+          api={api}
+          onCreated={onCreated}
+          onBack={onBack}
+          onDirtyChange={onDirtyChange}
+          onCandidate={onCandidate}
+          onArchiveConfirm={onArchiveConfirm}
+          guard={guard}
+          need={need}
+          canWrite={canWrite}
+        />
         <ArchiveNeedDialog
           open={archiveConfirm}
           pending={board.pending}
@@ -219,50 +134,14 @@ export const VacancyBank = ({
         />
       </aside>
       <div className="grid min-w-0 gap-4">
-        <form
-          role="search"
-          aria-label="Поиск потребностей"
-          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] gap-3 rounded-xl border border-border bg-card p-4 sm:flex sm:p-5"
-          onSubmit={(event) => {
-            event.preventDefault();
-            updateFilters({ query: searchDraft.trim() });
-          }}
-        >
-          <div className="relative min-w-0 flex-1">
-            <SearchIcon
-              className="pointer-events-none absolute top-3.5 left-3 size-4 text-muted-foreground"
-              aria-hidden="true"
-            />
-            <Input
-              aria-label="Название или описание потребности"
-              placeholder="Название потребности или ключевые слова"
-              value={searchDraft}
-              onChange={(event) => setSearchDraft(event.target.value)}
-              disabled={board.pending}
-              className="pl-9"
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={board.pending}
-            className="w-10 px-0 sm:w-auto sm:px-4"
-          >
-            <SearchIcon />
-            <span className="sr-only sm:not-sr-only">Найти</span>
-          </Button>
-          {canWrite && (
-            <Button
-              type="button"
-              variant="outline"
-              disabled={board.pending}
-              onClick={onCreate}
-              className="col-span-2"
-            >
-              <PlusIcon />
-              Создать потребность
-            </Button>
-          )}
-        </form>
+        <VacancySearchForm
+          board={board}
+          searchDraft={searchDraft}
+          setSearchDraft={setSearchDraft}
+          updateFilters={updateFilters}
+          canWrite={canWrite}
+          onCreate={onCreate}
+        />
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-muted/60 p-2.5">
           <div
             role="tablist"
@@ -320,63 +199,20 @@ export const VacancyBank = ({
             </Button>
           )}
         </div>
-        {loading ? (
-          <div
-            role="status"
-            aria-label="Загрузка потребностей"
-            className="grid gap-4"
-          >
-            <Skeleton className="h-56 rounded-xl" />
-            <Skeleton className="h-56 rounded-xl" />
-          </div>
-        ) : error ? (
-          <AsyncState
-            error
-            title="Не удалось загрузить потребности"
-            description={error}
-            onRetry={filtered ? complete.retry : board.reload}
-            className="rounded-xl bg-card"
-          />
-        ) : items.length && board.company ? (
-          items.map((item) => (
-            <VacancyCard
-              key={item.id}
-              need={item}
-              catalogs={catalogs}
-              skills={skills}
-              busy={board.pending}
-              onOpen={() => onSelect(item.id)}
-            />
-          ))
-        ) : (
-          <div className="grid justify-items-center gap-3 rounded-xl border border-dashed bg-card p-8 text-center sm:p-12">
-            <SearchIcon className="size-8 text-muted-foreground" />
-            <h2 className="text-lg font-semibold">
-              {filtered
-                ? 'Ничего не найдено'
-                : board.status === 'archived'
-                  ? 'Архив пуст'
-                  : 'Потребностей пока нет'}
-            </h2>
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              {filtered
-                ? 'Попробуйте другие условия поиска или сбросьте фильтры.'
-                : 'Потребности выбранной компании появятся здесь. Начните с черновика и заполните его по шагам.'}
-            </p>
-            {filtered ? (
-              <Button variant="outline" onClick={reset}>
-                Сбросить фильтры
-              </Button>
-            ) : (
-              canWrite && (
-                <Button disabled={board.pending} onClick={onCreate}>
-                  <PlusIcon />
-                  Создать потребность
-                </Button>
-              )
-            )}
-          </div>
-        )}
+        <VacancyFeedContent
+          board={board}
+          catalogs={catalogs}
+          skills={skills}
+          onSelect={onSelect}
+          onCreate={onCreate}
+          items={items}
+          filtered={filtered}
+          loading={loading}
+          error={error}
+          retry={filtered ? complete.retry : board.reload}
+          reset={reset}
+          canWrite={canWrite}
+        />
         {!loading && !error && (
           <PageControls
             offset={filtered ? filteredOffset : board.offset}

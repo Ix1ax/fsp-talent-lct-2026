@@ -20,7 +20,7 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
   const { syncError, retrySync } = useAssessmentResultSync(result);
   return (
     <section
-      className="flex min-w-0 flex-col gap-5 wrap-anywhere"
+      className="flex min-w-0 flex-col gap-6 wrap-anywhere"
       aria-labelledby="assessment-result-title"
     >
       <Card>
@@ -87,11 +87,11 @@ export const AssessmentResultCard = ({ result }: AssessmentResultCardProps) => {
         </div>
       )}
       <div className="grid gap-3 sm:flex sm:flex-wrap">
-        <Button className="h-auto min-h-11 whitespace-normal" asChild>
+        <Button className="h-auto min-h-10 whitespace-normal" asChild>
           <Link href={STATIC_ROUTES.CANDIDATE}>Посмотреть профиль</Link>
         </Button>
         <Button
-          className="h-auto min-h-11 whitespace-normal"
+          className="h-auto min-h-10 whitespace-normal"
           asChild
           variant="outline"
         >

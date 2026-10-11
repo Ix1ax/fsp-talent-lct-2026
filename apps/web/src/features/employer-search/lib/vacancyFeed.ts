@@ -1,6 +1,6 @@
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 
-import type { NeedsSearchApi } from './loadSearchNeeds';
+import type { NeedsSearchApi } from './types';
 
 export type VacancyFilters = {
   query: string;

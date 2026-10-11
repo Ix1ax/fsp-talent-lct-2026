@@ -20,7 +20,11 @@ import {
 import { adminDate, adminNumber } from '../lib';
 import { AdminEntityLink } from './OperationDetailsLayout';
 
-export const CompanyRelatedLists = ({ company }: { company: AdminCompany }) => {
+interface CompanyRelatedListsProps {
+  company: AdminCompany;
+}
+
+export const CompanyRelatedLists = ({ company }: CompanyRelatedListsProps) => {
   const [filesOffset, setFilesOffset] = useState(0);
   const [membersOffset, setMembersOffset] = useState(0);
   const files = useAdminQuery(

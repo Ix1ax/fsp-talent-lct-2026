@@ -17,7 +17,9 @@ import { AdminSidebar } from './AdminSidebar';
 interface AdminShellProps {
   children: ReactNode;
 }
-const Content = ({ children }: AdminShellProps) => {
+type ContentProps = AdminShellProps;
+
+const Content = ({ children }: ContentProps) => {
   const pathname = usePathname();
   const { session, loading, error, retry, logout } = useAdminSession();
   const { collapsed, toggle: toggleSidebar } = useSidebarCollapsed();
@@ -87,12 +89,14 @@ const Content = ({ children }: AdminShellProps) => {
   );
 };
 
-export const AdminShell = ({ children }: AdminShellProps) => (
-  <AdminProvider>
-    <div data-admin-shell className="relative isolate min-h-screen">
-      <div className="relative z-10">
-        <Content>{children}</Content>
+export const AdminShell = ({ children }: AdminShellProps) => {
+  return (
+    <AdminProvider>
+      <div data-admin-shell className="relative isolate min-h-screen">
+        <div className="relative z-10">
+          <Content>{children}</Content>
+        </div>
       </div>
-    </div>
-  </AdminProvider>
-);
+    </AdminProvider>
+  );
+};

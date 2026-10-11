@@ -3,11 +3,11 @@ import type { ReactNode } from 'react';
 import { AppHeader } from '@/widgets/app-header/server';
 import { SiteFooter } from '@/widgets/site-footer';
 
-export default function SiteLayout({
-  children,
-}: Readonly<{
+interface SiteLayoutProps {
   children: ReactNode;
-}>) {
+}
+
+const SiteLayout = ({ children }: Readonly<SiteLayoutProps>) => {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader />
@@ -15,4 +15,6 @@ export default function SiteLayout({
       <SiteFooter />
     </div>
   );
-}
+};
+
+export default SiteLayout;

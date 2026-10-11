@@ -2,11 +2,11 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 
-const Card = ({
-  className,
-  size = 'default',
-  ...props
-}: ComponentProps<'div'> & { size?: 'default' | 'sm' }) => {
+interface CardProps extends ComponentProps<'div'> {
+  size?: 'default' | 'sm';
+}
+
+const Card = ({ className, size = 'default', ...props }: CardProps) => {
   return (
     <div
       data-slot="card"
@@ -20,7 +20,9 @@ const Card = ({
   );
 };
 
-const CardHeader = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardHeaderProps = ComponentProps<'div'>;
+
+const CardHeader = ({ className, ...props }: CardHeaderProps) => {
   return (
     <div
       data-slot="card-header"
@@ -33,7 +35,9 @@ const CardHeader = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const CardTitle = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardTitleProps = ComponentProps<'div'>;
+
+const CardTitle = ({ className, ...props }: CardTitleProps) => {
   return (
     <div
       data-slot="card-title"
@@ -46,7 +50,9 @@ const CardTitle = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const CardDescription = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardDescriptionProps = ComponentProps<'div'>;
+
+const CardDescription = ({ className, ...props }: CardDescriptionProps) => {
   return (
     <div
       data-slot="card-description"
@@ -56,7 +62,9 @@ const CardDescription = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const CardAction = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardActionProps = ComponentProps<'div'>;
+
+const CardAction = ({ className, ...props }: CardActionProps) => {
   return (
     <div
       data-slot="card-action"
@@ -69,7 +77,9 @@ const CardAction = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const CardContent = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardContentProps = ComponentProps<'div'>;
+
+const CardContent = ({ className, ...props }: CardContentProps) => {
   return (
     <div
       data-slot="card-content"
@@ -79,7 +89,9 @@ const CardContent = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const CardFooter = ({ className, ...props }: ComponentProps<'div'>) => {
+type CardFooterProps = ComponentProps<'div'>;
+
+const CardFooter = ({ className, ...props }: CardFooterProps) => {
   return (
     <div
       data-slot="card-footer"

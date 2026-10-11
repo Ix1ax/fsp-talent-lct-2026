@@ -4,7 +4,9 @@ import type { ComponentProps } from 'react';
 import { useTheme } from 'next-themes';
 import { Toaster as SonnerToaster } from 'sonner';
 
-export const Toaster = (props: ComponentProps<typeof SonnerToaster>) => {
+type ToasterProps = ComponentProps<typeof SonnerToaster>;
+
+export const Toaster = (props: ToasterProps) => {
   const { resolvedTheme } = useTheme();
   return (
     <SonnerToaster

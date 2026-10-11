@@ -1,8 +1,7 @@
 import {
-  ApiError,
   clientApi,
   ensureClientAccessToken,
-  toApiError,
+  normalizeApiError,
 } from '@/shared/api';
 
 export const exportCandidatePDF = async (signal?: AbortSignal) => {
@@ -18,17 +17,6 @@ export const exportCandidatePDF = async (signal?: AbortSignal) => {
     });
     return data;
   } catch (error) {
-    if (error instanceof ApiError && error.data instanceof Blob) {
-      let body: unknown;
-      try {
-        body = JSON.parse(await error.data.text());
-      } catch {
-        throw error;
-      }
-
-      throw toApiError(error.status, body, error.message, error.headers);
-    }
-
-    throw error;
+    throw await normalizeApiError(error);
   }
 };

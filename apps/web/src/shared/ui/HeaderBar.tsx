@@ -64,52 +64,56 @@ export const HeaderBar = ({
   menuExtra,
   tabs,
   className,
-}: HeaderBarProps) => (
-  <header
-    className={cn(
-      // Полоса вокруг плашки прозрачна и пропускает клики; размыта только сама плашка.
-      'pointer-events-none sticky top-0 z-40 pt-3 pb-2',
-      className,
-    )}
-  >
-    <div className="container-page">
-      <div className="pointer-events-auto flex items-center gap-x-3 rounded-2xl border border-border/60 bg-muted/80 px-3 py-2 shadow-xs backdrop-blur-xl supports-backdrop-filter:bg-muted/70 sm:gap-x-4 sm:px-4">
-        <div className="flex shrink-0 items-center">{brand}</div>
-        {context}
-        {nav && (
-          <nav
-            aria-label={navLabel}
-            className={cn(
-              'hidden min-w-0 shrink-0 items-center gap-1',
-              NAV_FROM[navFrom].nav,
-              '[&_[data-label-full]]:hidden 2xl:[&_[data-label-full]]:inline 2xl:[&_[data-label-short]]:hidden',
-            )}
-          >
-            {nav}
-          </nav>
-        )}
-        <div className="flex-1" />
-        {search && <div className="hidden w-64 md:block lg:w-72">{search}</div>}
-        {(actions || search || menuNav) && (
-          <div className="flex shrink-0 items-center gap-2">
-            {search && <HeaderMobileSearch>{search}</HeaderMobileSearch>}
-            {actions}
-            {menuNav && (
-              <HeaderMenu
-                className={NAV_FROM[navFrom].menu}
-                nav={menuNav}
-                extra={menuExtra}
-              />
-            )}
-          </div>
-        )}
+}: HeaderBarProps) => {
+  return (
+    <header
+      className={cn(
+        // Полоса вокруг плашки прозрачна и пропускает клики; размыта только сама плашка.
+        'pointer-events-none sticky top-0 z-40 pt-3 pb-2',
+        className,
+      )}
+    >
+      <div className="container-page">
+        <div className="pointer-events-auto flex items-center gap-x-3 rounded-2xl border border-border/60 bg-muted/80 px-3 py-2 shadow-xs backdrop-blur-xl supports-backdrop-filter:bg-muted/70 sm:gap-x-4 sm:px-4">
+          <div className="flex shrink-0 items-center">{brand}</div>
+          {context}
+          {nav && (
+            <nav
+              aria-label={navLabel}
+              className={cn(
+                'hidden min-w-0 shrink-0 items-center gap-1',
+                NAV_FROM[navFrom].nav,
+                '[&_[data-label-full]]:hidden 2xl:[&_[data-label-full]]:inline 2xl:[&_[data-label-short]]:hidden',
+              )}
+            >
+              {nav}
+            </nav>
+          )}
+          <div className="flex-1" />
+          {search && (
+            <div className="hidden w-64 md:block lg:w-72">{search}</div>
+          )}
+          {(actions || search || menuNav) && (
+            <div className="flex shrink-0 items-center gap-2">
+              {search && <HeaderMobileSearch>{search}</HeaderMobileSearch>}
+              {actions}
+              {menuNav && (
+                <HeaderMenu
+                  className={NAV_FROM[navFrom].menu}
+                  nav={menuNav}
+                  extra={menuExtra}
+                />
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-    {/* Вне размытой плашки: backdrop-filter сломал бы fixed-позиционирование. */}
-    {tabs && (
-      <HeaderTabBar hiddenFrom={navFrom} label={`${navLabel} (панель)`}>
-        {tabs}
-      </HeaderTabBar>
-    )}
-  </header>
-);
+      {/* Вне размытой плашки: backdrop-filter сломал бы fixed-позиционирование. */}
+      {tabs && (
+        <HeaderTabBar hiddenFrom={navFrom} label={`${navLabel} (панель)`}>
+          {tabs}
+        </HeaderTabBar>
+      )}
+    </header>
+  );
+};

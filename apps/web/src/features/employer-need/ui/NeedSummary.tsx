@@ -15,9 +15,11 @@ interface SummaryTokenProps {
   fallback: string;
 }
 
-const SummaryToken = ({ value, fallback }: SummaryTokenProps) => (
-  <span className={briefTokenClassName(!value)}>{value || fallback}</span>
-);
+const SummaryToken = ({ value, fallback }: SummaryTokenProps) => {
+  return (
+    <span className={briefTokenClassName(!value)}>{value || fallback}</span>
+  );
+};
 
 /** Бриф потребности одной фразой: значения справочника — токены. */
 export const NeedSummary = ({ value, catalogs, skills }: NeedSummaryProps) => {

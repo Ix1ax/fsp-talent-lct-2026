@@ -1,5 +1,7 @@
-import type { AssessmentAttempt } from '@/entities/assessment';
-import { saveAssessmentAnswer } from '@/entities/assessment';
+import {
+  type AssessmentAttempt,
+  saveAssessmentAnswer,
+} from '@/entities/assessment';
 
 import { createAnswerSchema } from '../constants';
 import { createAnswerQueue } from './createAnswerQueue';

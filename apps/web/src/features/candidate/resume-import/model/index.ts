@@ -5,4 +5,5 @@ export type {
   ResumeFieldChange,
   ResumeRecordStatus,
 } from './types';
+export { useResumeImport } from './useResumeImport';
 export { useResumeRecords } from './useResumeRecords';

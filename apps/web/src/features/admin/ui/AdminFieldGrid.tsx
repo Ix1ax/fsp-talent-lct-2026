@@ -10,12 +10,14 @@ interface AdminFieldGridProps extends ComponentProps<'div'> {
 export const AdminFieldGrid = ({
   className,
   ...props
-}: AdminFieldGridProps) => (
-  <div
-    className={cn(
-      'grid min-w-0 items-start gap-x-4 gap-y-4 sm:grid-cols-2 [&>[data-admin-field]]:row-span-3 [&>[data-admin-field]]:grid-rows-subgrid',
-      className,
-    )}
-    {...props}
-  />
-);
+}: AdminFieldGridProps) => {
+  return (
+    <div
+      className={cn(
+        'grid min-w-0 items-start gap-x-4 gap-y-4 sm:grid-cols-2 [&>[data-admin-field]]:row-span-3 [&>[data-admin-field]]:grid-rows-subgrid',
+        className,
+      )}
+      {...props}
+    />
+  );
+};

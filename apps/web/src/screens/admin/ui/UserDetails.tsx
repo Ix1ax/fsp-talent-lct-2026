@@ -19,7 +19,11 @@ import { adminDate } from '../lib';
 import { DetailFields, OperationDetailsLayout } from './OperationDetailsLayout';
 import { UserCompanies } from './UserCompanies';
 
-export const UserDetails = ({ id }: { id: string }) => {
+interface UserDetailsProps {
+  id: string;
+}
+
+export const UserDetails = ({ id }: UserDetailsProps) => {
   const query = useAdminQuery(`/users/${id}`, adminUserSchema);
   const user = query.data;
   const [relatedRevision, setRelatedRevision] = useState(0);

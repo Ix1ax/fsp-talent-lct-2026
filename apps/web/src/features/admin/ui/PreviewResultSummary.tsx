@@ -1,5 +1,19 @@
 import type { Preview } from '@/entities/admin';
 
+const getPreviewAnswerResult = (
+  review: NonNullable<Preview['result']>['questions'][number],
+) => {
+  if (review.correct) {
+    return 'верно';
+  }
+
+  if (review.answered) {
+    return 'неверно';
+  }
+
+  return 'без ответа';
+};
+
 interface PreviewResultSummaryProps {
   preview: Preview;
   questionId?: string;
@@ -43,12 +57,7 @@ export const PreviewResultSummary = ({
       {review && (
         <div className="border-t pt-3 text-sm">
           <p className="font-medium">
-            Текущий вопрос:{' '}
-            {review.correct
-              ? 'верно'
-              : review.answered
-                ? 'неверно'
-                : 'без ответа'}
+            Текущий вопрос: {getPreviewAnswerResult(review)}
           </p>
           <p>Правильный ответ: {answer}</p>
         </div>

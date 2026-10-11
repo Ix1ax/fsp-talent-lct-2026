@@ -16,10 +16,25 @@ import {
   Input,
   Textarea,
 } from '@/shared/ui';
-import type { Company, CompanyInput } from '@/entities/company';
-import { VERIFICATION_LABELS } from '@/entities/company';
+import {
+  type Company,
+  type CompanyInput,
+  VERIFICATION_LABELS,
+} from '@/entities/company';
 
 import { companySchema } from '../constants';
+
+const getCompanySubmitLabel = (pending: boolean, create: boolean) => {
+  if (pending) {
+    return 'Сохраняем…';
+  }
+
+  if (create) {
+    return 'Создать компанию и продолжить';
+  }
+
+  return 'Сохранить изменения';
+};
 
 interface CompanyProfileFormProps {
   company: Company | null;
@@ -115,7 +130,7 @@ export const CompanyProfileForm = ({
               onDirtyChange(false);
               onSaved(savedCompany);
             } catch {
-              /* Keep the draft on error. */
+              onDirtyChange(true);
             }
           })}
         >
@@ -175,11 +190,7 @@ export const CompanyProfileForm = ({
                 disabled={pending}
                 className="w-full sm:w-auto sm:justify-self-start"
               >
-                {pending
-                  ? 'Сохраняем…'
-                  : create
-                    ? 'Создать компанию и продолжить'
-                    : 'Сохранить изменения'}
+                {getCompanySubmitLabel(pending, create)}
               </Button>
               {onCancel && (
                 <Button

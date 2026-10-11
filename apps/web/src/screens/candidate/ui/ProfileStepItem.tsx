@@ -13,14 +13,14 @@ type StepItem = {
   title: string;
 };
 
-interface ProfileStepItem {
+interface ProfileStepItemProps {
   step: StepItem;
   number: number;
 }
 
 const MotionLink = motion.create(Link);
 
-export const ProfileStepItem = ({ step, number }: ProfileStepItem) => {
+export const ProfileStepItem = ({ step, number }: ProfileStepItemProps) => {
   const { reducedMotion, transition } = useMotionSettings();
 
   return (

@@ -1,0 +1,1 @@
+export { useCandidateBank } from './useCandidateBank';

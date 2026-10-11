@@ -5,10 +5,12 @@ import { Tooltip as TooltipPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
+type TooltipProviderProps = ComponentProps<typeof TooltipPrimitive.Provider>;
+
 const TooltipProvider = ({
   delayDuration = 0,
   ...props
-}: ComponentProps<typeof TooltipPrimitive.Provider>) => {
+}: TooltipProviderProps) => {
   return (
     <TooltipPrimitive.Provider
       data-slot="tooltip-provider"
@@ -18,24 +20,26 @@ const TooltipProvider = ({
   );
 };
 
-const Tooltip = ({
-  ...props
-}: ComponentProps<typeof TooltipPrimitive.Root>) => {
+type TooltipProps = ComponentProps<typeof TooltipPrimitive.Root>;
+
+const Tooltip = ({ ...props }: TooltipProps) => {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 };
 
-const TooltipTrigger = ({
-  ...props
-}: ComponentProps<typeof TooltipPrimitive.Trigger>) => {
+type TooltipTriggerProps = ComponentProps<typeof TooltipPrimitive.Trigger>;
+
+const TooltipTrigger = ({ ...props }: TooltipTriggerProps) => {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 };
+
+type TooltipContentProps = ComponentProps<typeof TooltipPrimitive.Content>;
 
 const TooltipContent = ({
   className,
   sideOffset = 0,
   children,
   ...props
-}: ComponentProps<typeof TooltipPrimitive.Content>) => {
+}: TooltipContentProps) => {
   return (
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content

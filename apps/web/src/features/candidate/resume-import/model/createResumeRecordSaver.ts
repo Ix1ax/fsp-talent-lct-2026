@@ -24,9 +24,11 @@ export const createResumeRecordSaver = (options: ResumeRecordSaverOptions) => {
     running = true;
     current.onBusyChange(true);
     options.onStatus(index, {});
+    let savedId: string;
     try {
       await options.authenticate();
       const record = await action();
+      savedId = record.id;
       completed.add(index);
       options.onStatus(index, { savedId: record.id });
     } catch (error) {
@@ -40,7 +42,11 @@ export const createResumeRecordSaver = (options: ResumeRecordSaverOptions) => {
     try {
       current.onSaved();
     } catch {
-      /* The record already has its saved status. */
+      options.onStatus(index, {
+        savedId,
+        error:
+          'Запись сохранена, но не удалось обновить профиль. Обновите страницу.',
+      });
     }
     return true;
   };

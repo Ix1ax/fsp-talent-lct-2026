@@ -6,11 +6,13 @@ import { Tabs as TabsPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
+type TabsProps = ComponentProps<typeof TabsPrimitive.Root>;
+
 const Tabs = ({
   className,
   orientation = 'horizontal',
   ...props
-}: ComponentProps<typeof TabsPrimitive.Root>) => {
+}: TabsProps) => {
   return (
     <TabsPrimitive.Root
       data-slot="tabs"
@@ -39,12 +41,14 @@ const tabsListVariants = cva(
   },
 );
 
+type TabsListProps = ComponentProps<typeof TabsPrimitive.List> &
+  VariantProps<typeof tabsListVariants>;
+
 const TabsList = ({
   className,
   variant = 'default',
   ...props
-}: ComponentProps<typeof TabsPrimitive.List> &
-  VariantProps<typeof tabsListVariants>) => {
+}: TabsListProps) => {
   return (
     <TabsPrimitive.List
       data-slot="tabs-list"
@@ -55,10 +59,9 @@ const TabsList = ({
   );
 };
 
-const TabsTrigger = ({
-  className,
-  ...props
-}: ComponentProps<typeof TabsPrimitive.Trigger>) => {
+type TabsTriggerProps = ComponentProps<typeof TabsPrimitive.Trigger>;
+
+const TabsTrigger = ({ className, ...props }: TabsTriggerProps) => {
   return (
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
@@ -74,10 +77,9 @@ const TabsTrigger = ({
   );
 };
 
-const TabsContent = ({
-  className,
-  ...props
-}: ComponentProps<typeof TabsPrimitive.Content>) => {
+type TabsContentProps = ComponentProps<typeof TabsPrimitive.Content>;
+
+const TabsContent = ({ className, ...props }: TabsContentProps) => {
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"

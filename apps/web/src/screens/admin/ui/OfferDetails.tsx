@@ -12,7 +12,11 @@ import {
   OperationDetailsLayout,
 } from './OperationDetailsLayout';
 
-export const OfferDetails = ({ id }: { id: string }) => {
+interface OfferDetailsProps {
+  id: string;
+}
+
+export const OfferDetails = ({ id }: OfferDetailsProps) => {
   const query = useAdminQuery(`/offers/${id}`, adminOfferSchema);
   const offer = query.data;
   return (

@@ -19,7 +19,7 @@ The root workspace also exposes equivalent npm scripts. Install web dependencies
 
 Use TypeScript and TSX, two-space indentation, single quotes, and Prettier formatting (`.prettierrc`). ESLint enforces Next.js rules and sorted imports and exports. Name React components and files in PascalCase (`SkillsSection.tsx`), utilities in camelCase (`getEmptySkillsMessage.ts`), hooks `useSomething.ts`, and tests `*.test.ts`.
 
-- Use `interface` only for React component props, named `ComponentNameProps`. Use `type` for domain models, API payloads, hook options, form values, and other data. Library module augmentation in `.d.ts` files may require an interface for declaration merging.
+- Use `interface` only for React component props, named `ComponentNameProps`. Props that inherit existing props without adding fields use a named `type` alias instead of an empty interface. Use `type` for domain models, API payloads, hook options, form values, and other data. Library module augmentation in `.d.ts` files may require an interface for declaration merging.
 - Keep request-only types beside their API function. Put domain types in `entities/*/model/` and Zod validation schemas in the feature's `constants/`.
 - Export modules through `index.ts` barrels. Import across segments through barrels, for example `import type { ProfileFormValues } from '../model'`. Inside a segment, direct imports are allowed to avoid circular dependencies.
 - Keep server-only API exports in a separate `api/server.ts` barrel; never re-export them from a barrel consumed by client components.

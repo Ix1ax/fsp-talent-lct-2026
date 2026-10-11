@@ -63,71 +63,77 @@ interface CriteriaPillsProps {
   criteria: Criterion[];
 }
 
-export const CriteriaPills = ({ criteria }: CriteriaPillsProps) => (
-  <ul className="flex flex-wrap gap-1.5" aria-label="Условия потребности">
-    {[...criteria]
-      .sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status))
-      .map((item) => {
-        const view = CRITERION_VIEW[item.status];
-        const label = MATCH_CONDITION_LABELS[item.code] ?? item.code;
-        return (
-          <li
-            key={item.code}
-            className={cn(pillClassName, view.className)}
-            title={`${label}: ${view.label}`}
-          >
-            <view.icon aria-hidden="true" />
-            {label}
-            <span className="sr-only">: {view.label}</span>
-          </li>
-        );
-      })}
-  </ul>
-);
+export const CriteriaPills = ({ criteria }: CriteriaPillsProps) => {
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label="Условия потребности">
+      {[...criteria]
+        .sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status))
+        .map((item) => {
+          const view = CRITERION_VIEW[item.status];
+          const label = MATCH_CONDITION_LABELS[item.code] ?? item.code;
+          return (
+            <li
+              key={item.code}
+              className={cn(pillClassName, view.className)}
+              title={`${label}: ${view.label}`}
+            >
+              <view.icon aria-hidden="true" />
+              {label}
+              <span className="sr-only">: {view.label}</span>
+            </li>
+          );
+        })}
+    </ul>
+  );
+};
 
-const SKILL_VIEW: Record<Skill['source'], { label: string; className: string }> =
-  {
-    test: {
-      label: 'подтверждён тестом',
-      className: 'border-success/30 bg-success-soft text-success',
-    },
-    claimed: {
-      label: 'заявлен кандидатом',
-      className: 'border-border bg-card text-foreground',
-    },
-    missing: {
-      label: 'нет данных',
-      className: 'border-dashed border-border text-muted-foreground',
-    },
-  };
+const SKILL_VIEW: Record<
+  Skill['source'],
+  { label: string; className: string }
+> = {
+  test: {
+    label: 'подтверждён тестом',
+    className: 'border-success/30 bg-success-soft text-success',
+  },
+  claimed: {
+    label: 'заявлен кандидатом',
+    className: 'border-border bg-card text-foreground',
+  },
+  missing: {
+    label: 'нет данных',
+    className: 'border-dashed border-border text-muted-foreground',
+  },
+};
 
 interface SkillPillsProps {
   skills: Skill[];
 }
 
-export const SkillPills = ({ skills }: SkillPillsProps) => (
-  <ul className="flex flex-wrap gap-1.5" aria-label="Навыки потребности">
-    {skills.map((skill) => {
-      const view = SKILL_VIEW[skill.source];
-      return (
-        <li
-          key={skill.id}
-          className={cn(pillClassName, 'border', view.className)}
-          title={`${skill.name}: ${view.label}${skill.required ? ', обязательный' : ''}`}
-        >
-          {skill.source === 'test' && <ShieldCheckIcon aria-hidden="true" />}
-          {skill.name}
-          {skill.required && (
-            <span aria-hidden="true" className="text-destructive">
-              *
+export const SkillPills = ({ skills }: SkillPillsProps) => {
+  return (
+    <ul className="flex flex-wrap gap-1.5" aria-label="Навыки потребности">
+      {skills.map((skill) => {
+        const view = SKILL_VIEW[skill.source];
+        return (
+          <li
+            key={skill.id}
+            className={cn(pillClassName, 'border', view.className)}
+            title={`${skill.name}: ${view.label}${skill.required ? ', обязательный' : ''}`}
+          >
+            {skill.source === 'test' && <ShieldCheckIcon aria-hidden="true" />}
+            {skill.name}
+            {skill.required && (
+              <span aria-hidden="true" className="text-destructive">
+                *
+              </span>
+            )}
+            <span className="sr-only">
+              : {view.label}
+              {skill.required ? ', обязательный' : ''}
             </span>
-          )}
-          <span className="sr-only">
-            : {view.label}
-            {skill.required ? ', обязательный' : ''}
-          </span>
-        </li>
-      );
-    })}
-  </ul>
-);
+          </li>
+        );
+      })}
+    </ul>
+  );
+};

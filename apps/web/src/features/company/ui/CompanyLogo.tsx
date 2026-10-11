@@ -4,7 +4,7 @@ import { Building2Icon } from 'lucide-react';
 
 import type { Company } from '@/entities/company';
 
-import type { CompanyManagementApi } from '../model/management';
+import type { CompanyManagementApi } from '../model';
 
 interface CompanyLogoProps {
   company: Company;
@@ -28,7 +28,10 @@ export const CompanyLogo = ({ company, api }: CompanyLogoProps) => {
         objectUrl = URL.createObjectURL(blob);
         setImage({ companyId: company.id, fileId, url: objectUrl });
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!controller.signal.aborted)
+          setImage({ companyId: company.id, fileId, url: '' });
+      });
     return () => {
       controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);

@@ -2,7 +2,9 @@ import type { ComponentProps } from 'react';
 
 import { cn } from '@/shared/lib/utils';
 
-const Skeleton = ({ className, ...props }: ComponentProps<'div'>) => {
+type SkeletonProps = ComponentProps<'div'>;
+
+const Skeleton = ({ className, ...props }: SkeletonProps) => {
   return (
     <div
       data-slot="skeleton"

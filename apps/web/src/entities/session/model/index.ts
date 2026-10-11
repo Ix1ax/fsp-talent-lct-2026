@@ -1,5 +1,6 @@
 export { type AuthUnavailableDetails, AuthUnavailableError } from './errors';
 export { getRoleHomeRoute } from './getRoleHomeRoute';
+export type { SessionState } from './sessionState';
 export {
   type RegistrationRole,
   type SessionUser,

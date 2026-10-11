@@ -4,11 +4,11 @@ import { z } from 'zod';
 import { isOperationSection } from '@/features/admin/server';
 import { AdminWorkspacePage, OperationDetailsPage } from '@/screens/admin';
 
-const AdminItemPage = async ({
-  params,
-}: {
+interface AdminItemPageProps {
   params: Promise<{ section: string; path: string[] }>;
-}) => {
+}
+
+const AdminItemPage = async ({ params }: AdminItemPageProps) => {
   const { section, path } = await params;
   if (isOperationSection(section)) {
     if (path.length !== 1 || !z.uuid().safeParse(path[0]).success) notFound();

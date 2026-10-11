@@ -6,13 +6,13 @@ export const TaskDetailsSkeleton = () => {
   return (
     <TaskLoadingState label="Загружаем задание…">
       <div className="grid gap-8">
-        <div className="grid gap-5">
+        <div className="grid gap-4 rounded-2xl border border-border/60 bg-card p-5 sm:p-6">
           <Skeleton className="h-5 w-48" />
           <Skeleton className="h-10 w-3/4" />
           <Skeleton className="h-5 w-64 max-w-full" />
         </div>
         <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_24rem]">
-          <div className="space-y-6 rounded-xl border bg-card p-5 sm:p-8">
+          <div className="space-y-6 rounded-xl border bg-card p-5 sm:p-6">
             <Skeleton className="h-7 w-48 max-w-full" />
             <div className="space-y-2">
               <Skeleton className="h-5 w-full" />

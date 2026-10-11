@@ -1,17 +1,42 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
 import { Button, PageTransition } from '@/shared/ui';
 import { AdminApiError, type Template } from '@/entities/admin';
 
-import { useServerPreview } from '../model/useServerPreview';
+import { useServerPreview } from '../model';
 import { AdminConfirmDialog } from './AdminConfirmDialog';
 import { AdminPanel } from './AdminPanel';
 import { ErrorNotice } from './Common';
 import { PreviewQuestionBody } from './PreviewQuestionBody';
+import { PreviewQuestionNavigation } from './PreviewQuestionNavigation';
 import { PreviewResultSummary } from './PreviewResultSummary';
+
+const getPreviewAnswerSaveLabel = (dirty: boolean, answered: boolean) => {
+  if (dirty) {
+    return 'Изменения не сохранены';
+  }
+
+  if (answered) {
+    return 'Ответ сохранён';
+  }
+
+  return 'Можно пропустить вопрос';
+};
+
+const getPreviewStartLabel = (busy: boolean, retry: boolean) => {
+  if (busy) {
+    return 'Загружаем…';
+  }
+
+  if (retry) {
+    return 'Повторить запрос';
+  }
+
+  return 'Начать пробное прохождение';
+};
 
 interface TemplatePreviewProps {
   template: Template;
@@ -72,11 +97,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
               void state.start();
             }}
           >
-            {busy
-              ? 'Загружаем…'
-              : error && !missing
-                ? 'Повторить запрос'
-                : 'Начать пробное прохождение'}
+            {getPreviewStartLabel(busy, Boolean(error && !missing))}
           </Button>
         </div>
       )}
@@ -93,26 +114,12 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
                 : 'Прохождение завершено'}
             </span>
           </div>
-          <nav
-            aria-label="Вопросы предпросмотра"
-            className="flex flex-wrap gap-2"
-          >
-            {data.questions.map((q, i) => (
-              <Button
-                key={q.id}
-                size="sm"
-                className="w-14 shrink-0"
-                variant={i === index ? 'default' : 'outline'}
-                aria-label={`Вопрос ${i + 1}${q.answer ? ', сохранён ответ' : ''}`}
-                aria-current={i === index ? 'step' : undefined}
-                disabled={busy}
-                onClick={() => setIndex(i)}
-              >
-                {i + 1}
-                <Check className={q.answer ? 'size-3' : 'invisible size-3'} />
-              </Button>
-            ))}
-          </nav>
+          <PreviewQuestionNavigation
+            data={data}
+            index={index}
+            busy={busy}
+            setIndex={setIndex}
+          />
           {question && (
             <>
               <PageTransition
@@ -145,11 +152,7 @@ export const TemplatePreview = ({ template }: TemplatePreviewProps) => {
                     </Button>
                   )}
                   <span role="status" className="text-sm text-muted-foreground">
-                    {dirty
-                      ? 'Изменения не сохранены'
-                      : question.answer
-                        ? 'Ответ сохранён'
-                        : 'Можно пропустить вопрос'}
+                    {getPreviewAnswerSaveLabel(dirty, Boolean(question.answer))}
                   </span>
                 </div>
               )}

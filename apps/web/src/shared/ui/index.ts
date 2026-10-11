@@ -33,7 +33,6 @@ export {
   CommandList,
 } from './Command';
 export { ConfirmDeleteDialog } from './ConfirmDeleteDialog';
-export { ConfirmDiscardDialog } from './ConfirmDiscardDialog';
 export {
   Dialog,
   DialogClose,
@@ -91,6 +90,7 @@ export type { SelectOption } from './OptionSelect';
 export { OptionSelect } from './OptionSelect';
 export { PageControls } from './PageControls';
 export { PageHeader } from './PageHeader';
+export { PageWrapper } from './PageWrapper';
 export {
   Popover,
   PopoverAnchor,
@@ -100,6 +100,7 @@ export {
   PopoverTitle,
   PopoverTrigger,
 } from './Popover';
+export { Radio } from './Radio';
 export { RecordItem, RecordItemActions } from './RecordItem';
 export { RefreshButton } from './RefreshButton';
 export { RemoteState } from './RemoteState';

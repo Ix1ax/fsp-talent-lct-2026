@@ -1,5 +1,5 @@
+import { normalizeApiError } from '@/shared/api';
 import { clientApi } from '@/shared/api/client';
-import { ApiError, toApiError } from '@/shared/api/errors';
 
 import {
   type CandidateProfile,
@@ -78,14 +78,7 @@ export const getCandidateAvatar = async (
     });
     return data;
   } catch (error) {
-    if (error instanceof ApiError && error.data instanceof Blob) {
-      const body: unknown = await error.data
-        .text()
-        .then(JSON.parse)
-        .catch(() => undefined);
-      throw toApiError(error.status, body, error.message);
-    }
-    throw error;
+    throw await normalizeApiError(error);
   }
 };
 

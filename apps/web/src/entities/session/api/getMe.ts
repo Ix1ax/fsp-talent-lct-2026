@@ -4,7 +4,7 @@ import { cache } from 'react';
 
 import { serverApi } from '@/shared/api/server';
 
-import type { SessionUser } from '../model/types';
+import type { SessionUser } from '../model';
 
 export const getMe = cache(async (): Promise<SessionUser> => {
   const { data } = await serverApi.get<SessionUser>('/v1/me');

@@ -9,7 +9,7 @@ import type { Company, CompanyInput } from '@/entities/company';
 import type { EmployerNeed } from '@/entities/employer-need';
 import { CompanyProfileForm } from '@/features/company';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 import { CompanyProfileSummary } from './CompanyProfileSummary';
 import { CompanyProfileVacancies } from './CompanyProfileVacancies';
 

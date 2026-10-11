@@ -5,24 +5,26 @@ import { Popover as PopoverPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Popover = ({
-  ...props
-}: ComponentProps<typeof PopoverPrimitive.Root>) => {
+type PopoverProps = ComponentProps<typeof PopoverPrimitive.Root>;
+
+const Popover = ({ ...props }: PopoverProps) => {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 };
 
-const PopoverTrigger = ({
-  ...props
-}: ComponentProps<typeof PopoverPrimitive.Trigger>) => {
+type PopoverTriggerProps = ComponentProps<typeof PopoverPrimitive.Trigger>;
+
+const PopoverTrigger = ({ ...props }: PopoverTriggerProps) => {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 };
+
+type PopoverContentProps = ComponentProps<typeof PopoverPrimitive.Content>;
 
 const PopoverContent = ({
   className,
   align = 'center',
   sideOffset = 4,
   ...props
-}: ComponentProps<typeof PopoverPrimitive.Content>) => {
+}: PopoverContentProps) => {
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
@@ -39,13 +41,15 @@ const PopoverContent = ({
   );
 };
 
-const PopoverAnchor = ({
-  ...props
-}: ComponentProps<typeof PopoverPrimitive.Anchor>) => {
+type PopoverAnchorProps = ComponentProps<typeof PopoverPrimitive.Anchor>;
+
+const PopoverAnchor = ({ ...props }: PopoverAnchorProps) => {
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
 };
 
-const PopoverHeader = ({ className, ...props }: ComponentProps<'div'>) => {
+type PopoverHeaderProps = ComponentProps<'div'>;
+
+const PopoverHeader = ({ className, ...props }: PopoverHeaderProps) => {
   return (
     <div
       data-slot="popover-header"
@@ -55,7 +59,9 @@ const PopoverHeader = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const PopoverTitle = ({ className, ...props }: ComponentProps<'h2'>) => {
+type PopoverTitleProps = ComponentProps<'h2'>;
+
+const PopoverTitle = ({ className, ...props }: PopoverTitleProps) => {
   return (
     <div
       data-slot="popover-title"
@@ -65,7 +71,12 @@ const PopoverTitle = ({ className, ...props }: ComponentProps<'h2'>) => {
   );
 };
 
-const PopoverDescription = ({ className, ...props }: ComponentProps<'p'>) => {
+type PopoverDescriptionProps = ComponentProps<'p'>;
+
+const PopoverDescription = ({
+  className,
+  ...props
+}: PopoverDescriptionProps) => {
   return (
     <p
       data-slot="popover-description"

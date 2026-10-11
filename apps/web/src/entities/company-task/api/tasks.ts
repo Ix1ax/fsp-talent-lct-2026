@@ -22,7 +22,9 @@ const get = async <T>(path: string, signal?: AbortSignal, params?: object) => {
 
   signal?.throwIfAborted();
 
-  return (await clientApi.get<T>(path, { signal, params })).data;
+  const { data } = await clientApi.get<T>(path, { signal, params });
+
+  return data;
 };
 
 export const listTasks = (

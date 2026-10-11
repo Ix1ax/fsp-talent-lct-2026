@@ -36,7 +36,7 @@ export const TaskSubmissionPage = ({ id }: TaskSubmissionPageProps) => {
         />
       )}
       {query.data && (
-        <div className="max-w-3xl space-y-5">
+        <div className="max-w-3xl space-y-6">
           <header>
             <p className="text-sm text-muted-foreground">
               {query.data.companyName}

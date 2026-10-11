@@ -4,7 +4,7 @@ import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import type { Catalogs } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 
 type Resource<T> = {
   gateway: EmployerGateway;

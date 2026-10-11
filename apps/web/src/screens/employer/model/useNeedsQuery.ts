@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import type { EmployerNeed, NeedStatus } from '@/entities/employer-need';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
+
 type NeedsQueryOptions = {
   api: EmployerGateway;
   companyId: string;

@@ -6,8 +6,12 @@ import { requireAccessToken } from '@/shared/auth/server';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { sanitizeRedirectPath } from '@/shared/utils';
 
-import type { SessionUser, UserRole } from '../model';
-import { AuthUnavailableError, getRoleHomeRoute } from '../model';
+import {
+  AuthUnavailableError,
+  getRoleHomeRoute,
+  type SessionUser,
+  type UserRole,
+} from '../model';
 import { loadSession } from './loadSession';
 
 export const requireSessionUser = async (

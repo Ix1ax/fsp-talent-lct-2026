@@ -1,16 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import Link from 'next/link';
 
-import { STATIC_ROUTES } from '@/shared/contants';
-import {
-  AsyncState,
-  Button,
-  Label,
-  OptionSelect,
-  PageControls,
-} from '@/shared/ui';
+import { AsyncState, Label, OptionSelect, PageControls } from '@/shared/ui';
 import {
   listMyTaskSubmissions,
   type SubmissionFilters,
@@ -18,6 +10,7 @@ import {
 
 import { useTaskQuery } from '../model';
 import { TasksShell } from './TasksShell';
+import { TaskSubmissionCard } from './TaskSubmissionCard';
 import { TaskSubmissionsListSkeleton } from './TaskSubmissionsLoading';
 
 export const TaskSubmissionsPage = () => {
@@ -36,7 +29,7 @@ export const TaskSubmissionsPage = () => {
 
   return (
     <TasksShell title="Мои решения" history>
-      <div className="grid gap-4 rounded-xl border bg-card p-4 sm:grid-cols-2">
+      <div className="grid gap-4 rounded-xl border bg-card p-5 sm:p-6 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="submission-status">Статус решения</Label>
           <OptionSelect
@@ -94,42 +87,7 @@ export const TaskSubmissionsPage = () => {
           )}
           <div className="space-y-3">
             {query.data.items.map((submission) => (
-              <article
-                key={submission.id}
-                className="flex flex-col justify-between gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center"
-              >
-                <div className="min-w-0 space-y-2">
-                  <p className="break-words text-sm text-muted-foreground">
-                    {submission.companyName}
-                  </p>
-                  <h2 className="break-words font-semibold">
-                    <Link
-                      href={`${STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS}/${submission.id}`}
-                      className="hover:underline"
-                    >
-                      {submission.taskTitle}
-                    </Link>
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    {submission.status === 'reviewed'
-                      ? 'Проверено'
-                      : 'Ожидает проверки'}
-                    {submission.score !== null &&
-                      ` · ${submission.score} из 100`}{' '}
-                    ·{' '}
-                    {new Date(submission.submittedAt).toLocaleDateString(
-                      'ru-RU',
-                    )}
-                  </p>
-                </div>
-                <Button asChild variant="outline" className="self-start">
-                  <Link
-                    href={`${STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS}/${submission.id}`}
-                  >
-                    Посмотреть решение
-                  </Link>
-                </Button>
-              </article>
+              <TaskSubmissionCard key={submission.id} submission={submission} />
             ))}
           </div>
           <PageControls

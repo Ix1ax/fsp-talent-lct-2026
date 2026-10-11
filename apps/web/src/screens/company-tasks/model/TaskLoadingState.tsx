@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { RemoteState } from '@/shared/ui';
+
 interface TaskLoadingStateProps {
   children: ReactNode;
   label: string;
@@ -8,14 +10,6 @@ interface TaskLoadingStateProps {
 export const TaskLoadingState = ({
   children,
   label,
-}: TaskLoadingStateProps) => (
-  <div role="status" aria-label={label} aria-busy="true">
-    <span className="sr-only">{label}</span>
-    <div
-      aria-hidden="true"
-      className="motion-reduce:[&_[data-slot=skeleton]]:animate-none"
-    >
-      {children}
-    </div>
-  </div>
-);
+}: TaskLoadingStateProps) => {
+  return <RemoteState loading loadingLabel={label} loadingContent={children} />;
+};

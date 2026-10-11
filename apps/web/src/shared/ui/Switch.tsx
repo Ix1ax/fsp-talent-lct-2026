@@ -5,13 +5,11 @@ import { Switch as SwitchPrimitive } from 'radix-ui';
 
 import { cn } from '@/shared/lib/utils';
 
-const Switch = ({
-  className,
-  size = 'default',
-  ...props
-}: ComponentProps<typeof SwitchPrimitive.Root> & {
+interface SwitchProps extends ComponentProps<typeof SwitchPrimitive.Root> {
   size?: 'sm' | 'default';
-}) => {
+}
+
+const Switch = ({ className, size = 'default', ...props }: SwitchProps) => {
   return (
     <SwitchPrimitive.Root
       data-slot="switch"

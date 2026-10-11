@@ -1,5 +1,7 @@
 import { CallbackPage } from '@/screens/auth-callback';
 
-export default function Page() {
+const Page = () => {
   return <CallbackPage />;
-}
+};
+
+export default Page;

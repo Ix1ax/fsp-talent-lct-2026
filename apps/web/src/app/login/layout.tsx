@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
 
-// Вход — отдельный экран без шапки и подвала сайта.
-export default function LoginLayout({
-  children,
-}: Readonly<{
+interface LoginLayoutProps {
   children: ReactNode;
-}>) {
-  return children;
 }
+
+const LoginLayout = ({ children }: LoginLayoutProps) => {
+  return children;
+};
+
+export default LoginLayout;

@@ -5,5 +5,5 @@ export const getAttemptErrorMessage = (error: unknown): string => {
     return 'Попытка не найдена.';
   }
 
-  return 'Не удалось загрузить попытку. Обновите страницу.';
+  return 'Не удалось загрузить попытку. Попробуйте ещё раз.';
 };

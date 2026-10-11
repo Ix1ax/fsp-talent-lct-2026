@@ -21,7 +21,10 @@ const isAwaiting = (offer: IncomingOffer) =>
  * Карточка предложения. Ожидающие ответа — яркие, с фирменным градиентом
  * и главной кнопкой; принятые — зелёные; отклонённые — приглушённые.
  */
-export const IncomingOfferCard = ({ offer, onOpen }: IncomingOfferCardProps) => {
+export const IncomingOfferCard = ({
+  offer,
+  onOpen,
+}: IncomingOfferCardProps) => {
   const awaiting = isAwaiting(offer);
 
   return (

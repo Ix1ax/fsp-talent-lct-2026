@@ -9,10 +9,10 @@ import {
 
 import { cn } from '@/shared/lib/utils';
 
-type TextareaProps = ComponentProps<'textarea'> & {
+interface TextareaProps extends ComponentProps<'textarea'> {
   /** Высота растёт вместе с текстом; `rows` задаёт минимальную высоту. */
   autoResize?: boolean;
-};
+}
 
 const Textarea = ({
   className,

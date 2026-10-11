@@ -14,44 +14,46 @@ export const getCompanyOffers = async (
   status?: OfferStatus,
   offset = 0,
   signal?: AbortSignal,
-) =>
-  normalizePage(
-    (
-      await clientApi.get<Page<CandidateOffer>>(
-        `/v1/companies/${companyId}/offers`,
-        { params: { status, limit: 21, offset }, signal },
-      )
-    ).data,
+) => {
+  const { data } = await clientApi.get<Page<CandidateOffer>>(
+    `/v1/companies/${companyId}/offers`,
+    { params: { status, limit: 21, offset }, signal },
   );
+
+  return normalizePage(data);
+};
 export const getCompanyOffer = async (
   companyId: string,
   id: string,
   signal?: AbortSignal,
-) =>
-  (
-    await clientApi.get<CandidateOffer>(
-      `/v1/companies/${companyId}/offers/${id}`,
-      { signal },
-    )
-  ).data;
+) => {
+  const { data } = await clientApi.get<CandidateOffer>(
+    `/v1/companies/${companyId}/offers/${id}`,
+    { signal },
+  );
+
+  return data;
+};
 export const sendCandidateOffer = async (
   companyId: string,
   input: OfferInput,
-) =>
-  (
-    await clientApi.post<CandidateOffer>(
-      `/v1/companies/${companyId}/offers`,
-      input,
-    )
-  ).data;
+) => {
+  const { data } = await clientApi.post<CandidateOffer>(
+    `/v1/companies/${companyId}/offers`,
+    input,
+  );
+
+  return data;
+};
 export const getOfferContacts = async (
   companyId: string,
   offerId: string,
   signal?: AbortSignal,
-) =>
-  (
-    await clientApi.get<CandidateOfferContacts>(
-      `/v1/companies/${companyId}/offers/${offerId}/candidate-contacts`,
-      { signal },
-    )
-  ).data;
+) => {
+  const { data } = await clientApi.get<CandidateOfferContacts>(
+    `/v1/companies/${companyId}/offers/${offerId}/candidate-contacts`,
+    { signal },
+  );
+
+  return data;
+};

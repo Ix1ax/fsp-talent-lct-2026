@@ -7,32 +7,33 @@ import { Dialog as SheetPrimitive } from 'radix-ui';
 import { cn } from '@/shared/lib/utils';
 import { Button } from '@/shared/ui/Button';
 
-const Sheet = ({ ...props }: ComponentProps<typeof SheetPrimitive.Root>) => {
+type SheetProps = ComponentProps<typeof SheetPrimitive.Root>;
+
+const Sheet = ({ ...props }: SheetProps) => {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 };
 
-const SheetTrigger = ({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Trigger>) => {
+type SheetTriggerProps = ComponentProps<typeof SheetPrimitive.Trigger>;
+
+const SheetTrigger = ({ ...props }: SheetTriggerProps) => {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 };
 
-const SheetClose = ({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Close>) => {
+type SheetCloseProps = ComponentProps<typeof SheetPrimitive.Close>;
+
+const SheetClose = ({ ...props }: SheetCloseProps) => {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 };
 
-const SheetPortal = ({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Portal>) => {
+type SheetPortalProps = ComponentProps<typeof SheetPrimitive.Portal>;
+
+const SheetPortal = ({ ...props }: SheetPortalProps) => {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 };
 
-const SheetOverlay = ({
-  className,
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Overlay>) => {
+type SheetOverlayProps = ComponentProps<typeof SheetPrimitive.Overlay>;
+
+const SheetOverlay = ({ className, ...props }: SheetOverlayProps) => {
   return (
     <SheetPrimitive.Overlay
       data-slot="sheet-overlay"
@@ -45,16 +46,20 @@ const SheetOverlay = ({
   );
 };
 
+interface SheetContentProps extends ComponentProps<
+  typeof SheetPrimitive.Content
+> {
+  side?: 'top' | 'right' | 'bottom' | 'left';
+  showCloseButton?: boolean;
+}
+
 const SheetContent = ({
   className,
   children,
   side = 'right',
   showCloseButton = true,
   ...props
-}: ComponentProps<typeof SheetPrimitive.Content> & {
-  side?: 'top' | 'right' | 'bottom' | 'left';
-  showCloseButton?: boolean;
-}) => {
+}: SheetContentProps) => {
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -85,7 +90,9 @@ const SheetContent = ({
   );
 };
 
-const SheetHeader = ({ className, ...props }: ComponentProps<'div'>) => {
+type SheetHeaderProps = ComponentProps<'div'>;
+
+const SheetHeader = ({ className, ...props }: SheetHeaderProps) => {
   return (
     <div
       data-slot="sheet-header"
@@ -95,7 +102,9 @@ const SheetHeader = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const SheetFooter = ({ className, ...props }: ComponentProps<'div'>) => {
+type SheetFooterProps = ComponentProps<'div'>;
+
+const SheetFooter = ({ className, ...props }: SheetFooterProps) => {
   return (
     <div
       data-slot="sheet-footer"
@@ -105,10 +114,9 @@ const SheetFooter = ({ className, ...props }: ComponentProps<'div'>) => {
   );
 };
 
-const SheetTitle = ({
-  className,
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Title>) => {
+type SheetTitleProps = ComponentProps<typeof SheetPrimitive.Title>;
+
+const SheetTitle = ({ className, ...props }: SheetTitleProps) => {
   return (
     <SheetPrimitive.Title
       data-slot="sheet-title"
@@ -121,10 +129,9 @@ const SheetTitle = ({
   );
 };
 
-const SheetDescription = ({
-  className,
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Description>) => {
+type SheetDescriptionProps = ComponentProps<typeof SheetPrimitive.Description>;
+
+const SheetDescription = ({ className, ...props }: SheetDescriptionProps) => {
   return (
     <SheetPrimitive.Description
       data-slot="sheet-description"

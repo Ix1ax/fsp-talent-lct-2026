@@ -1,24 +1,7 @@
 'use client';
-
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
 import Image from 'next/image';
 
 import {
-  EMPLOYER_DRAFT_SCOPE,
-  FILE_STATUS,
-  STATIC_ROUTES,
-} from '@/shared/contants';
-import { useAsyncMutation, useUnsavedChanges } from '@/shared/hooks';
-import { useRemoteData } from '@/shared/hooks';
-import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -30,16 +13,11 @@ import {
   OptionSelect,
   PageControls,
   RemoteState,
-  toast,
 } from '@/shared/ui';
-import type {
-  Company,
-  CompanyFile,
-  CompanyFilePurpose,
-} from '@/entities/company';
+import { type Company, type CompanyFilePurpose } from '@/entities/company';
 
-import { validateCompanyFile } from '../lib';
-import type { CompanyManagementApi } from '../model';
+import { type CompanyManagementApi, useCompanyDocuments } from '../model';
+import { CompanyFileItem } from './CompanyFileItem';
 import { CompanyVerificationCard } from './CompanyVerificationCard';
 
 interface CompanyDocumentsProps {
@@ -59,122 +37,34 @@ export const CompanyDocuments = ({
   onCompanyChange,
   onBusyChange,
 }: CompanyDocumentsProps) => {
-  const [offset, setOffset] = useState(0);
-  const [documentRevision, setDocumentRevision] = useState(0);
-  const [verificationBusy, setVerificationBusy] = useState(false);
-  const load = useCallback(
-    (signal: AbortSignal) => api.getCompanyFiles(company.id, offset, signal),
-    [api, company.id, offset],
-  );
-  const remote = useRemoteData(load, 0, active);
-  const mutation = useAsyncMutation();
-  const busy = verificationBusy || mutation.pending;
-  const [purpose, setPurpose] =
-    useState<CompanyFilePurpose>('company_document');
-  const [file, setFile] = useState<File | null>(null);
-
-  const { markSaved } = useUnsavedChanges(!!file, {
-    preserveWithin: useMemo(
-      () => [
-        STATIC_ROUTES.EMPLOYER,
-        STATIC_ROUTES.EMPLOYER_PROFILE,
-        STATIC_ROUTES.EMPLOYER_DOCUMENTS,
-        STATIC_ROUTES.EMPLOYER_TEAM,
-        STATIC_ROUTES.EMPLOYER_VACANCIES,
-        STATIC_ROUTES.EMPLOYER_CANDIDATES,
-        STATIC_ROUTES.EMPLOYER_OFFERS,
-      ],
-      [],
-    ),
-    scopeSearchParams: EMPLOYER_DRAFT_SCOPE,
+  const {
+    offset,
+    setOffset,
+    documentRevision,
+    setVerificationBusy,
+    remote,
+    mutation,
+    busy,
+    purpose,
+    setPurpose,
+    file,
+    setFile,
+    remove,
+    setRemove,
+    logo,
+    input,
+    readonly,
+    handleFormSubmit,
+    handleSubmit,
+    handleDownload,
+  } = useCompanyDocuments({
+    company,
+    active,
+    onDirtyChange,
+    api,
+    onCompanyChange,
+    onBusyChange,
   });
-
-  useEffect(() => {
-    onDirtyChange?.(!!file);
-    return () => onDirtyChange?.(false);
-  }, [file, onDirtyChange]);
-
-  const [remove, setRemove] = useState<CompanyFile | null>(null);
-  const [logoState, setLogo] = useState({ fileId: '', url: '' });
-  const logo = logoState.fileId === company.logoFileId ? logoState.url : '';
-  const input = useRef<HTMLInputElement>(null);
-  const readonly = company.memberRole !== 'owner';
-
-  useEffect(() => {
-    onBusyChange(busy);
-    return () => onBusyChange(false);
-  }, [busy, onBusyChange]);
-
-  useEffect(() => {
-    if (!active || !company.logoFileId) return;
-    const controller = new AbortController();
-    let url = '';
-    void api
-      .downloadCompanyFile(company.id, company.logoFileId, controller.signal)
-      .then((blob) => {
-        if (controller.signal.aborted) return;
-        url = URL.createObjectURL(blob);
-        setLogo({ fileId: company.logoFileId!, url });
-      })
-      .catch(() => {});
-    return () => {
-      controller.abort();
-      if (url) URL.revokeObjectURL(url);
-    };
-  }, [api, company.id, company.logoFileId, active]);
-
-  const refresh = async () => {
-    setDocumentRevision((value) => value + 1);
-    remote.retry();
-    await onCompanyChange();
-  };
-
-  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!file) return;
-    void mutation.run(async () => {
-      await validateCompanyFile(file, purpose);
-      try {
-        await api.uploadCompanyFile(company.id, file, purpose);
-      } catch (error) {
-        remote.retry();
-        throw error;
-      }
-      setFile(null);
-      markSaved();
-      if (input.current) input.current.value = '';
-      await refresh();
-      toast.success('Файл загружен');
-    });
-  };
-
-  const handleSubmit = async (): Promise<boolean> => {
-    if (!remove) return false;
-
-    try {
-      await mutation.run(async () => {
-        await api.deleteCompanyFile(company.id, remove.id);
-        await refresh();
-        toast.success('Файл удалён');
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
-  const handleDownload = (item: CompanyFile) => {
-    void mutation.run(async () => {
-      const blob = await api.downloadCompanyFile(company.id, item.id);
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = item.originalName;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
-  };
-
   return (
     <div className="grid gap-5">
       <CompanyVerificationCard
@@ -264,52 +154,28 @@ export const CompanyDocuments = ({
               {mutation.error}
             </p>
           )}
-          <RemoteState {...remote} />
+          <RemoteState
+            {...remote}
+            empty={remote.data?.items.length === 0}
+            emptyTitle="Документов пока нет"
+            emptyDescription={
+              readonly
+                ? 'Владелец компании может загрузить документы и логотип.'
+                : 'Загрузите документы компании или добавьте логотип.'
+            }
+          />
           {remote.data && (
             <>
-              {!remote.data.items.length && (
-                <AsyncState
-                  title="Документов пока нет"
-                  description={
-                    readonly
-                      ? 'Владелец компании может загрузить документы и логотип.'
-                      : 'Загрузите документы компании или добавьте логотип.'
-                  }
-                />
-              )}
               {remote.data.items.map((item) => (
-                <div
+                <CompanyFileItem
+                  item={item}
+                  busy={busy}
+                  readonly={readonly}
+                  handleDownload={handleDownload}
+                  mutation={mutation}
+                  setRemove={setRemove}
                   key={item.id}
-                  className="flex flex-wrap items-center gap-3 rounded-lg border p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="break-all font-medium">{item.originalName}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {item.purpose === 'company_logo' ? 'Логотип' : 'Документ'}{' '}
-                      · {(item.sizeBytes / 1024 / 1024).toFixed(1)} МБ ·{' '}
-                      {FILE_STATUS[item.status]}
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    disabled={busy || item.status !== 'ready'}
-                    onClick={() => handleDownload(item)}
-                  >
-                    Скачать
-                  </Button>
-                  {!readonly && item.status !== 'deleted' && (
-                    <Button
-                      variant="ghost"
-                      disabled={busy}
-                      onClick={() => {
-                        mutation.clearError();
-                        setRemove(item);
-                      }}
-                    >
-                      Удалить
-                    </Button>
-                  )}
-                </div>
+                />
               ))}
               <PageControls
                 offset={offset}

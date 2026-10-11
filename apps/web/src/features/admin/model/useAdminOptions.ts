@@ -8,7 +8,7 @@ import {
   subscribeAdminCatalogs,
 } from '@/entities/admin';
 
-import { useAdminSession } from './index';
+import { useAdminSession } from './AdminProvider';
 
 type CatalogState = {
   token: string;

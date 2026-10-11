@@ -5,4 +5,3 @@ export {
   hasVacancyFilters,
   loadStatusVacancies,
 } from './lib/vacancyFeed';
-export { EmployerSearch } from './ui/EmployerSearch';

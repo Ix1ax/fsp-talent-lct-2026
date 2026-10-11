@@ -8,9 +8,16 @@ vi.mock('@/shared/api', async () => {
   const { createApi, attachErrorInterceptor } =
     await import('@/shared/api/base');
   const errors = await import('@/shared/api/errors');
+  const { normalizeApiError } = await import('@/shared/api/normalizeApiError');
   const clientApi = createApi({ adapter });
   attachErrorInterceptor(clientApi);
-  return { clientApi, ensureClientAccessToken: ensure, ...errors };
+
+  return {
+    normalizeApiError,
+    clientApi,
+    ensureClientAccessToken: ensure,
+    ...errors,
+  };
 });
 beforeEach(() => {
   adapter.mockReset();

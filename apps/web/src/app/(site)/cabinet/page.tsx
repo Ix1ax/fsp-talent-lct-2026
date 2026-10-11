@@ -1,5 +1,7 @@
 import { CabinetPage } from '@/screens/cabinet';
 
-export default function Page() {
+const Page = () => {
   return <CabinetPage />;
-}
+};
+
+export default Page;

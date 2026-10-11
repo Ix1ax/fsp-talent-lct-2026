@@ -7,11 +7,14 @@ import {
 
 import { Badge } from '@/shared/ui';
 import { contactUrlSchema } from '@/shared/validation/contactUrl';
-import type { Company } from '@/entities/company';
-import { MEMBER_ROLE_LABELS, VERIFICATION_LABELS } from '@/entities/company';
+import {
+  type Company,
+  MEMBER_ROLE_LABELS,
+  VERIFICATION_LABELS,
+} from '@/entities/company';
 import { CompanyLogo } from '@/features/company';
 
-import type { EmployerGateway } from '../lib/gateway';
+import type { EmployerGateway } from '../lib';
 
 interface CompanyProfileSummaryProps {
   company: Company;

@@ -8,9 +8,11 @@ import { adminRequest, adminSchemas, type Question } from '@/entities/admin';
 
 import { questionFormSchema } from '../constants';
 import { questionContent } from '../lib';
-import type { QuestionFormValues } from '../model';
-import { useAdminSession } from '../model';
-import { useAdminMutation } from '../model/useAdminMutation';
+import {
+  type QuestionFormValues,
+  useAdminMutation,
+  useAdminSession,
+} from '../model';
 import { AdminFieldGrid } from './AdminFieldGrid';
 import { AdminPanel } from './AdminPanel';
 import { AdminSelect, ErrorNotice, Field, SkillPicker } from './Common';
@@ -103,8 +105,7 @@ export const QuestionEditor = ({
             {question ? 'Новая версия задания' : 'Новое задание'}
           </h1>
           <p className="text-sm text-muted-foreground">
-            Сохранение создаёт черновик. Публикация доступна в карточке
-            задания.
+            Сохранение создаёт черновик. Публикация доступна в карточке задания.
           </p>
         </div>
         <form onSubmit={submit} className="grid min-w-0 gap-6">
@@ -151,7 +152,8 @@ export const QuestionEditor = ({
                     disabled={!!question}
                     onChange={(value) => {
                       field.onChange(value);
-                      if (value === 'choice') form.setValue('grading', 'choice');
+                      if (value === 'choice')
+                        form.setValue('grading', 'choice');
                       if (value === 'short_answer')
                         form.setValue('grading', 'text');
                     }}

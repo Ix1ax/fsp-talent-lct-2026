@@ -3,21 +3,13 @@ import Link from 'next/link';
 import { CheckIcon } from 'lucide-react';
 
 import { STATIC_ROUTES } from '@/shared/contants';
-import {
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  FadeIn,
-} from '@/shared/ui';
+import { Button, Card, CardContent, FadeIn } from '@/shared/ui';
 import { formatDuration } from '@/shared/utils';
-import type { AssessmentAttempt } from '@/entities/assessment';
+import { type AssessmentAttempt } from '@/entities/assessment';
 
 import { useAssessmentNavigation, useAssessmentRunner } from '../model';
 import { AssessmentAnswerReview } from './AssessmentAnswerReview';
+import { AssessmentFinishDialog } from './AssessmentFinishDialog';
 import { AssessmentFocusWarning } from './AssessmentFocusWarning';
 import { AssessmentQuestionPanel } from './AssessmentQuestionPanel';
 import { AssessmentResultCard } from './AssessmentResultCard';
@@ -72,7 +64,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
     );
 
   return (
-    <>
+    <div className="flex min-w-0 flex-col gap-6">
       <AssessmentFocusWarning violations={violations} />
       {storageError && (
         <p role="alert" className="text-sm text-muted-foreground">
@@ -96,44 +88,43 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           )}
         </div>
       )}
-      <section
-        aria-label="Ход теста"
-        className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          <div className="flex flex-wrap gap-x-6 gap-y-2 tabular-nums">
-            <p
-              role="timer"
-              aria-label="Оставшееся время"
-              className="font-medium"
-            >
-              Осталось {formatDuration(remaining)}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Готово: {completed} из {questions.length}
-            </p>
+      <Card role="region" aria-label="Ход теста">
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 tabular-nums">
+              <p
+                role="timer"
+                aria-label="Оставшееся время"
+                className="font-medium"
+              >
+                Осталось {formatDuration(remaining)}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Готово: {completed} из {questions.length}
+              </p>
+            </div>
+            {!reviewing && (
+              <Button
+                variant="ghost"
+                className="text-muted-foreground"
+                disabled={busy || locked}
+                onClick={() => setConfirm(true)}
+              >
+                Завершить досрочно
+              </Button>
+            )}
           </div>
-          {!reviewing && (
-            <Button
-              variant="ghost"
-              className="min-h-11 text-muted-foreground"
-              disabled={busy || locked}
-              onClick={() => setConfirm(true)}
-            >
-              Завершить досрочно
-            </Button>
-          )}
-        </div>
-        <progress
-          className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
-          value={completed}
-          max={Math.max(1, questions.length)}
-          aria-label="Завершённые задания"
-        />
-        <p className="text-xs text-muted-foreground">
-          Задание засчитывается после перехода дальше и сохранения ответа.
-        </p>
-      </section>
+          <progress
+            className="h-2 w-full overflow-hidden rounded-full bg-muted [&::-moz-progress-bar]:bg-primary [&::-webkit-progress-bar]:bg-muted [&::-webkit-progress-value]:bg-primary"
+            value={completed}
+            max={Math.max(1, questions.length)}
+            aria-label="Завершённые задания"
+          />
+          <p className="text-xs text-muted-foreground">
+            Задание засчитывается после перехода дальше и сохранения ответа.
+          </p>
+        </CardContent>
+      </Card>
       {error && <p role="alert">{error}</p>}
       {consentBlocked && (
         <Button asChild variant="outline">
@@ -160,7 +151,7 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           {questions.map((item, position) => (
             <Button
               key={item.id}
-              className="h-11 w-14 shrink-0 px-2"
+              className="h-10 w-12 shrink-0 px-2"
               aria-label={`Задание ${item.position}${progress[position] === 'complete' ? ', готово' : ''}`}
               variant={position === index ? 'default' : 'outline'}
               aria-current={position === index ? 'step' : undefined}
@@ -207,44 +198,16 @@ export const AssessmentRunner = ({ initialAttempt }: AssessmentRunnerProps) => {
           onReview={reviewAnswers}
         />
       )}
-      <Dialog
-        open={confirm && !locked}
-        onOpenChange={(open) => {
-          if (!busy) setConfirm(open);
-        }}
-      >
-        <DialogContent showCloseButton={!busy}>
-          <DialogHeader>
-            <DialogTitle>
-              {reviewing ? 'Завершить тест?' : 'Завершить тест досрочно?'}
-            </DialogTitle>
-            <DialogDescription>
-              Без ответа: {unanswered}. Перед завершением отправим все текущие
-              ответы. После отправки изменить их нельзя.
-            </DialogDescription>
-          </DialogHeader>
-          {error && <p role="alert">{error}</p>}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              disabled={busy}
-              onClick={() => setConfirm(false)}
-            >
-              Отмена
-            </Button>
-            <Button
-              disabled={busy}
-              onClick={() => {
-                void finish().then((done) => {
-                  if (done) setConfirm(false);
-                });
-              }}
-            >
-              {busy ? 'Отправляем…' : 'Завершить'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      <AssessmentFinishDialog
+        confirm={confirm}
+        locked={locked}
+        busy={busy}
+        reviewing={reviewing}
+        unanswered={unanswered}
+        error={error}
+        setConfirm={setConfirm}
+        finish={finish}
+      />
+    </div>
   );
 };

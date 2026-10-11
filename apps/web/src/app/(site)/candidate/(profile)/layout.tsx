@@ -10,9 +10,13 @@ import { CandidateHomePage } from '@/screens/candidate';
 
 export const metadata: Metadata = { title: 'Профиль кандидата · ФСП' };
 
-export default async function CandidateProfileLayout({
+interface CandidateProfileLayoutProps {
+  children: ReactNode;
+}
+
+const CandidateProfileLayout = async ({
   children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<CandidateProfileLayoutProps>) => {
   const user = await requireRole(USER_ROLES.CANDIDATE, STATIC_ROUTES.CANDIDATE);
   const [fullProfileResult, catalogsResult] = await Promise.allSettled([
     getCandidateFullProfile(),
@@ -41,8 +45,15 @@ export default async function CandidateProfileLayout({
             : undefined
         }
         loadError={loadError}
+        catalogsError={
+          catalogsResult.status === 'rejected'
+            ? 'Не удалось загрузить форматы работы. Повторите загрузку справочника.'
+            : undefined
+        }
       />
       {children}
     </>
   );
-}
+};
+
+export default CandidateProfileLayout;

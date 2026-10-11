@@ -27,19 +27,21 @@ interface MetricProps {
   muted?: boolean;
 }
 
-const Metric = ({ label, value, muted }: MetricProps) => (
-  <div className="grid gap-0.5 rounded-lg bg-muted/60 px-3 py-2">
-    <dt className="text-xs text-muted-foreground">{label}</dt>
-    <dd
-      className={cn(
-        'text-sm font-semibold tabular-nums',
-        muted && 'font-normal text-muted-foreground',
-      )}
-    >
-      {value}
-    </dd>
-  </div>
-);
+const Metric = ({ label, value, muted }: MetricProps) => {
+  return (
+    <div className="grid gap-0.5 rounded-lg bg-muted/60 px-3 py-2">
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          'text-sm font-semibold tabular-nums',
+          muted && 'font-normal text-muted-foreground',
+        )}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+};
 
 const formatPercent = (value: number | null | undefined, empty: string) =>
   value === null || value === undefined ? empty : `${Math.round(value)}%`;

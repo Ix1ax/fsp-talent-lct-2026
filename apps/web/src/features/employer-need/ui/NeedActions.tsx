@@ -37,72 +37,74 @@ export const NeedActions = ({
   onRestore,
   onArchive,
   onDuplicate,
-}: NeedActionsProps) => (
-  <div className="flex flex-wrap gap-3">
-    {status === 'active' && (
-      <Button
-        type="button"
-        onClick={onFind}
-        disabled={pending || dirty}
-        title={dirty ? 'Сохраните изменения перед поиском' : undefined}
-      >
-        <UsersIcon />
-        Подобрать кандидатов
-      </Button>
-    )}
-    {canWrite && status === 'active' && onEditBrief && (
-      <Button
-        type="button"
-        variant="outline"
-        disabled={pending}
-        onClick={onEditBrief}
-      >
-        <PencilIcon />
-        Изменить условия
-      </Button>
-    )}
-    {canWrite && status === 'draft' && onEditBrief && (
-      <Button type="button" disabled={pending} onClick={onEditBrief}>
-        <PencilIcon />
-        Дополнить бриф
-      </Button>
-    )}
-    {canWrite && status === 'archived' && (
-      <Button
-        type="button"
-        variant="outline"
-        disabled={pending}
-        onClick={onRestore}
-      >
-        <Undo2Icon />
-        Вернуть в черновики
-      </Button>
-    )}
-    {canWrite && (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-10 px-0"
-            disabled={pending}
-            aria-label="Ещё действия с потребностью"
-          >
-            <MoreHorizontalIcon />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onSelect={onDuplicate}>
-            <CopyIcon />
-            Копия в черновики
-          </DropdownMenuItem>
-          {status !== 'archived' && (
-            <DropdownMenuItem onSelect={onArchive}>
-              <ArchiveIcon />В архив
+}: NeedActionsProps) => {
+  return (
+    <div className="flex flex-wrap gap-3">
+      {status === 'active' && (
+        <Button
+          type="button"
+          onClick={onFind}
+          disabled={pending || dirty}
+          title={dirty ? 'Сохраните изменения перед поиском' : undefined}
+        >
+          <UsersIcon />
+          Подобрать кандидатов
+        </Button>
+      )}
+      {canWrite && status === 'active' && onEditBrief && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onEditBrief}
+        >
+          <PencilIcon />
+          Изменить условия
+        </Button>
+      )}
+      {canWrite && status === 'draft' && onEditBrief && (
+        <Button type="button" disabled={pending} onClick={onEditBrief}>
+          <PencilIcon />
+          Дополнить бриф
+        </Button>
+      )}
+      {canWrite && status === 'archived' && (
+        <Button
+          type="button"
+          variant="outline"
+          disabled={pending}
+          onClick={onRestore}
+        >
+          <Undo2Icon />
+          Вернуть в черновики
+        </Button>
+      )}
+      {canWrite && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-10 px-0"
+              disabled={pending}
+              aria-label="Ещё действия с потребностью"
+            >
+              <MoreHorizontalIcon />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={onDuplicate}>
+              <CopyIcon />
+              Копия в черновики
             </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    )}
-  </div>
-);
+            {status !== 'archived' && (
+              <DropdownMenuItem onSelect={onArchive}>
+                <ArchiveIcon />В архив
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+};

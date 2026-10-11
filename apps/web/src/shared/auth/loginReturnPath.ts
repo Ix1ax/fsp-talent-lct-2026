@@ -11,8 +11,9 @@ export const rememberLoginReturnPath = (
     const safe = sanitizeRedirectPath(path);
     if (safe === '/') store.removeItem(KEY);
     else store.setItem(KEY, safe);
+    return true;
   } catch {
-    /* Login still works if the browser blocks storage. */
+    return false;
   }
 };
 export const takeLoginReturnPath = (
@@ -29,7 +30,7 @@ export const takeLoginReturnPath = (
     if (url.pathname === fallback || url.pathname.startsWith(`${fallback}/`))
       return `${url.pathname}${url.search}${url.hash}`;
   } catch {
-    /* Use the role's default workspace when storage is unavailable. */
+    return fallback;
   }
   return fallback;
 };

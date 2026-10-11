@@ -2,7 +2,11 @@ import type { ReactNode } from 'react';
 
 import { AdminShell } from '@/widgets/admin-shell';
 
-const AdminLayout = ({ children }: { children: ReactNode }) => (
-  <AdminShell>{children}</AdminShell>
-);
+interface AdminLayoutProps {
+  children: ReactNode;
+}
+
+const AdminLayout = ({ children }: AdminLayoutProps) => {
+  return <AdminShell>{children}</AdminShell>;
+};
 export default AdminLayout;

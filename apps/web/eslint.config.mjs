@@ -4,12 +4,61 @@ import { fileURLToPath } from 'node:url';
 import { FlatCompat } from '@eslint/eslintrc';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
+import consistency from './scripts/eslint/consistency.mjs';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const compat = new FlatCompat({
   baseDirectory: __dirname,
 });
+
+const COMPONENT_RETURN_RESTRICTIONS = [
+  {
+    selector:
+      'VariableDeclarator[id.name=/^[A-Z]/] > ArrowFunctionExpression[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+  {
+    selector:
+      'ExportDefaultDeclaration > ArrowFunctionExpression[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+  {
+    selector:
+      'CallExpression[callee.name=/^(memo|forwardRef)$/] > ArrowFunctionExpression.arguments:first-child[body.type!="BlockStatement"]',
+    message: 'Компоненты должны использовать тело функции с явным return.',
+  },
+];
+
+const EMPTY_CATCH_RESTRICTIONS = [
+  {
+    selector: 'CatchClause > BlockStatement[body.length=0]',
+    message:
+      'Пустой catch запрещён, в том числе с комментариями. Нужна явная обработка ошибки.',
+  },
+  {
+    selector:
+      'CallExpression[callee.type="MemberExpression"][callee.property.name="catch"] > :matches(ArrowFunctionExpression, FunctionExpression) > BlockStatement[body.length=0]',
+    message:
+      'Обработчик ошибки не должен быть пустым: обработайте ошибку, выберите fallback или передайте её выше.',
+  },
+];
+
+const PUBLIC_API_RESTRICTIONS = [
+  {
+    selector:
+      'ImportDeclaration[source.value=/^\\.\\.\\/(api|model|lib|constants|ui)\\//]',
+    message:
+      'Между сегментами используйте index.ts. Внутри сегмента допустим прямой импорт.',
+  },
+  {
+    selector:
+      'ImportDeclaration[source.value=/^@\\/(entities|features|widgets|screens)\\/.+\\/(api|model|lib|constants|ui)(\\/|$)/]:not([source.value=/\\/api\\/server$/])',
+    message:
+      'Используйте публичный API слайса или подмодуля; серверный API импортируйте отдельно из api/server.',
+  },
+];
 
 const eslintConfig = [
   {
@@ -25,6 +74,7 @@ const eslintConfig = [
   {
     plugins: {
       'simple-import-sort': simpleImportSort,
+      consistency,
     },
     rules: {
       'simple-import-sort/imports': [
@@ -51,9 +101,62 @@ const eslintConfig = [
         },
       ],
       'simple-import-sort/exports': 'error',
+      'import/no-duplicates': ['error', { 'prefer-inline': true }],
+      'no-empty': ['error', { allowEmptyCatch: false }],
+      'no-nested-ternary': 'error',
+      'no-restricted-syntax': ['error', ...EMPTY_CATCH_RESTRICTIONS],
     },
   },
-  // Границы FSD для кабинета работодателя. Внутри слайса — относительные импорты.
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/**/*.test.ts', 'src/**/*.d.ts'],
+    rules: {
+      'consistency/arrow-functions': 'error',
+      'consistency/props-interface': 'error',
+      'consistency/api-response': 'error',
+    },
+  },
+  {
+    files: ['src/{features,screens,widgets}/**/*.tsx'],
+    ignores: ['src/screens/home/**'],
+    rules: {
+      'consistency/shared-controls': 'error',
+      'consistency/semantic-colors': 'error',
+    },
+  },
+  {
+    files: ['src/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...COMPONENT_RETURN_RESTRICTIONS,
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/__tests__/**', 'src/**/*.test.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...PUBLIC_API_RESTRICTIONS,
+      ],
+    },
+  },
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/__tests__/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...EMPTY_CATCH_RESTRICTIONS,
+        ...COMPONENT_RETURN_RESTRICTIONS,
+        ...PUBLIC_API_RESTRICTIONS,
+      ],
+    },
+  },
   {
     files: [
       'src/entities/company/**/*.{ts,tsx}',
@@ -129,7 +232,6 @@ const eslintConfig = [
   {
     files: [
       'src/widgets/employer-shell/**/*.{ts,tsx}',
-      'src/widgets/needs-board/**/*.{ts,tsx}',
       'src/widgets/need-matches/**/*.{ts,tsx}',
     ],
     rules: {

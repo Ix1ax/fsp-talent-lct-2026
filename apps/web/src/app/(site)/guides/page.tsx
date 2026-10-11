@@ -12,7 +12,7 @@ interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function Page({ searchParams }: PageProps) {
+const Page = async ({ searchParams }: PageProps) => {
   const query = parseSkillsQuery(await searchParams);
   const [catalogsResult, skillsResult] = await Promise.allSettled([
     getCatalogs(),
@@ -40,4 +40,6 @@ export default async function Page({ searchParams }: PageProps) {
       skillsError={skillsError}
     />
   );
-}
+};
+
+export default Page;

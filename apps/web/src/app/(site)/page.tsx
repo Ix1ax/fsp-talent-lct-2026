@@ -1,5 +1,7 @@
 import { HomePage } from '@/screens/home';
 
-export default function Page() {
+const Page = () => {
   return <HomePage />;
-}
+};
+
+export default Page;

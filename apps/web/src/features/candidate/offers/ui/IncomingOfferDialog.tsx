@@ -75,7 +75,9 @@ export const IncomingOfferDialog = ({
           onClose();
           if (updated.status === 'accepted') {
             launchConfetti();
-            toast.success('Предложение принято! Работодатель увидит ваш ответ.');
+            toast.success(
+              'Предложение принято! Работодатель увидит ваш ответ.',
+            );
           }
         } catch (error) {
           if (error instanceof ApiError && error.code === 'response_conflict') {

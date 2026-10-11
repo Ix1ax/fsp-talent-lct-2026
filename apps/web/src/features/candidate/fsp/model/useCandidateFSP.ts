@@ -33,7 +33,7 @@ export const useCandidateFSP = () => {
         action === 'link' ? 'Привязка ФСП сохранена' : 'Достижения обновлены',
       );
     } catch {
-      // TODO: add error message
+      return false;
     }
   };
 

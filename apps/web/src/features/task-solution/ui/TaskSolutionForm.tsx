@@ -7,6 +7,7 @@ import { InfoIcon, LoaderCircleIcon, UploadIcon } from 'lucide-react';
 import { STATIC_ROUTES } from '@/shared/contants';
 import {
   Button,
+  Checkbox,
   FileInput,
   Label,
   Tooltip,
@@ -20,7 +21,7 @@ import {
   type TaskSubmission,
 } from '@/entities/company-task';
 
-import { type SolutionFormValues, solutionSchema } from '../constants/schema';
+import { type SolutionFormValues, solutionSchema } from '../constants';
 import { isTaskOpen, taskErrorMessage } from '../lib';
 
 interface TaskSolutionFormProps {
@@ -151,12 +152,22 @@ export const TaskSolutionForm = ({
       </div>
       <div>
         <label className="flex items-start gap-3 rounded-lg bg-muted p-4 text-sm leading-relaxed">
-          <input
-            type="checkbox"
-            className="mt-1 size-4 accent-primary"
-            disabled={form.formState.isSubmitting}
-            {...form.register('confirmed')}
-            aria-describedby="solution-confirm-error"
+          <Controller
+            control={form.control}
+            name="confirmed"
+            render={({ field }) => (
+              <Checkbox
+                className="mt-1"
+                name={field.name}
+                ref={field.ref}
+                onBlur={field.onBlur}
+                checked={field.value}
+                onCheckedChange={(checked) => field.onChange(checked === true)}
+                disabled={form.formState.isSubmitting}
+                aria-invalid={!!form.formState.errors.confirmed}
+                aria-describedby="solution-confirm-error"
+              />
+            )}
           />
           Я проверил(а) файл и готов(а) отправить окончательное решение.
         </label>

@@ -32,7 +32,9 @@ export const useCandidateFullProfile = (initial?: CandidateFullProfile) => {
 
   useEffect(() => {
     const refresh = () => {
-      void controller.refresh().catch(() => {});
+      void controller.refresh().catch(() => {
+        setRefreshError('Не удалось обновить профиль. Повторите загрузку.');
+      });
     };
     window.addEventListener(CANDIDATE_DATA_UPDATED_EVENT, refresh);
     return () =>
@@ -61,8 +63,13 @@ export const useCandidateFullProfile = (initial?: CandidateFullProfile) => {
     controller.invalidate();
     setFullProfile((current) => current && update(current));
   };
-  const refreshAfterSave = () => {
-    void refreshFullProfile().catch(() => {});
+  const refreshAfterSave = async () => {
+    try {
+      await refreshFullProfile();
+      return true;
+    } catch {
+      return false;
+    }
   };
   return {
     fullProfile,

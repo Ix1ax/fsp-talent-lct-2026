@@ -20,8 +20,7 @@ const MAX_OPTIONS = 10;
 // Служебный код варианта нужен только для проверки ответа, поэтому
 // администратор видит букву по порядку, а код подбирается сам.
 const nextOptionId = (ids: Set<string>, count: number) =>
-  'abcdefghij'.split('').find((letter) => !ids.has(letter)) ??
-  `o${count + 1}`;
+  'abcdefghij'.split('').find((letter) => !ids.has(letter)) ?? `o${count + 1}`;
 
 const letter = (index: number) => String.fromCharCode(65 + index);
 
@@ -108,7 +107,7 @@ export const QuestionOptionsEditor = ({ form }: QuestionOptionsEditorProps) => {
                     'flex size-9 min-h-9! shrink-0 items-center justify-center text-sm font-semibold transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
                     multiple ? 'rounded-lg' : 'rounded-full',
                     correct
-                      ? 'bg-success text-white dark:text-background'
+                      ? 'bg-success text-success-foreground'
                       : 'bg-muted text-muted-foreground hover:bg-accent hover:text-brand-text',
                   )}
                 >

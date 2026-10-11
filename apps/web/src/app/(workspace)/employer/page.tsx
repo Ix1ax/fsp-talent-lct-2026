@@ -5,15 +5,17 @@ import {
   getEmployerReturnPath,
 } from '@/screens/employer';
 
-export default async function Page({
-  searchParams,
-}: {
+interface PageProps {
   searchParams: Promise<EmployerSearchParams>;
-}) {
+}
+
+const Page = async ({ searchParams }: PageProps) => {
   await requireRole(
     USER_ROLES.EMPLOYER,
     getEmployerReturnPath('overview', await searchParams),
   );
 
   return null;
-}
+};
+
+export default Page;

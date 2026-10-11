@@ -5,11 +5,13 @@ import { type HTMLMotionProps, motion } from 'framer-motion';
 import { useSmoothScrollProgress } from '@/shared/hooks';
 import { cn } from '@/shared/lib/utils';
 
+type ScrollProgressProps = HTMLMotionProps<'div'>;
+
 export const ScrollProgress = ({
   className,
   style,
   ...props
-}: HTMLMotionProps<'div'>) => {
+}: ScrollProgressProps) => {
   const scaleX = useSmoothScrollProgress();
   return (
     <motion.div

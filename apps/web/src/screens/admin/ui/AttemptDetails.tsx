@@ -14,7 +14,11 @@ import {
 import { adminDate } from '../lib';
 import { DetailFields, OperationDetailsLayout } from './OperationDetailsLayout';
 
-export const AttemptDetails = ({ id }: { id: string }) => {
+interface AttemptDetailsProps {
+  id: string;
+}
+
+export const AttemptDetails = ({ id }: AttemptDetailsProps) => {
   const query = useAdminQuery(
     `/assessments/attempts/${id}`,
     adminAssessmentAttemptSchema,

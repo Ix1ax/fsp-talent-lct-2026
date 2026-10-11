@@ -16,8 +16,8 @@ import {
 } from '@/shared/ui';
 import { toast } from '@/shared/ui/Sonner';
 
-import { cropAvatar } from '../lib/cropAvatar';
-import { avatarSchema } from '../model/avatarSchema';
+import { cropAvatar } from '../lib';
+import { avatarSchema } from '../model';
 
 interface AvatarCropDialogProps {
   file: File;

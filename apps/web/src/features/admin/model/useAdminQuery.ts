@@ -3,11 +3,11 @@ import type { z } from 'zod';
 
 import { adminRequest } from '@/entities/admin';
 
+import { useAdminSession } from './AdminProvider';
 import {
   type AdminQueryResult,
   getAdminQueryState,
 } from './getAdminQueryState';
-import { useAdminSession } from './index';
 
 export const useAdminQuery = <T>(path: string | null, schema: z.ZodType<T>) => {
   const { session } = useAdminSession();

@@ -7,10 +7,13 @@ import {
 } from 'lucide-react';
 
 import { Badge, Button, PageControls } from '@/shared/ui';
-import type { Company } from '@/entities/company';
-import { MEMBER_ROLE_LABELS, VERIFICATION_LABELS } from '@/entities/company';
+import {
+  type Company,
+  MEMBER_ROLE_LABELS,
+  VERIFICATION_LABELS,
+} from '@/entities/company';
 
-import type { EmployerSection } from '../constants/sections';
+import type { EmployerSection } from '../constants';
 
 const getVerificationVariant = (status: Company['verificationStatus']) => {
   if (status === 'verified') return 'success';

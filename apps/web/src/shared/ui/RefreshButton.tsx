@@ -19,19 +19,21 @@ export const RefreshButton = ({
   disabled,
   className,
   onClick,
-}: RefreshButtonProps) => (
-  <Button
-    type="button"
-    variant="outline"
-    disabled={disabled}
-    onClick={onClick}
-    title={label}
-    className={cn('shrink-0 max-sm:w-10 max-sm:px-0', className)}
-  >
-    <RefreshCwIcon
-      aria-hidden="true"
-      className={cn(loading && 'animate-spin motion-reduce:animate-none')}
-    />
-    <span className="max-sm:sr-only">{label}</span>
-  </Button>
-);
+}: RefreshButtonProps) => {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      disabled={disabled}
+      onClick={onClick}
+      title={label}
+      className={cn('shrink-0 max-sm:w-10 max-sm:px-0', className)}
+    >
+      <RefreshCwIcon
+        aria-hidden="true"
+        className={cn(loading && 'animate-spin motion-reduce:animate-none')}
+      />
+      <span className="max-sm:sr-only">{label}</span>
+    </Button>
+  );
+};

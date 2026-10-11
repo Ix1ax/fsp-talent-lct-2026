@@ -18,7 +18,11 @@ import {
   OperationDetailsLayout,
 } from './OperationDetailsLayout';
 
-export const NeedDetails = ({ id }: { id: string }) => {
+interface NeedDetailsProps {
+  id: string;
+}
+
+export const NeedDetails = ({ id }: NeedDetailsProps) => {
   const query = useAdminQuery(`/needs/${id}`, adminNeedSchema);
   const need = query.data;
   const options = useAdminOptions([
@@ -128,15 +132,13 @@ export const NeedDetails = ({ id }: { id: string }) => {
     </OperationDetailsLayout>
   );
 };
-const NeedSkill = ({
-  id,
-  required,
-  weight,
-}: {
+interface NeedSkillProps {
   id: string;
   required: boolean;
   weight: number;
-}) => {
+}
+
+const NeedSkill = ({ id, required, weight }: NeedSkillProps) => {
   const query = useAdminQuery(`/catalogs/skills/${id}`, adminSchemas.catalog);
   return (
     <li className="grid gap-1 border-b pb-3 last:border-0">

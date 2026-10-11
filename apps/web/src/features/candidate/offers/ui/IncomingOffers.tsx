@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { STATIC_ROUTES } from '@/shared/contants';
 import { useRemoteData } from '@/shared/hooks';
 import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -14,12 +13,13 @@ import {
   CardTitle,
   FadeIn,
   OptionSelect,
+  PageControls,
   PageHeader,
   RefreshButton,
+  RemoteState,
   Stagger,
   StaggerItem,
 } from '@/shared/ui';
-import { PageControls, RemoteState } from '@/shared/ui';
 import {
   getIncomingOffers,
   type IncomingOffer,
@@ -64,16 +64,22 @@ export const IncomingOffers = () => {
   }, []);
 
   return (
-    <main className="container-page page-rhythm grid flex-1 content-start gap-8">
-      <PageHeader
-        title="Входящие предложения"
-        description="Посмотрите условия работодателей и ответьте на предложение."
-        actions={
-          <Button asChild variant="outline">
-            <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
-          </Button>
-        }
-      />
+    <div className="grid content-start gap-8">
+      <PageHeader>
+        <PageHeader.Row>
+          <PageHeader.Content>
+            <PageHeader.Title>Входящие предложения</PageHeader.Title>
+            <PageHeader.Description>
+              Посмотрите условия работодателей и ответьте на предложение.
+            </PageHeader.Description>
+          </PageHeader.Content>
+          <PageHeader.Actions>
+            <Button asChild variant="outline">
+              <Link href={STATIC_ROUTES.CANDIDATE}>Мой кабинет</Link>
+            </Button>
+          </PageHeader.Actions>
+        </PageHeader.Row>
+      </PageHeader>
       <FadeIn delay={FADE_IN_DELAY}>
         <Card>
           <CardHeader>
@@ -104,10 +110,19 @@ export const IncomingOffers = () => {
                 onClick={remote.retry}
               />
             </div>
-            <RemoteState {...remote} />
+            <RemoteState
+              {...remote}
+              empty={remote.data?.items.length === 0}
+              emptyTitle={
+                status
+                  ? 'Нет предложений с этим статусом'
+                  : 'Предложений пока нет'
+              }
+              emptyDescription="Здесь появятся предложения работодателей. Для их получения нужен профиль кандидата."
+            />
             {remote.data && (
               <>
-                {remote.data.items.length ? (
+                {
                   <Stagger
                     key={`${status ?? 'all'}:${offset}`}
                     interval={0.01}
@@ -125,16 +140,7 @@ export const IncomingOffers = () => {
                       </StaggerItem>
                     ))}
                   </Stagger>
-                ) : (
-                  <AsyncState
-                    title={
-                      status
-                        ? 'Нет предложений с этим статусом'
-                        : 'Предложений пока нет'
-                    }
-                    description="Здесь появятся предложения работодателей. Для их получения нужен профиль кандидата."
-                  />
-                )}
+                }
                 <PageControls
                   offset={offset}
                   count={remote.data.items.length}
@@ -156,6 +162,6 @@ export const IncomingOffers = () => {
           onCloseAutoFocus={restoreFocus}
         />
       )}
-    </main>
+    </div>
   );
 };

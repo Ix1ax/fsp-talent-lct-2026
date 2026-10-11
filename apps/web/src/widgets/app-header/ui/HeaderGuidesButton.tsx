@@ -15,21 +15,28 @@ interface HeaderGuidesButtonProps {
 export const HeaderGuidesButton = ({
   labeled = false,
   className,
-}: HeaderGuidesButtonProps) => (
-  <Button
-    asChild
-    variant="outline"
-    size={labeled ? 'default' : 'icon'}
-    className={cn(labeled ? 'h-10 max-sm:w-10 max-sm:px-0' : 'size-10', className)}
-  >
-    <Link
-      data-preserve-draft
-      href={GUIDES_NAV_ITEM.href}
-      aria-label={GUIDES_NAV_ITEM.label}
-      title={GUIDES_NAV_ITEM.label}
+}: HeaderGuidesButtonProps) => {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size={labeled ? 'default' : 'icon'}
+      className={cn(
+        labeled ? 'h-10 max-sm:w-10 max-sm:px-0' : 'size-10',
+        className,
+      )}
     >
-      <GUIDES_NAV_ITEM.icon aria-hidden="true" />
-      {labeled && <span className="max-sm:hidden">{GUIDES_NAV_ITEM.label}</span>}
-    </Link>
-  </Button>
-);
+      <Link
+        data-preserve-draft
+        href={GUIDES_NAV_ITEM.href}
+        aria-label={GUIDES_NAV_ITEM.label}
+        title={GUIDES_NAV_ITEM.label}
+      >
+        <GUIDES_NAV_ITEM.icon aria-hidden="true" />
+        {labeled && (
+          <span className="max-sm:hidden">{GUIDES_NAV_ITEM.label}</span>
+        )}
+      </Link>
+    </Button>
+  );
+};

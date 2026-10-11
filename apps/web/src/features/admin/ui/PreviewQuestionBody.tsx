@@ -3,6 +3,37 @@ import type { PreviewAnswer, PreviewQuestion } from '@/entities/admin';
 
 import { PreviewTextAnswer } from './PreviewTextAnswer';
 
+const getSelectedPreviewOptions = (
+  grading: PreviewQuestion['answer_form'],
+  answer: PreviewAnswer,
+  option: NonNullable<PreviewQuestion['prompt']['options']>[number],
+  checked: boolean | 'indeterminate',
+) => {
+  if (grading.multiple) {
+    return (answer.selected ?? [])
+      .filter((id) => id !== option.id)
+      .concat(checked === true ? [option.id] : []);
+  }
+
+  if (checked === true) {
+    return [option.id];
+  }
+
+  return [];
+};
+
+const getPreviewAnswerLegend = (grading: PreviewQuestion['answer_form']) => {
+  if (grading.type === 'text') {
+    return 'Введите ответ';
+  }
+
+  if (grading.multiple) {
+    return 'Выберите все правильные ответы';
+  }
+
+  return 'Выберите один ответ';
+};
+
 interface PreviewQuestionBodyProps {
   question: PreviewQuestion;
   answer: PreviewAnswer;
@@ -36,11 +67,7 @@ export const PreviewQuestionBody = ({
       )}
       <fieldset disabled={finished} className="grid min-w-0 gap-3">
         <legend className="mb-3 text-sm text-muted-foreground">
-          {grading.type === 'text'
-            ? 'Введите ответ'
-            : grading.multiple
-              ? 'Выберите все правильные ответы'
-              : 'Выберите один ответ'}
+          {getPreviewAnswerLegend(grading)}
         </legend>
         {grading.type === 'choice' ? (
           prompt.options?.map((option) => (
@@ -52,13 +79,12 @@ export const PreviewQuestionBody = ({
                 aria-label={option.text}
                 checked={(answer.selected ?? []).includes(option.id)}
                 onCheckedChange={(checked) => {
-                  const selected = grading.multiple
-                    ? (answer.selected ?? [])
-                        .filter((id) => id !== option.id)
-                        .concat(checked === true ? [option.id] : [])
-                    : checked === true
-                      ? [option.id]
-                      : [];
+                  const selected = getSelectedPreviewOptions(
+                    grading,
+                    answer,
+                    option,
+                    checked,
+                  );
                   onChange({ selected });
                 }}
               />

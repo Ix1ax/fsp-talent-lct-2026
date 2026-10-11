@@ -20,7 +20,11 @@ import {
   OperationDetailsLayout,
 } from './OperationDetailsLayout';
 
-export const CompanyDetails = ({ id }: { id: string }) => {
+interface CompanyDetailsProps {
+  id: string;
+}
+
+export const CompanyDetails = ({ id }: CompanyDetailsProps) => {
   const query = useAdminQuery(`/companies/${id}`, adminCompanySchema);
   const company = query.data;
   const [relatedRevision, setRelatedRevision] = useState(0);

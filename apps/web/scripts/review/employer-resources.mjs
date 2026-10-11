@@ -2,6 +2,16 @@ import assert from 'node:assert/strict';
 
 import { createFixtures } from './fixtures.mjs';
 
+const getSkillSearchItems = (q, fixtures) => {
+  if (q === 'fresh') {
+    return [{ ...fixtures.skills[0], name: 'Fresh skill' }];
+  }
+  if (q === 'slow') {
+    return [{ ...fixtures.skills[0], name: 'Stale skill' }];
+  }
+  return fixtures.skills;
+};
+
 const app = process.env.REVIEW_APP_URL ?? 'http://127.0.0.1:5185';
 const api = process.env.REVIEW_API_URL ?? 'http://127.0.0.1:5191';
 const cdp = process.env.REVIEW_CDP_URL ?? 'http://127.0.0.1:9224';
@@ -149,7 +159,9 @@ const fulfill = (p, requestId, body, status = 200) =>
       responseHeaders: [{ name: 'Content-Type', value: 'application/json' }],
       body: Buffer.from(JSON.stringify(body)).toString('base64'),
     })
-    .catch(() => {});
+    .catch((error) => {
+      console.error('Failed to fulfill intercepted review request', error);
+    });
 try {
   await post('/__review/reset', { scenario: 'filled' });
   const p = await createPage();
@@ -175,12 +187,7 @@ try {
         assert.equal(url.searchParams.get('offset'), '0');
         void delay(q === 'slow' ? 1000 : 0).then(() =>
           fulfill(p, requestId, {
-            items:
-              q === 'fresh'
-                ? [{ ...fixtures.skills[0], name: 'Fresh skill' }]
-                : q === 'slow'
-                  ? [{ ...fixtures.skills[0], name: 'Stale skill' }]
-                  : fixtures.skills,
+            items: getSkillSearchItems(q, fixtures),
             limit: 50,
             offset: 0,
           }),

@@ -6,7 +6,6 @@ import { getApiErrorMessage } from '@/shared/api/getApiErrorMessage';
 import { useAsyncMutation } from '@/shared/hooks';
 import { useRemoteData } from '@/shared/hooks/useRemoteData';
 import {
-  AsyncState,
   Button,
   Card,
   CardContent,
@@ -111,42 +110,40 @@ export const CompanyOffers = ({
               onClick={remote.retry}
             />
           </div>
-          <RemoteState {...remote} />
+          <RemoteState
+            {...remote}
+            empty={remote.data?.items.length === 0}
+            emptyTitle="Предложений пока нет"
+            emptyDescription="Откройте профиль в банке кандидатов или подборке потребности и предложите работу."
+          />
           {remote.data && (
             <>
-              {remote.data.items.length ? (
-                remote.data.items.map((item) => (
-                  <article
-                    key={item.id}
-                    className="grid gap-2 rounded-lg border p-4"
+              {remote.data.items.map((item) => (
+                <article
+                  key={item.id}
+                  className="grid gap-2 rounded-lg border p-4"
+                >
+                  <p className="font-medium">{item.title}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Кандидат {item.candidateId.slice(0, 8)} ·{' '}
+                    {STATUS[item.status]} · {formatDate(item.createdAt)}
+                  </p>
+                  <p className="text-sm">
+                    {formatSalaryRange(item.salaryFromRub, item.salaryToRub)}
+                  </p>
+                  <Button
+                    variant="outline"
+                    className="justify-self-start"
+                    onClick={() => {
+                      setId(item.id);
+                      setContacts(null);
+                      mutation.clearError();
+                    }}
                   >
-                    <p className="font-medium">{item.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Кандидат {item.candidateId.slice(0, 8)} ·{' '}
-                      {STATUS[item.status]} · {formatDate(item.createdAt)}
-                    </p>
-                    <p className="text-sm">
-                      {formatSalaryRange(item.salaryFromRub, item.salaryToRub)}
-                    </p>
-                    <Button
-                      variant="outline"
-                      className="justify-self-start"
-                      onClick={() => {
-                        setId(item.id);
-                        setContacts(null);
-                        mutation.clearError();
-                      }}
-                    >
-                      Открыть предложение
-                    </Button>
-                  </article>
-                ))
-              ) : (
-                <AsyncState
-                  title="Предложений пока нет"
-                  description="Откройте профиль в банке кандидатов или подборке потребности и предложите работу."
-                />
-              )}
+                    Открыть предложение
+                  </Button>
+                </article>
+              ))}
               <PageControls
                 offset={offset}
                 count={remote.data.items.length}

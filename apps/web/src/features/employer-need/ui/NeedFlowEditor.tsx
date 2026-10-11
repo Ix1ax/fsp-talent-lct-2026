@@ -1,8 +1,6 @@
 'use client';
-
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon } from 'lucide-react';
 
-import { cn } from '@/shared/lib/utils';
 import {
   Button,
   Card,
@@ -10,26 +8,33 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
-  OptionSelect,
-  Textarea,
 } from '@/shared/ui';
-import type { Catalogs, Skill } from '@/entities/catalog';
-import type { NeedInput } from '@/entities/employer-need';
-import { NEED_DETAIL_STATUS_LABELS } from '@/entities/employer-need';
+import { type Catalogs, type Skill } from '@/entities/catalog';
+import {
+  NEED_DETAIL_STATUS_LABELS,
+  type NeedInput,
+} from '@/entities/employer-need';
 
 import { validateNeed } from '../lib';
 import { NEED_FLOW_LAST_STEP, useNeedFlowEditor } from '../model';
-import { BriefPhrase } from './BriefPhrase';
-import { NeedAdvancedFields } from './NeedAdvancedFields';
+import { NeedBriefStep } from './NeedBriefStep';
+import { NeedConditionsStep } from './NeedConditionsStep';
 import { NeedReadiness } from './NeedReadiness';
+import { NeedStepNavigation } from './NeedStepNavigation';
 import { NeedSummary } from './NeedSummary';
 
-const STEPS = [
-  { id: 'brief', title: 'Бриф' },
-  { id: 'conditions', title: 'Задачи и условия' },
-  { id: 'readiness', title: 'Готовность' },
-] as const;
+const getNeedSaveLabel = (pending: boolean, step: number) => {
+  if (pending) {
+    return 'Сохраняем…';
+  }
+
+  if (step < LAST_STEP) {
+    return 'Сохранить и продолжить';
+  }
+
+  return 'Сохранить';
+};
+
 const LAST_STEP = NEED_FLOW_LAST_STEP;
 interface NeedFlowEditorProps {
   active?: boolean;
@@ -62,20 +67,7 @@ export const NeedFlowEditor = ({
   onDirtyChange,
   showBack = true,
 }: NeedFlowEditorProps) => {
-  const {
-    value,
-    step,
-    setStep,
-    stepNavigationRef,
-    q,
-    setQ,
-    skillSearch,
-    skills,
-    errors,
-    saved,
-    change,
-    submit,
-  } = useNeedFlowEditor({
+  const editor = useNeedFlowEditor({
     initial,
     initialSkills,
     initialStep,
@@ -85,12 +77,8 @@ export const NeedFlowEditor = ({
     onSave,
     onDirtyChange,
   });
-  const message = (key: string) =>
-    errors[key] && (
-      <p role="alert" className="text-sm text-destructive">
-        {errors[key]}
-      </p>
-    );
+  const { value, step, setStep, stepNavigationRef, skills, saved, submit } =
+    editor;
   return (
     <div className="grid gap-5">
       {showBack && (
@@ -105,48 +93,12 @@ export const NeedFlowEditor = ({
         </Button>
       )}
       <div className="grid gap-5">
-        <div
-          ref={stepNavigationRef}
-          className="flex scroll-mt-40 flex-col lg:scroll-mt-24 gap-3"
-        >
-          <p className="text-sm font-medium" aria-live="polite">
-            Шаг {step + 1} из {STEPS.length} · {STEPS[step].title}
-          </p>
-          <OptionSelect
-            aria-label="Перейти к шагу потребности"
-            className="sm:hidden"
-            disabled={pending}
-            value={step}
-            onValueChange={(value) => setStep(Number(value))}
-            options={STEPS.map((item, i) => ({
-              value: i,
-              label: `${i + 1}. ${item.title}`,
-            }))}
-          />
-          <nav
-            aria-label="Разделы потребности"
-            className="hidden w-fit gap-1 rounded-lg bg-hover p-1 sm:flex"
-          >
-            {STEPS.map((item, i) => (
-              <Button
-                type="button"
-                key={item.id}
-                variant="ghost"
-                disabled={pending}
-                aria-current={step === i ? 'step' : undefined}
-                size="sm"
-                className={cn(
-                  'rounded-md px-3 text-muted-foreground hover:bg-transparent hover:text-foreground',
-                  step === i &&
-                    'bg-card text-foreground ring-1 ring-border hover:bg-card',
-                )}
-                onClick={() => setStep(i)}
-              >
-                {i + 1}. {item.title}
-              </Button>
-            ))}
-          </nav>
-        </div>
+        <NeedStepNavigation
+          stepNavigationRef={stepNavigationRef}
+          step={step}
+          pending={pending}
+          setStep={setStep}
+        />
         <Card>
           <CardHeader>
             <CardTitle>{isNew ? 'Новая потребность' : value.title}</CardTitle>
@@ -172,75 +124,14 @@ export const NeedFlowEditor = ({
             >
               <fieldset disabled={readonly || pending} className="grid gap-5">
                 {step === 0 && (
-                  <>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Название потребности *
-                      <Input
-                        value={value.title}
-                        maxLength={200}
-                        onChange={(e) => change({ title: e.target.value })}
-                        aria-invalid={!!errors.title}
-                        placeholder="Например, Frontend-разработчик в команду платформы"
-                      />
-                      {message('title')}
-                    </label>
-                    <div className="grid gap-2">
-                      <p className="text-sm font-medium">Кого ищем</p>
-                      <BriefPhrase
-                        value={value}
-                        onChange={(next) => change(next)}
-                        catalogs={catalogs}
-                        skills={skills}
-                        searchItems={skillSearch.items}
-                        skillQuery={q}
-                        onSkillQuery={setQ}
-                        skillsLoading={skillSearch.loading}
-                        skillsError={skillSearch.error}
-                        onRetrySkills={skillSearch.retry}
-                        catalogsUnavailable={false}
-                        disabled={readonly || pending}
-                        errors={errors}
-                      />
-                      {message('specializationId')}
-                      {message('gradeId')}
-                      {message('workFormatIds')}
-                      {message('skills')}
-                    </div>
-                    <NeedAdvancedFields
-                      skillsOnly
-                      value={value}
-                      skills={skills}
-                      errors={errors}
-                      change={(patch) => {
-                        if (patch.skills) change({ skills: patch.skills });
-                      }}
-                    />
-                  </>
+                  <NeedBriefStep
+                    editor={editor}
+                    catalogs={catalogs}
+                    readonly={readonly}
+                    pending={pending}
+                  />
                 )}
-                {step === 1 && (
-                  <>
-                    <label className="grid gap-2 text-sm font-medium">
-                      Задачи и описание *
-                      <Textarea
-                        value={value.description}
-                        maxLength={10000}
-                        rows={6}
-                        placeholder="Задачи на первые месяцы, команда, продукт"
-                        onChange={(e) =>
-                          change({ description: e.target.value })
-                        }
-                        aria-invalid={!!errors.description}
-                      />
-                      {message('description')}
-                    </label>
-                    <NeedAdvancedFields
-                      value={{ ...value, skills: [] }}
-                      skills={skills}
-                      errors={errors}
-                      change={change}
-                    />
-                  </>
-                )}
+                {step === 1 && <NeedConditionsStep editor={editor} />}
                 {step === LAST_STEP && (
                   <>
                     <NeedSummary
@@ -275,11 +166,7 @@ export const NeedFlowEditor = ({
               {!readonly && (
                 <div className="flex flex-wrap gap-3">
                   <Button type="submit" size="lg" disabled={pending}>
-                    {pending
-                      ? 'Сохраняем…'
-                      : step < LAST_STEP
-                        ? 'Сохранить и продолжить'
-                        : 'Сохранить'}
+                    {getNeedSaveLabel(pending, step)}
                   </Button>
                   {step === LAST_STEP && value.status === 'draft' && !isNew && (
                     <Button

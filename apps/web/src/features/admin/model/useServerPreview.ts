@@ -18,7 +18,7 @@ import {
   getPreviewRecovery,
   previewSecondsRemaining,
 } from '../lib';
-import { useAdminSession } from './index';
+import { useAdminSession } from './AdminProvider';
 
 export const useServerPreview = (templateId: string) => {
   const { session } = useAdminSession();
