@@ -107,6 +107,31 @@ services:
     mem_limit: 160m
     ports:
       - "8080:8080"
+  web:
+    image: ${WEB_IMAGE:?required}
+    restart: unless-stopped
+    environment:
+      API_PROXY_TARGET: http://api:8080
+      OIDC_TOKEN_URL: http://keycloak:8080/realms/fsp/protocol/openid-connect/token
+      OIDC_CLIENT_ID: fsp-web
+      APP_ORIGIN: ${WEB_PUBLIC_URL:?required}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+    mem_limit: 512m
   keycloak-db:
     image: postgres:17-alpine
     environment:
@@ -154,7 +179,7 @@ services:
       KC_HOSTNAME: http://${PUBLIC_HOST:?required}:8081
       JAVA_OPTS_KC_HEAP: "-Xms128m -Xmx384m"
       API_PUBLIC_URL: http://${PUBLIC_HOST:?required}:8080
-      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-http://localhost:3000}
+      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:?required}
     ports:
       - "8081:8080"
     volumes:

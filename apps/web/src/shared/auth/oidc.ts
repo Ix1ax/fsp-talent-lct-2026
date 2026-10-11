@@ -7,6 +7,8 @@ import {
 
 import { STATIC_ROUTES } from '@/shared/contants';
 
+import { usesServerPkce } from './httpPkce';
+
 export const getAppOrigin = (): string => {
   if (typeof window !== 'undefined') {
     return window.location.origin;
@@ -34,7 +36,9 @@ export const createOidcManager = (
     redirect_uri: redirectUri,
     post_logout_redirect_uri: getAppOrigin(),
     response_type: 'code',
-    disablePKCE: false,
+    // On HTTP by IP the login caller supplies server-generated S256 parameters.
+    // Disable only the library's browser hashing, not the PKCE exchange itself.
+    disablePKCE: usesServerPkce(),
     scope: 'openid profile email',
     automaticSilentRenew: false,
     userStore: new WebStorageStateStore({ store: new InMemoryWebStorage() }),
