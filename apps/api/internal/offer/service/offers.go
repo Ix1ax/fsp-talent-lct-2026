@@ -60,9 +60,9 @@ func (s *Service) CandidateContacts(ctx context.Context, user, company, offerID 
 }
 func filter(status string) error {
 	switch status {
-	case "", entity.StatusSent, entity.StatusViewed, entity.StatusAccepted, entity.StatusRejected:
+	case "", entity.StatusSent, entity.StatusViewed, entity.StatusAccepted, entity.StatusRejected, entity.StatusExpired:
 		return nil
 	default:
-		return &entity.ValidationError{Message: "Статус должен быть sent, viewed, accepted или rejected"}
+		return &entity.ValidationError{Message: "Статус должен быть sent, viewed, accepted, rejected или expired"}
 	}
 }

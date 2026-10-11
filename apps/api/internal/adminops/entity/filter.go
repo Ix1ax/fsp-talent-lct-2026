@@ -41,7 +41,7 @@ func ParseFilter(raw, kind string) (Filter, error) {
 			allowed[key] = true
 		}
 	case "offers":
-		statuses = []string{"all", "sent", "viewed", "accepted", "rejected"}
+		statuses = []string{"all", "sent", "viewed", "accepted", "rejected", "expired"}
 		allowed["company_id"], allowed["candidate_id"] = true, true
 	case "tasks":
 		statuses = []string{"all", "published", "hidden"}

@@ -68,7 +68,7 @@ func (r *Repository) CompanyList(ctx context.Context, user, company, status stri
 	if _, err = companyPermission(ctx, tx, user, company, false); err != nil {
 		return nil, 0, err
 	}
-	const filter = ` AND ($3='' OR o.status=$3)`
+	filter := ` AND ($3='' OR (` + effectiveStatus + `)=$3)`
 	var total int64
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+companyAccess+filter, user, company, status).Scan(&total); err != nil {
 		return nil, 0, err
