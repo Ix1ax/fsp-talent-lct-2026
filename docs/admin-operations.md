@@ -151,7 +151,7 @@ JSON `{status:"hidden"|"published",reason:"..."}`. Причина обязате
 | Компании | `q` по названию/ИНН, `status=all/unverified/pending/verified/rejected` |
 | Пользователи | `q` по имени, почте и ID; `role=candidate/employer/admin`, `status=all/active/blocked/deleted` |
 | Потребности | `q`, `company_id`, `specialization_id`, `grade_id`, `status=all/draft/active/archived` |
-| Приглашения | `company_id`, `candidate_id` (ID профиля), `status=all/sent/viewed/accepted/rejected` |
+| Приглашения | `company_id`, `candidate_id` (ID профиля), `status=all/sent/viewed/accepted/rejected/expired` |
 | Ежедневные задания | `q`, `company_id`, `specialization_id`, `grade_id`, `status=all/published/hidden` — именно модерация |
 | Попытки | `candidate_id`, `specialization_id`, `grade_id`, `status=all/active/passed/failed/expired` |
 | Журнал | `source`, `actor_id`, `entity_type`, `entity_id`, `action`, `from`, `to` |
