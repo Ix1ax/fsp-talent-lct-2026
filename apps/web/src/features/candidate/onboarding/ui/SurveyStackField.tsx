@@ -62,7 +62,7 @@ export const SurveyStackField = ({
   }, [search]);
   const selectedLabel = selected?.id === value ? selected.name : savedLabel;
   return (
-    <div className="grid gap-2">
+    <div className="grid min-w-0 gap-2">
       <Label htmlFor={id}>Основной стек</Label>
       <Combobox
         ref={inputRef}
