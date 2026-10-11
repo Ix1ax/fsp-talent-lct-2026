@@ -106,13 +106,20 @@ export const CandidateSurveyForm = ({
           <Label htmlFor={`${id}-industry`}>Отрасль</Label>
           <Input
             id={`${id}-industry`}
-            placeholder="Например, информационные технологии"
+            placeholder="Например, финтех или образование"
             maxLength={200}
             disabled={isSubmitting}
             aria-invalid={!!errors.industry}
-            aria-describedby={`${id}-industry-error`}
+            aria-describedby={`${id}-industry-hint ${id}-industry-error`}
             {...form.register('industry')}
           />
+          <p
+            id={`${id}-industry-hint`}
+            className="text-xs text-muted-foreground"
+          >
+            Сфера бизнеса, в которой хотите работать. Например, финансы,
+            медицина или образование.
+          </p>
           <FieldMessage
             id={`${id}-industry-error`}
             message={errors.industry?.message}
