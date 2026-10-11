@@ -4,6 +4,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 )
 
 const candidateID = "00000000-0000-4000-8000-000000000001"
@@ -12,6 +13,26 @@ func amount(n int64) *int64 { return &n }
 func text(s string) *string { return &s }
 func validInput() Input {
 	return Input{CandidateID: candidateID, Title: "Go-разработчик", Description: "Разработка сервисов в продуктовой команде", SalaryFromRUB: amount(150000), SalaryToRUB: amount(250000), ContactEmail: "hr@example.test"}
+}
+
+func TestOfferExpirationBoundary(t *testing.T) {
+	created := time.Date(2026, 10, 1, 12, 0, 0, 0, time.UTC)
+	for _, status := range []string{StatusSent, StatusViewed, StatusAccepted, StatusRejected} {
+		for _, age := range []time.Duration{Lifetime - time.Nanosecond, Lifetime, Lifetime + time.Nanosecond} {
+			want := status
+			if (status == StatusSent || status == StatusViewed) && age >= Lifetime {
+				want = StatusExpired
+			}
+			if got := EffectiveStatus(status, created, created.Add(age)); got != want {
+				t.Fatalf("%s, age=%s: got %s, want %s", status, age, got, want)
+			}
+		}
+	}
+	for _, decision := range []string{StatusAccepted, StatusRejected} {
+		if !errors.Is(ValidateResponse(StatusExpired, decision), ErrExpired) {
+			t.Fatal("На истёкшее предложение нельзя ответить")
+		}
+	}
 }
 
 func TestOfferInput(t *testing.T) {
