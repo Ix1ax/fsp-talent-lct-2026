@@ -1,4 +1,4 @@
-package httpapi_test
+package web_test
 
 import (
 	"bytes"
@@ -78,7 +78,7 @@ func uploadResume(t *testing.T, e *testutil.AuthEnv, sub, field, name string, da
 
 func resumeFixture(t *testing.T) []byte {
 	t.Helper()
-	data, err := os.ReadFile("../candidate/resume/testdata/resume_hh.pdf")
+	data, err := os.ReadFile("../resume/testdata/resume_hh.pdf")
 	if err != nil {
 		t.Fatal(err)
 	}

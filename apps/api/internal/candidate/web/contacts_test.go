@@ -1,4 +1,4 @@
-package httpapi_test
+package web_test
 
 import (
 	"context"

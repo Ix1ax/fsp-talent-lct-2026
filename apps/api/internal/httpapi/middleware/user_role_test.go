@@ -1,4 +1,4 @@
-package httpapi
+package middleware
 
 import (
 	"net/http/httptest"
@@ -11,7 +11,7 @@ import (
 
 func TestRequireRole(t *testing.T) {
 	r := gin.New()
-	r.GET("/", func(c *gin.Context) { c.Set(userKey, user.User{Role: c.Query("role")}) }, requireRole("employer"), func(c *gin.Context) { c.Status(200) })
+	r.GET("/", func(c *gin.Context) { c.Set(userKey, user.User{Role: c.Query("role")}) }, RequireRole("employer"), func(c *gin.Context) { c.Status(200) })
 	for role, status := range map[string]int{"employer": 200, "candidate": 403, "admin": 403} {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, httptest.NewRequest("GET", "/?role="+role, nil))
@@ -21,7 +21,7 @@ func TestRequireRole(t *testing.T) {
 	}
 	// Без currentUser в контексте доступа быть не должно.
 	r2 := gin.New()
-	r2.GET("/", requireRole("employer"), func(c *gin.Context) { c.Status(200) })
+	r2.GET("/", RequireRole("employer"), func(c *gin.Context) { c.Status(200) })
 	w := httptest.NewRecorder()
 	r2.ServeHTTP(w, httptest.NewRequest("GET", "/", nil))
 	if w.Code != 401 {
