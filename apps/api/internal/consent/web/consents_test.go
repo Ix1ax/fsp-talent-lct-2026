@@ -1,4 +1,4 @@
-package httpapi_test
+package web_test
 
 import (
 	"context"
@@ -130,5 +130,15 @@ func TestConsentUnavailable(t *testing.T) {
 	w := e.Do(t, "GET", "/api/v1/me/consents", e.Token(t, "cand"), "")
 	if w.Code != 503 || testutil.ErrorCode(t, w) != "consent_unavailable" {
 		t.Fatalf("без сервиса ожидали 503 consent_unavailable: %d %s", w.Code, w.Body)
+	}
+}
+
+// Согласия проверяются отдельно от профиля: оба модуля должны возвращать единый 413.
+func TestOversizedConsentJSONBody(t *testing.T) {
+	e := consentEnv(t)
+	body := `{"note":"` + strings.Repeat("a", 3<<20) + `"}`
+	w := e.Do(t, "POST", "/api/v1/me/consents", e.Token(t, "cand"), body)
+	if w.Code != 413 || testutil.ErrorCode(t, w) != "request_too_large" || strings.Contains(w.Body.String(), "Аватар") {
+		t.Fatalf("POST /me/consents: %d %s, ожидали 413 request_too_large без упоминания аватара", w.Code, w.Body)
 	}
 }
