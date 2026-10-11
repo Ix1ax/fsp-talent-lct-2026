@@ -136,6 +136,10 @@ export const CandidateBank = ({
                 ? 'Требования потребности применены. Изменение фильтров снимет привязку к потребности.'
                 : 'Выберите потребность или задайте условия поиска в фильтрах.'}
             </p>
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              Открытые и приглашённые кандидаты на время скрываются из подборки
+              вашей компании, чтобы не получать повторные контакты подряд.
+            </p>
             {selectedNeed && (
               <>
                 <div className="flex flex-wrap gap-2">
@@ -164,7 +168,7 @@ export const CandidateBank = ({
               loading={remote.loading || (!!needId && needs.loading)}
               empty={remote.data?.items.length === 0}
               emptyTitle="Кандидаты не найдены"
-              emptyDescription="Измените фильтры или вернитесь позже."
+              emptyDescription="Измените фильтры или вернитесь позже. Недавно открытые и приглашённые кандидаты временно скрыты."
             />
           )}
           {remote.data && (

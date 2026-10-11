@@ -111,7 +111,8 @@ export const EmployerWorkspaceContent = ({
           onSaved={(savedCompany) => {
             profileDirtyChanged(false);
             setCreateCompany(false);
-            router.push(href('documents', savedCompany.id), { scroll: false });
+            // Сразу к первому полезному действию; проверку компании можно пройти позже.
+            router.push(href('vacancies', savedCompany.id), { scroll: false });
           }}
         />
       </div>

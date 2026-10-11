@@ -1,13 +1,5 @@
 import type { NeedStatus } from '@/entities/employer-need';
 
-export const getNeedStatusLabel = (status: NeedStatus, readonly?: boolean) => {
-  if (readonly) return 'Только просмотр';
-  if (status === 'active') return 'Активна';
-  if (status === 'archived') return 'В архиве';
-
-  return 'Черновик';
-};
-
 export const getNeedSaveLabel = (
   status: NeedStatus,
   pending: boolean,

@@ -16,7 +16,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { formatDate, formatPercent } from '@/shared/utils';
 import { getAssessmentHistory } from '@/entities/assessment';
 import type { Catalogs } from '@/entities/catalog';
 
@@ -111,7 +111,7 @@ export const AssessmentHistory = ({ catalogs }: AssessmentHistoryProps) => {
                         <span className="font-medium tabular-nums">
                           {item.scorePercent === null
                             ? 'Ещё не определён'
-                            : `${item.scorePercent.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}%`}
+                            : formatPercent(item.scorePercent)}
                         </span>
                       </p>
                       {item.finishedAt && (

@@ -42,7 +42,7 @@ describe('anonymous candidate presentation', () => {
     const html = render();
     expect(html).toContain('самооценка');
     expect(html).toContain('Зарплата не указана');
-    expect(html).toContain('2.5 года');
+    expect(html).toContain('2,5 года');
     expect(html).not.toContain('0%');
   });
   it.each([

@@ -3,7 +3,6 @@ import { clientApi } from '@/shared/api/client';
 import type { Page } from '@/shared/api/types';
 
 import {
-  type Company,
   type CompanyFile,
   type CompanyFilePurpose,
   type CompanyInvitation,
@@ -12,12 +11,6 @@ import {
 } from '../model';
 
 const path = (id: string) => `/v1/companies/${id}`;
-
-export const getCompany = async (id: string, signal?: AbortSignal) => {
-  const { data } = await clientApi.get<Company>(path(id), { signal });
-
-  return data;
-};
 
 export const getCompanyFiles = async (
   id: string,

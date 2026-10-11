@@ -31,7 +31,7 @@ export const CandidateOnboardingCard = () => {
       {action && (
         <FadeIn className="flex flex-col items-start gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <p className="text-xs font-medium text-muted-foreground">
                 Следующий шаг
               </p>
@@ -40,7 +40,8 @@ export const CandidateOnboardingCard = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-8"
+                    // Зона нажатия 32px, но иконка визуально рядом с подписью.
+                    className="-my-2 -ml-1.5 size-8"
                     aria-label="Как определяется следующий шаг"
                   >
                     <InfoIcon aria-hidden="true" className="size-4" />

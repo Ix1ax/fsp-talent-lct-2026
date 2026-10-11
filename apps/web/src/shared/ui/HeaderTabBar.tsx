@@ -44,7 +44,8 @@ export const HeaderTabBar = ({
     >
       <div
         className={cn(
-          'mx-auto grid max-w-2xl auto-cols-fr grid-flow-col gap-1 px-2 py-1.5',
+          // На планшете пункты не расползаются по всей ширине.
+          'mx-auto grid max-w-md auto-cols-fr grid-flow-col gap-1 px-2 py-1.5',
           // Пункт — колонка: иконка в «таблетке» над подписью.
           '[&>*]:min-h-14 [&>*]:min-w-0 [&>*]:flex-col [&>*]:justify-center [&>*]:gap-1 [&>*]:rounded-xl [&>*]:px-1 [&>*]:text-center [&>*]:text-[0.6875rem] [&>*]:leading-tight [&>*]:font-medium',
           '[&>*]:hover:bg-transparent [&>[aria-current=page]]:bg-transparent [&>[aria-current=page]]:shadow-none',

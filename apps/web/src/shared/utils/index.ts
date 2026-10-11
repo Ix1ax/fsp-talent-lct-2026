@@ -4,6 +4,7 @@ export { convertCamelToSnake } from './convertCamelToSnake';
 export { convertSnakeToCamel } from './convertSnakeToCamel';
 export { formatDate } from './formatDate';
 export { formatDuration } from './formatDuration';
+export { formatPercent } from './formatPercent';
 export { formatSalaryRange } from './formatSalaryRange';
 export { isObject } from './isObject';
 export { pluralizeRu } from './pluralizeRu';
