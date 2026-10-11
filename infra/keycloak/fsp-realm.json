@@ -1,6 +1,6 @@
 {
   "realm": "fsp",
-  "displayName": "FSP Talent",
+  "displayName": "ФСП Скаут",
   "loginTheme": "fsp-scout",
   "enabled": true,
   "registrationAllowed": true,
@@ -17,7 +17,7 @@
     "host": "mailpit",
     "port": "1025",
     "from": "no-reply@fsp.local",
-    "fromDisplayName": "FSP Talent",
+    "fromDisplayName": "ФСП Скаут",
     "ssl": "false",
     "starttls": "false",
     "auth": "false"
