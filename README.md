@@ -156,6 +156,38 @@ internal/httpapi/request/      разбор JSON и пагинации
 чтобы их могли использовать другие модули.
 Права на записи проверяем в сервисах и SQL, а не только в middleware.
 
+### Расположение тестов бэкенда
+
+- `internal/<модуль>/entity` и `service`: модели, валидация и сценарии без внешних хранилищ.
+- `internal/<модуль>/web/*_test.go`: HTTP-контракты модуля с тестовыми хранилищами
+  и настоящей проверкой синтетических JWT. Используется внешний пакет `web_test`,
+  чтобы тестовый роутер не создавал циклические импорты рабочего кода.
+- `internal/httpapi/*_test.go`: сборка роутера, CORS, Swagger, регистрация и общие
+  правила доступа ко всем маршрутам. Доменные сценарии сюда не добавляем.
+- `internal/httpapi/middleware/*_test.go`: проверки middleware, включая роли.
+- `internal/testutil`: общие помощники авторизации и запросов; специфичные для
+  модуля тестовые хранилища остаются в его тестах.
+- `tests/integration`: проверки PostgreSQL, миграций, транзакций и внешних
+  хранилищ под build tag `integration`. Тесты создают отдельные схемы БД.
+
+Из `apps/api`:
+
+```sh
+# Все обычные тесты, включая HTTP-контракты модулей:
+go test -race ./...
+
+# Только HTTP-контракты выбранного модуля:
+go test -race ./internal/candidate/web
+go test -race ./internal/assessment/web ./internal/consent/web
+
+# Интеграционные тесты; сначала задайте TEST_DATABASE_URL и нужные TEST_S3_*:
+go test -race -tags=integration ./internal/platform ./tests/integration
+```
+
+Без `TEST_DATABASE_URL` проверки БД пропускаются. Обычные HTTP-тесты не требуют
+PostgreSQL, S3 или работающего Keycloak. Полный локальный запуск с настройками
+из `apps/api/.env` также доступен через `make integration` из корня репозитория.
+
 **Постраничные списки.** Все методы со списками принимают `limit` (1–100, по умолчанию 20) и `offset` (0–10000) и отвечают одним форматом:
 `{"items": [...], "total": N, "limit": 20, "offset": 0}`. `total` это число **всех** записей, подходящих под фильтры
 (`status`, `q` и другие), без учёта `limit` и `offset`; по нему считаются страницы: `ceil(total / limit)`. Если `offset` больше
@@ -240,7 +272,7 @@ PATCH не затирали друг друга.
 ```sh
 cd apps/api
 # Задайте TEST_DATABASE_URL и TEST_S3_ENDPOINT, TEST_S3_BUCKET, TEST_S3_ACCESS_KEY, TEST_S3_SECRET_KEY.
-go test -race -tags=integration ./internal/httpapi -run TestCompaniesAndPrivateS3
+go test -race -tags=integration ./tests/integration -run TestCompaniesAndPrivateS3
 ```
 
 ### Потребности работодателя
@@ -331,7 +363,7 @@ DELETE переводит запись в `archived`, сохраняя ID и с�
 ```sh
 cd apps/api
 # Задайте TEST_DATABASE_URL для отдельного тестового Postgres.
-go test -race -tags=integration ./internal/httpapi -run TestCompanyNeeds
+go test -race -tags=integration ./tests/integration -run TestCompanyNeeds
 ```
 
 ### Команда компании и приглашения
@@ -384,7 +416,7 @@ go test -race -tags=integration ./internal/httpapi -run TestCompanyNeeds
 ```sh
 cd apps/api
 # Задайте TEST_DATABASE_URL для отдельного тестового Postgres.
-go test -race -tags=integration ./internal/httpapi -run 'TestCompanyMembers|TestCompanyNeeds'
+go test -race -tags=integration ./tests/integration -run 'TestCompanyMembers|TestCompanyNeeds'
 ```
 
 ### Профиль кандидата
@@ -450,7 +482,7 @@ curl --fail-with-body -X PUT "$API_URL/api/v1/me/profile/avatar" \
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./internal/httpapi -run 'TestCandidate'
+go test -race -tags=integration ./tests/integration -run 'TestCandidate'
 ```
 
 ### Согласия и контакты кандидата
@@ -518,7 +550,7 @@ curl --fail-with-body -X PUT "$API_URL/api/v1/me/contacts" \
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./internal/httpapi -run 'Consent|CandidateContacts'
+go test -race -tags=integration ./tests/integration -run 'Consent|CandidateContacts'
 ```
 
 ### Навыки кандидата
@@ -566,7 +598,7 @@ curl --fail-with-body "$API_URL/api/v1/me/skills" -H "Authorization: Bearer $TOK
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./internal/httpapi -run 'CandidateSkills'
+go test -race -tags=integration ./tests/integration -run 'CandidateSkills'
 ```
 
 ### Полный профиль кандидата
@@ -627,7 +659,7 @@ curl --fail-with-body "$API_URL/api/v1/me/profile/full" -H "Authorization: Beare
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./internal/httpapi -run 'CandidateFullProfile'
+go test -race -tags=integration ./tests/integration -run 'CandidateFullProfile'
 ```
 
 ### Опыт работы и образование кандидата
@@ -941,7 +973,7 @@ curl --fail-with-body -X POST "$API_URL/api/v1/me/offers/$OFFER_ID/respond" \
 
 ```sh
 cd apps/api
-go test -race -tags=integration ./internal/httpapi -run 'TestOffer'
+go test -race -tags=integration ./tests/integration -run 'TestOffer'
 ```
 
 ### Банк кандидатов и предварительная подборка
