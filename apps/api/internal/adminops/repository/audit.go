@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/query"
 )
 
 const auditUnion = `(
@@ -63,7 +64,7 @@ func (r *Repository) Stats(ctx context.Context, actor string) (map[string]any, e
  'users',(SELECT jsonb_build_object('total',count(*),'active',count(*) FILTER(WHERE status='active'),'blocked',count(*) FILTER(WHERE status='blocked'),'deleted',count(*) FILTER(WHERE status='deleted'),'candidates',count(*) FILTER(WHERE role='candidate'),'employers',count(*) FILTER(WHERE role='employer')) FROM users),
  'companies',(SELECT jsonb_build_object('total',count(*),'pending',count(*) FILTER(WHERE verification_status='pending'),'verified',count(*) FILTER(WHERE verification_status='verified'),'rejected',count(*) FILTER(WHERE verification_status='rejected'),'active',count(*) FILTER(WHERE status='active'),'blocked',count(*) FILTER(WHERE status='blocked')) FROM companies),
  'needs',(SELECT jsonb_build_object('total',count(*),'active',count(*) FILTER(WHERE status='active'),'hidden',count(*) FILTER(WHERE moderation_status='hidden')) FROM employer_needs),
- 'offers',(SELECT jsonb_build_object('total',count(*),'accepted',count(*) FILTER(WHERE status='accepted'),'rejected',count(*) FILTER(WHERE status='rejected')) FROM candidate_offers),
+ 'offers',(SELECT jsonb_build_object('total',count(*),'accepted',count(*) FILTER(WHERE status='accepted'),'rejected',count(*) FILTER(WHERE status='rejected'),'expired',count(*) FILTER(WHERE `+query.Expired("o", "transaction_timestamp()")+`)) FROM candidate_offers o),
  'tasks',(SELECT jsonb_build_object('total',count(*),'hidden',count(*) FILTER(WHERE moderation_status='hidden'),'open',count(*) FILTER(WHERE status='open' AND (deadline_at IS NULL OR deadline_at>transaction_timestamp()))) FROM company_daily_tasks),
  'submissions',(SELECT jsonb_build_object('total',count(*),'reviewed',count(*) FILTER(WHERE status='reviewed')) FROM company_task_submissions),
  'attempts',(SELECT jsonb_build_object('total',count(*),'passed',count(*) FILTER(WHERE status='passed'),'failed',count(*) FILTER(WHERE status='failed'),'active',count(*) FILTER(WHERE status='active')) FROM assessment_attempts),

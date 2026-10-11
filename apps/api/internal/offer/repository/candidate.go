@@ -2,8 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"time"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/query"
 )
 
 func (r *Repository) CandidateGet(ctx context.Context, user, id string) (entity.Offer, error) {
@@ -25,7 +28,7 @@ func (r *Repository) CandidateList(ctx context.Context, user, status string, lim
 	if err != nil {
 		return nil, 0, dbError(err)
 	}
-	const filter = ` AND ($2='' OR o.status=$2)`
+	filter := ` AND ($2='' OR (` + effectiveStatus + `)=$2)`
 	var total int64
 	if err = tx.QueryRow(ctx, `SELECT count(*)`+candidateAccess+filter, user, status).Scan(&total); err != nil {
 		return nil, 0, err
@@ -67,11 +70,18 @@ func (r *Repository) action(ctx context.Context, user, id, status string) (entit
 	if err != nil {
 		return o, err
 	}
+	// Проверяем реальное время после ожидания блокировки, а не начало транзакции.
+	var now time.Time
+	if err = tx.QueryRow(ctx, `SELECT clock_timestamp()`).Scan(&now); err != nil {
+		return o, err
+	}
+	o.Status = entity.EffectiveStatus(o.Status, o.CreatedAt, now)
+	stillOpen := ` AND NOT ` + query.Expired("o", "clock_timestamp()")
 	if status == entity.StatusViewed {
 		if o.Status != entity.StatusSent {
 			return o, tx.Commit(ctx)
 		}
-		o, err = scan(tx.QueryRow(ctx, `UPDATE candidate_offers AS o SET status='viewed',viewed_at=GREATEST(statement_timestamp(),created_at) WHERE id=$1 RETURNING `+columns, id))
+		o, err = scan(tx.QueryRow(ctx, `UPDATE candidate_offers AS o SET status='viewed',viewed_at=GREATEST(clock_timestamp(),created_at) WHERE id=$1`+stillOpen+` RETURNING `+columns, id))
 	} else {
 		if err = entity.ValidateResponse(o.Status, status); err != nil {
 			return o, err
@@ -80,8 +90,16 @@ func (r *Repository) action(ctx context.Context, user, id, status string) (entit
 			return o, tx.Commit(ctx)
 		}
 		o, err = scan(tx.QueryRow(ctx, `UPDATE candidate_offers AS o SET status=$2,
- viewed_at=COALESCE(viewed_at,GREATEST(statement_timestamp(),created_at)),
- responded_at=GREATEST(statement_timestamp(),created_at,viewed_at) WHERE id=$1 RETURNING `+columns, id, status))
+ viewed_at=COALESCE(viewed_at,GREATEST(clock_timestamp(),created_at)),
+ responded_at=GREATEST(clock_timestamp(),created_at,viewed_at) WHERE id=$1`+stillOpen+` RETURNING `+columns, id, status))
+	}
+	// Дедлайн мог наступить между проверкой и UPDATE; не записываем поздний ответ.
+	if errors.Is(err, entity.ErrNotFound) {
+		if status != entity.StatusViewed {
+			return entity.Offer{}, entity.ErrExpired
+		}
+		o, err = scan(tx.QueryRow(ctx, `SELECT `+columns+` FROM candidate_offers o WHERE o.id=$1`, id))
+		o.Status = entity.StatusExpired
 	}
 	if err != nil {
 		return o, err

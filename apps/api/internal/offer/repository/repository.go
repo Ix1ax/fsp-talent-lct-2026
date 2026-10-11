@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/query"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -14,7 +15,9 @@ type Repository struct{ db *pgxpool.Pool }
 
 func New(db *pgxpool.Pool) *Repository { return &Repository{db: db} }
 
-const columns = `o.id::text,o.company_id::text,o.candidate_id::text,o.created_by::text,o.need_id::text,o.company_name,o.title,o.description,o.salary_from_rub,o.salary_to_rub,o.contact_email,o.contact_url,o.status,o.created_at,o.viewed_at,o.responded_at`
+var effectiveStatus = query.Status("o", "transaction_timestamp()")
+var columns = `o.id::text,o.company_id::text,o.candidate_id::text,o.created_by::text,o.need_id::text,o.company_name,o.title,o.description,o.salary_from_rub,o.salary_to_rub,o.contact_email,o.contact_url,` + effectiveStatus + `,o.created_at,o.viewed_at,o.responded_at`
+
 const companyAccess = ` FROM candidate_offers o JOIN companies c ON c.id=o.company_id JOIN company_members m ON m.company_id=o.company_id JOIN users u ON u.id=m.user_id
  WHERE m.user_id=$1 AND o.company_id=$2 AND c.status='active' AND m.status='active' AND u.status='active' AND u.role='employer'`
 const candidateAccess = ` FROM candidate_offers o JOIN companies c ON c.id=o.company_id JOIN candidate_profiles p ON p.id=o.candidate_id JOIN users u ON u.id=p.user_id

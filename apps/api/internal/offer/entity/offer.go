@@ -16,12 +16,15 @@ const (
 	StatusViewed   = "viewed"
 	StatusAccepted = "accepted"
 	StatusRejected = "rejected"
+	StatusExpired  = "expired"
+	Lifetime       = 14 * 24 * time.Hour
 )
 
 var (
 	ErrNotFound         = errors.New("предложение не найдено или недоступно")
 	ErrForbidden        = errors.New("недостаточно прав для этого действия")
 	ErrResponseConflict = errors.New("ответ на предложение уже сохранён и не может быть изменён")
+	ErrExpired          = errors.New("срок предложения истёк; ответить на него нельзя")
 )
 
 type ValidationError struct{ Message string }
@@ -123,6 +126,8 @@ func ValidateResponse(current, decision string) error {
 		return invalid("Ответ должен быть accepted или rejected")
 	}
 	switch current {
+	case StatusExpired:
+		return ErrExpired
 	case StatusSent, StatusViewed:
 		return nil
 	case StatusAccepted, StatusRejected:
@@ -133,6 +138,14 @@ func ValidateResponse(current, decision string) error {
 	default:
 		return invalid("Неизвестный статус предложения")
 	}
+}
+
+// Истечение не является ответом кандидата и не меняет сохранённую историю.
+func EffectiveStatus(status string, createdAt, now time.Time) string {
+	if (status == StatusSent || status == StatusViewed) && !now.Before(createdAt.Add(Lifetime)) {
+		return StatusExpired
+	}
+	return status
 }
 
 func uuid(value string) (string, bool) {

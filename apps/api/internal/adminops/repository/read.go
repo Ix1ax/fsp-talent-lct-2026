@@ -6,6 +6,7 @@ import (
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/adminops/entity"
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/files"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/query"
 )
 
 const companyJSON = `jsonb_build_object('id',c.id,'name',c.name,'description',c.description,'inn',c.inn,'contact_email',c.contact_email,'contact_url',c.contact_url,'logo_file_id',c.logo_file_id,'verification_status',c.verification_status,'verification_version',c.verification_version,'verification_requested_at',c.verification_requested_at,'verification_reviewed_at',c.verification_reviewed_at,'verification_reviewed_by',c.verification_reviewed_by,'verification_reason',c.verification_reason,'verification_document_ids',c.verification_file_ids,'created_at',c.created_at,'status',c.status,'blocked_reason',c.blocked_reason,'blocked_at',c.blocked_at)`
@@ -33,7 +34,8 @@ OR strpos(lower(u.id::text),lower($3))>0 OR strpos(lower(COALESCE(p.id::text,'')
 	case "needs":
 		return `to_jsonb(n)||jsonb_build_object('company_name',c.name,'skills',COALESCE((SELECT jsonb_agg(jsonb_build_object('skill_id',s.skill_id,'required',s.required,'weight',s.weight) ORDER BY s.skill_id) FROM need_skills s WHERE s.need_id=n.id),'[]'::jsonb),'work_format_ids',COALESCE((SELECT jsonb_agg(w.work_format_id ORDER BY w.work_format_id) FROM need_work_formats w WHERE w.need_id=n.id),'[]'::jsonb))`, ` FROM employer_needs n JOIN companies c ON c.id=n.company_id `, `WHERE ($1='all' OR n.status=$1) AND ($2='' OR strpos(lower(n.title||' '||n.description),lower($2))>0) AND ($3::uuid IS NULL OR n.company_id=$3) AND ($4::smallint IS NULL OR n.specialization_id=$4) AND ($5::smallint IS NULL OR n.grade_id=$5)`, `n.id`, `n.created_at DESC,n.id DESC`
 	case "offers":
-		return `to_jsonb(o)-'contact_email'-'contact_url'`, ` FROM candidate_offers o `, `WHERE ($1='all' OR o.status=$1) AND ($2::uuid IS NULL OR o.company_id=$2) AND ($3::uuid IS NULL OR o.candidate_id=$3)`, `o.id`, `o.created_at DESC,o.id DESC`
+		status := query.Status("o", "transaction_timestamp()")
+		return `(to_jsonb(o)-'contact_email'-'contact_url')||jsonb_build_object('status',` + status + `)`, ` FROM candidate_offers o `, `WHERE ($1='all' OR (` + status + `)=$1) AND ($2::uuid IS NULL OR o.company_id=$2) AND ($3::uuid IS NULL OR o.candidate_id=$3)`, `o.id`, `o.created_at DESC,o.id DESC`
 	case "tasks":
 		return `(to_jsonb(t)-'file_id')||jsonb_build_object('status',CASE WHEN t.status='closed' OR t.deadline_at<=transaction_timestamp() THEN 'closed' ELSE 'open' END,'company_name',c.name,'file',` + fileJSON + `,'submissions_count',(SELECT count(*) FROM company_task_submissions WHERE task_id=t.id))`, ` FROM company_daily_tasks t JOIN companies c ON c.id=t.company_id JOIN files f ON f.id=t.file_id `, `WHERE ($1='all' OR t.moderation_status=$1) AND ($2='' OR strpos(lower(t.title||' '||t.description),lower($2))>0) AND ($3::uuid IS NULL OR t.company_id=$3) AND ($4::smallint IS NULL OR t.specialization_id=$4) AND ($5::smallint IS NULL OR t.grade_id=$5)`, `t.id`, `t.published_at DESC,t.id DESC`
 	case "attempts":

@@ -2506,7 +2506,7 @@ paths:
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
-      description: "Активный employer с членством owner или recruiter. candidate_id — UUID candidate_profiles.id. Получатель должен быть активным кандидатом с search_status open или passive. need_id необязателен; привязать можно только активную потребность этой компании. Обе границы зарплаты обязательны, в рублях за месяц. Название компании берётся из БД, автор — из текущего пользователя. Условия сохраняются на момент отправки. Каждый успешный POST создаёт новое предложение; автоматический повтор отправки не предусмотрен. Контакты кандидата не возвращаются, письмо и чат не подключены. Успешная отправка атомарно записывает просмотр и историю отправки этой компании; кандидат исключается из её обычной выдачи на 30 дней. Отказ или принятие не сбрасывают срок."
+      description: "Активный employer с членством owner или recruiter. candidate_id — UUID candidate_profiles.id. Получатель должен быть активным кандидатом с search_status open или passive. need_id необязателен; привязать можно только активную потребность этой компании. Обе границы зарплаты обязательны, в рублях за месяц. Название компании берётся из БД, автор — из текущего пользователя. Условия сохраняются на момент отправки. Каждый успешный POST создаёт новое предложение; автоматический повтор отправки не предусмотрен. Контакты кандидата не возвращаются, письмо и чат не подключены. Успешная отправка атомарно записывает просмотр и историю отправки этой компании; кандидат исключается из её обычной выдачи на 30 дней. Отказ или принятие не сбрасывают срок. Без ответа предложение истекает через ровно 336 часов; истёкшее предложение и автоматически записанный при его отправке просмотр не удерживают кулдаун. Более поздний явный просмотр и другие неистёкшие предложения сохраняют собственный срок."
       requestBody:
         required: true
         content:
@@ -2549,8 +2549,8 @@ paths:
       parameters:
         - name: status
           in: query
-          description: Без фильтра возвращаются все статусы.
-          schema: {type: string, enum: [sent, viewed, accepted, rejected]}
+          description: Без фильтра возвращаются все статусы. expired — sent/viewed без ответа, достигшие возраста 336 часов; вычисляется до фильтрации и подсчёта total.
+          schema: {type: string, enum: [sent, viewed, accepted, rejected, expired]}
         - name: limit
           in: query
           schema: {type: integer, minimum: 1, maximum: 100, default: 20}
@@ -2625,8 +2625,8 @@ paths:
       parameters:
         - name: status
           in: query
-          description: Без фильтра возвращаются все статусы.
-          schema: {type: string, enum: [sent, viewed, accepted, rejected]}
+          description: Без фильтра возвращаются все статусы. expired — sent/viewed без ответа, достигшие возраста 336 часов; вычисляется до фильтрации и подсчёта total.
+          schema: {type: string, enum: [sent, viewed, accepted, rejected, expired]}
         - name: limit
           in: query
           schema: {type: integer, minimum: 1, maximum: 100, default: 20}
@@ -2698,7 +2698,7 @@ paths:
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
-      description: "Только кандидат-получатель. Тело не требуется. sent переводится в viewed, viewed_at выставляется один раз. Повторный просмотр, в том числе после ответа, возвращает текущее предложение без изменения статуса и дат."
+      description: "Только кандидат-получатель. Тело не требуется. sent переводится в viewed, viewed_at выставляется один раз. Повторный просмотр, в том числе после ответа или истечения, возвращает текущее предложение без изменения статуса и дат. Истёкшее предложение возвращается со статусом expired и не переводится в viewed."
       responses:
         '200':
           description: Успешно
@@ -2731,7 +2731,7 @@ paths:
       security:
         - bearerAuth: []
         - keycloakOAuth: [openid, email]
-      description: "Только кандидат-получатель. Передайте status: accepted или rejected. Можно ответить сразу из sent: viewed_at и responded_at выставляются вместе. Повтор того же решения успешен и не меняет даты; противоположное решение после ответа — 409 response_conflict. Одновременные противоположные ответы сохраняют только одно решение. Принятие не добавляет кандидата в сотрудники компании. Контакты доступны отдельным защищённым GET /companies/{company_id}/offers/{offer_id}/candidate-contacts после принятия, при действующем согласии кандидата, только owner/recruiter отправившей компании."
+      description: "Только кандидат-получатель. Передайте status: accepted или rejected. Можно ответить сразу из sent: viewed_at и responded_at выставляются вместе. Повтор того же решения успешен и не меняет даты; противоположное решение после ответа — 409 response_conflict. Ответ на истёкшее предложение — 409 offer_expired; после ровно 336 часов с created_at ответ недоступен. Возраст уже принятого/отклонённого предложения не мешает повтору того же решения. Одновременные противоположные ответы сохраняют только одно решение. Принятие не добавляет кандидата в сотрудники компании. Контакты доступны отдельным защищённым GET /companies/{company_id}/offers/{offer_id}/candidate-contacts после принятия, при действующем согласии кандидата, только owner/recruiter отправившей компании."
       requestBody:
         required: true
         content:
@@ -2811,7 +2811,7 @@ paths:
           schema: {type: boolean}
         - name: interaction_status
           in: query
-          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации."
+          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации. Истёкшее предложение не удерживает срок, если нет более позднего явного просмотра или другого неистёкшего предложения."
           schema: {type: string, enum: [available, cooldown, all], default: available}
         - name: has_offer
           in: query
@@ -2988,7 +2988,7 @@ paths:
           schema: {type: boolean}
         - name: interaction_status
           in: query
-          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации."
+          description: "available — новые кандидаты и кандидаты, с которыми последнее взаимодействие было не менее 30 дней назад; cooldown — только кандидаты в 30-дневном сроке; all — вся доступная база вместе с историей. Фильтр применяется до подсчёта total и пагинации. Истёкшее предложение не удерживает срок, если нет более позднего явного просмотра или другого неистёкшего предложения."
           schema: {type: string, enum: [available, cooldown, all], default: available}
         - name: has_offer
           in: query
@@ -7997,6 +7997,7 @@ paths:
               - viewed
               - accepted
               - rejected
+              - expired
             default: all
         - name: company_id
           in: query
@@ -9255,7 +9256,7 @@ components:
         - created_at
         - viewed_at
         - responded_at
-      description: Сохранённые условия предложения. Контактов кандидата нет, включая принятые предложения.
+      description: Сохранённые условия предложения. Контактов кандидата нет, включая принятые предложения. Статус expired вычисляется при чтении для sent/viewed при created_at + 336 часов <= текущего времени. accepted/rejected не истекают; responded_at при истечении остаётся null. Хранимые статус и даты не меняются; cron не требуется.
       properties:
         id:
           type: string
@@ -9295,6 +9296,7 @@ components:
             - viewed
             - accepted
             - rejected
+            - expired
         created_at:
           type: string
           format: date-time
@@ -9685,6 +9687,7 @@ components:
             - total
             - accepted
             - rejected
+            - expired
           properties:
             total:
               type: integer
@@ -9693,6 +9696,9 @@ components:
               type: integer
               minimum: 0
             rejected:
+              type: integer
+              minimum: 0
+            expired:
               type: integer
               minimum: 0
         tasks:
@@ -10685,7 +10691,7 @@ components:
         viewed: {type: boolean, description: Эта компания открывала профиль или отправляла оффер}
         last_viewed_at: {type: string, format: date-time, nullable: true}
         last_offered_at: {type: string, format: date-time, nullable: true}
-        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее взаимодействие плюс ровно 720 часов}
+        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее удерживающее кулдаун взаимодействие плюс ровно 720 часов; истёкшие офферы и их автоматические просмотры исключены}
     CandidateBankCard:
       type: object
       description: "Безопасная карточка. ID относится к candidate_profiles, а не users или Keycloak. Контакты и свободное описание отсутствуют."
@@ -10694,7 +10700,7 @@ components:
         viewed: {type: boolean, description: Эта компания открывала профиль или отправляла оффер; сохраняется после истечения срока}
         last_viewed_at: {type: string, format: date-time, nullable: true, description: Последнее открытие профиля или отправка оффера этой компанией}
         last_offered_at: {type: string, format: date-time, nullable: true, description: Последняя отправка оффера этой компанией независимо от его статуса}
-        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее взаимодействие плюс ровно 720 часов; null при отсутствии истории. После этой даты кандидат снова участвует в обычной выдаче}
+        next_available_at: {type: string, format: date-time, nullable: true, description: Последнее удерживающее кулдаун взаимодействие плюс ровно 720 часов; истёкшие офферы и их автоматические просмотры исключены; null при отсутствии удерживающего взаимодействия, в том числе после истечения всех таких офферов. Исторические даты и признаки сохраняются. После этой даты кандидат снова участвует в обычной выдаче}
         has_offer:
           type: boolean
           description: Эта компания уже отправляла кандидату предложение. Учитываются все потребности и статусы, включая accepted и rejected; предложения других компаний не влияют. Старые предложения также учитываются.
@@ -10959,7 +10965,7 @@ components:
     CandidateOffer:
       type: object
       required: [id, company_id, candidate_id, created_by, need_id, company_name, title, description, salary_from_rub, salary_to_rub, contact_email, contact_url, status, created_at, viewed_at, responded_at]
-      description: Сохранённые условия предложения. Контактов кандидата нет, включая принятые предложения.
+      description: Сохранённые условия предложения. Контактов кандидата нет, включая принятые предложения. Статус expired вычисляется при чтении для sent/viewed при created_at + 336 часов <= текущего времени. accepted/rejected не истекают; responded_at при истечении остаётся null. Хранимые статус и даты не меняются; cron не требуется.
       properties:
         id: {type: string, format: uuid}
         company_id: {type: string, format: uuid}
@@ -10984,7 +10990,7 @@ components:
           format: email
           description: Email работодателя, сохранённый при отправке.
         contact_url: {type: string, nullable: true}
-        status: {type: string, enum: [sent, viewed, accepted, rejected]}
+        status: {type: string, enum: [sent, viewed, accepted, rejected, expired]}
         created_at: {type: string, format: date-time}
         viewed_at: {type: string, format: date-time, nullable: true}
         responded_at: {type: string, format: date-time, nullable: true}
@@ -13014,7 +13020,7 @@ components:
               code: not_found
               message: "Предложение не найдено или недоступно"
     OfferResponseConflict:
-      description: "Ответ уже сохранён; изменить принятое решение нельзя. Повтор того же ответа возвращает 200."
+      description: "Ответ уже сохранён; изменить принятое решение нельзя (response_conflict). Повтор того же ответа возвращает 200. Ответ на истёкшее предложение запрещён: offer_expired, сообщение «срок предложения истёк; ответить на него нельзя»."
       content:
         application/json:
           schema:

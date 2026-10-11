@@ -5,13 +5,27 @@ import (
 	"errors"
 
 	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/candidatebank/entity"
+	"github.com/ix1ax/lct-fsp-hackaton-2026/apps/api/internal/offer/query"
 	"github.com/jackc/pgx/v5"
 )
 
 const lastInteraction = `GREATEST(interaction.last_viewed_at,interaction.last_offered_at)`
-const nextAvailable = lastInteraction + ` + interval '720 hours'`
-const interactionColumns = `interaction.last_offered_at IS NOT NULL AS has_offer,
+
+// Отправка автоматически записывает просмотр на ту же дату. Если последний оффер
+// истёк, этот автоматический просмотр больше не удерживает кулдаун. Более поздний
+// ручной просмотр и прежние принятые/отклонённые предложения сохраняют свой срок.
+var cooldownInteraction = `CASE WHEN interaction.last_viewed_at<=interaction.last_offered_at
+ AND EXISTS(SELECT 1 FROM candidate_offers o WHERE o.company_id=interaction.company_id
+ AND o.candidate_id=interaction.candidate_id AND o.created_at=interaction.last_offered_at
+ AND ` + query.Expired("o", "transaction_timestamp()") + `)
+ THEN (SELECT max(o.created_at) FROM candidate_offers o WHERE o.company_id=interaction.company_id
+ AND o.candidate_id=interaction.candidate_id AND o.created_at<=interaction.last_offered_at
+ AND NOT ` + query.Expired("o", "transaction_timestamp()") + `)
+ ELSE ` + lastInteraction + ` END`
+var nextAvailable = `(` + cooldownInteraction + `) + interval '720 hours'`
+var interactionColumns = `interaction.last_offered_at IS NOT NULL AS has_offer,
  interaction.last_viewed_at IS NOT NULL AS viewed,interaction.last_viewed_at,interaction.last_offered_at,` + nextAvailable + ` AS next_available_at`
+
 const cardResultColumns = `id,city,timezone,experience_months,salary_min_rub,search_status,work_format_ids,category,declared_category,grade_status,achievements_count,fsp_bonus,
  has_offer,viewed,last_viewed_at,last_offered_at,next_available_at`
 

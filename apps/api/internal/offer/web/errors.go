@@ -30,6 +30,8 @@ func (h handler) fail(c *gin.Context, err error) {
 		abort(c, 409, "contacts_unavailable", entity.ErrContactsUnavailable.Error())
 	case errors.Is(err, entity.ErrResponseConflict):
 		abort(c, 409, "response_conflict", entity.ErrResponseConflict.Error())
+	case errors.Is(err, entity.ErrExpired):
+		abort(c, 409, "offer_expired", entity.ErrExpired.Error())
 	default:
 		h.log.Error("Ошибка при работе с предложением", "error", err)
 		abort(c, 500, "internal_error", "Внутренняя ошибка сервера")
