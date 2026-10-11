@@ -1,7 +1,11 @@
+/** Цвета диаграмм по смыслу, палитра бренда (токены --chart-*). */
 export const STATISTICS_COLORS = {
-  primary: 'var(--brand-text)',
-  success: 'var(--success)',
-  warning: 'var(--warning)',
-  muted: 'var(--caption)',
-  danger: 'var(--destructive)',
+  /** Активно, подтверждено, пройдено. */
+  positive: 'var(--chart-1)',
+  /** В процессе, ждёт решения. */
+  progress: 'var(--chart-2)',
+  /** Заблокировано, отклонено, скрыто. */
+  negative: 'var(--chart-3)',
+  /** Нет данных, удалено, истекло. */
+  neutral: 'var(--chart-4)',
 };

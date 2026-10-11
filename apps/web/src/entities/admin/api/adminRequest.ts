@@ -116,8 +116,11 @@ const request = async <T>(
       const payload = parsed.success ? parsed.data : undefined;
       if (response.status === 401 && token)
         window.dispatchEvent(new Event('admin:expired'));
+      // Текст 5xx — служебный (часто на английском), админу показываем общий.
       throw new AdminApiError(
-        payload?.error?.message ?? `Ошибка HTTP ${response.status}`,
+        response.status >= 500
+          ? 'На сервере произошла ошибка. Попробуйте ещё раз.'
+          : (payload?.error?.message ?? `Ошибка HTTP ${response.status}`),
         response.status,
         payload?.error?.code ?? 'http_error',
         response.headers.get('X-Request-ID'),

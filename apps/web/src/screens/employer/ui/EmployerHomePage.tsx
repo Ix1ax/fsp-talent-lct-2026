@@ -42,8 +42,8 @@ export const EmployerHomePage = ({ user }: EmployerHomePageProps) => {
         section={section}
         busy={workspace.busy}
         hasCompany={!!board.company}
-        href={workspace.href}
-        onNavigate={workspace.navigate}
+        href={workspace.sectionHref}
+        onNavigate={workspace.openSection}
       />
       <PageWrapper
         variant="workspace"

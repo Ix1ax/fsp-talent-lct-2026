@@ -1,4 +1,7 @@
+import { Badge } from '@/shared/ui';
 import { statusLabels } from '@/entities/admin';
+
+import { getAdminStatusClassName } from './OperationStatus';
 
 interface StatusProps {
   value: string;
@@ -6,10 +9,11 @@ interface StatusProps {
 
 export const Status = ({ value }: StatusProps) => {
   return (
-    <span
-      className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center whitespace-normal border px-2 py-1 text-center text-xs ${value === 'published' || value === 'approved' || value === 'active' ? 'border-success/30 bg-success-soft text-success' : 'border-border bg-muted text-muted-foreground'}`}
+    <Badge
+      variant="secondary"
+      className={`h-auto min-h-6 max-w-full rounded-md px-2.5 whitespace-normal ${getAdminStatusClassName(value)}`}
     >
       {statusLabels[value] ?? value}
-    </span>
+    </Badge>
   );
 };

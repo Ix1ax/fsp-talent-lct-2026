@@ -10,7 +10,7 @@ export const DisciplinesSection = () => {
     >
       <div
         data-landing={LANDING_ELEMENTS.SECTION_LABEL}
-        className="[font-size:11px] font-medium [line-height:1.6] [letter-spacing:0.09em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:9px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
+        className="[font-size:12px] font-medium [line-height:1.6] [letter-spacing:0.08em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:11px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
       >
         <span>03 / ИЗ СПОРТА В ПРОФЕССИЮ</span>
         <span>ПЯТЬ ДИСЦИПЛИН ФСП</span>

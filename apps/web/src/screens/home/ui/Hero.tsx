@@ -9,7 +9,7 @@ import { useMediaQuery } from '@/shared/hooks';
 import { buttonVariants } from '@/shared/ui';
 import { useClientSession } from '@/entities/session';
 
-import { LANDING_ELEMENTS } from '../constants';
+import { LANDING_ANCHORS, LANDING_ELEMENTS } from '../constants';
 import { getLandingCta } from '../model';
 
 export const Hero = () => {
@@ -38,20 +38,22 @@ export const Hero = () => {
 
   const scale = useTransform(scrollYProgress, [0, 1], [1, 1.4]);
 
-  const handleNavigateClick: MouseEventHandler<HTMLAnchorElement> = (event) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
-      return;
-    const target = document.getElementById('manifest');
-    if (!target) return;
+  const scrollToSection =
+    (id: string): MouseEventHandler<HTMLAnchorElement> =>
+    (event) => {
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey)
+        return;
+      const target = document.getElementById(id);
+      if (!target) return;
 
-    event.preventDefault();
-    target.focus({ preventScroll: true });
-    target.scrollIntoView({
-      behavior: reduced ? 'instant' : 'smooth',
-      block: 'start',
-    });
-    window.history.replaceState(null, '', '#manifest');
-  };
+      event.preventDefault();
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({
+        behavior: reduced ? 'instant' : 'smooth',
+        block: 'start',
+      });
+      window.history.replaceState(null, '', `#${id}`);
+    };
 
   return (
     <section
@@ -90,11 +92,11 @@ export const Hero = () => {
       </motion.div>
       <div
         data-landing={LANDING_ELEMENTS.HERO_TOP}
-        className="container-page [padding-bottom:160px] w-full [padding-top:180px] [&_[data-landing~=eyebrow]]:flex [&_[data-landing~=eyebrow]]:items-center [&_[data-landing~=eyebrow]]:[gap:10px] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:[font-size:9px] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:[letter-spacing:0.045em] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:mb-7 [@media((max-width:767px))]:[padding-top:170px] [@media((max-width:767px))]:[padding-bottom:135px]"
+        className="container-page [padding-bottom:160px] w-full [padding-top:180px] [&_[data-landing~=eyebrow]]:flex [&_[data-landing~=eyebrow]]:items-center [&_[data-landing~=eyebrow]]:[gap:10px] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:[font-size:11px] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:[letter-spacing:0.045em] [@media((max-width:767px))]:[&_[data-landing~=eyebrow]]:mb-7 [@media((max-width:767px))]:[padding-top:170px] [@media((max-width:767px))]:[padding-bottom:135px]"
       >
         <p
           data-landing={LANDING_ELEMENTS.EYEBROW}
-          className="[font-size:11px] font-medium [line-height:1.6] [letter-spacing:0.09em] mb-8"
+          className="[font-size:12px] font-medium [line-height:1.6] [letter-spacing:0.08em] mb-8"
         >
           <span
             data-landing={LANDING_ELEMENTS.STATUS_DOT}
@@ -117,16 +119,27 @@ export const Hero = () => {
             <br />
             Найди команду, которой нужен именно ты.
           </p>
-          <Link
-            href={cta.href}
-            data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
-            className={buttonVariants({
-              className:
-                'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
-            })}
-          >
-            {cta.label} <ArrowUpRight size={20} />
-          </Link>
+          <div className="flex flex-col items-end gap-3 max-md:items-start">
+            <Link
+              href={cta.href}
+              data-landing={LANDING_ELEMENTS.PRIMARY_LINK}
+              className={buttonVariants({
+                className:
+                  'h-auto min-h-11 justify-between gap-6 px-6 py-4 [&_svg]:size-5',
+              })}
+            >
+              {cta.label} <ArrowUpRight size={20} />
+            </Link>
+            {cta.forGuest && (
+              <a
+                href={`#${LANDING_ANCHORS.EMPLOYERS}`}
+                onClick={scrollToSection(LANDING_ANCHORS.EMPLOYERS)}
+                className="inline-flex min-h-11 items-center gap-3 border-b border-current text-sm"
+              >
+                Ищу специалистов <ArrowDown size={18} />
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
@@ -138,7 +151,10 @@ export const Hero = () => {
           data-landing={LANDING_ELEMENTS.FILM_BOTTOM}
           className="flex justify-between items-center mt-10 [font-size:13px] [&_a]:flex [&_a]:gap-5 [&_a]:items-center [&_a]:[min-height:44px] [&_button]:grid [&_button]:place-items-center [&_button]:[width:46px] [&_button]:[height:46px] [&_button]:[border:1px_solid_rgb(255_255_255_/_55%)] [&_button]:rounded-full [&_button]:cursor-pointer"
         >
-          <a href="#manifest" onClick={handleNavigateClick}>
+          <a
+            href={`#${LANDING_ANCHORS.MANIFEST}`}
+            onClick={scrollToSection(LANDING_ANCHORS.MANIFEST)}
+          >
             От результата к карьере <ArrowDown size={18} />
           </a>
           {desktop && !reduced && (

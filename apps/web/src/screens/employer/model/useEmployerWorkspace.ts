@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useGuardedRouter, useUnsavedGuard } from '@/shared/hooks';
 
 import type { EmployerSection } from '../constants';
-import { getEmployerHref } from '../lib';
+import { getEmployerHref, getEmployerSectionHref } from '../lib';
 import type { useEmployerBoard } from './useEmployerBoard';
 
 type EmployerWorkspaceOptions = {
@@ -72,18 +72,24 @@ export const useEmployerWorkspace = ({
   const href = (next: EmployerSection, companyId = board.companyId) => {
     return getEmployerHref(next, companyId, searchParams.toString());
   };
-  const navigate = (next: EmployerSection) => {
+  const sectionHref = (next: EmployerSection) =>
+    getEmployerSectionHref(next, board.companyId);
+  const go = (next: EmployerSection, target: string) => {
     if (busy) return;
     const action = () => {
       setCreateCompany(false);
       setCandidateId('');
       setOffer(false);
       board.clearError();
-      router.push(href(next), { scroll: false });
+      router.push(target, { scroll: false });
     };
     if (createCompany || next === 'invitation') guard(action);
-    else router.navigate(href(next), action);
+    else router.navigate(target, action);
   };
+  /** Вкладки настроек компании: выбор потребности и страница сохраняются. */
+  const navigate = (next: EmployerSection) => go(next, href(next));
+  /** Пункты шапки: раздел открывается заново, сохраняется только компания. */
+  const openSection = (next: EmployerSection) => go(next, sectionHref(next));
   const startCompany = () =>
     guard(() => {
       setCreateCompany(true);
@@ -120,6 +126,8 @@ export const useEmployerWorkspace = ({
     guard,
     href,
     navigate,
+    sectionHref,
+    openSection,
     startCompany,
     refreshCompanies,
   };

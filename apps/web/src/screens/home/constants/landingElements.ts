@@ -13,7 +13,6 @@ export const LANDING_ELEMENTS = {
   DISCIPLINE_STAGE: 'disciplineStage',
   EMPLOYER_BOTTOM: 'employerBottom',
   EMPLOYER_NEW: 'employerNew',
-  EMPLOYER_WORDS: 'employerWords',
   EXPLORER: 'explorer',
   EXPLORER_CONTROLS: 'explorerControls',
   EYEBROW: 'eyebrow',

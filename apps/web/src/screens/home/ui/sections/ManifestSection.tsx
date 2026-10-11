@@ -1,10 +1,10 @@
-import { LANDING_ELEMENTS } from '../../constants';
+import { LANDING_ANCHORS, LANDING_ELEMENTS } from '../../constants';
 import { RevealWords } from '../motion';
 
 export const ManifestSection = () => {
   return (
     <section
-      id="manifest"
+      id={LANDING_ANCHORS.MANIFEST}
       tabIndex={-1}
       data-landing={LANDING_ELEMENTS.SECTION}
       className="container-page [padding-block:clamp(72px,_9vw,_140px)]"
@@ -12,7 +12,7 @@ export const ManifestSection = () => {
     >
       <div
         data-landing={LANDING_ELEMENTS.SECTION_LABEL}
-        className="[font-size:11px] font-medium [line-height:1.6] [letter-spacing:0.09em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:9px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
+        className="[font-size:12px] font-medium [line-height:1.6] [letter-spacing:0.08em] flex justify-between gap-6 [padding-bottom:22px] [border-bottom:1px_solid_var(--border)] [margin-bottom:52px] [&_span:last-child]:text-muted-foreground [@media((max-width:767px))]:[font-size:11px] [@media((max-width:767px))]:[margin-bottom:34px] [@media((max-width:767px))]:[&_span:last-child]:hidden"
       >
         <span>01 / ТВОЙ ПРОФЕССИОНАЛЬНЫЙ ПОТЕНЦИАЛ</span>
         <span>ОТ НАВЫКОВ К ВОЗМОЖНОСТЯМ</span>

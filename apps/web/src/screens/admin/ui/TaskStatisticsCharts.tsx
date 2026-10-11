@@ -28,12 +28,12 @@ export const TaskStatisticsCharts = ({ stats }: TaskStatisticsChartsProps) => {
             {
               label: 'Приём решений открыт',
               value: stats.tasks.open,
-              color: STATISTICS_COLORS.primary,
+              color: STATISTICS_COLORS.positive,
             },
             {
               label: 'Скрыты модерацией',
               value: stats.tasks.hidden,
-              color: STATISTICS_COLORS.danger,
+              color: STATISTICS_COLORS.negative,
               href: '/admin/tasks?status=hidden',
             },
           ]}
@@ -61,7 +61,7 @@ export const TaskStatisticsCharts = ({ stats }: TaskStatisticsChartsProps) => {
             {
               label: 'Проверены',
               value: stats.submissions.reviewed,
-              color: STATISTICS_COLORS.success,
+              color: STATISTICS_COLORS.positive,
             },
             {
               label: 'Ожидают оценки',
@@ -69,7 +69,7 @@ export const TaskStatisticsCharts = ({ stats }: TaskStatisticsChartsProps) => {
                 stats.submissions.total,
                 stats.submissions.reviewed,
               ),
-              color: STATISTICS_COLORS.warning,
+              color: STATISTICS_COLORS.progress,
             },
           ]}
         />

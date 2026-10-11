@@ -1,32 +1,38 @@
+import { Badge } from '@/shared/ui';
+
 import { operationStatusLabels } from '../constants';
+
+const SUCCESS = [
+  'verified',
+  'active',
+  'published',
+  'approved',
+  'accepted',
+  'passed',
+  'ready',
+  'open',
+];
+const DANGER = ['blocked', 'hidden', 'failed', 'rejected'];
+
+/** Тон бейджа как в кабинетах: мягкий фон без рамки. */
+export const getAdminStatusClassName = (value: string) => {
+  if (SUCCESS.includes(value)) return 'bg-success-soft text-success';
+  if (DANGER.includes(value)) return 'bg-destructive/10 text-destructive';
+  if (value === 'pending') return 'bg-accent text-brand-text';
+  return 'bg-secondary text-muted-foreground';
+};
 
 interface OperationStatusProps {
   value: string;
   label?: string;
 }
 export const OperationStatus = ({ value, label }: OperationStatusProps) => {
-  let colors = 'border-border bg-muted text-muted-foreground';
-  if (
-    [
-      'verified',
-      'active',
-      'published',
-      'accepted',
-      'passed',
-      'ready',
-      'open',
-    ].includes(value)
-  )
-    colors = 'border-success/30 bg-success-soft text-success';
-  if (['blocked', 'hidden', 'failed', 'rejected'].includes(value))
-    colors = 'border-destructive/30 bg-destructive/10 text-destructive';
-  if (value === 'pending')
-    colors = 'border-primary/30 bg-accent text-brand-text';
   return (
-    <span
-      className={`inline-flex min-h-7 max-w-full shrink-0 items-center justify-center border px-2 py-1 text-center text-xs ${colors}`}
+    <Badge
+      variant="secondary"
+      className={`h-auto min-h-6 max-w-full rounded-md px-2.5 whitespace-normal ${getAdminStatusClassName(value)}`}
     >
       {label ?? operationStatusLabels[value] ?? value}
-    </span>
+    </Badge>
   );
 };

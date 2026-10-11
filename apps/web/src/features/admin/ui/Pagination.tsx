@@ -14,6 +14,8 @@ export const Pagination = ({
   onChange,
   loading,
 }: PaginationProps) => {
+  // Пустой список уже показывает свою заглушку — строка «0 из 0» не нужна.
+  if (!count && offset === 0) return null;
   return (
     <div className="flex min-h-11 flex-wrap items-center justify-between gap-3 border-t pt-4 text-sm tabular-nums">
       <span className="text-muted-foreground">

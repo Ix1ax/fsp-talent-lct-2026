@@ -82,7 +82,7 @@ export const AdminSidebar = ({
             const active =
               pathname === DYNAMIC_ROUTES.ADMIN(path) ||
               pathname.startsWith(`${DYNAMIC_ROUTES.ADMIN(path)}/`) ||
-              (path === 'catalogs' && pathname === STATIC_ROUTES.ADMIN);
+              (path === 'overview' && pathname === STATIC_ROUTES.ADMIN);
             return (
               <Tooltip key={path}>
                 <TooltipTrigger asChild>
