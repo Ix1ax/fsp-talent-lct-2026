@@ -118,11 +118,14 @@ export const CandidateFSP = () => {
                 </div>
                 {link && (
                   <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-                    <div>
+                    <div className="min-w-0">
                       <dt className="text-muted-foreground">
                         Идентификатор участника
                       </dt>
-                      <dd className="mt-1 break-all font-medium">
+                      <dd
+                        className="mt-1 truncate font-medium"
+                        title={link.participantId}
+                      >
                         {link.participantId}
                       </dd>
                     </div>
@@ -200,6 +203,10 @@ export const CandidateFSP = () => {
                     </Tooltip>
                   )}
                 </div>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Если обновление временно ограничено, дождитесь окончания паузы
+                  перед повторным запросом. Достижения сохраняются.
+                </p>
               </section>
               {link && <FSPAchievements items={query.data.items} />}
             </FadeIn>

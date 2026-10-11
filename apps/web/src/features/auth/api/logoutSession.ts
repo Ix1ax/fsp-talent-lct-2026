@@ -18,10 +18,11 @@ export const logoutSession = async (): Promise<void> => {
     throw new Error('Не удалось завершить сессию. Попробуйте ещё раз.');
 
   clearClientAccessToken();
+  const user = await manager.getUser();
   await clearOidcUser();
   const cancelApproval = approveUnsavedUnload();
   try {
-    await manager.signoutRedirect();
+    await manager.signoutRedirect({ id_token_hint: user?.id_token });
   } catch (error) {
     cancelApproval();
     throw error;

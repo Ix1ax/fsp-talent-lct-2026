@@ -4,7 +4,10 @@ import { clearClientAccessToken, clearOidcUser } from '@/shared/auth';
 
 import { logoutSession } from '../logoutSession';
 
-const { signoutRedirect } = vi.hoisted(() => ({ signoutRedirect: vi.fn() }));
+const { signoutRedirect, getUser } = vi.hoisted(() => ({
+  signoutRedirect: vi.fn(),
+  getUser: vi.fn(),
+}));
 vi.mock('@/shared/api/authConfig', () => ({
   getAuthConfig: vi.fn(async () => ({
     issuer: 'https://id.test',
@@ -14,7 +17,7 @@ vi.mock('@/shared/api/authConfig', () => ({
 vi.mock('@/shared/auth', () => ({
   clearClientAccessToken: vi.fn(),
   clearOidcUser: vi.fn(),
-  createOidcManager: vi.fn(() => ({ signoutRedirect })),
+  createOidcManager: vi.fn(() => ({ signoutRedirect, getUser })),
 }));
 const fetchMock = vi.fn();
 
@@ -27,10 +30,19 @@ describe('logoutSession', () => {
 
   it('clears client and OIDC tokens after the server confirms logout', async () => {
     fetchMock.mockResolvedValue(Response.json({ ok: true }));
+    getUser.mockResolvedValue({ id_token: 'id-token' });
     await logoutSession();
     expect(clearClientAccessToken).toHaveBeenCalledOnce();
     expect(clearOidcUser).toHaveBeenCalledOnce();
     expect(signoutRedirect).toHaveBeenCalledOnce();
+    expect(signoutRedirect).toHaveBeenCalledWith({ id_token_hint: 'id-token' });
+  });
+
+  it('allows logout when the OIDC user is missing', async () => {
+    fetchMock.mockResolvedValue(Response.json({ ok: true }));
+    getUser.mockResolvedValue(null);
+    await logoutSession();
+    expect(signoutRedirect).toHaveBeenCalledWith({ id_token_hint: undefined });
   });
 
   it('keeps client state on a failed logout', async () => {
