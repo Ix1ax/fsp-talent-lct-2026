@@ -1,5 +1,5 @@
 #!/bin/sh
-# Update only the login theme of an existing realm. Import does not update existing realms.
+# Update presentation of an existing realm. Import does not update existing realms.
 # Pass Compose options before the implicit `exec`, e.g. -f deploy/compose.yaml.
 set -eu
 docker compose "$@" exec -T keycloak /bin/bash -s <<'KEYCLOAK_SCRIPT'
@@ -18,6 +18,11 @@ until /opt/keycloak/bin/kcadm.sh config credentials --config "$config" \
   fi
   sleep 2
 done
-/opt/keycloak/bin/kcadm.sh update realms/fsp --config "$config" -s loginTheme=fsp-scout
-printf 'Тема fsp-scout назначена realm fsp\n'
+# Default merge mode preserves the remaining realm and SMTP settings.
+/opt/keycloak/bin/kcadm.sh update realms/fsp --config "$config" \
+  -s loginTheme=fsp-scout \
+  -s 'displayName=ФСП Скаут' \
+  -s 'displayNameHtml=ФСП Скаут' \
+  -s 'smtpServer.fromDisplayName=ФСП Скаут'
+printf 'Тема fsp-scout и название ФСП Скаут применены к realm fsp\n'
 KEYCLOAK_SCRIPT
