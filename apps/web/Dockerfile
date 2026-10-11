@@ -2,13 +2,14 @@ FROM node:24-alpine AS deps
 WORKDIR /src
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/package.json
-RUN npm ci
+RUN npm ci && mkdir -p apps/web/node_modules
 
 FROM node:24-alpine AS build
 WORKDIR /src
 COPY --from=deps /src/node_modules ./node_modules
 COPY package.json package-lock.json ./
 COPY apps/web apps/web
+COPY --from=deps /src/apps/web/node_modules ./apps/web/node_modules
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV API_PROXY_TARGET=http://api:8080
 RUN npm run build -w apps/web
