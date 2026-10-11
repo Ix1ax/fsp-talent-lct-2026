@@ -22,11 +22,8 @@ export const Toaster = (props: ToasterProps) => {
       toastOptions={{
         closeButtonAriaLabel: 'Закрыть уведомление',
         style: {
-          background: 'var(--card)',
-          color: 'var(--foreground)',
-          border: '1px solid var(--input)',
-          borderRadius: 0,
-          boxShadow: 'inset 3px 0 0 var(--primary)',
+          borderRadius: 'var(--radius)',
+          boxShadow: 'var(--shadow-lg)',
         },
       }}
       {...props}

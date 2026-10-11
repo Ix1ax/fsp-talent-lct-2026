@@ -55,7 +55,7 @@ export const AvailableAssessments = ({
         />
       )}
       <Button
-        className="min-h-11 self-start"
+        className="min-h-11 w-fit self-start"
         variant="outline"
         disabled={loading || busy}
         onClick={refresh}

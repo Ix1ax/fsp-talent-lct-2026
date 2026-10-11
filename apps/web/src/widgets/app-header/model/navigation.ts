@@ -26,8 +26,6 @@ export type HeaderNavItem = {
   exclude?: string[];
   /** Маршруты, при которых пункт тоже активен. */
   include?: string[];
-  /** Второстепенный пункт: на узких экранах только в меню, не в нижней панели. */
-  secondary?: boolean;
 };
 
 const GUIDES_ITEM: HeaderNavItem = {
@@ -46,6 +44,7 @@ const CANDIDATE_ITEMS: HeaderNavItem[] = [
     exclude: [
       STATIC_ROUTES.CANDIDATE_ASSESSMENTS,
       STATIC_ROUTES.CANDIDATE_TASKS,
+      STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS,
       STATIC_ROUTES.OFFERS,
     ],
   },
@@ -68,7 +67,7 @@ const CANDIDATE_ITEMS: HeaderNavItem[] = [
     label: 'Задания компаний',
     shortLabel: 'Задания',
     icon: ListTodoIcon,
-    secondary: true,
+    include: [STATIC_ROUTES.CANDIDATE_TASK_SUBMISSIONS],
   },
 ];
 
@@ -110,7 +109,6 @@ export const EMPLOYER_NAV_ITEMS: HeaderNavItem[] = [
     href: STATIC_ROUTES.EMPLOYER_TASKS,
     label: 'Задания',
     icon: ListTodoIcon,
-    secondary: true,
   },
 ];
 

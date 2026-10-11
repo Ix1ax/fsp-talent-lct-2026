@@ -97,14 +97,10 @@ export const useNeedFlowEditor = ({
     const validation = validateNeed(next, status);
     setErrors(validation);
     if (Object.keys(validation).length) {
-      if (
-        validation.title ||
-        validation.description ||
-        validation.specializationId ||
-        validation.gradeId
-      )
+      if (validation.title || validation.specializationId || validation.gradeId)
         setStep(0);
       else if (
+        validation.description ||
         validation.salaryFromRub ||
         validation.salaryToRub ||
         validation.city ||

@@ -16,11 +16,16 @@ type StepItem = {
 interface ProfileStepItemProps {
   step: StepItem;
   number: number;
+  status: string;
 }
 
 const MotionLink = motion.create(Link);
 
-export const ProfileStepItem = ({ step, number }: ProfileStepItemProps) => {
+export const ProfileStepItem = ({
+  step,
+  number,
+  status,
+}: ProfileStepItemProps) => {
   const { reducedMotion, transition } = useMotionSettings();
 
   return (
@@ -42,6 +47,9 @@ export const ProfileStepItem = ({ step, number }: ProfileStepItemProps) => {
           />
         </div>
         <h2 className="text-lg font-semibold">{step.title}</h2>
+        <p className="text-xs font-medium text-muted-foreground" role="status">
+          {status}
+        </p>
         <p className="text-sm text-muted-foreground">
           {PROFILE_STEP_DESCRIPTIONS[step.id]}
         </p>

@@ -21,7 +21,7 @@ export const CandidateProfileOverview = () => {
               вернуться к остальным позже. Публикацией профиля управляете вы.
             </PageHeader.Description>
           </PageHeader.Content>
-          <PageHeader.Actions>
+          <PageHeader.Actions className="grid w-full grid-cols-1 sm:w-auto lg:grid-cols-1">
             <Button asChild variant="outline">
               <Link href={STATIC_ROUTES.OFFERS}>Входящие предложения</Link>
             </Button>

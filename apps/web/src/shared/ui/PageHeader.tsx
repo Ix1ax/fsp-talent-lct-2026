@@ -5,18 +5,23 @@ import { cn } from '@/shared/lib/utils';
 interface PageHeaderProps extends ComponentProps<'header'> {
   children: ReactNode;
 }
+
 interface PageHeaderRowProps extends ComponentProps<'div'> {
   children: ReactNode;
 }
+
 interface PageHeaderContentProps extends ComponentProps<'div'> {
   children: ReactNode;
 }
+
 interface PageHeaderTitleProps extends ComponentProps<'h1'> {
   children: ReactNode;
 }
+
 interface PageHeaderDescriptionProps extends ComponentProps<'div'> {
   children: ReactNode;
 }
+
 interface PageHeaderActionsProps extends ComponentProps<'div'> {
   children: ReactNode;
 }
@@ -103,7 +108,6 @@ const PageHeaderActions = ({
   );
 };
 
-/** Compose a Row with Content (Title/Description) and Actions; extra sections follow the Row. */
 export const PageHeader = Object.assign(PageHeaderRoot, {
   Row: PageHeaderRow,
   Content: PageHeaderContent,

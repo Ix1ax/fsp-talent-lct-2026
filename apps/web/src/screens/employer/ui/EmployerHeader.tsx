@@ -107,7 +107,7 @@ export const EmployerHeader = ({
       }
       nav={renderItems(EMPLOYER_NAV_ITEMS)}
       navFrom={EMPLOYER_NAV_FROM}
-      tabs={renderItems(EMPLOYER_NAV_ITEMS.filter((item) => !item.secondary))}
+      tabs={renderItems(EMPLOYER_NAV_ITEMS)}
       menuExtra={<HeaderMenuExtra />}
       actions={
         <>

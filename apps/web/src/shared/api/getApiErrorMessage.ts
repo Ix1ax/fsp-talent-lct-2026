@@ -1,7 +1,15 @@
+import { formatDate } from '../utils';
 import { ApiError } from './errors';
 
 export const getApiErrorMessage = (error: unknown): string => {
   if (error instanceof ApiError) {
+    if (error.status === 429 || error.code.endsWith('_cooldown')) {
+      if (error.retryAt && Number.isFinite(Date.parse(error.retryAt)))
+        return `Повторный запрос доступен ${formatDate(error.retryAt)}.`;
+      if (error.retryAfter && /^\d+$/.test(error.retryAfter))
+        return `Повторите запрос через ${error.retryAfter} сек.`;
+      return 'Повторный запрос временно недоступен. Подождите и попробуйте ещё раз.';
+    }
     if (error.code === 'company_blocked')
       return 'Компания заблокирована. Обратитесь к администратору для восстановления доступа.';
     if (error.code === 'verification_evidence_required')

@@ -7,13 +7,14 @@ import {
   listMyTaskSubmissions,
   type SubmissionFilters,
 } from '@/entities/company-task';
+import { CandidateProfileGate } from '@/features/candidate/profile';
 
 import { useTaskQuery } from '../model';
 import { TasksShell } from './TasksShell';
 import { TaskSubmissionCard } from './TaskSubmissionCard';
 import { TaskSubmissionsListSkeleton } from './TaskSubmissionsLoading';
 
-export const TaskSubmissionsPage = () => {
+const TaskSubmissionsContent = () => {
   const [filters, setFilters] = useState<SubmissionFilters>({
     status: 'all',
     sort: 'newest',
@@ -99,5 +100,13 @@ export const TaskSubmissionsPage = () => {
         </>
       )}
     </TasksShell>
+  );
+};
+
+export const TaskSubmissionsPage = () => {
+  return (
+    <CandidateProfileGate>
+      <TaskSubmissionsContent />
+    </CandidateProfileGate>
   );
 };

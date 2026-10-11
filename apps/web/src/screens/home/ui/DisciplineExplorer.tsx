@@ -29,7 +29,7 @@ export const DisciplineExplorer = () => {
   return (
     <div
       data-landing={LANDING_ELEMENTS.EXPLORER}
-      className="grid [grid-template-columns:0.8fr_1.2fr] gap-16 items-start [@media((max-width:1000px))]:gap-7 [@media((max-width:1000px))]:[grid-template-columns:0.8fr_1.2fr] [@media((max-width:767px))]:[grid-template-columns:1fr] [@media((max-width:767px))]:gap-8"
+      className="grid [overflow-anchor:none] [grid-template-columns:0.8fr_1.2fr] gap-16 items-start [@media((max-width:1000px))]:gap-7 [@media((max-width:1000px))]:[grid-template-columns:0.8fr_1.2fr] [@media((max-width:767px))]:[grid-template-columns:1fr] [@media((max-width:767px))]:gap-8"
     >
       <div
         data-landing={LANDING_ELEMENTS.DISCIPLINE_STAGE}
@@ -40,7 +40,6 @@ export const DisciplineExplorer = () => {
         <div
           data-landing={LANDING_ELEMENTS.DISCIPLINE_ARTWORK}
           className="relative shrink-0 [margin:20px_-20px] [@media((max-width:767px))]:[max-width:350px] [@media((max-width:767px))]:w-full [@media((max-width:767px))]:[margin:0_auto]"
-          key={selected.code}
         >
           <DisciplineVisual kind={selected.kind} />
         </div>
@@ -75,7 +74,7 @@ export const DisciplineExplorer = () => {
             <article
               key={item.code}
               data-landing={LANDING_ELEMENTS.DISCIPLINE}
-              className="[border-top:1px_solid_var(--border)] [transition:background_0.25s] [&:last-child]:[border-bottom:1px_solid_var(--border)] [&[data-open='true']]:rounded-xl [&[data-open='true']]:bg-accent [&_h3_button]:grid [&_h3_button]:[grid-template-columns:28px_1fr_24px] [&_h3_button]:[gap:14px] [&_h3_button]:items-center [&_h3_button]:text-left [&_h3_button]:[padding:26px_16px] [&_h3_button]:w-full [&_h3_button]:cursor-pointer [&_h3_button]:[font-size:clamp(18px,_1.8vw,_25px)] [&_h3_button]:[line-height:1.25] [&_h3_button]:[letter-spacing:-0.03em] [&_h3_button:hover]:text-brand-text [&[data-open='true']_h3]:text-brand-text [@media((max-width:767px))]:[&_h3_button]:[font-size:19px] [@media((max-width:767px))]:[&_h3_button]:[padding-inline:12px]"
+              className="[border-top:1px_solid_var(--border)] [&[data-open='true']+article]:[border-top-color:transparent] [transition:background_0.25s] [&:last-child]:[border-bottom:1px_solid_var(--border)] [&[data-open='true']]:rounded-xl [&[data-open='true']]:bg-accent [&_h3_button]:grid [&_h3_button]:[grid-template-columns:28px_1fr_24px] [&_h3_button]:[gap:14px] [&_h3_button]:items-center [&_h3_button]:text-left [&_h3_button]:[padding:26px_16px] [&_h3_button]:w-full [&_h3_button]:cursor-pointer [&_h3_button]:[font-size:clamp(18px,_1.8vw,_25px)] [&_h3_button]:[line-height:1.25] [&_h3_button]:[letter-spacing:-0.03em] [&_h3_button:hover]:text-brand-text [&[data-open='true']_h3]:text-brand-text [@media((max-width:767px))]:[&_h3_button]:[font-size:19px] [@media((max-width:767px))]:[&_h3_button]:[padding-inline:12px]"
               data-open={open}
             >
               <h3>
@@ -99,7 +98,7 @@ export const DisciplineExplorer = () => {
                 id={`discipline-${item.code}`}
                 hidden={!open}
                 data-landing={LANDING_ELEMENTS.DISCIPLINE_BODY}
-                className="[&:not([hidden])]:grid [&:not([hidden])]:min-h-[340px] [&:not([hidden])]:content-start max-md:[&:not([hidden])]:min-h-[400px] [&:not([hidden])]:[grid-template-columns:1fr] [&:not([hidden])]:gap-5 [&:not([hidden])]:[padding:0_24px_28px_58px] [&:not([hidden])]:[animation:enter_0.3s_ease-out] [&:not([hidden])]:[--tw-enter-opacity:0] [&:not([hidden])]:[--tw-enter-translate-y:8px] [&_p]:[font-size:15px] [&_p]:[line-height:1.7] [&_p]:mb-4 [@media((max-width:767px))]:[&:not([hidden])]:[padding-left:54px]"
+                className="[&:not([hidden])]:grid [&:not([hidden])]:min-h-[340px] [&:not([hidden])]:content-start max-md:[&:not([hidden])]:min-h-[400px] [&:not([hidden])]:[grid-template-columns:1fr] [&:not([hidden])]:gap-5 [&:not([hidden])]:[padding:0_24px_28px_58px] [&_p]:[font-size:15px] [&_p]:[line-height:1.7] [&_p]:mb-4 [@media((max-width:767px))]:[&:not([hidden])]:[padding-left:54px]"
               >
                 <div
                   data-landing={LANDING_ELEMENTS.SKILL_TAGS}
