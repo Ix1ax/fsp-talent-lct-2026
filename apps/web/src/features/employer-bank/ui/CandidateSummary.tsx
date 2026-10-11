@@ -1,3 +1,4 @@
+import { pluralizeRu } from '@/shared/utils';
 import type { Catalogs } from '@/entities/catalog';
 import type { BankCandidate } from '@/entities/employer-bank';
 
@@ -9,6 +10,7 @@ export const CandidateSummary = ({
   candidate,
   catalogs,
 }: CandidateSummaryProps) => {
+  const years = Math.round((candidate.experienceMonths / 12) * 10) / 10;
   const category = candidate.category ?? candidate.declaredCategory;
   return (
     <div className="grid min-w-0 gap-3 [overflow-wrap:anywhere]">
@@ -38,7 +40,7 @@ export const CandidateSummary = ({
           : 'Грейд не подтверждён · самооценка'}
       </p>
       <p className="text-sm text-muted-foreground">
-        Опыт: {Math.round((candidate.experienceMonths / 12) * 10) / 10} лет ·{' '}
+        Опыт: {pluralizeRu(years, ['год', 'года', 'лет'])} ·{' '}
         {candidate.searchStatus === 'open'
           ? 'Активно ищет работу'
           : 'Рассматривает предложения'}

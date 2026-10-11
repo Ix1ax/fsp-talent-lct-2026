@@ -42,8 +42,16 @@ describe('anonymous candidate presentation', () => {
     const html = render();
     expect(html).toContain('самооценка');
     expect(html).toContain('Зарплата не указана');
-    expect(html).toContain('2.5 лет');
+    expect(html).toContain('2.5 года');
     expect(html).not.toContain('0%');
+  });
+  it.each([
+    [12, '1 год'],
+    [36, '3 года'],
+    [60, '5 лет'],
+    [132, '11 лет'],
+  ])('declines experience for %i months', (experienceMonths, expected) => {
+    expect(render({ ...candidate, experienceMonths })).toContain(expected);
   });
   it('distinguishes confirmed qualification and zero salary from missing data', () => {
     const html = render({

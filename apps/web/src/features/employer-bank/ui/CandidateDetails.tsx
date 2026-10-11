@@ -16,7 +16,7 @@ import {
   DialogTitle,
   RemoteState,
 } from '@/shared/ui';
-import { formatDate } from '@/shared/utils';
+import { formatDate, pluralizeRu } from '@/shared/utils';
 import type { Catalogs } from '@/entities/catalog';
 import type { Company } from '@/entities/company';
 import type { EmployerBankApi } from '@/entities/employer-bank';
@@ -70,7 +70,6 @@ export const CandidateDetails = ({
   const recordView = useCallback(
     async (signal: AbortSignal) => {
       signal.throwIfAborted();
-      // Уже открытый профиль должен учитываться, даже если диалог сразу закрыли.
       const interaction = await api.viewBankCandidate(company.id, candidateId);
       onViewedRef.current?.();
       return interaction;
@@ -136,7 +135,7 @@ export const CandidateDetails = ({
               <CardContent className="grid gap-3">
                 <p className="text-sm">
                   {candidate.assessment
-                    ? `Результат теста: ${candidate.assessment.scorePercent}% · ${formatDate(candidate.assessment.confirmedAt)}`
+                    ? `Результат теста: ${candidate.assessment.scorePercent.toLocaleString('ru-RU', { maximumFractionDigits: 2 })}% · ${formatDate(candidate.assessment.confirmedAt)}`
                     : 'Нет подтверждённого результата теста'}
                 </p>
                 {candidate.qualifications.map((item, i) => (
@@ -169,7 +168,10 @@ export const CandidateDetails = ({
               <CardContent className="grid gap-3">
                 <p className="text-sm">
                   Опыт:{' '}
-                  {Math.round((candidate.experienceMonths / 12) * 10) / 10} лет
+                  {pluralizeRu(
+                    Math.round((candidate.experienceMonths / 12) * 10) / 10,
+                    ['год', 'года', 'лет'],
+                  )}
                 </p>
                 {candidate.experience.map((item, i) => (
                   <p key={i} className="text-sm">
